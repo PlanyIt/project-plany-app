@@ -1,0 +1,63 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs
+*.log
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Environment variables
+.env
+
+# Docker
+Dockerfile
+docker-compose.yml
+.docker/
+docker-compose.override.yml
+*.env
+
+# Build outputs
+/dist/
+/build/
+/coverage/
+
+# IDE and editor files
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.vscode/
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+
+# MongoDB
+*.lock
+data/
+
+# Flutter specific
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.dart_tool/
+.published/
+.pub-cache/
+
+# macOS specific
+.DS_Store
+
+# Linux specific
+*.swp
