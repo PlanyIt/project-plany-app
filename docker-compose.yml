@@ -10,6 +10,11 @@ services:
     depends_on:
       - auth-service
       - user-service
+      - notification-service
+      - partner-service
+      - payment-service
+      - plan-service
+      - search-service
 
   auth-service:
     build:
@@ -28,6 +33,53 @@ services:
       - "3002:3002"
     networks:
       - plany-network
+    
+  notification-service:
+    build:
+      context: ./backend/notification-service
+    container_name: notification-service
+    ports:
+      - "3003:3003"
+    networks:
+      - plany-network
+
+  partner-service:
+    build:
+      context: ./backend/partner-service
+    container_name: partner-service
+    ports:
+      - "3004:3004"
+    networks:
+      - plany-network
+
+  payment-service:
+    build:
+      context: ./backend/payment-service
+    container_name: payment-service
+    ports:
+      - "3005:3005"
+    networks:
+      - plany-network
+
+  plan-service:
+    build:
+      context: ./backend/plan-service
+    container_name: plan-service
+    ports:
+      - "3006:3006"
+    networks:
+      - plany-network
+
+  search-service:
+    build:
+      context: ./backend/search-service
+    container_name: search-service
+    ports:
+      - "3007:3007"
+    networks:
+      - plany-network
+    depends_on:
+      - redis
 
   mongo:
     image: mongo
