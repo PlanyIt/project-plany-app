@@ -1,0 +1,55 @@
+services:
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    networks:
+      - plany-network
+    depends_on:
+      - auth-service
+      - user-service
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    networks:
+      - plany-network
+
+  user-service:
+    build:
+      context: ./backend/user-service
+    container_name: user-service
+    ports:
+      - "3002:3002"
+    networks:
+      - plany-network
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - plany-network
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - plany-network
+
+networks:
+  plany-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
