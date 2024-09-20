@@ -24,6 +24,8 @@ services:
       - "3001:3001"
     networks:
       - plany-network
+    env_file:
+      - ./backend/auth-service/.env
 
   user-service:
     build:
@@ -69,6 +71,10 @@ services:
       - "3006:3006"
     networks:
       - plany-network
+    depends_on:
+      - mongo
+    environment:
+      - "MONGO_URI=mongodb://mongo:27017/plan-database"
 
   search-service:
     build:

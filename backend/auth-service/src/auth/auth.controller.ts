@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
@@ -10,6 +10,17 @@ export class AuthController {
   @UseGuards(AuthGuard('auth0'))
   login() {
     // Redirige vers Auth0 pour l'authentification
+  }
+
+  @Post('logout')
+  @UseGuards(AuthGuard('jwt'))
+  logout() {
+    // Déconnecte l'utilisateur
+  }
+
+  @Post('register')
+  register() {
+    // Enregistrer un utilisateur
   }
 
   @Get('callback')
