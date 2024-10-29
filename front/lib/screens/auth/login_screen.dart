@@ -38,7 +38,7 @@ class LoginScreenState extends State<LoginScreen> {
 
       if (user != null) {
         // Rediriger l'utilisateur vers l'écran d'accueil après la connexion réussie
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } catch (e) {
       // Si la connexion échoue, afficher un message d'erreur

@@ -24,6 +24,11 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          selectedItemColor: Color(0xFF3425B5),
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.white,
+        ),
         inputDecorationTheme: const InputDecorationTheme(
           floatingLabelBehavior: FloatingLabelBehavior.never,
           filled: true,
