@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
+import { UserModule } from './user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
+import { PlanModule } from './plan/plan.module';
+import { AuthModule } from './auth/auth.module';
+import { FirebaseAdminModule } from './firebase/firebase-admin.module';
 
 @Module({
   imports: [
@@ -13,7 +16,10 @@ import { ConfigModule } from '@nestjs/config';
     MongooseModule.forRoot(
       'mongodb+srv://gaellegoyondev:Nvxemb4*@cluster0.uturluy.mongodb.net/plany',
     ),
-    UsersModule,
+    UserModule,
+    PlanModule,
+    AuthModule,
+    FirebaseAdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

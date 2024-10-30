@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/services/auth_service.dart';
-import 'package:front/widgets/primarybutton.dart';
-import 'package:front/widgets/secondarybutton.dart';
+import 'package:front/widgets/buttons/p_primarybutton.dart';
+import 'package:front/widgets/buttons/p_secondarybutton.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -65,23 +65,25 @@ class HomeScreen extends StatelessWidget {
 
           Positioned(
             bottom: 100,
-            left: 20,
-            right: 20,
+            left: 30,
+            right: 30,
             child: PrimaryButton(
-              text: "S'inscrire",
+              text: "Se connecter",
               onPressed: () {
-                Navigator.pushNamed(context, '/signup');
+                Navigator.pushNamed(context, '/login');
               },
             ),
           ),
           Positioned(
-            bottom: 35,
-            left: 20,
-            right: 20,
-            child: SecondaryButton(
-              text: "Se connecter",
+            bottom: 25,
+            left: 30,
+            right: 30,
+            child: PrimaryButton(
+              buttonColor: ButtonColor.secondary,
+              textColor: TextColor.dark,
+              text: "S'inscrire",
               onPressed: () {
-                Navigator.pushNamed(context, '/login');
+                Navigator.pushNamed(context, '/signup');
               },
             ),
           ),

@@ -6,7 +6,7 @@ import { User, UserDocument } from './schemas/user.schema';
 import { Model } from 'mongoose';
 
 @Injectable()
-export class UsersService {
+export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   // Création d'un utilisateur

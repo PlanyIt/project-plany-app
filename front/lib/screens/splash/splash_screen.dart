@@ -24,10 +24,10 @@ class SplashScreenState extends State<SplashScreen> {
 
     if (user != null) {
       // Si l'utilisateur est connecté, redirige vers la page d'accueil
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/dashboard');
     } else {
       // Sinon, redirige vers la page de connexion
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
