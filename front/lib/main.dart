@@ -19,12 +19,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.nunitoTextTheme(),
         primaryColor: const Color(0xFF3425B5),
-        scaffoldBackgroundColor: const Color(0xFFF4F4F4),
+        scaffoldBackgroundColor: Colors.grey[100],
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
           selectedItemColor: Color(0xFF3425B5),
           unselectedItemColor: Colors.grey,
           backgroundColor: Colors.white,

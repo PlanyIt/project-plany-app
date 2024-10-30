@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:front/services/auth_service.dart';
-import 'package:front/widgets/primarybutton.dart';
+import 'package:front/widgets/buttons/p_primarybutton.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -74,14 +74,19 @@ class LoginScreenState extends State<LoginScreen> {
                 children: <Widget>[
                   TextField(
                     controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: TextStyle(color: Colors.grey[600]),
+                    ),
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _passwordController,
-                    decoration:
-                        const InputDecoration(labelText: 'Mot de passe'),
+                    decoration: InputDecoration(
+                      labelText: 'Mot de passe',
+                      labelStyle: TextStyle(color: Colors.grey[600]),
+                    ),
                     obscureText: true,
                   ),
                   const SizedBox(height: 10),
