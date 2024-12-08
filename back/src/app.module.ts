@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PlanModule } from './plan/plan.module';
 import { AuthModule } from './auth/auth.module';
 import { FirebaseAdminModule } from './firebase/firebase-admin.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { FirebaseAdminModule } from './firebase/firebase-admin.module';
     UserModule,
     PlanModule,
     AuthModule,
+    CommentModule,
     FirebaseAdminModule,
   ],
   controllers: [AppController],
