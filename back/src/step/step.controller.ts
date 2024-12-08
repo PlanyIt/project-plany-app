@@ -10,8 +10,8 @@ import {
   Req,
 } from '@nestjs/common';
 import { StepService } from './step.service';
-import { CreateStepDto } from './dto/create-step.dto';
 import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
+import { CreateStepDto } from './dto/create-step.dto';
 
 @Controller('api/steps')
 export class StepController {
@@ -43,6 +43,11 @@ export class StepController {
     @Body('userId') userId: string,
     @Body('planId') planId: string,
   ) {
-    return this.stepService.updateById(stepId, updateStepDto, userId, planId);
+    return this.stepService.updateById(
+        stepId,
+        updateStepDto,
+        userId,
+        planId
+    );
   }
 }

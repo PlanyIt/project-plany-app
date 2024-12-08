@@ -1,13 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type StepDocument = HydratedDocument<Step>;
 
 @Schema({ timestamps: true })
 export class Step {
-  @Prop({ required: true, type: String })
-  stepId: string;
-
   @Prop({ required: true, type: String })
   title: string;
 
@@ -22,9 +19,6 @@ export class Step {
 
   @Prop({ required: true, type: Number })
   order: number;
-
-  @Prop({ required: true, type: String })
-  planId: string;
 
   @Prop({ type: String, required: false })
   image?: string;
@@ -44,7 +38,14 @@ export class Step {
   @Prop({ type: Date, required: false })
   createdAt?: Date;
 
-  @Prop({ required: true, type: String })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'Plan', required: true })
+  planId: string;
+  //je met categoryId required false: on a pas de categoryId, on ne peut pas mettre une catégorie
+  //TODO après la crétion du module Catégorie
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: false })
   categoryId: string;
 }
 

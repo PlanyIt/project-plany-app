@@ -3,17 +3,14 @@ import {
   IsNumber,
   IsPositive,
   IsString,
-  IsUUID,
   IsUrl,
   IsOptional,
   IsLatitude,
   IsLongitude,
+  IsNotEmpty
 } from 'class-validator';
 
 export class CreateStepDto {
-  @IsUUID()
-  stepId: string;
-
   @IsString()
   title: string;
 
@@ -31,9 +28,6 @@ export class CreateStepDto {
   @IsNumber()
   @IsPositive()
   order: number;
-
-  @IsUUID()
-  planId: string;
 
   @IsOptional()
   @IsUrl()
@@ -60,6 +54,18 @@ export class CreateStepDto {
   @IsDate()
   createdAt?: Date;
 
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
+  planId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  //je met categoryId required false: on a pas de categoryId, on ne peut pas mettre une catégorie 
+  //TODO après la crétion du module Catégorie
+  @IsOptional()
+  @IsString()
   categoryId: string;
 }
+
