@@ -7,19 +7,19 @@ import { ConfigModule } from '@nestjs/config';
 import { PlanModule } from './plan/plan.module';
 import { AuthModule } from './auth/auth.module';
 import { FirebaseAdminModule } from './firebase/firebase-admin.module';
+import { StepModule } from './step/step.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    MongooseModule.forRoot(
-      'mongodb+srv://gaellegoyondev:Nvxemb4*@cluster0.uturluy.mongodb.net/plany',
-    ),
+    MongooseModule.forRoot(process.env.MONGO_URI),
     UserModule,
     PlanModule,
     AuthModule,
     FirebaseAdminModule,
+    StepModule,
   ],
   controllers: [AppController],
   providers: [AppService],
