@@ -13,9 +13,7 @@ import { FirebaseAdminModule } from './firebase/firebase-admin.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    MongooseModule.forRoot(
-      'mongodb+srv://gaellegoyondev:Nvxemb4*@cluster0.uturluy.mongodb.net/plany',
-    ),
+    MongooseModule.forRoot(process.env.MONGO_URI),
     UserModule,
     PlanModule,
     AuthModule,

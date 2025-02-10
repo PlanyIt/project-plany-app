@@ -8,6 +8,8 @@ import {
   Put,
   UseGuards,
   Req,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PlanService } from './plan.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
@@ -24,14 +26,22 @@ export class PlanController {
 
   @UseGuards(FirebaseAuthGuard)
   @Post()
+  @Post()
   async createPlan(@Body() createPlanDto: CreatePlanDto, @Req() req) {
-    console.log(req.userId);
-    const planData = {
-      ...createPlanDto,
-      userId: req.userId,
-    };
-    console.log(planData);
-    return this.planService.createPlan(planData);
+    try {
+      const planData = { ...createPlanDto, userId: req.userId };
+      return await this.planService.createPlan(planData);
+    } catch (error) {
+      console.error('Erreur lors de la création du plan :', error);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Erreur serveur lors de la création du plan',
+          message: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Put(':planId')
