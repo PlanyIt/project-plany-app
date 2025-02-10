@@ -91,4 +91,10 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
     );
   }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 }

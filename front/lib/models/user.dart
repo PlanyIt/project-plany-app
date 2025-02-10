@@ -7,7 +7,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      token: json['access_token'], // Utilise 'access_token' renvoyé par l'API
+      token: json['access_token'],
     );
   }
 }

@@ -26,7 +26,7 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
         _currentStep++;
       });
       _pageController.nextPage(
-          duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+          duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
     }
   }
 
@@ -36,7 +36,7 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
         _currentStep--;
       });
       _pageController.previousPage(
-          duration: Duration(milliseconds: 300), curve: Curves.easeOut);
+          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
     }
   }
 
@@ -50,7 +50,7 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Créer un plan'),
+        title: const Text('Créer un plan'),
       ),
       body: Column(
         children: [
@@ -58,7 +58,7 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
             currentStep: _currentStep,
             onStepContinue: _nextStep,
             onStepCancel: _previousStep,
-            steps: [
+            steps: const [
               Step(
                   title: Text('Détails'),
                   content: Text('Remplissez les détails de votre plan')),
@@ -76,7 +76,7 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
           Expanded(
             child: PageView(
               controller: _pageController,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               children: [
                 _step1Details(),
                 _step2Date(),
@@ -90,7 +90,7 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
             children: [
               if (_currentStep > 0)
                 ElevatedButton(
-                    onPressed: _previousStep, child: Text('Précédent')),
+                    onPressed: _previousStep, child: const Text('Précédent')),
               ElevatedButton(
                 onPressed: _currentStep == 3 ? _submitForm : _nextStep,
                 child: Text(_currentStep == 3 ? 'Soumettre' : 'Suivant'),
@@ -107,11 +107,11 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
     return Column(
       children: [
         TextField(
-          decoration: InputDecoration(labelText: 'Titre'),
+          decoration: const InputDecoration(labelText: 'Titre'),
           onChanged: (value) => _formData['title'] = value,
         ),
         TextField(
-          decoration: InputDecoration(labelText: 'Description'),
+          decoration: const InputDecoration(labelText: 'Description'),
           onChanged: (value) => _formData['description'] = value,
         ),
       ],
@@ -123,7 +123,7 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
     return Column(
       children: [
         TextField(
-          decoration: InputDecoration(labelText: 'Date'),
+          decoration: const InputDecoration(labelText: 'Date'),
           onChanged: (value) => _formData['date'] = value,
         ),
       ],
@@ -135,7 +135,7 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
     return Column(
       children: [
         SwitchListTile(
-          title: Text('Public'),
+          title: const Text('Public'),
           value: _formData['isPublic'],
           onChanged: (value) => setState(() {
             _formData['isPublic'] = value;

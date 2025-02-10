@@ -1,24 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:front/models/plan.dart';
+import 'package:front/services/plan_service.dart';
 import 'package:front/widgets/buttons/p_primarybutton.dart';
 import 'package:front/widgets/buttons/p_secondarybutton.dart';
 
-class PlansScreen extends StatefulWidget {
-  const PlansScreen({super.key});
+class CreatePlansScreen extends StatefulWidget {
+  const CreatePlansScreen({super.key});
 
   @override
-  PlansScreenState createState() => PlansScreenState();
+  CreatePlansScreenState createState() => CreatePlansScreenState();
 }
 
-class PlansScreenState extends State<PlansScreen> {
-  int _currentStep = 1; // Étape actuelle, de 1 à 4
+class CreatePlansScreenState extends State<CreatePlansScreen> {
+  int _currentStep = 1;
   final TextEditingController _titreController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final PlanService _planService = PlanService();
 
-  void _nextStep() {
+  void _nextStep() async {
     if (_currentStep < 4) {
       setState(() {
         _currentStep++;
       });
+    } else {
+      final plan = Plan(
+        title: _titreController.text,
+        description: _descriptionController.text,
+      );
+
+      try {
+        await _planService.createPlan(plan);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Plan créé avec succès !')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Échec de la création du plan : $e')),
+        );
+      }
     }
   }
 
@@ -75,7 +94,26 @@ class PlansScreenState extends State<PlansScreen> {
           ],
         );
       case 3:
-        return const Text('Étape 3');
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ajout des étapes',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _descriptionController,
+              decoration: InputDecoration(
+                labelText: 'Description du plan',
+                labelStyle: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+          ],
+        );
       case 4:
         return const Text('Étape 4');
       default:
@@ -93,7 +131,8 @@ class PlansScreenState extends State<PlansScreen> {
                 style: ButtonStyle(
                   backgroundColor: WidgetStateProperty.all(Colors.white),
                 ),
-                icon: const Icon(Icons.chevron_left_rounded),
+                icon:
+                    const Icon(Icons.chevron_left_rounded, color: Colors.black),
                 iconSize: 30,
                 onPressed: _previousStep,
               )
@@ -122,13 +161,11 @@ class PlansScreenState extends State<PlansScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Continuous progress bar with animation
                 Center(
                   child: SizedBox(
-                    width: 200,
+                    width: MediaQuery.of(context).size.width * 0.5,
                     child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(
-                          begin: 0, end: _currentStep / 4), // update end value
+                      tween: Tween<double>(begin: 0, end: _currentStep / 4),
                       duration: const Duration(milliseconds: 300),
                       builder: (context, value, _) => ClipRRect(
                         borderRadius: BorderRadius.circular(5),
@@ -142,6 +179,7 @@ class PlansScreenState extends State<PlansScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 50),
                 content(),
               ],
@@ -169,7 +207,7 @@ class PlansScreenState extends State<PlansScreen> {
                   SizedBox(
                     width: 200,
                     child: PrimaryButton(
-                      text: "Suivant",
+                      text: _currentStep != 4 ? "Suivant" : "Valider",
                       onPressed: _nextStep,
                     ),
                   ),
@@ -193,5 +231,12 @@ class PlansScreenState extends State<PlansScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _titreController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
   }
 }

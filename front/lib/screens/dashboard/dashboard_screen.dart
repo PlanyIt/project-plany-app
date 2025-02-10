@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/screens/auth/login_screen.dart';
 import 'package:front/screens/auth/signup_screen.dart';
 import 'package:front/screens/create-plan/plans_screen.dart';
+import 'package:front/screens/dashboard/plans_screen.dart';
 import 'package:front/screens/home/home_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -21,7 +22,8 @@ class DashboardScreenState extends State<DashboardScreen> {
     HomeScreen(),
     const LoginScreen(),
     const SignupScreen(),
-    PlansScreen(),
+    const CreatePlansScreen(),
+    const PlansScreen(),
   ];
 
   @override
@@ -71,6 +73,11 @@ class DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: Colors.white,
             icon: Icon(Icons.add_circle_outline),
             label: 'Créer',
+          ),
+          BottomNavigationBarItem(
+            backgroundColor: Colors.white,
+            icon: Icon(Icons.list),
+            label: 'Plans',
           ),
         ],
         currentIndex: _selectedIndex,

@@ -126,4 +126,13 @@ class SignupScreenState extends State<SignupScreen> {
             ),
     );
   }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _usernameController.dispose();
+    _descriptionController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 }
