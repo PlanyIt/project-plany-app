@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Controller,
   Get,
@@ -24,8 +25,12 @@ export class PlanController {
     return this.planService.findAll();
   }
 
+  @Get(':planId')
+  findById(@Param('planId') planId: string) {
+    return this.planService.findById(planId);
+  }
+  
   @UseGuards(FirebaseAuthGuard)
-  @Post()
   @Post()
   async createPlan(@Body() createPlanDto: CreatePlanDto, @Req() req) {
     try {

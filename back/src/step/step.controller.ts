@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Controller,
   Get,
@@ -24,9 +25,14 @@ export class StepController {
     return this.stepService.create(stepData);
   }
 
-  @Get(':planId')
+  @Get('plan/:planId')
   async findAllByPlanId(@Param('planId') planId: string) {
     return this.stepService.findAllByPlanId(planId);
+  }
+
+  @Get('id/:stepId')
+  async findById(@Param('stepId') stepId: string) {
+    return this.stepService.findById(stepId);
   }
 
   @UseGuards(FirebaseAuthGuard)

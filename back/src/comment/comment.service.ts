@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -17,6 +18,14 @@ export class CommentService {
 
   async findAllByPlanId(planId: string): Promise<CommentDocument[]> {
     return this.commentModel.find({ planId }).exec();
+  }
+
+  async findAllByUserId(userId: string): Promise<CommentDocument[]> {
+    return this.commentModel.find({ userId }).exec();
+  }
+  
+  async findById(commentId: string): Promise<CommentDocument | undefined> {
+    return this.commentModel.findOne({ _id: commentId }).exec();
   }
 
   async removeById(commentId: string): Promise<CommentDocument | null> {

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Controller,
   Get,
@@ -24,11 +25,21 @@ export class CommentController {
     return this.commentService.create(commentData);
   }
 
-  @Get(':planId')
+  @Get('plan/:planId')
   async findAllByPlanId(@Param('planId') planId: string) {
     return this.commentService.findAllByPlanId(planId);
   }
 
+  @Get('id/:commentId')
+  async findById(@Param('commentId') _id: string) {
+    return this.commentService.findById(_id);
+  }
+
+  @Get('user/:userId')
+  async findAllByUserId(@Param('userId') userId: string) {
+    return this.commentService.findAllByUserId(userId);
+  }
+  
   @UseGuards(FirebaseAuthGuard)
   @Delete(':commentId')
   async removeComment(@Param('commentId') commentId: string) {

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -33,5 +34,12 @@ export class PlanService {
     return this.planModel
       .findOneAndUpdate({ _id: planId, userId }, updatePlanDto, { new: true })
       .exec();
+  }
+
+  // Récupérer un plan par son ID
+  async findById(
+    planId: string,
+  ): Promise<PlanDocument | undefined> {
+    return this.planModel.findOne({_id: planId}).exec();
   }
 }
