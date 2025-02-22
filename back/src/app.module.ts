@@ -8,6 +8,7 @@ import { PlanModule } from './plan/plan.module';
 import { AuthModule } from './auth/auth.module';
 import { FirebaseAdminModule } from './firebase/firebase-admin.module';
 import { CommentModule } from './comment/comment.module';
+import { StepModule } from './step/step.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CommentModule } from './comment/comment.module';
     AuthModule,
     CommentModule,
     FirebaseAdminModule,
+    StepModule,
   ],
   controllers: [AppController],
   providers: [AppService],
