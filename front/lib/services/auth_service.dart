@@ -82,7 +82,7 @@ class AuthService {
 
       // Envoyer une requête POST à l'API NestJS pour enregistrer l'utilisateur
       await http.post(
-        Uri.parse('http://10.0.2.2:3000/api/users'),
+        Uri.parse('http://192.168.1.136:3000/api/users'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

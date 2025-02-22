@@ -11,7 +11,8 @@ class PlanService {
 
   Future<List<Plan>> getPlans() async {
     final response =
-        await http.get(Uri.parse('http://10.0.2.2:3000/api/plans'));
+        await http.get(Uri.parse('http://192.168.1.136:3000/api/plans'));
+    print(response.body);
     if (response.statusCode == 200) {
       final List<dynamic> plans = json.decode(response.body);
       return plans.map((plan) => Plan.fromJson(plan)).toList();
@@ -30,7 +31,7 @@ class PlanService {
 
       // Requête HTTP avec le token dans l’en-tête
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/api/plans'),
+        Uri.parse('http://192.168.1.136:3000/api/plans'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token', // Ajout du token

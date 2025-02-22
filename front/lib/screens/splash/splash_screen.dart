@@ -27,7 +27,7 @@ class SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacementNamed(context, '/dashboard');
     } else {
       // Sinon, redirige vers la page de connexion
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/home');
     }
   }
 
