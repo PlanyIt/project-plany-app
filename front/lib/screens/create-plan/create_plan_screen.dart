@@ -42,8 +42,12 @@ class CreatePlanScreenState extends State<CreatePlanScreen> {
 
   // Soumettre les données
   void _submitForm() {
+     final plan = Plan(
+      title: _formData['title'],
+      description: _formData['description'],
+    );
     // Ici, vous pouvez envoyer _formData à votre backend ou Firebase
-    print('Plan créé: $_formData');
+    print('Plan créé: ${plan.toJson()}');
   }
 
   @override

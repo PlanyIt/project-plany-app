@@ -23,13 +23,14 @@ class CreatePlansScreenState extends State<CreatePlansScreen> {
         _currentStep++;
       });
     } else {
-      final plan = Plan(
+      final newPlan = Plan(
+        id: '', // L'ID sera généré par le backend
         title: _titreController.text,
         description: _descriptionController.text,
       );
 
       try {
-        await _planService.createPlan(plan);
+        await _planService.createPlan(newPlan);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Plan créé avec succès !')),
         );

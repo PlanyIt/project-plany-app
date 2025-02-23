@@ -2,8 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/models/plan.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class PlanService {
+  final String baseUrl = dotenv.env['BASE_URL'] ?? 'http://192.168.1.22:3000';
+
   Future<String?> getAuthToken() async {
     User? user = FirebaseAuth.instance.currentUser;
     return user != null ? await user.getIdToken() : null;
@@ -11,7 +15,7 @@ class PlanService {
 
   Future<List<Plan>> getPlans() async {
     final response =
-        await http.get(Uri.parse('http://192.168.1.136:3000/api/plans'));
+        await http.get(Uri.parse('$baseUrl/api/plans'));
     print(response.body);
     if (response.statusCode == 200) {
       final List<dynamic> plans = json.decode(response.body);
@@ -23,7 +27,6 @@ class PlanService {
 
   Future<void> createPlan(Plan plan) async {
     final body = json.encode(plan.toJson());
-
     try {
       // Récupération du token Firebase
       final token = await getAuthToken();
@@ -31,7 +34,7 @@ class PlanService {
 
       // Requête HTTP avec le token dans l’en-tête
       final response = await http.post(
-        Uri.parse('http://192.168.1.136:3000/api/plans'),
+        Uri.parse('$baseUrl/api/plans'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token', // Ajout du token
