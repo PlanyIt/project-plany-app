@@ -8,6 +8,10 @@ import { CreateStepDto } from './dto/create-step.dto';
 export class StepService {
   constructor(@InjectModel(Step.name) private stepModel: Model<StepDocument>) {}
 
+  async findAll(): Promise<StepDocument[]> {
+    return this.stepModel.find().exec();
+  }
+  
   async create(createStepDto: CreateStepDto): Promise<StepDocument> {
     const newStep = new this.stepModel(createStepDto);
     return newStep.save();

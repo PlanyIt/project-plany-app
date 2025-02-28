@@ -5,6 +5,7 @@ import 'package:front/screens/auth/signup_screen.dart';
 import 'package:front/screens/create-plan/plans_screen.dart';
 import 'package:front/screens/dashboard/plans_screen.dart';
 import 'package:front/screens/home/home_screen.dart';
+import 'package:front/screens/dashboard/map_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -24,6 +25,7 @@ class DashboardScreenState extends State<DashboardScreen> {
     const SignupScreen(),
     const CreatePlansScreen(),
     const PlansScreen(),
+    MapScreen(),
   ];
 
   @override
@@ -78,6 +80,11 @@ class DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: Colors.white,
             icon: Icon(Icons.list),
             label: 'Plans',
+          ),
+            BottomNavigationBarItem(
+            backgroundColor: Colors.white,
+            icon: Icon(Icons.map),
+            label: 'Maps',
           ),
         ],
         currentIndex: _selectedIndex,
