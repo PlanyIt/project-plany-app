@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 class PlanCard extends StatelessWidget {
@@ -26,12 +28,19 @@ class PlanCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            child: Image.network(
-              imageUrl,
-              width: double.infinity,
-              height: 150,
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl.startsWith('http') || imageUrl.startsWith('https')
+                ? Image.network(
+                    imageUrl,
+                    width: double.infinity,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(
+                    File(imageUrl),
+                    width: double.infinity,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(10.0),

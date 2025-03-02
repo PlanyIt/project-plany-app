@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:front/services/auth_service.dart';
-import 'package:front/widgets/buttons/p_primarybutton.dart';
+import 'package:front/widgets/buttons/primarybutton.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatelessWidget {

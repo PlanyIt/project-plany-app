@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/screens/auth/login_screen.dart';
 import 'package:front/screens/auth/signup_screen.dart';
-import 'package:front/screens/create-plan/plans_screen.dart';
+import 'package:front/screens/create-plan/create_plans_screen.dart';
 import 'package:front/screens/dashboard/plans_screen.dart';
 import 'package:front/screens/home/home_screen.dart';
 
