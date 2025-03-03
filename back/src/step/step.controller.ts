@@ -25,6 +25,11 @@ export class StepController {
     return this.stepService.create(stepData);
   }
 
+  @Get()
+  async findAll() {
+    return this.stepService.findAll();
+  }
+
   @Get('plan/:planId')
   async findAllByPlanId(@Param('planId') planId: string) {
     return this.stepService.findAllByPlanId(planId);

@@ -36,11 +36,11 @@ class CreatePlansScreenState extends State<CreatePlansScreen> {
   List<Category> _categories = [];
   List<Tag> _tags = [];
   List<Tag> _filteredTags = [];
-  List<Tag> _selectedTags = [];
+  final List<Tag> _selectedTags = [];
   Category? _selectedCategory;
   bool _showTagContainer = false;
   XFile? _image;
-  List<PlanCard> _planCards = [];
+  final List<PlanCard> _planCards = [];
 
   @override
   void initState() {
@@ -86,8 +86,8 @@ class CreatePlansScreenState extends State<CreatePlansScreen> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     setState(() {
       _image = image;
     });

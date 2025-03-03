@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:front/screens/auth/login_screen.dart';
-import 'package:front/screens/auth/signup_screen.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
+import 'package:front/screens/dashboard/map_screen.dart';
 import 'package:front/screens/dashboard/plans_screen.dart';
 import 'package:front/screens/home/home_screen.dart';
 
@@ -20,10 +19,9 @@ class DashboardScreenState extends State<DashboardScreen> {
   // Liste des pages pour chaque onglet de la barre de navigation
   static final List<Widget> _pages = <Widget>[
     HomeScreen(),
-    const LoginScreen(),
-    const SignupScreen(),
     const CreatePlansScreen(),
     const PlansScreen(),
+    const MapScreen(),
   ];
 
   @override
@@ -42,6 +40,7 @@ class DashboardScreenState extends State<DashboardScreen> {
 
   void _onItemTapped(int index) {
     setState(() {
+      print(index);
       _selectedIndex = index;
     });
   }
@@ -50,7 +49,7 @@ class DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: _pages.elementAt(_selectedIndex), // Affiche la page sélectionnée
+        child: _pages.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -61,16 +60,6 @@ class DashboardScreenState extends State<DashboardScreen> {
           ),
           BottomNavigationBarItem(
             backgroundColor: Colors.white,
-            icon: Icon(Icons.view_list),
-            label: 'Login',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.white,
-            icon: Icon(Icons.person),
-            label: 'Signin',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.white,
             icon: Icon(Icons.add_circle_outline),
             label: 'Créer',
           ),
@@ -78,6 +67,11 @@ class DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: Colors.white,
             icon: Icon(Icons.list),
             label: 'Plans',
+          ),
+          BottomNavigationBarItem(
+            backgroundColor: Colors.white,
+            icon: Icon(Icons.map),
+            label: 'Maps',
           ),
         ],
         currentIndex: _selectedIndex,

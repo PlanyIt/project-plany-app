@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
+  final String baseUrl = dotenv.env['BASE_URL'] ?? '';
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Méthode de connexion
@@ -82,7 +85,7 @@ class AuthService {
 
       // Envoyer une requête POST à l'API NestJS pour enregistrer l'utilisateur
       await http.post(
-        Uri.parse('http://192.168.1.136:3000/api/users'),
+        Uri.parse('$baseUrl/api/users'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

@@ -61,11 +61,5 @@ export class CreateStepDto {
   @IsString()
   @IsNotEmpty()
   userId: string;
-
-  //je met categoryId required false: on a pas de categoryId, on ne peut pas mettre une catégorie 
-  //TODO après la crétion du module Catégorie
-  @IsOptional()
-  @IsString()
-  categoryId: string;
 }
 

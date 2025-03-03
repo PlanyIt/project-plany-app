@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:front/models/plan.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/widgets/cards/p_plan-card.dart';
+import 'package:front/screens/comment_plan/comment_screen.dart';
 
 class PlansScreen extends StatefulWidget {
   const PlansScreen({super.key});
@@ -59,6 +60,15 @@ class PlansScreenState extends State<PlansScreen> {
     });
   }
 
+  void _navigateToComments(String planId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CommentScreen(planId: planId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,17 +108,16 @@ class PlansScreenState extends State<PlansScreen> {
                 ],
               ),
               const SizedBox(height: 22),
-              ..._filteredPlans
-                  .map((plan) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: PlanCard(
-                          imageUrl:
-                              "https://www.vivre-a-niort.com/fileadmin/_processed_/a/5/csm_Coucher_de_soleil_pris_depuis_le_Moulin_du_Roc__c__TOUTATIS_Drone_3168e85b55.jpg",
-                          title: plan.title,
-                          description: plan.description,
-                        ),
-                      ))
-                  .toList(),
+              ..._filteredPlans.map((plan) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: PlanCard(
+                      imageUrl:
+                          "https://www.vivre-a-niort.com/fileadmin/_processed_/a/5/csm_Coucher_de_soleil_pris_depuis_le_Moulin_du_Roc__c__TOUTATIS_Drone_3168e85b55.jpg",
+                      title: plan.title,
+                      description: plan.description,
+                      onTap: () => _navigateToComments(plan.id!),
+                    ),
+                  )),
             ],
           ),
           if (_isLoading)
