@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
-import 'package:front/screens/dashboard/map_screen.dart';
 import 'package:front/screens/dashboard/plans_screen.dart';
 import 'package:front/screens/home/home_screen.dart';
 
@@ -16,13 +15,19 @@ class DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Liste des pages pour chaque onglet de la barre de navigation
-  static final List<Widget> _pages = <Widget>[
-    HomeScreen(),
-    const CreatePlansScreen(),
-    const PlansScreen(),
-    const MapScreen(),
-  ];
+  // Instead of static pages, use a getter that returns the current page
+  Widget get _currentPage {
+    switch (_selectedIndex) {
+      case 0:
+        return HomeScreen();
+      case 1:
+        return const CreatePlansScreen();
+      case 2:
+        return const PlansScreen();
+      default:
+        return HomeScreen();
+    }
+  }
 
   @override
   void initState() {
@@ -49,7 +54,7 @@ class DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: _pages.elementAt(_selectedIndex),
+        child: _currentPage,
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -67,11 +72,6 @@ class DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: Colors.white,
             icon: Icon(Icons.list),
             label: 'Plans',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.white,
-            icon: Icon(Icons.map),
-            label: 'Maps',
           ),
         ],
         currentIndex: _selectedIndex,

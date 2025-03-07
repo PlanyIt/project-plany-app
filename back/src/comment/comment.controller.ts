@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import {
   Controller,
   Get,
@@ -11,7 +10,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
+import { CommentDto } from './dto/comment.dto';
 import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
 
 @Controller('api/comments')
@@ -20,7 +19,7 @@ export class CommentController {
 
   @UseGuards(FirebaseAuthGuard)
   @Post()
-  async createComment(@Body() createCommentDto: CreateCommentDto, @Req() req) {
+  async createComment(@Body() createCommentDto: CommentDto, @Req() req) {
     const commentData = { ...createCommentDto, userId: req.userId };
     return this.commentService.create(commentData);
   }
@@ -39,7 +38,7 @@ export class CommentController {
   async findAllByUserId(@Param('userId') userId: string) {
     return this.commentService.findAllByUserId(userId);
   }
-  
+
   @UseGuards(FirebaseAuthGuard)
   @Delete(':commentId')
   async removeComment(@Param('commentId') commentId: string) {
@@ -50,7 +49,7 @@ export class CommentController {
   @Put(':commentId')
   async updateComment(
     @Param('commentId') commentId: string,
-    @Body() updateCommentDto: CreateCommentDto,
+    @Body() updateCommentDto: CommentDto,
     @Body('userId') userId: string,
     @Body('planId') planId: string,
   ) {

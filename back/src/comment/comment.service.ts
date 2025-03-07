@@ -1,9 +1,8 @@
-/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Comment, CommentDocument } from './schemas/comment.schema';
-import { CreateCommentDto } from './dto/create-comment.dto';
+import { CommentDto } from './dto/comment.dto';
 
 @Injectable()
 export class CommentService {
@@ -11,7 +10,7 @@ export class CommentService {
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
   ) {}
 
-  async create(createCommentDto: CreateCommentDto): Promise<CommentDocument> {
+  async create(createCommentDto: CommentDto): Promise<CommentDocument> {
     const newComment = new this.commentModel(createCommentDto);
     return newComment.save();
   }
@@ -23,7 +22,7 @@ export class CommentService {
   async findAllByUserId(userId: string): Promise<CommentDocument[]> {
     return this.commentModel.find({ userId }).exec();
   }
-  
+
   async findById(commentId: string): Promise<CommentDocument | undefined> {
     return this.commentModel.findOne({ _id: commentId }).exec();
   }
@@ -34,7 +33,7 @@ export class CommentService {
 
   async updateById(
     commentId: string,
-    updateCommentDto: CreateCommentDto,
+    updateCommentDto: CommentDto,
     userId: string,
     planId: string,
   ): Promise<CommentDocument | null> {

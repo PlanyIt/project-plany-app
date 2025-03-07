@@ -16,6 +16,15 @@ export class Plan {
 
   @Prop({ default: true })
   isPublic: boolean;
+
+  @Prop({ required: true })
+  category: string;
+
+  @Prop({ type: [String], default: [] })
+  tags: string[];
+
+  @Prop({ type: [String], default: [] })
+  steps: string[];
 }
 
 export const PlanSchema = SchemaFactory.createForClass(Plan);

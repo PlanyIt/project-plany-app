@@ -45,6 +45,10 @@ dependencies:
   flutter_osm_plugin: ^1.3.6
   osm_nominatim: ^3.0.1
   location: ^8.0.0
+  shared_preferences: ^2.5.2
+  provider: ^6.1.2
+  timeline_tile: ^2.0.0
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +75,7 @@ flutter:
   assets:
     - .env
     - assets/images/background.png
+    - assets/images/background2.png
     - assets/images/icon-success.png
     - assets/images/user.png
 

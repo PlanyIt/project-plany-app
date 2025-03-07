@@ -1,8 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:front/providers/plan_provider.dart';
 import 'package:front/routes/routes.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +15,9 @@ void main() async {
     print('Erreur lors du chargement du fichier .env: $e');
   }
   await Firebase.initializeApp();
-  runApp(const MyApp());
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider(create: (_) => PlanProvider()),
+  ], child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -26,7 +30,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.nunitoTextTheme(),
         primaryColor: const Color(0xFF3425B5),
-        scaffoldBackgroundColor: const Color.fromARGB(255, 228, 228, 228),
+        scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,

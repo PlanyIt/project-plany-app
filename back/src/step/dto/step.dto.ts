@@ -1,5 +1,4 @@
 import {
-  IsDate,
   IsNumber,
   IsPositive,
   IsString,
@@ -7,10 +6,10 @@ import {
   IsOptional,
   IsLatitude,
   IsLongitude,
-  IsNotEmpty
+  IsNotEmpty,
 } from 'class-validator';
 
-export class CreateStepDto {
+export class StepDto {
   @IsString()
   title: string;
 
@@ -29,37 +28,18 @@ export class CreateStepDto {
   @IsPositive()
   order: number;
 
-  @IsOptional()
   @IsUrl()
-  image?: string;
+  image: string;
 
   @IsOptional()
-  @IsDate()
-  start?: Date;
-
-  @IsOptional()
-  @IsDate()
-  end?: Date;
-
-  @IsOptional()
-  @IsNumber()
-  @IsPositive()
-  duration?: number;
+  @IsString()
+  duration?: string;
 
   @IsOptional()
   @IsNumber()
   cost?: number;
 
-  @IsOptional()
-  @IsDate()
-  createdAt?: Date;
-
-  @IsString()
-  @IsNotEmpty()
-  planId: string;
-
   @IsString()
   @IsNotEmpty()
   userId: string;
 }
-

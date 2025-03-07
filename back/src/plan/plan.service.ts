@@ -1,16 +1,16 @@
-/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
-import { CreatePlanDto } from './dto/create-plan.dto';
+import { PlanDto } from './dto/plan.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from './schemas/plan.schema';
 import { Model } from 'mongoose';
+import { StepDto } from 'src/step/dto/step.dto';
 
 @Injectable()
 export class PlanService {
   constructor(@InjectModel(Plan.name) private planModel: Model<PlanDocument>) {}
 
   // Création de plan avec userId
-  async createPlan(createPlanDto: CreatePlanDto): Promise<PlanDocument> {
+  async createPlan(createPlanDto: PlanDto): Promise<PlanDocument> {
     const createdPlan = new this.planModel(createPlanDto);
     return createdPlan.save();
   }
@@ -28,7 +28,7 @@ export class PlanService {
   // Mettre à jour un plan par son ID et userId
   async updateById(
     planId: string,
-    updatePlanDto: CreatePlanDto,
+    updatePlanDto: PlanDto,
     userId: string,
   ): Promise<PlanDocument> {
     return this.planModel
@@ -37,9 +37,21 @@ export class PlanService {
   }
 
   // Récupérer un plan par son ID
-  async findById(
+  async findById(planId: string): Promise<PlanDocument | undefined> {
+    return this.planModel.findOne({ _id: planId }).exec();
+  }
+
+  /// ajouter les steps dans le plan
+  async addStepToPlan(
     planId: string,
+    stepDto: StepDto,
   ): Promise<PlanDocument | undefined> {
-    return this.planModel.findOne({_id: planId}).exec();
+    return this.planModel
+      .findOneAndUpdate(
+        { _id: planId },
+        { $push: { steps: stepDto } },
+        { new: true },
+      )
+      .exec();
   }
 }

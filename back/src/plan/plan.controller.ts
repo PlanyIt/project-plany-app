@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import {
   Controller,
   Get,
@@ -13,8 +12,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { PlanService } from './plan.service';
-import { CreatePlanDto } from './dto/create-plan.dto';
 import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
+import { PlanDto } from './dto/plan.dto';
 
 @Controller('api/plans')
 export class PlanController {
@@ -29,10 +28,10 @@ export class PlanController {
   findById(@Param('planId') planId: string) {
     return this.planService.findById(planId);
   }
-  
+
   @UseGuards(FirebaseAuthGuard)
   @Post()
-  async createPlan(@Body() createPlanDto: CreatePlanDto, @Req() req) {
+  async createPlan(@Body() createPlanDto: PlanDto, @Req() req) {
     try {
       const planData = { ...createPlanDto, userId: req.userId };
       return await this.planService.createPlan(planData);
@@ -52,7 +51,7 @@ export class PlanController {
   @Put(':planId')
   updatePlan(
     @Param('planId') planId: string,
-    @Body() updatePlanDto: CreatePlanDto,
+    @Body() updatePlanDto: PlanDto,
     @Body('userId') userId: string,
   ) {
     return this.planService.updateById(planId, updatePlanDto, userId);

@@ -10,6 +10,7 @@ class PrimaryButton extends StatelessWidget {
   final VoidCallback onPressed;
   final ButtonColor buttonColor;
   final TextColor textColor;
+  final IconData? leadingIcon;
 
   const PrimaryButton({
     super.key,
@@ -17,6 +18,7 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.buttonColor = ButtonColor.primary,
     this.textColor = TextColor.light,
+    this.leadingIcon,
   });
 
   Color _getButtonColor(BuildContext context) {
@@ -43,27 +45,43 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ButtonStyle(
-        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         ),
-        backgroundColor: WidgetStateProperty.all<Color>(
+        backgroundColor: MaterialStateProperty.all<Color>(
           _getButtonColor(context),
         ),
-        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5),
+            borderRadius:
+                BorderRadius.circular(10), // Increased radius for modern look
           ),
         ),
       ),
       onPressed: onPressed,
-      child: Text(
-        text,
-        style: GoogleFonts.leagueSpartan(
-          textStyle: TextStyle(
-            color: _getTextColor(),
-            fontSize: 19,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (leadingIcon != null) ...[
+            Icon(
+              leadingIcon,
+              color: _getTextColor(),
+              size: 18,
+            ),
+            const SizedBox(width: 12),
+          ],
+          Text(
+            text,
+            style: GoogleFonts.leagueSpartan(
+              textStyle: TextStyle(
+                color: _getTextColor(),
+                fontSize: 19,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

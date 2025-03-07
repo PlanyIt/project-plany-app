@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import {
   Controller,
   Get,
@@ -12,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { StepService } from './step.service';
 import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
-import { CreateStepDto } from './dto/create-step.dto';
+import { StepDto } from './dto/step.dto';
 
 @Controller('api/steps')
 export class StepController {
@@ -20,7 +19,7 @@ export class StepController {
 
   @UseGuards(FirebaseAuthGuard)
   @Post()
-  async createStep(@Body() createStepDto: CreateStepDto, @Req() req) {
+  async createStep(@Body() createStepDto: StepDto, @Req() req) {
     const stepData = { ...createStepDto, userId: req.userId };
     return this.stepService.create(stepData);
   }
@@ -30,12 +29,7 @@ export class StepController {
     return this.stepService.findAll();
   }
 
-  @Get('plan/:planId')
-  async findAllByPlanId(@Param('planId') planId: string) {
-    return this.stepService.findAllByPlanId(planId);
-  }
-
-  @Get('id/:stepId')
+  @Get(':stepId')
   async findById(@Param('stepId') stepId: string) {
     return this.stepService.findById(stepId);
   }
@@ -50,15 +44,10 @@ export class StepController {
   @Put(':stepId')
   async updateStep(
     @Param('stepId') stepId: string,
-    @Body() updateStepDto: CreateStepDto,
+    @Body() updateStepDto: StepDto,
     @Body('userId') userId: string,
     @Body('planId') planId: string,
   ) {
-    return this.stepService.updateById(
-        stepId,
-        updateStepDto,
-        userId,
-        planId
-    );
+    return this.stepService.updateById(stepId, updateStepDto, userId, planId);
   }
 }
