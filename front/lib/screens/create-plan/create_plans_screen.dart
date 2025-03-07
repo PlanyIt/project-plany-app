@@ -114,6 +114,7 @@ class CreatePlansScreenState extends State<CreatePlansScreen> {
       final plan = Plan(
         title: _titreController.text,
         description: _descriptionController.text,
+        photo: _image?.path ?? ''
       );
 
       try {

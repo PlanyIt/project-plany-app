@@ -6,6 +6,7 @@ import 'package:front/models/step.dart';
 class StepService {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
 
+  //récupérer tout les steps à supprimer !
   Future<List<Step>> fetchSteps() async {
     final response = await http.get(Uri.parse('$baseUrl/api/steps'));
     print('Response status: ${response.statusCode}');
@@ -14,6 +15,18 @@ class StepService {
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       print('Data: $data');
+      return data.map((step) => Step.fromJson(step)).toList();
+    } else {
+      throw Exception('Failed to load steps');
+    }
+  }
+  
+  //récupérer les steps d'un plan
+  Future<List<Step>> fetchStepsByPlan(String idPlan) async {
+    final response = await http.get(Uri.parse('$baseUrl/api/steps/plan/$idPlan'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
       return data.map((step) => Step.fromJson(step)).toList();
     } else {
       throw Exception('Failed to load steps');

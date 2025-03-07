@@ -10,4 +10,7 @@ export class CreatePlanDto {
   @IsBoolean()
   @IsOptional()
   isPublic?: boolean;
+
+  @IsString()
+  photo: string;
 }

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:front/models/plan.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/widgets/cards/p_plan-card.dart';
-import 'package:front/screens/comment_plan/comment_screen.dart';
+import 'package:front/screens/details_plan/detail_screen.dart';
+
 
 class PlansScreen extends StatefulWidget {
   const PlansScreen({super.key});
@@ -60,14 +61,14 @@ class PlansScreenState extends State<PlansScreen> {
     });
   }
 
-  void _navigateToComments(String planId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CommentScreen(planId: planId),
-      ),
-    );
-  }
+ void _navigateToDetails(String planId) {
+  Navigator.pushNamed(
+    context,
+    '/details',
+    arguments: planId,
+  );
+}
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +116,7 @@ class PlansScreenState extends State<PlansScreen> {
                           "https://www.vivre-a-niort.com/fileadmin/_processed_/a/5/csm_Coucher_de_soleil_pris_depuis_le_Moulin_du_Roc__c__TOUTATIS_Drone_3168e85b55.jpg",
                       title: plan.title,
                       description: plan.description,
-                      onTap: () => _navigateToComments(plan.id!),
+                      onTap: () => _navigateToDetails(plan.id!),
                     ),
                   )),
             ],

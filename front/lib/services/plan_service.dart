@@ -14,7 +14,6 @@ class PlanService {
 
   Future<List<Plan>> getPlans() async {
     final response = await http.get(Uri.parse('$baseUrl/api/plans'));
-    print(response.body);
     if (response.statusCode == 200) {
       final List<dynamic> plans = json.decode(response.body);
       return plans.map((plan) => Plan.fromJson(plan)).toList();
@@ -49,6 +48,15 @@ class PlanService {
     } catch (error) {
       print('Exception capturée: $error');
       rethrow;
+    }
+  }
+
+  Future<Plan> getPlanById(String id) async {
+    final response = await http.get(Uri.parse('$baseUrl/api/plans/$id'));
+    if (response.statusCode == 200) {
+      return Plan.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Failed to load plan');
     }
   }
 }

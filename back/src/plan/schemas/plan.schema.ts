@@ -16,6 +16,9 @@ export class Plan {
 
   @Prop({ default: true })
   isPublic: boolean;
+
+  @Prop({ default: true })
+  photo: string;
 }
 
 export const PlanSchema = SchemaFactory.createForClass(Plan);

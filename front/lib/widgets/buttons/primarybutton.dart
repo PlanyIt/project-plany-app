@@ -34,9 +34,7 @@ class PrimaryButton extends StatelessWidget {
         return Colors.white;
       case TextColor.dark:
         return Colors.black87;
-      default:
-        return Colors.white;
-    }
+      }
   }
 
   @override
