@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
 import 'package:front/screens/dashboard/plans_screen.dart';
-import 'package:front/screens/home/home_screen.dart';
+import 'package:front/screens/dashboard/dashboard_home_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,13 +19,13 @@ class DashboardScreenState extends State<DashboardScreen> {
   Widget get _currentPage {
     switch (_selectedIndex) {
       case 0:
-        return HomeScreen();
+        return const DashboardHomeScreen();
       case 1:
         return const CreatePlansScreen();
       case 2:
         return const PlansScreen();
       default:
-        return HomeScreen();
+        return const DashboardHomeScreen();
     }
   }
 
@@ -60,8 +60,8 @@ class DashboardScreenState extends State<DashboardScreen> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             backgroundColor: Colors.white,
-            icon: Icon(Icons.home),
-            label: 'Accueil',
+            icon: Icon(Icons.dashboard_customize_outlined),
+            label: 'Tableau de bord',
           ),
           BottomNavigationBarItem(
             backgroundColor: Colors.white,

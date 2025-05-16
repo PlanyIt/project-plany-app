@@ -16,7 +16,14 @@ class CategorieService {
     final response = await http.get(Uri.parse('$baseUrl/api/categories'));
     if (response.statusCode == 200) {
       final List<dynamic> categories = json.decode(response.body);
-      return categories.map((category) => Category.fromJson(category)).toList();
+
+      List<Category> result = categories.map((category) {
+        print(category);
+        return Category.fromJson(category);
+      }).toList();
+
+      print(result);
+      return result;
     } else {
       throw Exception('Failed to load categories');
     }

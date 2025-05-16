@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:front/widgets/tag/info_chip.dart';
+import 'package:latlong2/latlong.dart';
 
 class StepCard extends StatelessWidget {
   final String title;
@@ -10,7 +10,7 @@ class StepCard extends StatelessWidget {
   final String? duration;
   final String? durationUnit;
   final double? cost;
-  final GeoPoint? location;
+  final LatLng? location;
   final String? locationName;
   final VoidCallback? onDelete;
   final Color? themeColor;

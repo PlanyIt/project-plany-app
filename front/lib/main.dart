@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       // Utilisation des routes définies dans le fichier routes.dart
-      initialRoute: '/',
+      initialRoute: '/home',
       routes: AppRoutes.routes(),
     );
   }
