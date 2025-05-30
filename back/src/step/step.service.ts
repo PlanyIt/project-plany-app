@@ -11,6 +11,10 @@ export class StepService {
     return this.stepModel.find().exec();
   }
 
+  async findAllByPlanId(planId: string): Promise<StepDocument[]> {
+    return this.stepModel.find({ planId }).exec();
+  }
+
   async create(createStepDto: StepDto): Promise<StepDocument> {
     const newStep = new this.stepModel(createStepDto);
     return newStep.save();

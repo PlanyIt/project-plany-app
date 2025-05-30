@@ -40,6 +40,11 @@ export class StepController {
     return this.stepService.removeById(stepId);
   }
 
+  @Get('plan/:planId')
+  async findAllByPlanId(@Param('planId') planId: string) {
+    return this.stepService.findAllByPlanId(planId);
+  }
+
   @UseGuards(FirebaseAuthGuard)
   @Put(':stepId')
   async updateStep(

@@ -82,7 +82,14 @@ class PlansScreenState extends State<PlansScreen>
     _tabController?.dispose();
     super.dispose();
   }
-
+  
+  void _navigateToDetails(String planId) {
+    Navigator.pushNamed(
+      context,
+      '/details',
+      arguments: planId,
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return _buildContent();
@@ -335,9 +342,7 @@ class PlansScreenState extends State<PlansScreen>
             stepsCount: plan.steps.length,
             cost: cost,
             duration: duration,
-            onTap: () {
-              // Navigation vers la page de détail du plan
-            },
+            onTap: () => _navigateToDetails(plan.id!),
             margin: EdgeInsets.zero,
             borderRadius: BorderRadius.circular(16),
           ),

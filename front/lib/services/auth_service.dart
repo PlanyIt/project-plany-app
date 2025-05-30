@@ -2,11 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:front/services/user_service.dart';
 
 class AuthService {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  
 
   // Méthode de connexion
   Future<User?> login(String email, String password) async {
@@ -17,6 +19,7 @@ class AuthService {
         password: password,
       );
 
+      await UserService().syncUserAfterLogin();
       // Si la connexion est réussie, renvoyer l'utilisateur Firebase
       return userCredential.user;
     } catch (e) {

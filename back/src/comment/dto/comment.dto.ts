@@ -1,15 +1,32 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
 
 export class CommentDto {
   @IsString()
-  @IsNotEmpty()
   content: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   userId: string;
 
   @IsString()
   @IsNotEmpty()
   planId: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  likes: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  responses?: string[];
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  parentId: string;
 }

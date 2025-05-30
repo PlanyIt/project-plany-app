@@ -25,6 +25,9 @@ export class Plan {
 
   @Prop({ type: [String], default: [] })
   steps: string[];
+
+  @Prop({ type: [String], default: [] })
+  favorites: string[];
 }
 
 export const PlanSchema = SchemaFactory.createForClass(Plan);

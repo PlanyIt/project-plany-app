@@ -25,4 +25,9 @@ export class PlanDto {
   @IsArray()
   @Type(() => String)
   steps: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  favorites?: string[];
 }

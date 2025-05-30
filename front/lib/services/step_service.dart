@@ -45,7 +45,6 @@ class StepService {
 
   Future<List<Step>> getSteps() async {
     final response = await http.get(Uri.parse('$baseUrl/api/steps'));
-    print(response.body);
     if (response.statusCode == 200) {
       final List<dynamic> steps = json.decode(response.body);
       return steps.map((step) => Step.fromJson(step)).toList();
@@ -116,6 +115,17 @@ class StepService {
       return Step.fromJson(json.decode(response.body));
     } else {
       throw Exception('Failed to load step');
+    }
+  }
+  //récupérer les steps d'un plan
+  Future<List<Step>> fetchStepsByPlan(String idPlan) async {
+    final response = await http.get(Uri.parse('$baseUrl/api/steps/plan/$idPlan'));
+    if (response.statusCode == 200) {
+      
+      List<dynamic> data = json.decode(response.body);
+      return data.map((step) => Step.fromJson(step)).toList();
+    } else {
+      throw Exception('Failed to load steps');
     }
   }
 }
