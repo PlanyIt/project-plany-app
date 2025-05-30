@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:front/models/categorie.dart';
 import 'package:front/models/plan.dart';
 import 'package:front/models/tag.dart';
@@ -14,6 +13,7 @@ import 'package:front/services/step_service.dart';
 import 'package:front/services/tag_service.dart';
 import 'package:front/widgets/card/step_card.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 
 class CreatePlanProvider extends ChangeNotifier {
   // Services
@@ -52,7 +52,7 @@ class CreatePlanProvider extends ChangeNotifier {
   String selectedUnit = 'Heures';
 
   // Step creation fields
-  GeoPoint? _selectedLocation;
+  LatLng? _selectedLocation;
   String? _selectedLocationName;
 
   // Getters
@@ -67,11 +67,11 @@ class CreatePlanProvider extends ChangeNotifier {
   List<StepCard> get stepCards => _stepCards;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  GeoPoint? get selectedLocation => _selectedLocation;
+  LatLng? get selectedLocation => _selectedLocation;
   String? get selectedLocationName => _selectedLocationName;
 
   // Setters
-  set selectedLocation(GeoPoint? location) {
+  set selectedLocation(LatLng? location) {
     _selectedLocation = location;
     notifyListeners();
   }
@@ -240,7 +240,7 @@ class CreatePlanProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setLocation(GeoPoint location, String locationName) {
+  void setLocation(LatLng location, String locationName) {
     _selectedLocation = location;
     _selectedLocationName = locationName;
     notifyListeners();

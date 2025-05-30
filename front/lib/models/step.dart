@@ -1,10 +1,10 @@
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+import 'package:latlong2/latlong.dart';
 
 class Step {
   final String? id;
   final String title;
   final String description;
-  final GeoPoint? position;
+  final LatLng? position;
   final int order;
   final String image;
   final String? duration;
@@ -26,16 +26,12 @@ class Step {
   });
 
   factory Step.fromJson(Map<String, dynamic> json) {
-    GeoPoint? position;
-    if (json['latitude'] != null && json['longitude'] != null) {
-      double latitude = json['latitude'] is int
-          ? (json['latitude'] as int).toDouble()
-          : json['latitude'];
-      double longitude = json['longitude'] is int
-          ? (json['longitude'] as int).toDouble()
-          : json['longitude'];
+    LatLng? position;
 
-      position = GeoPoint(latitude: latitude, longitude: longitude);
+    if (json['position'] != null) {
+      final double latitude = json['position']['latitude'];
+      final double longitude = json['position']['longitude'];
+      position = LatLng(latitude, longitude);
     }
 
     double? cost;
@@ -60,16 +56,23 @@ class Step {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> data = {
       'title': title,
       'description': description,
-      'latitude': position?.latitude,
-      'longitude': position?.longitude,
       'order': order,
       'image': image,
       'duration': duration,
       'cost': cost,
       'userId': userId,
     };
+
+    if (position != null) {
+      data['position'] = {
+        'latitude': position!.latitude,
+        'longitude': position!.longitude,
+      };
+    }
+
+    return data;
   }
 }

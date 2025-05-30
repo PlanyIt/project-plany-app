@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:front/widgets/button/primary_button.dart';
+import 'package:front/widgets/common/plany_logo.dart';
+import 'package:front/widgets/common/plany_button.dart';
+import 'package:front/theme/app_theme.dart';
+import 'package:front/widgets/common/custom_text_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -50,45 +53,74 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Réinitialisation du mot de passe'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
+      body: Stack(
+        children: [
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            SafeArea(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: AppTheme.paddingL),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 40),
+                    Center(child: const PlanyLogo(fontSize: 50)),
+                    const SizedBox(height: 40),
+                    Text(
+                      'Réinitialisation du mot de passe',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onBackground,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Entrez votre adresse email pour recevoir un lien de réinitialisation.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onBackground
+                                .withOpacity(0.7),
+                          ),
+                    ),
+                    const SizedBox(height: 40),
+                    CustomTextField(
+                      controller: _emailController,
                       labelText: 'Email',
-                      filled: true,
-                      fillColor: Colors.white,
+                      hintText: 'Entrez votre email',
+                      prefixIcon: Icons.email_outlined,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: PrimaryButton(
+                    const SizedBox(height: 30),
+                    PlanyButton(
+                      text: 'Envoyer le lien de réinitialisation',
                       onPressed: _resetPassword,
-                      text: 'Envoyer l\'email de réinitialisation',
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/login');
-                    },
-                    child: Text(
-                      'Retour à la connexion',
-                      style: TextStyle(color: Theme.of(context).primaryColor),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/login');
+                        },
+                        child: Text(
+                          'Retour à la connexion',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+        ],
+      ),
     );
   }
 

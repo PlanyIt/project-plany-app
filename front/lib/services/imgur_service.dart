@@ -6,9 +6,9 @@ import '../models/imgur_response.dart';
 class ImgurService {
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: "https://api.imgur.com/3/",
+      baseUrl: 'https://api.imgur.com/3/',
       headers: {
-        "Authorization": "Client-ID ${dotenv.env["IMGUR_CLIENT_ID"]}",
+        'Authorization': 'Client-ID ${dotenv.env["IMGUR_CLIENT_ID"]}',
       },
     ),
   );
