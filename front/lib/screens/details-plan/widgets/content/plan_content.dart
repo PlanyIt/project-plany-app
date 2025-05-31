@@ -74,7 +74,7 @@ class PlanContent extends StatelessWidget {
                 
                 //Étapes du plan
                 SizedBox(
-                  height: 400,  // Hauteur fixe
+                  height: 400,
                   child: StepsCarousel(
                     steps: steps,
                     categoryColor: categoryColor,
@@ -101,7 +101,7 @@ class PlanContent extends StatelessWidget {
     );
   }
   
-  // Séparateur élégant entre les sections
+  // Séparateur entre les sections
   Widget _buildElegantDivider({IconData? icon}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),

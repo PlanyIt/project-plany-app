@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'package:front/models/step.dart' as plan_steps;
@@ -122,7 +121,6 @@ class _StepsCarouselState extends State<StepsCarousel> with SingleTickerProvider
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Partie gauche: Timeline avec points et animation (sans ligne continue)
           Stack(
             children: [
               SizedBox(
@@ -142,7 +140,7 @@ class _StepsCarouselState extends State<StepsCarousel> with SingleTickerProvider
               // Colonne avec cercle numéroté et badge de distance
               Column(
                 children: [
-                  // Cercle avec numéro (inchangé)
+                  // Cercle avec numéro
                   Container(
                     width: 36,
                     height: 36,
@@ -254,7 +252,6 @@ class _StepsCarouselState extends State<StepsCarousel> with SingleTickerProvider
           
           const SizedBox(width: 16),
           
-          // Partie droite: Contenu de l'étape
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,7 +354,6 @@ class _StepsCarouselState extends State<StepsCarousel> with SingleTickerProvider
     );
   }
 
-  // Modifié pour accepter explicitement la couleur
   Widget _buildInfoBadge(IconData icon, String text, Color badgeColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -419,7 +415,6 @@ class _StepsCarouselState extends State<StepsCarousel> with SingleTickerProvider
   }
 }
 
-  // Ajouter cette méthode pour calculer toutes les distances
   void _calculateDistances() {
     final steps = widget.steps ?? _loadedSteps;
     if (steps == null || steps.length < 2) return;

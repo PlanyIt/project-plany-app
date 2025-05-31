@@ -1,4 +1,3 @@
-// Créer un nouveau fichier: step_detail_card.dart
 import 'package:flutter/material.dart';
 import 'package:front/models/step.dart' as plan_steps;
 
@@ -145,7 +144,7 @@ class StepDetailCard extends StatelessWidget {
                       if (step.createdAt != null)
                         _buildInfoChip(
                           Icons
-                              .add_circle_outline, // Icône "ajout" plus explicite
+                              .add_circle_outline,
                           "Ajouté le ${step.createdAt!.day}/${step.createdAt!.month}/${step.createdAt!.year}",
                           color,
                         ),

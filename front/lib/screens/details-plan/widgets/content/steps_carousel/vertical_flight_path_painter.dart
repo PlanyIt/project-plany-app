@@ -22,7 +22,7 @@ class VerticalFlightPathPainter extends CustomPainter {
     final startX = 18.0;
     final startY = 36.0;
     
-    final targetY = 270.0; // Utiliser la hauteur totale du SizedBox
+    final targetY = 270.0;
     
     final dashPaint = Paint()
       ..color = color.withOpacity(0.6)

@@ -17,8 +17,17 @@ IconData getIconData(String iconName) {
     'local_bar': Icons.local_bar,
     'category': Icons.category,
     'list': Icons.list,
-
-    // Ajouter d'autres mappages d'icônes selon vos besoins
+    'favorite': Icons.favorite,
+    'nightlife': Icons.nightlife,
+    'nature': Icons.landscape,
+    'celebration': Icons.celebration,
+    'shopping_bag': Icons.shopping_bag,
+    'museum': Icons.museum,
+    'sports': Icons.sports_soccer,
+    'home_filled': Icons.home,
+    'home_rounded': Icons.home_rounded,
+    'house': Icons.house,
+    'house_outlined': Icons.house_outlined,
     // ...
 
     // Mappages de secours pour les icônes non trouvées
