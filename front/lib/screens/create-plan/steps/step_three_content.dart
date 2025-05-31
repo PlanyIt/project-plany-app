@@ -30,7 +30,6 @@ class StepThreeContent extends StatelessWidget {
           title: provider.titlePlanController.text,
           description: provider.descriptionPlanController.text,
           category: provider.selectedCategory,
-          tags: provider.selectedTags,
           stepsCount: provider.stepCards.length,
         ),
 

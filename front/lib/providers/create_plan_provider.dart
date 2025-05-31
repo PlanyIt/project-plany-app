@@ -4,13 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:front/models/categorie.dart';
 import 'package:front/models/plan.dart';
-import 'package:front/models/tag.dart';
 import 'package:front/models/step.dart' as StepModel;
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/imgur_service.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/step_service.dart';
-import 'package:front/services/tag_service.dart';
 import 'package:front/widgets/card/step_card.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
@@ -19,7 +17,6 @@ class CreatePlanProvider extends ChangeNotifier {
   // Services
   final PlanService _planService = PlanService();
   final StepService _stepService = StepService();
-  final TagService _tagService = TagService();
   final ImgurService _imgurService = ImgurService();
   final CategorieService _categorieService = CategorieService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -30,7 +27,6 @@ class CreatePlanProvider extends ChangeNotifier {
   final TextEditingController titlePlanController = TextEditingController();
   final TextEditingController descriptionPlanController =
       TextEditingController();
-  final TextEditingController tagSearchPlanController = TextEditingController();
 
   //Step Controller
   final TextEditingController titleStepController = TextEditingController();
@@ -40,11 +36,7 @@ class CreatePlanProvider extends ChangeNotifier {
   final TextEditingController costStepController = TextEditingController();
 
   List<Category> _categories = [];
-  List<Tag> _tags = [];
-  List<Tag> _filteredTags = [];
-  final List<Tag> _selectedTags = [];
   Category? _selectedCategory;
-  bool _showTagContainer = false;
   XFile? _imageStep;
   final List<StepCard> _stepCards = [];
   bool _isLoading = false;
@@ -58,11 +50,7 @@ class CreatePlanProvider extends ChangeNotifier {
   // Getters
   int get currentStep => _currentStep;
   List<Category> get categories => _categories;
-  List<Tag> get tags => _tags;
-  List<Tag> get filteredTags => _filteredTags;
-  List<Tag> get selectedTags => _selectedTags;
   Category? get selectedCategory => _selectedCategory;
-  bool get showTagContainer => _showTagContainer;
   XFile? get imageStep => _imageStep;
   List<StepCard> get stepCards => _stepCards;
   bool get isLoading => _isLoading;
@@ -88,7 +76,6 @@ class CreatePlanProvider extends ChangeNotifier {
 
   void _init() async {
     await loadCategories();
-    await loadTags();
   }
 
   // Methods
@@ -103,46 +90,6 @@ class CreatePlanProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
-  }
-
-  Future<void> loadTags() async {
-    try {
-      _setLoading(true);
-      final tags = await _tagService.getCategories();
-      _tags = tags;
-      _filteredTags = tags;
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to load tags: ${e.toString()}');
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  void filterTags(String query) {
-    final filteredTags = _tags.where((tag) {
-      final tagName = tag.name.toLowerCase();
-      final input = query.toLowerCase();
-      return tagName.contains(input);
-    }).toList();
-
-    _filteredTags = filteredTags;
-    _showTagContainer = query.isNotEmpty;
-    notifyListeners();
-  }
-
-  void toggleTag(Tag tag) {
-    if (_selectedTags.contains(tag)) {
-      _selectedTags.remove(tag);
-    } else {
-      _selectedTags.add(tag);
-    }
-    notifyListeners();
-  }
-
-  void removeTag(Tag tag) {
-    _selectedTags.remove(tag);
-    notifyListeners();
   }
 
   void setCategory(Category category) {
@@ -246,17 +193,6 @@ class CreatePlanProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearTagSearch() {
-    tagSearchPlanController.clear();
-    _showTagContainer = false;
-    notifyListeners();
-  }
-
-  void setShowTagContainer(bool value) {
-    _showTagContainer = value;
-    notifyListeners();
-  }
-
   Future<bool> createPlan() async {
     try {
       _setLoading(true);
@@ -335,7 +271,6 @@ class CreatePlanProvider extends ChangeNotifier {
         title: titlePlanController.text.trim(),
         description: descriptionPlanController.text.trim(),
         category: _selectedCategory!.id,
-        tags: _selectedTags.map((tag) => tag.id).toList(),
         userId: _auth.currentUser!.uid,
         steps: stepIds,
         isPublic: true,
@@ -360,8 +295,6 @@ class CreatePlanProvider extends ChangeNotifier {
     titlePlanController.clear();
     descriptionPlanController.clear();
     _selectedCategory = null;
-    _selectedTags.clear();
-    _showTagContainer = false;
     _stepCards.clear();
     _currentStep = 1;
     _resetStepFields();
@@ -382,7 +315,6 @@ class CreatePlanProvider extends ChangeNotifier {
   void dispose() {
     titlePlanController.dispose();
     descriptionPlanController.dispose();
-    tagSearchPlanController.dispose();
     super.dispose();
   }
 }

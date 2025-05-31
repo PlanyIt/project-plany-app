@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
 import 'package:front/screens/dashboard/plans_screen.dart';
 import 'package:front/screens/dashboard/dashboard_home_screen.dart';
-import 'package:front/screens/profile/profile_screen.dart'; // Importer l'écran de profil
+//import 'package:front/screens/profile/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -25,8 +25,8 @@ class DashboardScreenState extends State<DashboardScreen> {
         return const CreatePlansScreen();
       case 2:
         return const PlansScreen();
-      case 3:
-        return const ProfileScreen(); // Ajouter l'écran de profil
+      // case 3:
+      //   return const ProfileScreen();
       default:
         return const DashboardHomeScreen();
     }
@@ -76,11 +76,11 @@ class DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(Icons.list),
             label: 'Plans',
           ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.white,
-            icon: Icon(Icons.person),
-            label: 'Profil',
-          ),
+          // BottomNavigationBarItem(
+          //   backgroundColor: Colors.white,
+          //   icon: Icon(Icons.person),
+          //   label: 'Profil',
+          // ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

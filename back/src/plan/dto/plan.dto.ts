@@ -19,10 +19,6 @@ export class PlanDto {
   userId: string;
 
   @IsArray()
-  @IsString({ each: true })
-  tags: string[];
-
-  @IsArray()
   @Type(() => String)
   steps: string[];
 

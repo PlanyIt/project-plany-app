@@ -27,7 +27,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     @Inject(forwardRef(() => PlanService))
-    private readonly planService: PlanService, // Ajouter cette injection
+    private readonly planService: PlanService,
   ) {}
 
   @Get()
@@ -83,7 +83,6 @@ export class UserController {
   @Get(':firebaseUid/stats')
   async getUserStats(@Param('firebaseUid') userId: string) {
     try {
-      console.log(`API - Récupération des statistiques pour ${userId}`);
       return await this.userService.getUserStats(userId);
     } catch (error) {
       console.error('Erreur dans getUserStats:', error);
@@ -127,12 +126,10 @@ export class UserController {
   async findOne(@Param('id') id: string) {
     let user;
 
-    // 1. Essayer par ID MongoDB
     if (isValidObjectId(id)) {
       user = await this.userService.findById(id);
     }
 
-    // 2. Si non trouvé, essayer par firebaseUid
     if (!user) {
       user = await this.userService.findOneByFirebaseUid(id);
     }
@@ -148,19 +145,11 @@ export class UserController {
   @UseGuards(FirebaseAuthGuard)
   @Post(':id/follow')
   async followUser(@Param('id') targetUserId: string, @Request() req) {
-    // Debug complet avec vérification de l'existence de req.user
-    console.log('Headers:', req.headers);
-
     if (!req.user) {
-      console.log('⚠️ req.user est undefined!');
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
 
-    // Logique pour gérer à la fois req.user.uid ou req.user.id
     const followerId = req.user.uid || req.user.id;
-
-    console.log(`Auth User (followerId): ${followerId}`);
-    console.log(`Target User ID: ${targetUserId}`);
 
     if (!followerId) {
       throw new UnauthorizedException('ID utilisateur manquant');
@@ -195,10 +184,7 @@ export class UserController {
   // Récupérer les abonnements d'un utilisateur
   @Get(':id/following')
   async getUserFollowing(@Param('id') userId: string) {
-    console.log(`Récupération des abonnements pour l'utilisateur ${userId}`);
-
     try {
-      // Utiliser userService au lieu de userModel directement
       return await this.userService.getUserFollowing(userId);
     } catch (error) {
       console.error('Erreur dans getUserFollowing:', error);
@@ -212,22 +198,18 @@ export class UserController {
     @Param('id') followerId: string,
     @Param('targetId') targetId: string,
   ) {
-    console.log(`Vérification si ${followerId} suit ${targetId}`);
     const isFollowing = await this.userService.isFollowing(
       followerId,
       targetId,
     );
-    console.log(`Résultat de la vérification: ${isFollowing}`);
     return { isFollowing };
   }
 
-  // NOUVELLE APPROCHE: Utiliser un endpoint qui ne dépend pas de req.user
   @Post(':followerId/follow/:targetId')
   async explicitFollowUser(
     @Param('followerId') followerId: string,
     @Param('targetId') targetId: string,
   ) {
-    console.log(`Demande d'abonnement explicite: ${followerId} -> ${targetId}`);
     return this.userService.followUser(followerId, targetId);
   }
 

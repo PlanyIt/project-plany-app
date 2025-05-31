@@ -3,7 +3,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 IconData getIconData(String iconName) {
   // Log pour debugger le nom de l'icône reçue
-  print("Recherche d'icône pour: $iconName");
 
   // Map des noms d'icônes vers les IconData
   final Map<String, IconData> iconMap = {

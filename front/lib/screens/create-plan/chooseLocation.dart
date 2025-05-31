@@ -98,7 +98,7 @@ class ChooseLocationState extends State<ChooseLocation> {
               height: 80,
               child: const Icon(
                 Icons.location_on,
-                color: Colors.red,
+                color: const Color(0xFF3425B5),
                 size: 40.0,
               ),
             ),
@@ -137,7 +137,7 @@ class ChooseLocationState extends State<ChooseLocation> {
                 height: 80,
                 child: const Icon(
                   Icons.location_on,
-                  color: Colors.red,
+                  color: const Color(0xFF3425B5),
                   size: 40.0,
                 ),
               ),
@@ -198,7 +198,7 @@ class ChooseLocationState extends State<ChooseLocation> {
                         height: 80,
                         child: const Icon(
                           Icons.location_on,
-                          color: Colors.red,
+                          color: const Color(0xFF3425B5),
                           size: 40.0,
                         ),
                       ),
@@ -209,7 +209,7 @@ class ChooseLocationState extends State<ChooseLocation> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
                   userAgentPackageName: 'com.plany.app',
                 ),
                 MarkerLayer(markers: _markers),

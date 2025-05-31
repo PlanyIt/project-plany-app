@@ -5,7 +5,6 @@ class Plan {
   final String title;
   final String description;
   final String category;
-  final List<String> tags;
   final String? userId;
   final bool isPublic;
   final DateTime? createdAt;
@@ -21,7 +20,6 @@ class Plan {
     this.userId,
     required this.steps,
     required this.category,
-    this.tags = const [],
     this.isPublic = true,
     this.createdAt,
     this.updatedAt,
@@ -40,7 +38,6 @@ class Plan {
       userId: json['userId'],
       steps: List<String>.from(json['steps'] ?? []),
       category: json['category'],
-      tags: List<String>.from(json['tags'] ?? []),
       isPublic: json['isPublic'] ?? true,
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
@@ -61,7 +58,6 @@ class Plan {
       'description': description,
       'userId': userId,
       'category': category,
-      'tags': tags,
       'isPublic': isPublic,
       'steps': steps,
       'favorites': favorites, 

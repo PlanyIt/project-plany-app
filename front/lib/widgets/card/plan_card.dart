@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:front/models/categorie.dart';
-import 'package:front/models/tag.dart';
 import 'package:front/utils/icon_utils.dart';
 
 class PlanCard extends StatelessWidget {
@@ -12,7 +11,6 @@ class PlanCard extends StatelessWidget {
   final String title;
   final String description;
   final Category? category;
-  final List<Tag> tags;
   final int stepsCount;
   final String? cost; // Coût total
   final String? duration; // Durée totale
@@ -28,7 +26,6 @@ class PlanCard extends StatelessWidget {
     required this.title,
     required this.description,
     this.category,
-    this.tags = const [],
     this.stepsCount = 0,
     this.cost,
     this.duration,
@@ -224,8 +221,6 @@ class PlanCard extends StatelessWidget {
             ],
           ),
 
-          // Tags en mode compact (si présents)
-          if (tags.isNotEmpty) _buildCompactTagsList(context),
         ],
       ),
     );
@@ -260,34 +255,6 @@ class PlanCard extends StatelessWidget {
     );
   }
 
-  // Version compacte des tags
-  Widget _buildCompactTagsList(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Wrap(
-        spacing: 4,
-        runSpacing: 4,
-        children: tags
-            .take(3) // Limiter à 3 tags maximum
-            .map((tag) => Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Text(
-                    "#${tag.name}",
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ))
-            .toList(),
-      ),
-    );
-  }
 }
 
 // Carousel d'images avec moins d'espace

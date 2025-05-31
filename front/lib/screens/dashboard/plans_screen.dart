@@ -3,12 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:front/models/categorie.dart';
 import 'package:front/models/plan.dart';
 import 'package:front/models/step.dart' as StepModel;
-import 'package:front/models/tag.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/step_service.dart';
-import 'package:front/services/tag_service.dart';
 import 'package:front/utils/helpers.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/card/plan_card.dart';
@@ -76,13 +74,6 @@ class PlansScreenState extends State<PlansScreen>
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _tabController?.dispose();
-    super.dispose();
-  }
-  
   void _navigateToDetails(String planId) {
     Navigator.pushNamed(
       context,
@@ -90,6 +81,14 @@ class PlansScreenState extends State<PlansScreen>
       arguments: planId,
     );
   }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _tabController?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildContent();
@@ -314,13 +313,12 @@ class PlansScreenState extends State<PlansScreen>
   Widget _buildPlanCard(Plan plan) {
     // Récupérer les étapes du plan pour calculer le coût total et la durée
     return FutureBuilder<Map<String, dynamic>>(
-      future: _getStepData(plan.steps, plan.tags), // Ajouter les tags ici
+      future: _getStepData(plan.steps),
       builder: (context, snapshot) {
         // Initialiser des valeurs par défaut
         String? cost;
         String? duration;
         List<String>? imageUrls;
-        List<Tag> tags = const []; // Ajouter cette ligne
 
         // Si les données sont chargées, mettre à jour les valeurs
         if (snapshot.hasData) {
@@ -328,7 +326,6 @@ class PlansScreenState extends State<PlansScreen>
           cost = "${data['cost'].toStringAsFixed(0)} €";
           duration = data['duration'];
           imageUrls = data['imageUrls'];
-          tags = data['tags'] ?? []; // Ajouter cette ligne
         }
 
         return Hero(
@@ -338,7 +335,6 @@ class PlansScreenState extends State<PlansScreen>
             description: plan.description,
             imageUrls: imageUrls,
             category: _getCategoryFromId(plan.category),
-            tags: tags, // Remplacer const [] par la variable tags
             stepsCount: plan.steps.length,
             cost: cost,
             duration: duration,
@@ -351,14 +347,11 @@ class PlansScreenState extends State<PlansScreen>
     );
   }
 
-  // Fonction pour récupérer les données des étapes (images, coût, durée) et tags
-  Future<Map<String, dynamic>> _getStepData(
-      List<String> stepIds, List<String> tagIds) async {
+  // Fonction pour récupérer les données des étapes (images, coût, durée)
+  Future<Map<String, dynamic>> _getStepData(List<String> stepIds) async {
     final stepService = StepService();
-    final tagService = TagService();
     List<String> imageUrls = [];
     List<StepModel.Step> steps = [];
-    List<Tag> tags = [];
 
     try {
       // Récupérer les steps
@@ -373,19 +366,6 @@ class PlansScreenState extends State<PlansScreen>
         }
       }
 
-      // Récupérer les tags
-      if (tagIds.isNotEmpty) {
-        try {
-          // Récupérer tous les tags disponibles
-          List<Tag> allTags = await tagService.getCategories();
-
-          // Filtrer pour obtenir uniquement les tags qui correspondent aux IDs du plan
-          tags = allTags.where((tag) => tagIds.contains(tag.id)).toList();
-        } catch (e) {
-          print('Erreur lors de la récupération des tags: $e');
-        }
-      }
-
       // Calculer le coût total et la durée à l'aide des helpers
       final totalCost = calculateTotalStepsCost(steps);
       final totalDuration = calculateTotalStepsDuration(steps);
@@ -394,7 +374,6 @@ class PlansScreenState extends State<PlansScreen>
         'imageUrls': imageUrls,
         'cost': totalCost,
         'duration': totalDuration,
-        'tags': tags, // Ajouter les tags à la réponse
       };
     } catch (e) {
       print('Erreur lors de la récupération des données des étapes: $e');
@@ -402,7 +381,6 @@ class PlansScreenState extends State<PlansScreen>
         'imageUrls': <String>[],
         'cost': 0.0,
         'duration': "0 minute",
-        'tags': <Tag>[], // Ajouter une liste vide de tags en cas d'erreur
       };
     }
   }

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -57,16 +56,28 @@ class MapViewState extends State<MapView> {
 
       for (String id in widget.stepIds) {
         final step = await _stepService.getStepById(id);
-        if (step != null && step.position != null) {
-          loadedSteps.add(step);
+        if (step != null) {
+
+          if (step.position != null) {
+            loadedSteps.add(step);
+          } else {
+            print("Position nulle pour étape ${step.id}");
+          }
+        } else {
+          print("Étape non trouvée: $id");
         }
       }
+
 
       if (mounted) {
         setState(() {
           _steps = loadedSteps;
           _isLoading = false;
         });
+
+        if (loadedSteps.isEmpty) {
+          print("Aucune étape avec position valide n'a été chargée");
+        }
       }
     } catch (e) {
       print("Erreur chargement étapes: $e");
@@ -79,41 +90,35 @@ class MapViewState extends State<MapView> {
 
     _hasCenteredMap = true;
 
-    if (_steps.length == 1 && _steps[0].position != null) {
-      final point =
-          LatLng(_steps[0].position!.latitude, _steps[0].position!.longitude);
-      _mapController.move(point, 15.0);
-      return;
-    }
+    try {
+      if (_steps.length == 1) {
+        _mapController.move(_steps[0].position!, 12.0);
+        return;
+      }
 
-    double minLat = 90.0;
-    double maxLat = -90.0;
-    double minLng = 180.0;
-    double maxLng = -180.0;
+      final points = _steps
+          .where((step) => step.position != null)
+          .map((step) => step.position!)
+          .toList();
 
-    for (final step in _steps) {
-      if (step.position != null) {
-        minLat = math.min(minLat, step.position!.latitude);
-        maxLat = math.max(maxLat, step.position!.latitude);
-        minLng = math.min(minLng, step.position!.longitude);
-        maxLng = math.max(maxLng, step.position!.longitude);
+      if (points.isEmpty) return;
+
+      final bounds = LatLngBounds.fromPoints(points);
+
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(80),
+          maxZoom: 14.0,
+        ),
+      );
+    } catch (e) {
+      print("Erreur d'ajustement de la carte: $e");
+      // Tentative de fallback
+      if (_steps.isNotEmpty) {
+        _mapController.move(_steps[0].position!, 13.0);
       }
     }
-
-    final latPadding = (maxLat - minLat) * 0.2;
-    final lngPadding = (maxLng - minLng) * 0.2;
-
-    final bounds = LatLngBounds(
-        LatLng(minLat - latPadding, minLng - lngPadding),
-        LatLng(maxLat + latPadding, maxLng + lngPadding));
-
-    _mapController.fitBounds(
-      bounds,
-      options: const FitBoundsOptions(
-        padding: EdgeInsets.all(50.0),
-        maxZoom: 16.0,
-      ),
-    );
   }
 
   void _zoomToStep(int index) {
@@ -129,7 +134,6 @@ class MapViewState extends State<MapView> {
     });
   }
 
-  // Méthode pour recentrer la carte sur la première étape
   void recenterMap() {
     if (_steps.isNotEmpty && _steps[0].position != null) {
       _mapController.move(
@@ -162,10 +166,10 @@ class MapViewState extends State<MapView> {
       ),
     );
 
-    _mapController.fitBounds(
-      bounds,
-      options: const FitBoundsOptions(
-        padding: EdgeInsets.all(50.0),
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.all(50),
         maxZoom: 16.0,
       ),
     );
@@ -202,13 +206,12 @@ class MapViewState extends State<MapView> {
                     FlutterMap(
                       mapController: _mapController,
                       options: MapOptions(
-                        zoom: 13,
-                        center: _steps.isNotEmpty && _steps[0].position != null
-                            ? LatLng(_steps[0].position!.latitude,
-                                _steps[0].position!.longitude)
-                            : LatLng(48.8566, 2.3522),
+                        initialZoom: 13,
+                        initialCenter: _steps.isNotEmpty
+                            ? _steps[0].position!
+                            : const LatLng(48.856614, 2.3522219),
                         onMapReady: () {
-                          Future.delayed(const Duration(milliseconds: 300), () {
+                          Future.delayed(const Duration(milliseconds: 500), () {
                             _fitBounds();
                           });
                         },
@@ -231,8 +234,7 @@ class MapViewState extends State<MapView> {
                             return Marker(
                               width: 40,
                               height: 40,
-                              point: LatLng(step.position!.latitude,
-                                  step.position!.longitude),
+                              point: step.position!,
                               child: GestureDetector(
                                 onTap: () {
                                   setState(() {
@@ -264,10 +266,7 @@ class MapViewState extends State<MapView> {
                           PolylineLayer(
                             polylines: [
                               Polyline(
-                                points: _steps
-                                    .map((s) => LatLng(s.position!.latitude,
-                                        s.position!.longitude))
-                                    .toList(),
+                                points: _steps.map((s) => s.position!).toList(),
                                 color: categoryColor,
                                 strokeWidth: 4,
                               ),

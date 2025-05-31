@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:front/models/plan.dart';
 import 'package:front/models/step.dart' as plan_steps;
-import 'package:front/models/tag.dart';
 import 'package:front/models/categorie.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
 import 'package:front/screens/profile/widgets/common/section_header.dart';
 import 'package:front/services/step_service.dart';
-import 'package:front/services/tag_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/plan_service.dart';
@@ -32,7 +30,6 @@ class _MyPlansSectionState extends State<MyPlansSection>
     with AutomaticKeepAliveClientMixin {
   final UserService _userService = UserService();
   final StepService _stepService = StepService();
-  final TagService _tagService = TagService();
   final CategorieService _categorieService = CategorieService();
 
   late Future<List<Plan>> _plansFuture = _loadPlans();
@@ -238,19 +235,17 @@ class _MyPlansSectionState extends State<MyPlansSection>
     return Stack(
       children: [
         FutureBuilder<Map<String, dynamic>>(
-          future: _getStepData(plan.steps, plan.tags),
+          future: _getStepData(plan.steps),
           builder: (context, snapshot) {
             String? cost;
             String? duration;
             List<String>? imageUrls;
-            List<Tag> tags = const [];
 
             if (snapshot.hasData) {
               final data = snapshot.data!;
               cost = "${data['cost'].toStringAsFixed(0)} €";
               duration = data['duration'];
               imageUrls = data['imageUrls'];
-              tags = data['tags'] ?? [];
             }
 
             final category = _findCategoryForPlan(plan);
@@ -260,7 +255,6 @@ class _MyPlansSectionState extends State<MyPlansSection>
               description: plan.description,
               imageUrls: imageUrls,
               category: category,
-              tags: tags,
               stepsCount: plan.steps.length,
               cost: cost,
               duration: duration,
@@ -301,10 +295,9 @@ class _MyPlansSectionState extends State<MyPlansSection>
   }
 
   Future<Map<String, dynamic>> _getStepData(
-      List<String> stepIds, List<String> tagIds) async {
+      List<String> stepIds) async {
     List<String> imageUrls = [];
     List<plan_steps.Step> steps = [];
-    List<Tag> tags = [];
 
     try {
       for (final stepId in stepIds) {
@@ -317,14 +310,6 @@ class _MyPlansSectionState extends State<MyPlansSection>
           }
         }
       }
-      if (tagIds.isNotEmpty) {
-        try {
-          List<Tag> allTags = await _tagService.getCategories();
-          tags = allTags.where((tag) => tagIds.contains(tag.id)).toList();
-        } catch (e) {
-          print('Erreur lors de la récupération des tags: $e');
-        }
-      }
 
       final totalCost = calculateTotalStepsCost(steps);
       final totalDuration = calculateTotalStepsDuration(steps);
@@ -333,7 +318,6 @@ class _MyPlansSectionState extends State<MyPlansSection>
         'imageUrls': imageUrls,
         'cost': totalCost,
         'duration': totalDuration,
-        'tags': tags,
       };
     } catch (e) {
       print('Erreur lors de la récupération des données des étapes: $e');
@@ -341,7 +325,6 @@ class _MyPlansSectionState extends State<MyPlansSection>
         'imageUrls': <String>[],
         'cost': 0.0,
         'duration': "0 minute",
-        'tags': <Tag>[],
       };
     }
   }

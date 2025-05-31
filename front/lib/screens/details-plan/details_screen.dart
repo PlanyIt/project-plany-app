@@ -161,9 +161,10 @@ Future<void> _fetchPlanDetails(String planId) async {
                 ),
           
           DraggableScrollableSheet(
-            initialChildSize: 0.4,
+            initialChildSize: 0.2,
             minChildSize: 0.2,
             maxChildSize: 0.9,
+            controller: _bottomSheetController,
             builder: (context, scrollController) {
               return PlanContent(
                 plan: _plan!,

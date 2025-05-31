@@ -5,6 +5,7 @@ import 'package:front/models/plan.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/screens/search/search_screen.dart';
 import 'package:front/services/categorie_service.dart';
+import 'package:front/services/step_service.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/card/plan_card.dart';
 import 'package:front/widgets/common/plany_logo.dart';
@@ -53,6 +54,14 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     }
   }
 
+  void _navigateToDetails(String planId) {
+    Navigator.pushNamed(
+      context,
+      '/details',
+      arguments: planId,
+    );
+  }
+
   void _navigateToSearch(BuildContext context,
       {String? query, Category? category}) {
     Navigator.push(
@@ -96,12 +105,22 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const PlanyLogo(fontSize: 30),
-                          CircleAvatar(
-                            backgroundColor:
-                                Theme.of(context).primaryColor.withOpacity(0.1),
-                            child: Icon(
-                              Icons.person_outline,
-                              color: Theme.of(context).primaryColor,
+                          Material(
+                            color: Colors.transparent,
+                            shape: const CircleBorder(),
+                            clipBehavior: Clip.hardEdge,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/profile');
+                              },
+                              child: CircleAvatar(
+                                backgroundColor:
+                                    Theme.of(context).primaryColor.withOpacity(0.1),
+                                child: Icon(
+                                  Icons.person_outline,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -499,7 +518,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     final trendingPlans = plans.take(5).toList();
 
     return Container(
-      height: 270,
+      height: 300,
       margin: const EdgeInsets.only(top: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -510,18 +529,27 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
           return Container(
             width: 260,
             margin: const EdgeInsets.only(right: 16),
-            child: PlanCard(
-              title: plan.title,
-              description: plan.description,
-              imageUrls: plan.steps,
-              category: _getCategoryById(plan.category),
-              tags: const [], // À enrichir si vous avez les tags
-              stepsCount: plan.steps.length,
-              onTap: () {
-                // Naviguer vers la page de détail du plan
-                // Navigator.push...
+            child: FutureBuilder<List<String>>(
+              future: _getStepImages(plan.steps),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  );
+                }
+                return PlanCard(
+                  title: plan.title,
+                  description: plan.description,
+                  imageUrls: snapshot.data,
+                  category: _getCategoryById(plan.category),
+                  stepsCount: plan.steps.length,
+                  onTap: () => _navigateToDetails(plan.id!),
+                  borderRadius: BorderRadius.circular(16),
+                );
               },
-              borderRadius: BorderRadius.circular(16),
             ),
           );
         },
@@ -570,7 +598,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     final displayPlans = discoverPlans.take(8).toList();
 
     return Container(
-      height: 220,
+      height: 300,
       margin: const EdgeInsets.only(top: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -581,17 +609,27 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
           return Container(
             width: 180,
             margin: const EdgeInsets.only(right: 16),
-            child: PlanCard(
-              title: plan.title,
-              description: plan.description,
-              imageUrls: plan.steps,
-              category: _getCategoryById(plan.category),
-              tags: const [], // À enrichir si vous avez les tags
-              stepsCount: plan.steps.length,
-              onTap: () {
-                // Naviguer vers la page de détail du plan
+            child: FutureBuilder<List<String>>(
+              future: _getStepImages(plan.steps),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  );
+                }
+                return PlanCard(
+                  title: plan.title,
+                  description: plan.description,
+                  imageUrls: snapshot.data,
+                  category: _getCategoryById(plan.category),
+                  stepsCount: plan.steps.length,
+                  onTap: () => _navigateToDetails(plan.id!),
+                  borderRadius: BorderRadius.circular(16),
+                );
               },
-              borderRadius: BorderRadius.circular(16),
             ),
           );
         },
@@ -606,4 +644,27 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
       return null;
     }
   }
+
+  Future<List<String>> _getStepImages(List<String> stepIds) async {
+    final images = <String>[];
+    final stepService = StepService();
+    
+    for (String id in stepIds) {
+      try {
+        final step = await stepService.getStepById(id);
+        if (step != null && step.image.isNotEmpty) {
+          images.add(step.image);
+        }
+      } catch (e) {
+        print('Erreur lors de la récupération de l\'image pour step $id: $e');
+      }
+    }
+    
+    if (images.isEmpty) {
+      images.add('https://via.placeholder.com/300x200/EDEDED/888888?text=Plany');
+    }
+    
+    return images;
+  }
+  
 }

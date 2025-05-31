@@ -28,10 +28,23 @@ class Step {
   factory Step.fromJson(Map<String, dynamic> json) {
     LatLng? position;
 
-    if (json['position'] != null) {
-      final double latitude = json['position']['latitude'];
-      final double longitude = json['position']['longitude'];
-      position = LatLng(latitude, longitude);
+    if (json['latitude'] != null && json['longitude'] != null) {
+      try {
+        final double latitude = (json['latitude'] is int)
+            ? (json['latitude'] as int).toDouble()
+            : json['latitude'];
+
+        final double longitude = (json['longitude'] is int)
+            ? (json['longitude'] as int).toDouble()
+            : json['longitude'];
+
+
+        position = LatLng(latitude, longitude);
+      } catch (e) {
+        print("Erreur position: $e");
+      }
+    } else {
+      print("Coordonnées non trouvées dans le JSON");
     }
 
     double? cost;
@@ -66,11 +79,10 @@ class Step {
       'userId': userId,
     };
 
+    // Envoyer latitude et longitude directement au niveau racine
     if (position != null) {
-      data['position'] = {
-        'latitude': position!.latitude,
-        'longitude': position!.longitude,
-      };
+      data['latitude'] = position!.latitude;
+      data['longitude'] = position!.longitude;
     }
 
     return data;

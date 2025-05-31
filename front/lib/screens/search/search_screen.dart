@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:front/models/categorie.dart';
 import 'package:front/models/plan.dart';
-import 'package:front/models/tag.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/services/categorie_service.dart';
-import 'package:front/services/tag_service.dart';
+import 'package:front/services/step_service.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/card/plan_card.dart';
 import 'package:provider/provider.dart';
@@ -29,9 +28,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isSearchFocused = false;
   String _searchQuery = "";
   List<Category> _categories = [];
-  List<Tag> _tags = [];
   Category? _selectedCategory;
-  List<Tag> _selectedTags = [];
   bool _showFilterSheet = false;
   bool _isLoadingFilters = true;
 
@@ -55,13 +52,10 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       // Charger les catégories
       final categories = await CategorieService().getCategories();
-      // Charger les tags
-      final tags = await TagService().getCategories();
 
       if (mounted) {
         setState(() {
           _categories = categories;
-          _tags = tags;
           _isLoadingFilters = false;
         });
       }
@@ -75,11 +69,19 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  void _navigateToDetails(String planId) {
+    Navigator.pushNamed(
+      context,
+      '/details',
+      arguments: planId,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final planProvider = Provider.of<PlanProvider>(context);
 
-    // Filtrer les plans selon la recherche, la catégorie et les tags
+    // Filtrer les plans selon la recherche, la catégorie
     final filteredPlans = planProvider.plans.where((plan) {
       // Match par recherche texte
       final matchesSearch = _searchQuery.isEmpty ||
@@ -90,14 +92,9 @@ class _SearchScreenState extends State<SearchScreen> {
       final matchesCategory =
           _selectedCategory == null || plan.category == _selectedCategory!.id;
 
-      // Match par tags (si des tags sont sélectionnés)
-      bool matchesTags = true;
-      if (_selectedTags.isNotEmpty) {
-        // Vérifier si le plan a tous les tags sélectionnés
-        matchesTags = _selectedTags.every((tag) => plan.tags.contains(tag.id));
-      }
 
-      return matchesSearch && matchesCategory && matchesTags;
+
+      return matchesSearch && matchesCategory;
     }).toList();
 
     return Scaffold(
@@ -169,7 +166,7 @@ class _SearchScreenState extends State<SearchScreen> {
             clipBehavior: Clip.none,
             children: [
               const Icon(Icons.filter_list),
-              if (_selectedCategory != null || _selectedTags.isNotEmpty)
+              if (_selectedCategory != null)
                 Positioned(
                   top: -5,
                   right: -5,
@@ -180,11 +177,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Text(
-                      (_selectedCategory != null ? 1 : 0) +
-                                  _selectedTags.length >
+                      (_selectedCategory != null ? 1 : 0) >
                               9
                           ? '9+'
-                          : '${(_selectedCategory != null ? 1 : 0) + _selectedTags.length}',
+                          : '${(_selectedCategory != null ? 1 : 0)}',
                       style: const TextStyle(
                         fontSize: 8,
                         color: Colors.white,
@@ -222,15 +218,20 @@ class _SearchScreenState extends State<SearchScreen> {
         final plan = filteredPlans[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          child: PlanCard(
-            title: plan.title,
-            description: plan.description,
-            imageUrls: plan.steps,
-            category: _getCategoryById(plan.category),
-            tags: _getTagsById(plan.tags),
-            stepsCount: plan.steps.length,
-            onTap: () {
-              // Naviguer vers la page de détail du plan
+          child: FutureBuilder<List<String>>(
+            future: _getStepImages(plan.steps),
+            builder: (context, snapshot) {
+              final imageUrls = snapshot.data ??
+                  ['https://via.placeholder.com/300x200/EDEDED/888888?text=Plany'];
+              return PlanCard(
+                title: plan.title,
+                description: plan.description,
+                imageUrls: imageUrls,
+                category: _getCategoryById(plan.category),
+                stepsCount: plan.steps.length,
+                onTap: () => _navigateToDetails(plan.id!),
+
+              );
             },
           ),
         );
@@ -397,46 +398,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
               const SizedBox(height: 20),
 
-              // Tags
-              Text(
-                'Tags',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 10),
-
-              if (_isLoadingFilters)
-                const Center(child: CircularProgressIndicator())
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _tags.map((tag) {
-                    final isSelected = _selectedTags.contains(tag);
-
-                    return FilterChip(
-                      label: Text(tag.name),
-                      selected: isSelected,
-                      selectedColor: Theme.of(context).primaryColor,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey[700],
-                      ),
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedTags.add(tag);
-                          } else {
-                            _selectedTags.remove(tag);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
-
-              const SizedBox(height: 20),
-
               // Boutons d'action
               Row(
                 children: [
@@ -445,7 +406,6 @@ class _SearchScreenState extends State<SearchScreen> {
                       onPressed: () {
                         setState(() {
                           _selectedCategory = null;
-                          _selectedTags = [];
                         });
                       },
                       style: OutlinedButton.styleFrom(
@@ -496,10 +456,29 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  List<Tag> _getTagsById(List<String> tagIds) {
-    return _tags.where((tag) => tagIds.contains(tag.id)).toList();
-  }
 
+  Future<List<String>> _getStepImages(List<String> stepIds) async {
+    final images = <String>[];
+    final stepService = StepService();
+    
+    for (String id in stepIds) {
+      try {
+        final step = await stepService.getStepById(id);
+        if (step != null && step.image.isNotEmpty) {
+          images.add(step.image);
+        }
+      } catch (e) {
+        print('Erreur lors de la récupération de l\'image pour step $id: $e');
+      }
+    }
+    
+    if (images.isEmpty) {
+      images.add('https://via.placeholder.com/300x200/EDEDED/888888?text=Plany');
+    }
+    
+    return images;
+  }
+  
   @override
   void dispose() {
     _searchController.dispose();
