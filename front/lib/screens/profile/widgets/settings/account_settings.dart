@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:front/models/user_profile.dart';
 import 'package:front/screens/profile/widgets/content/premium_popup.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/widgets/section/section_text_field.dart';
+
 
 class AccountSettings extends StatefulWidget {
   final UserProfile userProfile;
   final Function onProfileUpdated;
   final Function(String, String) showInfoCard;
   final Function(String) showErrorCard;
-
-  const AccountSettings({
-    Key? key,
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
+  
+  AccountSettings({
+    super.key,
     required this.userProfile,
     required this.onProfileUpdated,
     required this.showInfoCard,
     required this.showErrorCard,
-  }) : super(key: key);
+  });
 
   @override
   _AccountSettingsState createState() => _AccountSettingsState();
@@ -30,114 +34,185 @@ class _AccountSettingsState extends State<AccountSettings> {
     final TextEditingController emailController = TextEditingController(
       text: widget.userProfile.email,
     );
+    final TextEditingController passwordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    bool obscurePassword = true;
 
     await showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Modifier votre email',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF3425B5),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  SectionTextField(
-                    title: 'Nouvelle adresse email',
-                    controller: emailController,
-                    labelText: 'Entrez votre nouvelle adresse email',
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline,
-                            color: Colors.blue[700], size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Pour des raisons de sécurité, vous devrez confirmer votre mot de passe avant de mettre à jour votre email.',
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Modifier votre email',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.blue[700]),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF3425B5),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                        ),
-                        child: const Text('Annuler'),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3425B5),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 20),
+                      SectionTextField(
+                        title: 'Nouvelle adresse email',
+                        controller: emailController,
+                        labelText: 'Entrez votre nouvelle adresse email',
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Ajout du champ mot de passe pour la réauthentification
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 10, left: 8),
+                            child: Text(
+                              'Mot de passe',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                        onPressed: () {
-                          if (formKey.currentState!.validate()) {
-                            Navigator.pop(context);
-                            // TODO: Implémenter la modification de l'email
-                            widget.showInfoCard('Développement en cours',
-                                'La modification de l\'email sera disponible prochainement.');
-                          }
-                        },
-                        child: const Text('Mettre à jour'),
+                          TextFormField(
+                            controller: passwordController,
+                            obscureText: obscurePassword,
+                            decoration: InputDecoration(
+                              hintText: 'Confirmez votre mot de passe actuel',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                ),
+                                onPressed: () {
+                                  setStateDialog(() {
+                                    obscurePassword = !obscurePassword;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Colors.grey[300]!),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFF3425B5), width: 2),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Veuillez entrer votre mot de passe';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                            ),
+                            child: const Text('Annuler'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3425B5),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () async {
+                              if (formKey.currentState!.validate()) {
+                                Navigator.pop(context);
+                                
+                                // Afficher l'indicateur de chargement
+                                setState(() {
+                                  widget._isLoading = true;
+                                });
+                                
+                                try {
+                                  await widget._authService.updateEmail(
+                                    emailController.text,
+                                    passwordController.text,
+                                  );
+                                  
+                                  // Mettre à jour l'interface
+                                  widget.onProfileUpdated();
+                                  widget.showInfoCard(
+                                    'Succès',
+                                    'Votre adresse email a été modifiée avec succès.'
+                                  );
+                                } catch (e) {
+                                  // Afficher l'erreur
+                                  widget.showErrorCard(
+                                    'Erreur: ${e.toString().replaceAll('Exception: ', '')}'
+                                  );
+                                } finally {
+                                  // Masquer l'indicateur de chargement
+                                  if (mounted) {
+                                    setState(() {
+                                      widget._isLoading = false;
+                                    });
+                                  }
+                                }
+                              }
+                            },
+                            child: const Text('Mettre à jour'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

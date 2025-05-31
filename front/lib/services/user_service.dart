@@ -732,4 +732,22 @@ class UserService {
       'followingCount': 0,
     };
   }
+
+  // Mettre à jour l'email dans votre API
+  Future<void> updateUserEmail(String newEmail) async {
+    try {
+      String? uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) throw Exception('Utilisateur non authentifié');
+      
+      await http.patch(
+        Uri.parse('$baseUrl/api/users/email/$uid'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({'email': newEmail}),
+      );
+    } catch (e) {
+      throw Exception('Échec de mise à jour de l\'email: $e');
+    }
+  }
 }
