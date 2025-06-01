@@ -7,44 +7,47 @@ class ChipList<T> extends StatelessWidget {
   final Function(T) onDeleted;
   final Color? backgroundColor;
   final Color? borderColor;
-  final Color? deleteIconColor;
+  final Color? textColor;
   final TextStyle? labelStyle;
   final EdgeInsetsGeometry? padding;
   final double spacing;
   final double runSpacing;
   final Widget Function(T)? avatarBuilder;
+  final IconData? icon;
 
   const ChipList({
-    Key? key,
+    super.key,
     required this.items,
     required this.labelBuilder,
     required this.onDeleted,
     this.backgroundColor,
     this.borderColor,
-    this.deleteIconColor,
+    this.textColor,
     this.labelStyle,
     this.padding,
     this.spacing = 8.0,
     this.runSpacing = 8.0,
     this.avatarBuilder,
-  }) : super(key: key);
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
       spacing: spacing,
       runSpacing: runSpacing,
-      children: items.map((item) {
-        return CustomChip<T>(
-          item: item,
+      children: items.map<Widget>((item) {
+        return CustomChip(
           label: labelBuilder(item),
-          onDeleted: onDeleted,
+          onTap: () => onDeleted(item),
           backgroundColor: backgroundColor,
           borderColor: borderColor,
-          deleteIconColor: deleteIconColor,
-          labelStyle: labelStyle,
+          textColor: textColor,
           padding: padding,
-          avatar: avatarBuilder != null ? avatarBuilder!(item) : null,
+          icon: icon,
+          item: item,
+          isSelected: true,
+          showCloseIcon: true,
         );
       }).toList(),
     );

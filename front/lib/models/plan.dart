@@ -3,12 +3,12 @@ class Plan {
   final String title;
   final String description;
   final String category;
-  final List<String> tags;
   final String? userId;
   final bool isPublic;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final List<String> steps;
+  final double? estimatedCost; // Added this field
 
   Plan({
     this.id,
@@ -17,10 +17,10 @@ class Plan {
     this.userId,
     required this.steps,
     required this.category,
-    this.tags = const [],
     this.isPublic = true,
     this.createdAt,
     this.updatedAt,
+    this.estimatedCost, // Added to constructor
   });
 
   factory Plan.fromJson(Map<String, dynamic> json) {
@@ -31,23 +31,29 @@ class Plan {
       userId: json['userId'],
       steps: List<String>.from(json['steps'] ?? []),
       category: json['category'],
-      tags: List<String>.from(json['tags'] ?? []),
       isPublic: json['isPublic'] ?? true,
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt:
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      estimatedCost: json['estimatedCost']?.toDouble(), // Parse from JSON
     );
   }
+
   Map<String, dynamic> toJson() {
-    return {
+    final map = {
       'title': title,
       'description': description,
       'userId': userId,
       'category': category,
-      'tags': tags,
       'isPublic': isPublic,
       'steps': steps,
     };
+
+    if (estimatedCost != null) {
+      map['estimatedCost'] = estimatedCost;
+    }
+
+    return map;
   }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
-import 'package:front/screens/dashboard/plans_screen.dart';
 import 'package:front/screens/dashboard/dashboard_home_screen.dart';
+import 'package:front/screens/profile/profile_screen.dart';
+import 'package:front/widgets/drawer/profile_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,18 +15,22 @@ class DashboardScreen extends StatefulWidget {
 class DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Instead of static pages, use a getter that returns the current page
   Widget get _currentPage {
     switch (_selectedIndex) {
       case 0:
-        return const DashboardHomeScreen();
+        return DashboardHomeScreen(
+          onProfileTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+        );
       case 1:
         return const CreatePlansScreen();
       case 2:
-        return const PlansScreen();
+        return const ProfileScreen();
       default:
-        return const DashboardHomeScreen();
+        return DashboardHomeScreen(
+          onProfileTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+        );
     }
   }
 
@@ -45,7 +50,6 @@ class DashboardScreenState extends State<DashboardScreen> {
 
   void _onItemTapped(int index) {
     setState(() {
-      print(index);
       _selectedIndex = index;
     });
   }
@@ -53,8 +57,12 @@ class DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       body: Center(
         child: _currentPage,
+      ),
+      endDrawer: ProfileDrawer(
+        onClose: () => _scaffoldKey.currentState?.closeEndDrawer(),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -70,8 +78,8 @@ class DashboardScreenState extends State<DashboardScreen> {
           ),
           BottomNavigationBarItem(
             backgroundColor: Colors.white,
-            icon: Icon(Icons.list),
-            label: 'Plans',
+            icon: Icon(Icons.person_outline),
+            label: 'Profil',
           ),
         ],
         currentIndex: _selectedIndex,

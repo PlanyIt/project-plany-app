@@ -36,8 +36,6 @@ class PrimaryButton extends StatelessWidget {
         return Colors.white;
       case TextColor.dark:
         return Colors.black87;
-      default:
-        return Colors.white;
     }
   }
 
@@ -45,13 +43,13 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ButtonStyle(
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         ),
-        backgroundColor: MaterialStateProperty.all<Color>(
+        backgroundColor: WidgetStateProperty.all<Color>(
           _getButtonColor(context),
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius:
                 BorderRadius.circular(10), // Increased radius for modern look

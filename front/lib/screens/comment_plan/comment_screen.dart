@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:front/services/comment_service.dart';
 import 'package:front/models/comment.dart';
@@ -8,10 +9,10 @@ class CommentScreen extends StatefulWidget {
   const CommentScreen({super.key, required this.planId});
 
   @override
-  _CommentScreenState createState() => _CommentScreenState();
+  CommentScreenState createState() => CommentScreenState();
 }
 
-class _CommentScreenState extends State<CommentScreen> {
+class CommentScreenState extends State<CommentScreen> {
   final CommentService _commentService = CommentService();
   final TextEditingController _commentController = TextEditingController();
   List<Comment> _comments = [];
@@ -29,7 +30,9 @@ class _CommentScreenState extends State<CommentScreen> {
         _comments = comments;
       });
     } catch (e) {
-      print('Erreur lors du chargement des commentaires : $e');
+      if (kDebugMode) {
+        print('Erreur lors du chargement des commentaires : $e');
+      }
     }
   }
 
@@ -47,7 +50,9 @@ class _CommentScreenState extends State<CommentScreen> {
         _commentController.clear();
         _loadComments(); // Rechargez les commentaires après l'ajout
       } catch (e) {
-        print('Erreur lors de l\'ajout du commentaire : $e');
+        if (kDebugMode) {
+          print('Erreur lors de l\'ajout du commentaire : $e');
+        }
       }
     }
   }
@@ -96,7 +101,8 @@ class _CommentScreenState extends State<CommentScreen> {
                       ),
                       Row(
                         children: [
-                          const Icon(Icons.comment, color: Colors.white, size: 16),
+                          const Icon(Icons.comment,
+                              color: Colors.white, size: 16),
                           const SizedBox(width: 4),
                           Text('${_comments.length} commentaires',
                               style: const TextStyle(color: Colors.white)),

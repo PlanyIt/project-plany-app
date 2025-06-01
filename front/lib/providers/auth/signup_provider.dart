@@ -15,14 +15,12 @@ class SignupProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> signup(BuildContext context) async {
+  Future<void> signup(Function onSuccess, Function(String) onError) async {
     if (emailController.text.isEmpty ||
         usernameController.text.isEmpty ||
         descriptionController.text.isEmpty ||
         passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs.')),
-      );
+      onError('Veuillez remplir tous les champs.');
       return;
     }
 
@@ -46,11 +44,9 @@ class SignupProvider extends ChangeNotifier {
         );
       }
 
-      Navigator.pushReplacementNamed(context, '/login');
+      onSuccess();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Inscription échouée : $e')),
-      );
+      onError('Inscription échouée : $e');
     } finally {
       isLoading = false;
       notifyListeners();

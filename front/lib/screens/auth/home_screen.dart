@@ -42,7 +42,7 @@ class HomeScreenState extends State<HomeScreen>
             width: double.infinity,
           ),
           Container(
-            color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withValues(alpha: 0.7),
             height: double.infinity,
             width: double.infinity,
           ),
@@ -56,7 +56,7 @@ class HomeScreenState extends State<HomeScreen>
             child: PlanyButton(
               text: 'Se connecter',
               onPressed: () {
-                Navigator.pushNamed(context, '/login');
+                Navigator.pushReplacementNamed(context, '/login');
               },
               filled: true,
             ),
@@ -68,7 +68,7 @@ class HomeScreenState extends State<HomeScreen>
             child: PlanyButton(
               text: "S'inscrire",
               onPressed: () {
-                Navigator.pushNamed(context, '/signup');
+                Navigator.pushReplacementNamed(context, '/signup');
               },
               filled: false,
             ),

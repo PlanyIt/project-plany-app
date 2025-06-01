@@ -7,4 +7,10 @@ class Messages {
   static const String resetPasswordSuccess =
       'Email de réinitialisation envoyé.';
   static const String logoutFailed = 'Erreur lors de la déconnexion.';
+
+  // Messages liés au clavier
+  static const String keyboardActive =
+      'Veuillez fermer le clavier pour continuer.';
+  static const String cannotShowModalWithKeyboard =
+      'Impossible d\'afficher le menu avec le clavier ouvert.';
 }

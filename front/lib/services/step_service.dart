@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:front/models/step.dart';
+import 'package:front/models/plan.dart'; // Import the Plan class
+import 'package:front/utils/helpers.dart'; // Import helper functions for duration conversion
 
 class StepService {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
@@ -31,21 +34,27 @@ class StepService {
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        print('Erreur : ${response.statusCode} - ${response.body}');
+        if (kDebugMode) {
+          print('Erreur : ${response.statusCode} - ${response.body}');
+        }
         throw Exception(
             'Erreur lors de la création de l’étape : ${response.body}');
       }
 
       return json.decode(response.body)['_id'];
     } catch (error) {
-      print('Exception capturée: $error');
+      if (kDebugMode) {
+        print('Exception capturée: $error');
+      }
       rethrow;
     }
   }
 
   Future<List<Step>> getSteps() async {
     final response = await http.get(Uri.parse('$baseUrl/api/steps'));
-    print(response.body);
+    if (kDebugMode) {
+      print(response.body);
+    }
     if (response.statusCode == 200) {
       final List<dynamic> steps = json.decode(response.body);
       return steps.map((step) => Step.fromJson(step)).toList();
@@ -73,12 +82,16 @@ class StepService {
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        print('Erreur : ${response.statusCode} - ${response.body}');
+        if (kDebugMode) {
+          print('Erreur : ${response.statusCode} - ${response.body}');
+        }
         throw Exception(
             'Erreur lors de la mise à jour de l’étape : ${response.body}');
       }
     } catch (error) {
-      print('Exception capturée: $error');
+      if (kDebugMode) {
+        print('Exception capturée: $error');
+      }
       rethrow;
     }
   }
@@ -99,12 +112,16 @@ class StepService {
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        print('Erreur : ${response.statusCode} - ${response.body}');
+        if (kDebugMode) {
+          print('Erreur : ${response.statusCode} - ${response.body}');
+        }
         throw Exception(
             'Erreur lors de la suppression de l’étape : ${response.body}');
       }
     } catch (error) {
-      print('Exception capturée: $error');
+      if (kDebugMode) {
+        print('Exception capturée: $error');
+      }
       rethrow;
     }
   }
@@ -117,5 +134,66 @@ class StepService {
     } else {
       throw Exception('Failed to load step');
     }
+  }
+
+  Future<double> calculatePlanTotalCost(Plan plan) async {
+    double totalCost = 0.0;
+
+    for (final stepId in plan.steps) {
+      try {
+        final step = await getStepById(stepId);
+        if (step != null && step.cost != null) {
+          totalCost += step.cost!;
+        }
+      } catch (e) {
+        print('Erreur lors du calcul du coût pour l\'étape $stepId: $e');
+      }
+    }
+
+    return totalCost;
+  }
+
+  int _parseDurationToMinutes(String durationStr) {
+    final parts = durationStr.trim().split(' ');
+    if (parts.length < 2) return 0;
+
+    int value;
+    try {
+      value = int.parse(parts[0]);
+    } catch (e) {
+      return 0;
+    }
+
+    final unit = parts[1].toLowerCase();
+
+    if (unit.contains('seconde')) {
+      return (value / 60).ceil(); // Convert seconds to minutes, rounding up
+    } else if (unit.contains('minute')) {
+      return value;
+    } else if (unit.contains('heure')) {
+      return value * 60; // Convert hours to minutes
+    } else if (unit.contains('jour')) {
+      return value * 24 * 60; // Convert days to minutes
+    }
+
+    return 0;
+  }
+
+  Future<int> calculatePlanTotalDuration(Plan plan) async {
+    int totalMinutes = 0;
+
+    for (final stepId in plan.steps) {
+      try {
+        final step = await getStepById(stepId);
+        if (step != null && step.duration != null) {
+          totalMinutes +=
+              _parseDurationToMinutes(step.duration!); // Use helper function
+        }
+      } catch (e) {
+        print('Erreur lors du calcul de la durée pour l\'étape $stepId: $e');
+      }
+    }
+
+    return totalMinutes;
   }
 }

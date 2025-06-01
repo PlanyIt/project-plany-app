@@ -8,12 +8,12 @@ class AddButton extends StatelessWidget {
   final IconData? icon;
 
   const AddButton({
-    Key? key,
+    super.key,
     required this.label,
     required this.onTap,
     this.color,
     this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,14 +30,14 @@ class AddButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               spreadRadius: 0,
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
           border: Border.all(
-            color: themeColor.withOpacity(0.2),
+            color: themeColor.withValues(alpha: 0.2),
             width: 1.5,
             style: BorderStyle.solid,
           ),
@@ -48,7 +48,7 @@ class AddButton extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: themeColor.withOpacity(0.1),
+                color: themeColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

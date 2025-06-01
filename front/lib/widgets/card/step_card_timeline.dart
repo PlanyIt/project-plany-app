@@ -14,6 +14,7 @@ class StepCardTimeline extends StatelessWidget {
   final double? cost;
   final String? locationName;
   final VoidCallback? onDelete;
+  final VoidCallback? onEdit; // Ajout du callback d'édition
   final Color? themeColor;
 
   const StepCardTimeline({
@@ -29,6 +30,7 @@ class StepCardTimeline extends StatelessWidget {
     this.cost,
     this.locationName,
     this.onDelete,
+    this.onEdit, // Nouveau paramètre
     this.themeColor,
   });
 
@@ -51,7 +53,7 @@ class StepCardTimeline extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.3),
+                color: color.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -70,11 +72,11 @@ class StepCardTimeline extends StatelessWidget {
         ),
       ),
       beforeLineStyle: LineStyle(
-        color: color.withOpacity(0.4),
+        color: color.withValues(alpha: 0.4),
         thickness: 2,
       ),
       afterLineStyle: LineStyle(
-        color: color.withOpacity(0.4),
+        color: color.withValues(alpha: 0.4),
         thickness: 2,
       ),
       endChild: Container(
@@ -88,6 +90,7 @@ class StepCardTimeline extends StatelessWidget {
           cost: cost,
           locationName: locationName,
           onDelete: onDelete,
+          onEdit: onEdit, // Passer le callback d'édition
           themeColor: themeColor,
           location: null,
         ),

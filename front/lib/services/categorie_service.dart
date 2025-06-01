@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:front/models/categorie.dart';
+import 'package:flutter/foundation.dart' hide Category;
+import 'package:front/models/category.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -18,11 +19,15 @@ class CategorieService {
       final List<dynamic> categories = json.decode(response.body);
 
       List<Category> result = categories.map((category) {
-        print(category);
+        if (kDebugMode) {
+          print(category);
+        }
         return Category.fromJson(category);
       }).toList();
 
-      print(result);
+      if (kDebugMode) {
+        print(result);
+      }
       return result;
     } else {
       throw Exception('Failed to load categories');

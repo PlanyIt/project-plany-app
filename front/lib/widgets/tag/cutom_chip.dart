@@ -1,48 +1,95 @@
 import 'package:flutter/material.dart';
 
-class CustomChip<T> extends StatelessWidget {
-  final T item;
+class CustomChip extends StatelessWidget {
   final String label;
-  final Function(T) onDeleted;
+  final Function? onTap;
   final Color? backgroundColor;
   final Color? borderColor;
-  final Color? deleteIconColor;
-  final TextStyle? labelStyle;
+  final Color? textColor;
   final EdgeInsetsGeometry? padding;
   final double elevation;
-  final Widget? avatar;
+  final IconData? icon;
+  final bool isSelected;
+  final bool showCloseIcon;
+  final dynamic item;
 
   const CustomChip({
     super.key,
-    required this.item,
     required this.label,
-    required this.onDeleted,
+    this.onTap,
     this.backgroundColor,
     this.borderColor,
-    this.deleteIconColor,
-    this.labelStyle,
+    this.textColor,
     this.padding,
     this.elevation = 0,
-    this.avatar,
+    this.icon,
+    this.isSelected = false,
+    this.showCloseIcon = false,
+    this.item,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final chipColor = isSelected
+        ? theme.primaryColor
+        : theme.primaryColor.withValues(alpha: 0.1);
+    final textColorValue = isSelected ? Colors.white : theme.primaryColor;
 
-    return Chip(
-      label: Text(label),
-      labelStyle: labelStyle ?? const TextStyle(fontWeight: FontWeight.w500),
-      backgroundColor: backgroundColor ?? theme.primaryColor.withOpacity(0.1),
-      side: BorderSide(
-        color: borderColor ?? theme.primaryColor.withOpacity(0.3),
+    return InkWell(
+      onTap: onTap as void Function()?,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding:
+            padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: backgroundColor ?? chipColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: borderColor ??
+                (isSelected
+                    ? theme.primaryColor
+                    : theme.primaryColor.withValues(alpha: 0.3)),
+          ),
+          boxShadow: elevation > 0
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: elevation * 2,
+                    spreadRadius: elevation / 2,
+                  )
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 16,
+                color: textColorValue,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor ?? textColorValue,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            if (showCloseIcon) ...[
+              const SizedBox(width: 4),
+              Icon(
+                Icons.close,
+                size: 16,
+                color: textColorValue,
+              ),
+            ],
+          ],
+        ),
       ),
-      deleteIconColor: deleteIconColor ?? theme.primaryColor,
-      onDeleted: () => onDeleted(item),
-      padding:
-          padding ?? const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-      elevation: elevation,
-      avatar: avatar,
     );
   }
 }

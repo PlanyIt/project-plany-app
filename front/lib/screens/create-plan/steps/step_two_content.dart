@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/providers/create_plan_provider.dart';
-import 'package:front/screens/create-plan/stepModal.dart';
-import 'package:front/widgets/button/add_button.dart';
-import 'package:front/widgets/card/empty_card.dart';
+import 'package:front/screens/create-plan/step_modal.dart';
+import 'package:front/theme/app_theme.dart';
 import 'package:front/widgets/card/step_card_timeline.dart';
 import 'package:provider/provider.dart';
 
@@ -19,81 +18,275 @@ class _StepTwoContentState extends State<StepTwoContent> {
     final provider = Provider.of<CreatePlanProvider>(context);
     final themeColor = Theme.of(context).primaryColor;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10, left: 8),
-          child: Text(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppTheme.paddingL),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInfoCard(),
+          const SizedBox(height: 24),
+          const Text(
             'Étapes du plan',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
+          const SizedBox(height: 16),
+          provider.stepCards.isEmpty
+              ? _buildEmptyCard()
+              : _buildStepsList(provider, themeColor),
+          const SizedBox(height: 24),
+          _buildAddStepButton(provider),
+          const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.secondaryColor,
+            const Color(0xFF8278FF),
+          ],
         ),
-        const SizedBox(height: 16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.directions_walk,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Composez votre parcours',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Ajoutez des étapes à votre plan. Vous pourrez les réorganiser facilement en les faisant glisser.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-        provider.stepCards.isEmpty
-            ? EmptyCard(
-                title: 'Aucune étape ajoutée',
-                message: 'Commencez à créer votre plan en ajoutant des étapes',
-                icon: Icons.playlist_add,
-              )
-            : Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                child: ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: provider.stepCards.length,
-                  onReorder: (oldIndex, newIndex) {
-                    provider.reorderStepCards(oldIndex, newIndex);
-                  },
-                  itemBuilder: (context, index) {
-                    final step = provider.stepCards[index];
-                    final isFirst = index == 0;
-                    final isLast = index == provider.stepCards.length - 1;
+  Widget _buildEmptyCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: Colors.grey.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.add_road,
+              size: 40,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Aucune étape ajoutée',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Créez votre plan en ajoutant des étapes',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                    return StepCardTimeline(
-                      key: Key('step_card_$index'),
-                      index: index,
-                      isFirst: isFirst,
-                      isLast: isLast,
-                      title: step.title,
-                      description: step.description,
-                      imagePath: step.imageUrl,
-                      duration: step.duration,
-                      durationUnit: step.durationUnit,
-                      cost: step.cost,
-                      locationName: step.locationName,
-                      onDelete: () => provider.removeStepCard(index),
-                      themeColor: themeColor,
+  Widget _buildStepsList(CreatePlanProvider provider, Color themeColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ReorderableListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: provider.stepCards.length,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        onReorder: (oldIndex, newIndex) {
+          provider.reorderStepCards(oldIndex, newIndex);
+        },
+        itemBuilder: (context, index) {
+          final step = provider.stepCards[index];
+          final isFirst = index == 0;
+          final isLast = index == provider.stepCards.length - 1;
+
+          return Padding(
+            key: Key('step_card_$index'),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: StepCardTimeline(
+              index: index,
+              isFirst: isFirst,
+              isLast: isLast,
+              title: step.title,
+              description: step.description,
+              imagePath: step.imageUrl,
+              duration: step.duration,
+              durationUnit: step.durationUnit,
+              cost: step.cost,
+              locationName: step.locationName,
+              onDelete: () => provider.removeStepCard(index),
+              onEdit: () {
+                // Commencer l'édition puis ouvrir le modal
+                provider.startEditingStep(index);
+
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (BuildContext context) {
+                    return ChangeNotifierProvider<CreatePlanProvider>.value(
+                      value: provider,
+                      child: const StepModal(),
                     );
                   },
-                ),
-              ),
-
-        const SizedBox(height: 24),
-        AddButton(
-          label: 'Ajouter une étape',
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (BuildContext context) {
-                return ChangeNotifierProvider<CreatePlanProvider>.value(
-                  value: provider,
-                  child: const StepModal(),
-                );
+                ).then((_) {
+                  // Si l'utilisateur annule, s'assurer que l'édition est bien annulée
+                  if (provider.isEditingStep) {
+                    provider.cancelEditingStep();
+                  }
+                });
               },
+              themeColor: themeColor,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAddStepButton(CreatePlanProvider provider) {
+    return InkWell(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (BuildContext context) {
+            return ChangeNotifierProvider<CreatePlanProvider>.value(
+              value: provider,
+              child: const StepModal(),
             );
           },
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border:
+              Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.5)),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              blurRadius: 8,
+              spreadRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-
-        const SizedBox(height: 100),
-      ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Ajouter une étape',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,7 +16,9 @@ class CommentService {
   Future<List<Comment>> getComments(String planId) async {
     final response =
         await http.get(Uri.parse('$baseUrl/api/comments/plan/$planId'));
-    print(response.body);
+    if (kDebugMode) {
+      print(response.body);
+    }
     if (response.statusCode == 200) {
       final List<dynamic> comments = json.decode(response.body);
       return comments.map((comment) => Comment.fromJson(comment)).toList();
@@ -43,12 +46,16 @@ class CommentService {
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        print('Erreur : ${response.statusCode} - ${response.body}');
+        if (kDebugMode) {
+          print('Erreur : ${response.statusCode} - ${response.body}');
+        }
         throw Exception(
             'Erreur lors de la création du commentaire : ${response.body}');
       }
     } catch (error) {
-      print('Exception capturée: $error');
+      if (kDebugMode) {
+        print('Exception capturée: $error');
+      }
       rethrow;
     }
   }

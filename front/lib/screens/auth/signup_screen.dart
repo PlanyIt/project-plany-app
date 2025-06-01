@@ -14,6 +14,8 @@ class SignupScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => SignupProvider(),
       child: Scaffold(
+        // Use resizeToAvoidBottomInset to prevent keyboard issues
+        resizeToAvoidBottomInset: true,
         body: Stack(
           children: [
             Consumer<SignupProvider>(
@@ -22,8 +24,14 @@ class SignupScreen extends StatelessWidget {
                     ? const Center(child: CircularProgressIndicator())
                     : SafeArea(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: AppTheme.paddingL),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: EdgeInsets.only(
+                            left: AppTheme.paddingL,
+                            right: AppTheme.paddingL,
+                            bottom:
+                                MediaQuery.of(context).viewInsets.bottom + 16,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -68,7 +76,15 @@ class SignupScreen extends StatelessWidget {
                               const SizedBox(height: 30),
                               PlanyButton(
                                 text: 'Inscription',
-                                onPressed: () => provider.signup(context),
+                                onPressed: () => provider.signup(
+                                  () => Navigator.pushReplacementNamed(
+                                      context, '/login'),
+                                  (errorMessage) =>
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                    SnackBar(content: Text(errorMessage)),
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 20),
                               _buildLoginLink(context, provider),
@@ -98,15 +114,17 @@ class SignupScreen extends StatelessWidget {
           'Inscription',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onBackground,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
         const SizedBox(height: 8),
         Text(
           'Créez un compte pour commencer',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color:
-                    Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.7),
               ),
         ),
       ],
@@ -121,8 +139,10 @@ class SignupScreen extends StatelessWidget {
           Text(
             'Déjà un compte ? ',
             style: TextStyle(
-              color:
-                  Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.7),
             ),
           ),
           TextButton(

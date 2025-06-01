@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/categorie.dart';
+import 'package:front/models/category.dart';
 import 'package:front/providers/create_plan_provider.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/button/select_button.dart';
@@ -14,7 +14,7 @@ Widget buildCategorySelector(BuildContext context) {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, 2),
@@ -35,10 +35,10 @@ Widget buildCategorySelector(BuildContext context) {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withOpacity(0.1),
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -110,7 +110,7 @@ void _showCategoryBottomSheet(BuildContext context) {
             height: 70,
             decoration: BoxDecoration(
               color: isSelected
-                  ? Theme.of(context).primaryColor.withOpacity(0.1)
+                  ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
                   : Colors.grey[100],
               borderRadius: BorderRadius.circular(20),
               border: Border.all(

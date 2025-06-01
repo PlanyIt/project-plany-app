@@ -1,23 +1,28 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
-import 'package:front/models/categorie.dart';
+import 'package:front/models/category.dart';
 import 'package:front/models/plan.dart';
-import 'package:front/models/tag.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/services/categorie_service.dart';
-import 'package:front/services/tag_service.dart';
+import 'package:front/services/step_service.dart';
 import 'package:front/utils/icon_utils.dart';
-import 'package:front/widgets/card/plan_card.dart';
+import 'package:front/widgets/card/compact_plan_card.dart';
+import 'package:front/widgets/tag/cutom_chip.dart';
+import 'package:front/widgets/dashboard/search_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class SearchScreen extends StatefulWidget {
   final String? initialQuery;
   final Category? initialCategory;
+  final bool autoFocus;
 
   const SearchScreen({
     super.key,
     this.initialQuery,
     this.initialCategory,
+    this.autoFocus = false,
   });
 
   @override
@@ -26,14 +31,28 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearchFocused = false;
+  final FocusNode _searchFocusNode = FocusNode();
   String _searchQuery = "";
   List<Category> _categories = [];
-  List<Tag> _tags = [];
   Category? _selectedCategory;
-  List<Tag> _selectedTags = [];
   bool _showFilterSheet = false;
   bool _isLoadingFilters = true;
+
+  // Ajout d'un timer pour la fonction de debounce
+  Timer? _debounce;
+
+  // Ajout des attributs pour les filtres de coût et durée
+  RangeValues _costRange = const RangeValues(0, 1000);
+  RangeValues _durationRange =
+      const RangeValues(0, 1440); // en minutes (24h max)
+
+  // Valeurs max pour les sliders
+  final double _maxCostValue = 1000;
+  final double _maxDurationValue = 1440; // 24 heures en minutes
+
+  // Option de tri sélectionnée
+  String? _sortBy;
+  bool _sortAscending = true;
 
   @override
   void initState() {
@@ -46,27 +65,64 @@ class _SearchScreenState extends State<SearchScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Provider.of<PlanProvider>(context, listen: false).fetchPlans();
+        // Charger les plans avec les filtres par défaut
+        _searchPlansWithFilters();
+
+        // Donner le focus au champ de recherche si demandé
+        if (widget.autoFocus) {
+          FocusScope.of(context).requestFocus(_searchFocusNode);
+        }
       }
     });
   }
 
+  // Mise à jour de la méthode pour rechercher des plans avec filtres
+  Future<void> _searchPlansWithFilters() async {
+    final planProvider = Provider.of<PlanProvider>(context, listen: false);
+
+    try {
+      setState(() {
+        // Montrer un indicateur de chargement si nécessaire
+      });
+
+      if (kDebugMode) {
+        print('Recherche avec query: "$_searchQuery"');
+      }
+
+      await planProvider.searchPlansWithFilters(
+        query: _searchQuery.isEmpty ? null : _searchQuery,
+        categoryId: _selectedCategory?.id,
+        minCost: _costRange.start == 0 ? null : _costRange.start,
+        maxCost: _costRange.end == _maxCostValue ? null : _costRange.end,
+        minDuration:
+            _durationRange.start == 0 ? null : _durationRange.start.toInt(),
+        maxDuration: _durationRange.end == _maxDurationValue
+            ? null
+            : _durationRange.end.toInt(),
+        sortBy: _sortBy,
+        ascending: _sortAscending,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erreur lors de la recherche: $e');
+      }
+    }
+  }
+
   Future<void> _loadFilters() async {
     try {
-      // Charger les catégories
       final categories = await CategorieService().getCategories();
-      // Charger les tags
-      final tags = await TagService().getCategories();
 
       if (mounted) {
         setState(() {
-          _categories = categories;
-          _tags = tags;
+          _categories = categories.cast<Category>();
           _isLoadingFilters = false;
         });
       }
     } catch (e) {
-      print('Erreur lors du chargement des filtres: $e');
+      if (kDebugMode) {
+        print('Erreur lors du chargement des filtres: $e');
+      }
       if (mounted) {
         setState(() {
           _isLoadingFilters = false;
@@ -79,39 +135,40 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final planProvider = Provider.of<PlanProvider>(context);
 
-    // Filtrer les plans selon la recherche, la catégorie et les tags
-    final filteredPlans = planProvider.plans.where((plan) {
-      // Match par recherche texte
-      final matchesSearch = _searchQuery.isEmpty ||
-          plan.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          plan.description.toLowerCase().contains(_searchQuery.toLowerCase());
+    // Filtrer localement les plans si nécessaire
+    final List<Plan> filteredPlans = _searchQuery.isNotEmpty
+        ? _applyLocalSearchFilter(planProvider.plans)
+        : planProvider.plans;
 
-      // Match par catégorie
-      final matchesCategory =
-          _selectedCategory == null || plan.category == _selectedCategory!.id;
-
-      // Match par tags (si des tags sont sélectionnés)
-      bool matchesTags = true;
-      if (_selectedTags.isNotEmpty) {
-        // Vérifier si le plan a tous les tags sélectionnés
-        matchesTags = _selectedTags.every((tag) => plan.tags.contains(tag.id));
-      }
-
-      return matchesSearch && matchesCategory && matchesTags;
-    }).toList();
+    if (kDebugMode && filteredPlans.length != planProvider.plans.length) {
+      print(
+          'Filtrage local: ${planProvider.plans.length} → ${filteredPlans.length} plans');
+    }
 
     return Scaffold(
+      // Add resizeToAvoidBottomInset to handle keyboard properly
+      resizeToAvoidBottomInset: true,
       appBar: _buildSearchBar(),
       body: Stack(
         children: [
           // Contenu principal
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: _buildContent(filteredPlans, planProvider),
+          Column(
+            children: [
+              // Indicateurs de filtres actifs
+              if (_selectedCategory != null) _buildActiveFilters(),
+
+              // Liste des résultats
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _buildContent(filteredPlans, planProvider),
+                ),
+              ),
+            ],
           ),
 
           // Bottom sheet des filtres
-          if (_showFilterSheet) _buildFilterSheet(),
+          if (_showFilterSheet) _buildFilterOverlay(),
         ],
       ),
     );
@@ -119,90 +176,235 @@ class _SearchScreenState extends State<SearchScreen> {
 
   AppBar _buildSearchBar() {
     return AppBar(
+      toolbarHeight: 80,
       titleSpacing: 0,
-      title: Container(
-        height: 45,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(23),
-        ),
-        child: TextField(
-          controller: _searchController,
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
-          onTap: () {
-            setState(() {
-              _isSearchFocused = true;
-            });
-          },
-          onSubmitted: (value) {
-            setState(() {
-              _isSearchFocused = false;
-            });
-          },
-          decoration: InputDecoration(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      title: Padding(
+        padding: const EdgeInsets.only(left: 8.0, bottom: 8),
+        child: Hero(
+          tag: 'searchBar',
+          child: DashboardSearchBar(
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            autofocus: widget.autoFocus,
+            onChanged: (value) {
+              // Fermer la bottomsheet si elle est ouverte lorsqu'on tape dans la recherche
+              if (_showFilterSheet) {
+                setState(() {
+                  _showFilterSheet = false;
+                });
+              }
+
+              setState(() {
+                _searchQuery = value;
+              });
+
+              // Ajouter un délai avant de déclencher la recherche (debounce)
+              if (_debounce?.isActive ?? false) _debounce!.cancel();
+              _debounce = Timer(const Duration(milliseconds: 500), () {
+                if (mounted) {
+                  _searchPlansWithFilters();
+                }
+              });
+            },
+            onSubmitted: (value) {
+              // S'assurer que la bottomsheet est fermée lors de la soumission
+              if (_showFilterSheet) {
+                setState(() {
+                  _showFilterSheet = false;
+                });
+              }
+              // Déclencher immédiatement la recherche lors de la soumission
+              _searchPlansWithFilters();
+            },
+            onTap: () {
+              // Fermer la bottomsheet lorsqu'on clique sur la barre de recherche
+              if (_showFilterSheet) {
+                setState(() {
+                  _showFilterSheet = false;
+                });
+              }
+            },
             hintText: 'Rechercher...',
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-            border: InputBorder.none,
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() {
-                        _searchQuery = "";
-                      });
-                    },
-                  )
-                : null,
           ),
         ),
       ),
       actions: [
-        IconButton(
-          icon: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(Icons.filter_list),
-              if (_selectedCategory != null || _selectedTags.isNotEmpty)
-                Positioned(
-                  top: -5,
-                  right: -5,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      (_selectedCategory != null ? 1 : 0) +
-                                  _selectedTags.length >
-                              9
-                          ? '9+'
-                          : '${(_selectedCategory != null ? 1 : 0) + _selectedTags.length}',
-                      style: const TextStyle(
-                        fontSize: 8,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.filter_list,
+                color: (_selectedCategory != null)
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey[700],
+              ),
+              onPressed: () {
+                // Ne pas afficher le filtre si le clavier est visible
+                if (MediaQuery.of(context).viewInsets.bottom > 0) {
+                  // D'abord fermer le clavier
+                  FocusScope.of(context).unfocus();
+                  // Puis attendre que le clavier se ferme avant d'ouvrir le filtre
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    if (mounted) {
+                      setState(() {
+                        _showFilterSheet = !_showFilterSheet;
+                      });
+                    }
+                  });
+                } else {
+                  setState(() {
+                    _showFilterSheet = !_showFilterSheet;
+                  });
+                }
+              },
+            ),
+            if (_selectedCategory != null)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${(_selectedCategory != null ? 1 : 0)}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-            ],
-          ),
-          onPressed: () {
-            setState(() {
-              _showFilterSheet = !_showFilterSheet;
-            });
-          },
+              ),
+          ],
         ),
         const SizedBox(width: 8),
       ],
+    );
+  }
+
+  // Nouvelle méthode pour formater la durée en minutes
+  String _formatDuration(int minutes) {
+    if (minutes < 60) {
+      return '$minutes min';
+    } else {
+      final hours = (minutes / 60).floor();
+      final remainingMinutes = minutes % 60;
+      if (remainingMinutes == 0) {
+        return '${hours}h';
+      } else {
+        return '${hours}h ${remainingMinutes}min';
+      }
+    }
+  }
+
+  Widget _buildActiveFilters() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            if (_selectedCategory != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: CustomChip(
+                  label: _selectedCategory!.name,
+                  icon: getIconData(_selectedCategory!.icon),
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = null;
+                    });
+                    _searchPlansWithFilters();
+                  },
+                  isSelected: true,
+                  showCloseIcon: true,
+                ),
+              ),
+            if (_costRange.start > 0 || _costRange.end < _maxCostValue)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: CustomChip(
+                  label:
+                      '${_costRange.start.toInt()}€-${_costRange.end.toInt()}€',
+                  icon: Icons.euro,
+                  onTap: () {
+                    setState(() {
+                      _costRange = RangeValues(0, _maxCostValue);
+                    });
+                    _searchPlansWithFilters();
+                  },
+                  isSelected: true,
+                  showCloseIcon: true,
+                ),
+              ),
+            if (_durationRange.start > 0 ||
+                _durationRange.end < _maxDurationValue)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: CustomChip(
+                  label:
+                      '${_formatDuration(_durationRange.start.toInt())}-${_formatDuration(_durationRange.end.toInt())}',
+                  icon: Icons.access_time,
+                  onTap: () {
+                    setState(() {
+                      _durationRange = RangeValues(0, _maxDurationValue);
+                    });
+                    _searchPlansWithFilters();
+                  },
+                  isSelected: true,
+                  showCloseIcon: true,
+                ),
+              ),
+            if (_sortBy != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: CustomChip(
+                  label:
+                      'Tri: ${_sortBy == 'cost' ? 'Coût' : 'Durée'} ${_sortAscending ? '↓' : '↑'}',
+                  icon: _sortBy == 'cost' ? Icons.euro : Icons.access_time,
+                  onTap: () {
+                    setState(() {
+                      _sortBy = null;
+                    });
+                    _searchPlansWithFilters();
+                  },
+                  isSelected: true,
+                  showCloseIcon: true,
+                ),
+              ),
+            if (_selectedCategory != null ||
+                _costRange.start > 0 ||
+                _costRange.end < _maxCostValue ||
+                _durationRange.start > 0 ||
+                _durationRange.end < _maxDurationValue ||
+                _sortBy != null)
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedCategory = null;
+                    _costRange = RangeValues(0, _maxCostValue);
+                    _durationRange = RangeValues(0, _maxDurationValue);
+                    _sortBy = null;
+                    _sortAscending = true;
+                  });
+                  _searchPlansWithFilters();
+                },
+                child: Text(
+                  'Effacer tout',
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -215,27 +417,198 @@ class _SearchScreenState extends State<SearchScreen> {
       return _buildEmptyView();
     }
 
+    // Utiliser une ListView.builder avec caching pour améliorer les performances
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: filteredPlans.length,
+      // Ajouter physics pour un meilleur défilement
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      // Optimisation de la construction des éléments avec keys uniques
       itemBuilder: (context, index) {
         final plan = filteredPlans[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          child: PlanCard(
-            title: plan.title,
-            description: plan.description,
-            imageUrls: plan.steps,
-            category: _getCategoryById(plan.category),
-            tags: _getTagsById(plan.tags),
-            stepsCount: plan.steps.length,
-            onTap: () {
-              // Naviguer vers la page de détail du plan
-            },
-          ),
+          // Utiliser une clé pour éviter les reconstructions inutiles
+          key: ValueKey('plan-${plan.id}'),
+          child: _buildPlanItem(plan, planProvider, index),
         );
       },
+      // Ajouter un cacheExtent pour précharger les items
+      cacheExtent: 500,
     );
+  }
+
+  Widget _buildPlanItem(Plan plan, PlanProvider planProvider, int index) {
+    return AnimatedOpacity(
+      opacity: 1.0,
+      duration: Duration(milliseconds: 300 + (index * 50)),
+      curve: Curves.easeInOut,
+      child: FutureBuilder<List<dynamic>>(
+        future: _getPlanData(plan, planProvider),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _buildPlanLoadingItem();
+          }
+
+          if (snapshot.hasError) {
+            return _buildPlanErrorItem(plan);
+          }
+
+          final data = snapshot.data;
+          final images =
+              data != null && data.length > 0 ? data[0] as List<String> : null;
+          final cost =
+              data != null && data.length > 1 ? data[1] as double : null;
+          final duration =
+              data != null && data.length > 2 ? data[2] as int : null;
+
+          // Utiliser un Material pour avoir un feedback tactile
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                // Navigation vers la page de détail du plan
+                _navigateToPlanDetail(plan);
+              },
+              child: CompactPlanCard(
+                title: plan.title,
+                description: plan.description,
+                imageUrls: images,
+                category: _getCategoryById(plan.category),
+                stepsCount: plan.steps.length,
+                totalCost: cost,
+                totalDuration: duration,
+                onTap: () => _navigateToPlanDetail(plan),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Optimiser en utilisant un cache Map pour stocker les données des plans
+  final Map<String, Future<List<dynamic>>> _planDataCache = {};
+
+  Future<List<dynamic>> _getPlanData(Plan plan, PlanProvider planProvider) {
+    final String planId = plan.id ?? 'unknown';
+    // Utiliser le cache si disponible
+    if (_planDataCache.containsKey(planId)) {
+      return _planDataCache[planId]!;
+    }
+
+    final future = Future.wait([
+      _getStepImages(plan),
+      planProvider.calculatePlanTotalCost(plan),
+      planProvider.calculatePlanTotalDuration(plan),
+    ]);
+
+    _planDataCache[planId] = future;
+    return future;
+  }
+
+  void _navigateToPlanDetail(Plan plan) {
+    // Fermer le clavier et les filtres d'abord
+    FocusScope.of(context).unfocus();
+    if (_showFilterSheet) {
+      setState(() {
+        _showFilterSheet = false;
+      });
+    }
+
+    // TODO: Implémenter la navigation vers la page de détail
+    // Navigator.push(context, MaterialPageRoute(...));
+  }
+
+  Widget _buildPlanLoadingItem() {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Theme.of(context).primaryColor.withOpacity(0.7),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanErrorItem(Plan plan) {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red[300], size: 32),
+            const SizedBox(height: 8),
+            Text(
+              plan.title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Erreur de chargement",
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Nouvelle méthode pour récupérer les images des étapes
+  Future<List<String>> _getStepImages(Plan plan) async {
+    final stepService = StepService();
+    final List<String> images = [];
+
+    // Limiter à 5 étapes maximum pour éviter trop de requêtes
+    final stepsToFetch =
+        plan.steps.length > 5 ? plan.steps.sublist(0, 5) : plan.steps;
+
+    for (final stepId in stepsToFetch) {
+      try {
+        final step = await stepService.getStepById(stepId);
+        if (step != null && step.image != null && step.image!.isNotEmpty) {
+          images.add(step.image!);
+        }
+      } catch (e) {
+        // Ignorer les erreurs de chargement d'images
+      }
+    }
+    return images;
   }
 
   Widget _buildLoadingView() {
@@ -291,196 +664,263 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildFilterSheet() {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
+  Widget _buildFilterOverlay() {
+    return Material(
+      color: Colors.transparent,
       child: GestureDetector(
-        onTap: () {}, // Empêche la propagation du tap pour fermer le sheet
+        onTap: () {
+          // Close the keyboard first
+          FocusScope.of(context).unfocus();
+          // Then close the filter sheet after a small delay
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              setState(() {
+                _showFilterSheet = false;
+              });
+            }
+          });
+        },
         child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
-              ),
-            ],
+          color: Colors.black.withValues(alpha: 0.5),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildFilterSheet(),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterSheet() {
+    return GestureDetector(
+      onTap: () {}, // Prevent tap propagation
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.all(16),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: .1),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: NotificationListener<LayoutChangedNotification>(
+          onNotification: (notification) {
+            // Si le clavier apparaît, fermer le filtre
+            if (MediaQuery.of(context).viewInsets.bottom > 0 &&
+                _showFilterSheet) {
+              setState(() {
+                _showFilterSheet = false;
+              });
+              return true;
+            }
+            return false;
+          },
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Filtres',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      setState(() {
-                        _showFilterSheet = false;
-                      });
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Catégories
-              Text(
-                'Catégorie',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 10),
-
-              if (_isLoadingFilters)
-                const Center(child: CircularProgressIndicator())
-              else
-                SizedBox(
-                  height: 50,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _categories.length,
-                    itemBuilder: (context, index) {
-                      final category = _categories[index];
-                      final isSelected = _selectedCategory?.id == category.id;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                getIconData(category.icon),
-                                size: 16,
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.grey[700],
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Filtres',
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(width: 6),
-                              Text(category.name),
-                            ],
-                          ),
-                          selected: isSelected,
-                          selectedColor: Theme.of(context).primaryColor,
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.grey[700],
-                          ),
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedCategory = category;
-                              } else {
-                                _selectedCategory = null;
-                              }
-                            });
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-              const SizedBox(height: 20),
-
-              // Tags
-              Text(
-                'Tags',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
                     ),
-              ),
-              const SizedBox(height: 10),
-
-              if (_isLoadingFilters)
-                const Center(child: CircularProgressIndicator())
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _tags.map((tag) {
-                    final isSelected = _selectedTags.contains(tag);
-
-                    return FilterChip(
-                      label: Text(tag.name),
-                      selected: isSelected,
-                      selectedColor: Theme.of(context).primaryColor,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey[700],
-                      ),
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedTags.add(tag);
-                          } else {
-                            _selectedTags.remove(tag);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
-
-              const SizedBox(height: 20),
-
-              // Boutons d'action
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedCategory = null;
-                          _selectedTags = [];
-                        });
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('Réinitialiser'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
+                    IconButton(
+                      icon: const Icon(Icons.close),
                       onPressed: () {
                         setState(() {
                           _showFilterSheet = false;
                         });
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('Appliquer'),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
-              // Espace pour le padding en bas
-              SizedBox(height: MediaQuery.of(context).padding.bottom),
+              const Divider(),
+
+              // Content with scroll
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Categories
+                      Text(
+                        'Catégorie',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      if (_isLoadingFilters)
+                        const Center(child: CircularProgressIndicator())
+                      else
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: _categories.map((category) {
+                            final isSelected =
+                                _selectedCategory?.id == category.id;
+                            return CustomChip(
+                              label: category.name,
+                              icon: getIconData(category.icon),
+                              onTap: () {
+                                setState(() {
+                                  if (isSelected) {
+                                    _selectedCategory = null;
+                                  } else {
+                                    _selectedCategory = category;
+                                  }
+                                });
+                              },
+                              isSelected: isSelected,
+                            );
+                          }).toList(),
+                        ),
+
+                      const SizedBox(height: 24),
+
+                      // Options de tri
+                      Text(
+                        'Trier par',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Options de tri
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          CustomChip(
+                            label: 'Pertinence',
+                            icon: Icons.sort,
+                            onTap: () {
+                              setState(() {
+                                _sortBy = null;
+                              });
+                            },
+                            isSelected: _sortBy == null,
+                          ),
+                          CustomChip(
+                            label: 'Coût ${_sortAscending ? '↓' : '↑'}',
+                            icon: Icons.euro,
+                            onTap: () {
+                              setState(() {
+                                if (_sortBy == 'cost') {
+                                  _sortAscending = !_sortAscending;
+                                } else {
+                                  _sortBy = 'cost';
+                                  _sortAscending = true;
+                                }
+                              });
+                              _searchPlansWithFilters();
+                            },
+                            isSelected: _sortBy == 'cost',
+                          ),
+                          CustomChip(
+                            label: 'Durée ${_sortAscending ? '↓' : '↑'}',
+                            icon: Icons.access_time,
+                            onTap: () {
+                              setState(() {
+                                if (_sortBy == 'duration') {
+                                  _sortAscending = !_sortAscending;
+                                } else {
+                                  _sortBy = 'duration';
+                                  _sortAscending = true;
+                                }
+                              });
+                              _searchPlansWithFilters();
+                            },
+                            isSelected: _sortBy == 'duration',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Bottom buttons
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                      ? MediaQuery.of(context).viewInsets.bottom + 8
+                      : MediaQuery.of(context).padding.bottom + 16,
+                  top: 16,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedCategory = null;
+                            _costRange = const RangeValues(0, 1000);
+                            _durationRange = const RangeValues(0, 1440);
+                            _sortBy = null;
+                            _sortAscending = true;
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Réinitialiser'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _showFilterSheet = false;
+                          });
+                          _searchPlansWithFilters();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text('Appliquer'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -496,13 +936,23 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  List<Tag> _getTagsById(List<String> tagIds) {
-    return _tags.where((tag) => tagIds.contains(tag.id)).toList();
-  }
-
   @override
   void dispose() {
+    // Annuler le timer de debounce lors de la destruction du widget
+    _debounce?.cancel();
     _searchController.dispose();
+    _searchFocusNode.dispose(); // Libérer le FocusNode
     super.dispose();
+  }
+
+  // Ajouter un filtrage local pour s'assurer que la recherche fonctionne
+  List<Plan> _applyLocalSearchFilter(List<Plan> plans) {
+    if (_searchQuery.isEmpty) return plans;
+
+    final query = _searchQuery.toLowerCase();
+    return plans.where((plan) {
+      return plan.title.toLowerCase().contains(query) ||
+          plan.description.toLowerCase().contains(query);
+    }).toList();
   }
 }

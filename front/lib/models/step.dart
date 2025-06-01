@@ -4,75 +4,77 @@ class Step {
   final String? id;
   final String title;
   final String description;
-  final LatLng? position;
   final int order;
-  final String image;
+  final String userId;
   final String? duration;
   final double? cost;
-  final DateTime? createdAt;
-  final String userId;
+  final LatLng? position; // Ne sera pas envoyé directement au serveur
+  final String? image;
+  final String? address; // Ne sera pas envoyé directement au serveur
 
   Step({
     this.id,
     required this.title,
     required this.description,
-    this.position,
     required this.order,
-    required this.image,
+    required this.userId,
     this.duration,
     this.cost,
-    this.createdAt,
-    required this.userId,
+    this.position,
+    this.image,
+    this.address,
   });
 
-  factory Step.fromJson(Map<String, dynamic> json) {
-    LatLng? position;
+  Map<String, dynamic> toJson() {
+    // On supprime les propriétés qui causent des erreurs 400
+    final Map<String, dynamic> data = {
+      'title': title,
+      'description': description,
+      'order': order,
+      'userId': userId,
+      'image': image,
+    };
 
-    if (json['position'] != null) {
-      final double latitude = json['position']['latitude'];
-      final double longitude = json['position']['longitude'];
-      position = LatLng(latitude, longitude);
+    if (duration != null) data['duration'] = duration;
+    if (cost != null) data['cost'] = cost;
+
+    // Ajouter les coordonnées séparément plutôt que l'objet position
+    // Seulement si nous avons une position valide
+    if (position != null) {
+      data['latitude'] = position!.latitude;
+      data['longitude'] = position!.longitude;
     }
 
-    double? cost;
-    if (json['cost'] != null) {
-      cost =
-          json['cost'] is int ? (json['cost'] as int).toDouble() : json['cost'];
+    // Nous n'envoyons pas la propriété 'address' au serveur
+    // car elle n'est pas acceptée par le backend
+
+    if (id != null) data['_id'] = id;
+
+    return data;
+  }
+
+  factory Step.fromJson(Map<String, dynamic> json) {
+    // Reconstruction de l'objet LatLng à partir de lat/lng
+    LatLng? position;
+    if (json.containsKey('latitude') && json.containsKey('longitude')) {
+      position = LatLng(double.parse(json['latitude'].toString()),
+          double.parse(json['longitude'].toString()));
     }
 
     return Step(
       id: json['_id'],
       title: json['title'],
       description: json['description'],
-      position: position,
       order: json['order'],
-      image: json['image'],
-      duration: json['duration'],
-      cost: cost,
-      createdAt:
-          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       userId: json['userId'],
+      duration: json['duration'],
+      cost: json['cost']?.toDouble(),
+      position: position,
+      image: json['image'],
+
+      // Nous conservons l'adresse localement dans l'application
+      // même si elle n'existe pas dans la réponse du serveur
+      address: json['address'],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {
-      'title': title,
-      'description': description,
-      'order': order,
-      'image': image,
-      'duration': duration,
-      'cost': cost,
-      'userId': userId,
-    };
-
-    if (position != null) {
-      data['position'] = {
-        'latitude': position!.latitude,
-        'longitude': position!.longitude,
-      };
-    }
-
-    return data;
   }
 }

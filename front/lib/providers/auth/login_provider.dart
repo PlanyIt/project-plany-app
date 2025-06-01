@@ -15,11 +15,9 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(BuildContext context) async {
+  Future<void> login(Function onSuccess, Function(String) onError) async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(Messages.fillAllFields)),
-      );
+      onError(Messages.fillAllFields);
       return;
     }
 
@@ -33,7 +31,7 @@ class LoginProvider extends ChangeNotifier {
       );
 
       if (user != null) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        onSuccess();
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage;
@@ -44,9 +42,7 @@ class LoginProvider extends ChangeNotifier {
       } else {
         errorMessage = Messages.loginFailed;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
+      onError(errorMessage);
     } finally {
       isLoading = false;
       notifyListeners();

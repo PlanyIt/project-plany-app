@@ -1,44 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:front/theme/app_theme.dart';
 
 class EmptyCard extends StatelessWidget {
   final String title;
   final String message;
-  final IconData? icon;
-  final Color? iconColor;
-  final Widget? action;
+  final IconData icon;
+  final VoidCallback? onAction;
+  final String? actionLabel;
 
   const EmptyCard({
     super.key,
     required this.title,
     required this.message,
-    this.icon,
-    this.iconColor,
-    this.action,
+    required this.icon,
+    this.onAction,
+    this.actionLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
         border: Border.all(
-          color: Colors.grey[200]!,
+          color: Colors.grey.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (icon != null)
-            Icon(
-              icon,
-              size: 48,
-              color: iconColor ?? Colors.grey[400],
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-          if (icon != null) const SizedBox(height: 16),
+            child: Icon(
+              icon,
+              size: 40,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             title,
             style: const TextStyle(
@@ -49,13 +62,24 @@ class EmptyCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             message,
-            style: TextStyle(
-              color: Colors.grey[600],
-            ),
             textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black54,
+            ),
           ),
-          if (action != null) const SizedBox(height: 16),
-          if (action != null) action!,
+          if (onAction != null && actionLabel != null) ...[
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: onAction,
+              child: Text(
+                actionLabel!,
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

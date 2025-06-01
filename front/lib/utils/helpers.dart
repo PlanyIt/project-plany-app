@@ -1,9 +1,9 @@
-import 'package:front/models/step.dart' as StepModel;
+import 'package:front/models/step.dart' as step_model;
 
 /// Calculates the total cost of steps from a list of Step objects.
 ///
 /// Use this when you have already loaded the Step objects.
-double calculateTotalStepsCost(List<StepModel.Step> steps) {
+double calculateTotalStepsCost(List<step_model.Step> steps) {
   return steps.fold(0.0, (total, step) {
     final stepCost = step.cost ?? 0.0;
     return total + stepCost;
@@ -14,7 +14,7 @@ double calculateTotalStepsCost(List<StepModel.Step> steps) {
 ///
 /// Handles durations in the format "X minutes", "X heures", "X jours", etc.
 /// Returns a formatted string representing the total duration.
-String calculateTotalStepsDuration(List<StepModel.Step> steps) {
+String calculateTotalStepsDuration(List<step_model.Step> steps) {
   // Convert all durations to minutes for easy calculation
   int totalMinutes = 0;
 
@@ -69,15 +69,15 @@ String _formatDuration(int totalMinutes) {
   final List<String> parts = [];
 
   if (days > 0) {
-    parts.add('${days} ${days == 1 ? "jour" : "jours"}');
+    parts.add('$days ${days == 1 ? "jour" : "jours"}');
   }
 
   if (hours > 0) {
-    parts.add('${hours} ${hours == 1 ? "heure" : "heures"}');
+    parts.add('$hours ${hours == 1 ? "heure" : "heures"}');
   }
 
   if (minutes > 0) {
-    parts.add('${minutes} ${minutes == 1 ? "minute" : "minutes"}');
+    parts.add('$minutes ${minutes == 1 ? "minute" : "minutes"}');
   }
 
   // Join the parts with commas and 'et' for the last part if there are multiple parts

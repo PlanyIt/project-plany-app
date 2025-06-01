@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-IconData getIconData(String iconName) {
-  // Log pour debugger le nom de l'icône reçue
-  print("Recherche d'icône pour: $iconName");
+IconData getIconData(String? iconName) {
+  // Si l'icône est null ou vide, retourner une icône par défaut
+  if (iconName == null || iconName.isEmpty) {
+    return Icons.category;
+  }
 
   // Map des noms d'icônes vers les IconData
   final Map<String, IconData> iconMap = {
+    // Icônes de base
     'flight': Icons.flight,
     'sports_soccer': Icons.sports_soccer,
     'restaurant': Icons.restaurant,
@@ -19,10 +21,43 @@ IconData getIconData(String iconName) {
     'category': Icons.category,
     'list': Icons.list,
 
-    // Ajouter d'autres mappages d'icônes selon vos besoins
-    // ...
+    // Transport
+    'directions_car': Icons.directions_car,
+    'directions_bus': Icons.directions_bus,
+    'directions_train': Icons.directions_train,
+    'directions_boat': Icons.directions_boat,
+    'directions_bike': Icons.directions_bike,
+    'directions_walk': Icons.directions_walk,
+    'local_airport': Icons.local_airport,
+    'flight_takeoff': Icons.flight_takeoff,
+    'flight_land': Icons.flight_land,
 
-    // Mappages de secours pour les icônes non trouvées
+    // Divertissement
+    'movie': Icons.movie,
+    'theaters': Icons.theaters,
+    'headphones': Icons.headphones,
+    'sports': Icons.sports,
+    'beach_access': Icons.beach_access,
+    'pool': Icons.pool,
+    'park': Icons.park,
+    'casino': Icons.casino,
+
+    // Gastronomie
+    'restaurant_menu': Icons.restaurant_menu,
+    'fastfood': Icons.fastfood,
+    'local_cafe': Icons.local_cafe,
+    'local_drink': Icons.local_drink,
+    'bakery_dining': Icons.bakery_dining,
+    'icecream': Icons.icecream,
+
+    // Culture
+    'museum': Icons.museum,
+    'local_library': Icons.local_library,
+    'account_balance': Icons.account_balance,
+    'location_city': Icons.location_city,
+    'church': Icons.church,
+
+    // Icônes spécifiques
     'place_outlined': Icons.place_outlined,
     'access_time_outlined': Icons.access_time_outlined,
     'euro_outlined': Icons.euro_outlined,

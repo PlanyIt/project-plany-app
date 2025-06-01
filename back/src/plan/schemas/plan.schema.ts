@@ -21,9 +21,6 @@ export class Plan {
   category: string;
 
   @Prop({ type: [String], default: [] })
-  tags: string[];
-
-  @Prop({ type: [String], default: [] })
   steps: string[];
 }
 

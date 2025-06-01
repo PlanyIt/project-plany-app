@@ -2,15 +2,13 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:front/models/categorie.dart';
+import 'package:front/models/category.dart';
 import 'package:front/models/plan.dart';
-import 'package:front/models/tag.dart';
-import 'package:front/models/step.dart' as StepModel;
+import 'package:front/models/step.dart' as step_model;
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/imgur_service.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/step_service.dart';
-import 'package:front/services/tag_service.dart';
 import 'package:front/widgets/card/step_card.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
@@ -19,7 +17,6 @@ class CreatePlanProvider extends ChangeNotifier {
   // Services
   final PlanService _planService = PlanService();
   final StepService _stepService = StepService();
-  final TagService _tagService = TagService();
   final ImgurService _imgurService = ImgurService();
   final CategorieService _categorieService = CategorieService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -30,7 +27,6 @@ class CreatePlanProvider extends ChangeNotifier {
   final TextEditingController titlePlanController = TextEditingController();
   final TextEditingController descriptionPlanController =
       TextEditingController();
-  final TextEditingController tagSearchPlanController = TextEditingController();
 
   //Step Controller
   final TextEditingController titleStepController = TextEditingController();
@@ -40,11 +36,9 @@ class CreatePlanProvider extends ChangeNotifier {
   final TextEditingController costStepController = TextEditingController();
 
   List<Category> _categories = [];
-  List<Tag> _tags = [];
-  List<Tag> _filteredTags = [];
-  final List<Tag> _selectedTags = [];
   Category? _selectedCategory;
-  bool _showTagContainer = false;
+  bool _showTagContainer =
+      false; // Cette propriété peut rester, mais ne sera plus utilisée
   XFile? _imageStep;
   final List<StepCard> _stepCards = [];
   bool _isLoading = false;
@@ -55,20 +49,26 @@ class CreatePlanProvider extends ChangeNotifier {
   LatLng? _selectedLocation;
   String? _selectedLocationName;
 
+  // Nouvel attribut pour stocker l'index de l'étape en cours d'édition
+  int? _editingStepIndex;
+  bool _isEditingStep = false;
+
   // Getters
   int get currentStep => _currentStep;
   List<Category> get categories => _categories;
-  List<Tag> get tags => _tags;
-  List<Tag> get filteredTags => _filteredTags;
-  List<Tag> get selectedTags => _selectedTags;
   Category? get selectedCategory => _selectedCategory;
-  bool get showTagContainer => _showTagContainer;
+  bool get showTagContainer =>
+      _showTagContainer; // Cette propriété peut rester, mais ne sera plus utilisée
   XFile? get imageStep => _imageStep;
   List<StepCard> get stepCards => _stepCards;
   bool get isLoading => _isLoading;
   String? get error => _error;
   LatLng? get selectedLocation => _selectedLocation;
   String? get selectedLocationName => _selectedLocationName;
+
+  // Nouveaux getters
+  bool get isEditingStep => _isEditingStep;
+  int? get editingStepIndex => _editingStepIndex;
 
   // Setters
   set selectedLocation(LatLng? location) {
@@ -88,61 +88,19 @@ class CreatePlanProvider extends ChangeNotifier {
 
   void _init() async {
     await loadCategories();
-    await loadTags();
   }
 
-  // Methods
   Future<void> loadCategories() async {
     try {
       _setLoading(true);
       final categories = await _categorieService.getCategories();
-      _categories = categories;
+      _categories = categories.cast<Category>();
       notifyListeners();
     } catch (e) {
       _setError('Failed to load categories: ${e.toString()}');
     } finally {
       _setLoading(false);
     }
-  }
-
-  Future<void> loadTags() async {
-    try {
-      _setLoading(true);
-      final tags = await _tagService.getCategories();
-      _tags = tags;
-      _filteredTags = tags;
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to load tags: ${e.toString()}');
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  void filterTags(String query) {
-    final filteredTags = _tags.where((tag) {
-      final tagName = tag.name.toLowerCase();
-      final input = query.toLowerCase();
-      return tagName.contains(input);
-    }).toList();
-
-    _filteredTags = filteredTags;
-    _showTagContainer = query.isNotEmpty;
-    notifyListeners();
-  }
-
-  void toggleTag(Tag tag) {
-    if (_selectedTags.contains(tag)) {
-      _selectedTags.remove(tag);
-    } else {
-      _selectedTags.add(tag);
-    }
-    notifyListeners();
-  }
-
-  void removeTag(Tag tag) {
-    _selectedTags.remove(tag);
-    notifyListeners();
   }
 
   void setCategory(Category category) {
@@ -194,14 +152,69 @@ class CreatePlanProvider extends ChangeNotifier {
     }
   }
 
-  void addStepCard(
+  // Méthode pour commencer l'édition d'une étape existante
+  void startEditingStep(int index) {
+    if (index >= 0 && index < _stepCards.length) {
+      _isEditingStep = true;
+      _editingStepIndex = index;
+
+      final stepToEdit = _stepCards[index];
+
+      // Pré-remplir les champs du formulaire avec les données de l'étape
+      titleStepController.text = stepToEdit.title;
+      descriptionStepController.text = stepToEdit.description;
+
+      if (stepToEdit.duration != null) {
+        durationStepController.text = stepToEdit.duration!;
+      }
+
+      if (stepToEdit.durationUnit != null) {
+        selectedUnit = stepToEdit.durationUnit!;
+      }
+
+      if (stepToEdit.cost != null) {
+        costStepController.text = stepToEdit.cost.toString();
+      }
+
+      // Gérer l'image si elle existe
+      if (stepToEdit.imageUrl.isNotEmpty) {
+        _imageStep = XFile(stepToEdit.imageUrl);
+      } else {
+        _imageStep = null;
+      }
+
+      // Gérer la localisation si elle existe
+      _selectedLocation = stepToEdit.location;
+      _selectedLocationName = stepToEdit.locationName;
+
+      notifyListeners();
+    }
+  }
+
+  // Méthode pour annuler l'édition en cours
+  void cancelEditingStep() {
+    _isEditingStep = false;
+    _editingStepIndex = null;
+    _resetStepFields();
+    notifyListeners();
+  }
+
+  // Méthode modifiée pour mettre à jour une étape existante ou en ajouter une nouvelle
+  void saveStep(
     String title,
     String description,
     File? imageFile,
     String durationText,
     double? cost,
   ) {
-    stepCards.add(StepCard(
+    // Vérifier que le lieu sélectionné n'est pas un message de chargement
+    final locationNameToSave =
+        _selectedLocationName == "Recherche de l'adresse..." ||
+                _selectedLocationName == "Impossible d'obtenir l'adresse"
+            ? null
+            : _selectedLocationName;
+
+    final stepCard = StepCard(
       title: title,
       description: description,
       imageUrl: imageFile?.path ?? '',
@@ -209,51 +222,21 @@ class CreatePlanProvider extends ChangeNotifier {
       durationUnit: selectedUnit,
       cost: cost,
       location: selectedLocation,
-      locationName: selectedLocationName,
-    ));
+      locationName: locationNameToSave,
+    );
 
-    // Réinitialiser les champs après ajout
-    _resetStepFields();
-
-    notifyListeners();
-  }
-
-  void _resetStepFields() {
-    titleStepController.clear();
-    descriptionStepController.clear();
-    durationStepController.clear();
-    costStepController.clear();
-    selectedUnit = 'Minutes';
-    setImageStep(null);
-    selectedLocation = null;
-    selectedLocationName = null;
-
-    notifyListeners();
-  }
-
-  void reorderStepCards(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
+    if (_isEditingStep && _editingStepIndex != null) {
+      // Mise à jour d'une étape existante
+      _stepCards[_editingStepIndex!] = stepCard;
+      _isEditingStep = false;
+      _editingStepIndex = null;
+    } else {
+      // Ajout d'une nouvelle étape
+      _stepCards.add(stepCard);
     }
-    final item = stepCards.removeAt(oldIndex);
-    stepCards.insert(newIndex, item);
-    notifyListeners();
-  }
 
-  void setLocation(LatLng location, String locationName) {
-    _selectedLocation = location;
-    _selectedLocationName = locationName;
-    notifyListeners();
-  }
-
-  void clearTagSearch() {
-    tagSearchPlanController.clear();
-    _showTagContainer = false;
-    notifyListeners();
-  }
-
-  void setShowTagContainer(bool value) {
-    _showTagContainer = value;
+    // Réinitialiser les champs après ajout/mise à jour
+    _resetStepFields();
     notifyListeners();
   }
 
@@ -314,7 +297,7 @@ class CreatePlanProvider extends ChangeNotifier {
         }
 
         // Créer un step
-        final step = StepModel.Step(
+        final step = step_model.Step(
           title: _stepCards[i].title,
           description: _stepCards[i].description,
           order: i + 1,
@@ -323,6 +306,8 @@ class CreatePlanProvider extends ChangeNotifier {
           cost: _stepCards[i].cost,
           position: _stepCards[i].location,
           image: imageUrl,
+          // Ne pas envoyer l'adresse car elle n'est pas acceptée par le backend
+          // address: _stepCards[i].locationName,
         );
 
         // Appel API pour créer le step et récupérer son ID
@@ -335,7 +320,6 @@ class CreatePlanProvider extends ChangeNotifier {
         title: titlePlanController.text.trim(),
         description: descriptionPlanController.text.trim(),
         category: _selectedCategory!.id,
-        tags: _selectedTags.map((tag) => tag.id).toList(),
         userId: _auth.currentUser!.uid,
         steps: stepIds,
         isPublic: true,
@@ -360,12 +344,22 @@ class CreatePlanProvider extends ChangeNotifier {
     titlePlanController.clear();
     descriptionPlanController.clear();
     _selectedCategory = null;
-    _selectedTags.clear();
     _showTagContainer = false;
     _stepCards.clear();
     _currentStep = 1;
     _resetStepFields();
     notifyListeners();
+  }
+
+  void _resetStepFields() {
+    titleStepController.clear();
+    descriptionStepController.clear();
+    durationStepController.clear();
+    costStepController.clear();
+    selectedUnit = 'Minutes';
+    setImageStep(null);
+    selectedLocation = null;
+    selectedLocationName = null;
   }
 
   void _setLoading(bool loading) {
@@ -378,11 +372,69 @@ class CreatePlanProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setStepWithoutNotify(int step) {
+    _currentStep = step;
+  }
+
+  bool validateCurrentStep() {
+    switch (_currentStep) {
+      case 1:
+        // Vérification des champs de l'étape 1
+        if (titlePlanController.text.trim().isEmpty) {
+          _setError('Le titre du plan est obligatoire');
+          return false;
+        }
+        if (descriptionPlanController.text.trim().isEmpty) {
+          _setError('La description du plan est obligatoire');
+          return false;
+        }
+        if (_selectedCategory == null) {
+          _setError('Veuillez sélectionner une catégorie');
+          return false;
+        }
+        return true;
+
+      case 2:
+        // Vérification des étapes ajoutées
+        if (_stepCards.isEmpty) {
+          _setError('Ajoutez au moins une étape à votre plan');
+          return false;
+        }
+        return true;
+
+      case 3:
+        // La dernière étape est juste une prévisualisation
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  void reorderStepCards(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    final item = stepCards.removeAt(oldIndex);
+    stepCards.insert(newIndex, item);
+    notifyListeners();
+  }
+
+  // Fonctions de gestion des tags à supprimer ou neutraliser
+  void clearTagSearch() {
+    // Méthode gardée mais vidée
+    notifyListeners();
+  }
+
+  void setShowTagContainer(bool value) {
+    _showTagContainer = value;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     titlePlanController.dispose();
     descriptionPlanController.dispose();
-    tagSearchPlanController.dispose();
     super.dispose();
   }
 }

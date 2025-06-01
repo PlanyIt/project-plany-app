@@ -5,6 +5,7 @@ import 'package:front/widgets/common/custom_text_field.dart';
 import 'package:front/providers/auth/login_provider.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:front/widgets/common/plany_button.dart';
+import 'package:front/screens/dashboard/dashboard_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -14,6 +15,8 @@ class LoginScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => LoginProvider(),
       child: Scaffold(
+        // Use resizeToAvoidBottomInset to prevent keyboard issues
+        resizeToAvoidBottomInset: true,
         body: Stack(
           children: [
             Consumer<LoginProvider>(
@@ -22,8 +25,14 @@ class LoginScreen extends StatelessWidget {
                     ? const Center(child: CircularProgressIndicator())
                     : SafeArea(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: AppTheme.paddingL),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: EdgeInsets.only(
+                            left: AppTheme.paddingL,
+                            right: AppTheme.paddingL,
+                            bottom:
+                                MediaQuery.of(context).viewInsets.bottom + 16,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -69,7 +78,21 @@ class LoginScreen extends StatelessWidget {
                               const SizedBox(height: 30),
                               PlanyButton(
                                 text: 'Connexion',
-                                onPressed: () => provider.login(context),
+                                onPressed: () => provider.login(
+                                  () => Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const DashboardScreen()),
+                                    (route) =>
+                                        false, // Supprime toutes les routes précédentes
+                                  ),
+                                  (errorMessage) =>
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                    SnackBar(content: Text(errorMessage)),
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 20),
                               _buildRegisterLink(context, provider),
@@ -99,15 +122,17 @@ class LoginScreen extends StatelessWidget {
           'Connexion',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onBackground,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
         const SizedBox(height: 8),
         Text(
           'Bienvenue ! Veuillez vous connecter pour continuer',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color:
-                    Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.7),
               ),
         ),
       ],
@@ -122,8 +147,10 @@ class LoginScreen extends StatelessWidget {
           Text(
             'Pas encore de compte ? ',
             style: TextStyle(
-              color:
-                  Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.7),
             ),
           ),
           TextButton(

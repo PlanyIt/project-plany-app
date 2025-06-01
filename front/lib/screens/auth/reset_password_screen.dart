@@ -32,17 +32,21 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     try {
       await _auth.sendPasswordResetEmail(email: _emailController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Email de réinitialisation du mot de passe envoyé.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Email de réinitialisation du mot de passe envoyé.')),
+        );
 
-      // Rediriger vers la page de connexion après l'envoi de l'email
-      Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la réinitialisation : $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la réinitialisation : $e')),
+        );
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -53,6 +57,8 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Use resizeToAvoidBottomInset to prevent keyboard issues
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           if (_isLoading)
@@ -60,8 +66,13 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
           else
             SafeArea(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppTheme.paddingL),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.only(
+                  left: AppTheme.paddingL,
+                  right: AppTheme.paddingL,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -70,13 +81,11 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     const SizedBox(height: 40),
                     Text(
                       'Réinitialisation du mot de passe',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onBackground,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -84,8 +93,8 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: Theme.of(context)
                                 .colorScheme
-                                .onBackground
-                                .withOpacity(0.7),
+                                .onSurface
+                                .withValues(alpha: 0.7),
                           ),
                     ),
                     const SizedBox(height: 40),
