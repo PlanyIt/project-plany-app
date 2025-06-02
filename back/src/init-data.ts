@@ -16,10 +16,10 @@ async function bootstrap() {
 
     // Vérifier si des utilisateurs existent déjà
     const usersCount = await UserModel.countDocuments();
-    
+
     if (usersCount === 0) {
       console.log('No users found, creating default admin...');
-      
+
       // Créer un utilisateur administrateur par défaut
       const defaultAdmin = new UserModel({
         username: 'admin',
@@ -30,13 +30,13 @@ async function bootstrap() {
         registrationDate: new Date(),
         isActive: true,
       });
-      
+
       await defaultAdmin.save();
       console.log('Default admin created successfully');
     } else {
       console.log(`Found ${usersCount} existing users`);
     }
-    
+
     console.log('Initialization complete');
   } catch (error) {
     console.error('Initialization failed:', error);

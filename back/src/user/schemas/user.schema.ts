@@ -6,28 +6,37 @@ export type UserDocument = User & Document;
 @Schema({ timestamps: true })
 export class User {
   @Prop({ required: true, unique: true })
-  firebaseUid: string;
+  username: string;
 
   @Prop({ required: true, unique: true })
   email: string;
 
   @Prop({ required: true })
-  username: string;
+  password: string;
 
   @Prop()
-  photoUrl?: string;
-
-  @Prop()
-  description?: string;
+  description: string;
 
   @Prop({ default: false })
   isPremium: boolean;
 
   @Prop()
-  birthDate?: Date;
+  photoUrl: string;
+
+  @Prop({ type: Date })
+  birthDate: Date;
 
   @Prop()
-  gender?: string;
+  gender: string;
+
+  @Prop({ default: 'user' })
+  role: string;
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ type: Date, default: Date.now })
+  registrationDate: Date;
 
   @Prop({ type: [String], default: [] })
   followers: string[];

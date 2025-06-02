@@ -10,17 +10,17 @@ import {
   Req,
 } from '@nestjs/common';
 import { StepService } from './step.service';
-import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { StepDto } from './dto/step.dto';
 
 @Controller('api/steps')
 export class StepController {
   constructor(private readonly stepService: StepService) {}
 
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post()
   async createStep(@Body() createStepDto: StepDto, @Req() req) {
-    const stepData = { ...createStepDto, userId: req.userId };
+    const stepData = { ...createStepDto, userId: req.user._id };
     return this.stepService.create(stepData);
   }
 
@@ -34,7 +34,7 @@ export class StepController {
     return this.stepService.findById(stepId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Delete(':stepId')
   async removeStep(@Param('stepId') stepId: string) {
     return this.stepService.removeById(stepId);
@@ -45,7 +45,7 @@ export class StepController {
     return this.stepService.findAllByPlanId(planId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Put(':stepId')
   async updateStep(
     @Param('stepId') stepId: string,

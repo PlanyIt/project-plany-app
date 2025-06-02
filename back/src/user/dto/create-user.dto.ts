@@ -1,21 +1,27 @@
 import {
-  IsString,
   IsBoolean,
-  IsOptional,
   IsDate,
-  IsArray,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateUserDto {
   @IsString()
-  firebaseUid: string;
-
-  @IsString()
+  @IsNotEmpty()
   username: string;
 
-  @IsString()
+  @IsEmail()
+  @IsNotEmpty()
   email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  password: string;
 
   @IsOptional()
   @IsString()
@@ -39,12 +45,10 @@ export class CreateUserDto {
   gender?: string;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  followers?: string[];
+  @IsString()
+  role?: string;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  following?: string[];
+  @IsBoolean()
+  isActive?: boolean;
 }

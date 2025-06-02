@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
@@ -13,17 +12,16 @@ import {
   NotFoundException,
   Request,
   UnauthorizedException,
+  Post,
 } from '@nestjs/common';
-import { UserService as UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { FirebaseAuthGuard } from '../auth/guards/firebase-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanService } from 'src/plan/plan.service';
-import { isValidObjectId } from 'mongoose';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('api/users')
 export class UserController {
-  userModel: any;
   constructor(
     private readonly userService: UserService,
     @Inject(forwardRef(() => PlanService))
@@ -35,9 +33,13 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  @Get(':firebaseUid')
-  findOneByFirebaseUid(@Param('firebaseUid') firebaseUid: string) {
-    return this.userService.findOneByFirebaseUid(firebaseUid);
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    const user = await this.userService.findById(id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
   }
 
   @Post()
@@ -48,17 +50,28 @@ export class UserController {
     });
   }
 
-  @Patch(':firebaseUid/profile')
-  updateByFirebaseUid(
-    @Param('firebaseUid') firebaseUid: string,
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/profile')
+  updateProfile(
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @Request() req,
   ) {
-    return this.userService.updateByFirebaseUid(firebaseUid, updateUserDto);
+    // Vérifier que l'utilisateur ne modifie que son propre profil
+    if (req.user._id.toString() !== id) {
+      throw new UnauthorizedException('Vous ne pouvez pas modifier ce profil');
+    }
+    return this.userService.updateById(id, updateUserDto);
   }
 
-  @Delete(':firebaseUid')
-  removeByFirebaseUid(@Param('firebaseUid') firebaseUid: string) {
-    return this.userService.removeByFirebaseUid(firebaseUid);
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  removeById(@Param('id') id: string, @Request() req) {
+    // Vérifier que l'utilisateur ne supprime que son propre compte
+    if (req.user._id.toString() !== id) {
+      throw new UnauthorizedException('Vous ne pouvez pas supprimer ce compte');
+    }
+    return this.userService.removeById(id);
   }
 
   @Get('username/:username')
@@ -71,17 +84,24 @@ export class UserController {
     return this.userService.findOneByEmail(email);
   }
 
-  @UseGuards(FirebaseAuthGuard)
-  @Patch(':firebaseUid/photo')
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/photo')
   updateUserPhoto(
-    @Param('firebaseUid') firebaseUid: string,
+    @Param('id') id: string,
     @Body('photoUrl') photoUrl: string,
+    @Request() req,
   ) {
-    return this.userService.updateByFirebaseUid(firebaseUid, { photoUrl });
+    // Vérifier que l'utilisateur ne modifie que sa propre photo
+    if (req.user._id.toString() !== id) {
+      throw new UnauthorizedException(
+        'Vous ne pouvez pas modifier cette photo',
+      );
+    }
+    return this.userService.updateById(id, { photoUrl });
   }
 
-  @Get(':firebaseUid/stats')
-  async getUserStats(@Param('firebaseUid') userId: string) {
+  @Get(':id/stats')
+  async getUserStats(@Param('id') userId: string) {
     try {
       return await this.userService.getUserStats(userId);
     } catch (error) {
@@ -90,10 +110,10 @@ export class UserController {
     }
   }
 
-  @Get(':firebaseUid/plans')
-  async getUserPlans(@Param('firebaseUid') firebaseUid: string) {
+  @Get(':id/plans')
+  async getUserPlans(@Param('id') userId: string) {
     try {
-      const plans = await this.planService.findAllByUserId(firebaseUid);
+      const plans = await this.planService.findAllByUserId(userId);
       return plans;
     } catch (error) {
       console.error(`Error getting plans: ${error.message}`);
@@ -101,11 +121,10 @@ export class UserController {
     }
   }
 
-  @Get(':firebaseUid/favorites')
-  async getUserFavorites(@Param('firebaseUid') firebaseUid: string) {
+  @Get(':id/favorites')
+  async getUserFavorites(@Param('id') userId: string) {
     try {
-      const favorites =
-        await this.planService.findFavoritesByUserId(firebaseUid);
+      const favorites = await this.planService.findFavoritesByUserId(userId);
       return favorites;
     } catch (error) {
       console.error(`Error getting favorites: ${error.message}`);
@@ -113,43 +132,29 @@ export class UserController {
     }
   }
 
-  @UseGuards(FirebaseAuthGuard)
-  @Patch(':firebaseUid/premium')
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/premium')
   async updatePremiumStatus(
-    @Param('firebaseUid') firebaseUid: string,
+    @Param('id') id: string,
     @Body('isPremium') isPremium: boolean,
+    @Request() req,
   ) {
-    return this.userService.updateByFirebaseUid(firebaseUid, { isPremium });
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    let user;
-
-    if (isValidObjectId(id)) {
-      user = await this.userService.findById(id);
+    // Vérifier si l'utilisateur est admin ou modifie son propre statut
+    if (req.user._id.toString() !== id && req.user.role !== 'admin') {
+      throw new UnauthorizedException('Opération non autorisée');
     }
-
-    if (!user) {
-      user = await this.userService.findOneByFirebaseUid(id);
-    }
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-
-    return user;
+    return this.userService.updateById(id, { isPremium });
   }
 
   // Suivre un utilisateur
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post(':id/follow')
   async followUser(@Param('id') targetUserId: string, @Request() req) {
     if (!req.user) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
 
-    const followerId = req.user.uid || req.user.id;
+    const followerId = req.user._id;
 
     if (!followerId) {
       throw new UnauthorizedException('ID utilisateur manquant');
@@ -164,14 +169,14 @@ export class UserController {
   }
 
   // Ne plus suivre un utilisateur
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Delete(':id/follow')
   async unfollowUser(@Param('id') targetUserId: string, @Request() req) {
     if (!req.user) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
 
-    const followerId = req.user.uid;
+    const followerId = req.user._id;
     return this.userService.unfollowUser(followerId, targetUserId);
   }
 
