@@ -5,9 +5,7 @@ import 'package:front/models/plan.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/screens/search/search_screen.dart';
 import 'package:front/services/categorie_service.dart';
-import 'package:front/services/step_service.dart';
-import 'package:front/utils/icon_utils.dart';
-import 'package:front/widgets/card/plan_card.dart';
+import 'package:front/widgets/card/compact_plan_card.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:front/widgets/dashboard/category_cards.dart';
 import 'package:front/widgets/dashboard/horizontal_plan_list.dart';
@@ -62,14 +60,6 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     }
   }
 
-  void _navigateToDetails(String planId) {
-    Navigator.pushNamed(
-      context,
-      '/details',
-      arguments: planId,
-    );
-  }
-
   void _navigateToSearch(BuildContext context,
       {String? query, app_category.Category? category}) {
     Navigator.push(
@@ -111,41 +101,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             child: CustomScrollView(
               slivers: [
                 // App Bar avec logo et bouton de profil
-                SliverAppBar(
-                  leading: const SizedBox.shrink(),
-                  backgroundColor: Colors.transparent,
-                  expandedHeight: 80,
-                  floating: true,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const PlanyLogo(fontSize: 30),
-                          Material(
-                            color: Colors.transparent,
-                            shape: const CircleBorder(),
-                            clipBehavior: Clip.hardEdge,
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/profile');
-                              },
-                              child: CircleAvatar(
-                                backgroundColor:
-                                    Theme.of(context).primaryColor.withOpacity(0.1),
-                                child: Icon(
-                                  Icons.person_outline,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                _buildAppBar(),
 
                 // Barre de recherche
                 SliverToBoxAdapter(
@@ -208,6 +164,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     cardWidth: 200,
                     onPlanTap: (plan) {
                       // Navigation vers détail du plan
+                      Navigator.pushNamed(context, '/details',
+                          arguments: plan.id);
                     },
                     emptyMessage: 'Aucun plan tendance disponible',
                   ),
@@ -235,6 +193,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     cardWidth: 200,
                     onPlanTap: (plan) {
                       // Navigation vers détail du plan
+                      Navigator.pushNamed(context, '/details',
+                          arguments: plan.id);
                     },
                     emptyMessage: 'Aucun plan à découvrir disponible',
                   ),
@@ -308,192 +268,17 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 
-  Widget _buildTrendingShimmer() {
-    return Container(
-      height: 270,
-      margin: const EdgeInsets.only(top: 8),
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: 3,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            itemBuilder: (context, index) {
-              return Container(
-                width: 260,
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              );
-            }),
-      ),
-    );
+  List<Plan> _getFilteredTrendingPlans(List<Plan> allPlans) {
+    if (allPlans.isEmpty) return [];
+    // Ici vous pourriez implémenter une logique pour filtrer les plans "tendance"
+    // Par exemple, prendre les 5 premiers ou les trier par popularité
+    return allPlans.take(5).toList();
   }
 
-  Widget _buildTrendingSection(List<Plan> plans) {
-    if (plans.isEmpty) {
-      return const SizedBox(
-        height: 270,
-        child: Center(
-          child: Text('Aucun plan tendance disponible'),
-        ),
-      );
-    }
-
-    // Prendre les 5 premiers plans ou ceux avec le plus d'étapes pour les "tendances"
-    final trendingPlans = plans.take(5).toList();
-
-    return Container(
-      height: 300,
-      margin: const EdgeInsets.only(top: 8),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: trendingPlans.length,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemBuilder: (context, index) {
-          final plan = trendingPlans[index];
-          return Container(
-            width: 260,
-            margin: const EdgeInsets.only(right: 16),
-            child: FutureBuilder<List<String>>(
-              future: _getStepImages(plan.steps),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  );
-                }
-                return PlanCard(
-                  title: plan.title,
-                  description: plan.description,
-                  imageUrls: snapshot.data,
-                  category: _getCategoryById(plan.category),
-                  stepsCount: plan.steps.length,
-                  onTap: () => _navigateToDetails(plan.id!),
-                  borderRadius: BorderRadius.circular(16),
-                );
-              },
-            ),
-          );
-        },
-      ),
-    );
+  List<Plan> _getRandomPlans(List<Plan> allPlans) {
+    if (allPlans.isEmpty) return [];
+    // Mélanger les plans pour avoir une découverte aléatoire
+    final shuffled = List<Plan>.from(allPlans)..shuffle();
+    return shuffled.take(8).toList();
   }
-
-  Widget _buildDiscoverShimmer() {
-    return Container(
-      height: 220,
-      margin: const EdgeInsets.only(top: 8),
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: 4,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            itemBuilder: (context, index) {
-              return Container(
-                width: 180,
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              );
-            }),
-      ),
-    );
-  }
-
-  Widget _buildDiscoverSection(List<Plan> plans) {
-    if (plans.isEmpty) {
-      return const SizedBox(
-        height: 220,
-        child: Center(
-          child: Text('Aucun plan à découvrir disponible'),
-        ),
-      );
-    }
-
-    // Pour les plans à découvrir, on peut prendre un ordre différent
-    // Par exemple, les plans les plus récents ou filtrer par une catégorie spécifique
-    final discoverPlans = List<Plan>.from(plans)..shuffle();
-    final displayPlans = discoverPlans.take(8).toList();
-
-    return Container(
-      height: 300,
-      margin: const EdgeInsets.only(top: 8),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: displayPlans.length,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemBuilder: (context, index) {
-          final plan = displayPlans[index];
-          return Container(
-            width: 180,
-            margin: const EdgeInsets.only(right: 16),
-            child: FutureBuilder<List<String>>(
-              future: _getStepImages(plan.steps),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  );
-                }
-                return PlanCard(
-                  title: plan.title,
-                  description: plan.description,
-                  imageUrls: snapshot.data,
-                  category: _getCategoryById(plan.category),
-                  stepsCount: plan.steps.length,
-                  onTap: () => _navigateToDetails(plan.id!),
-                  borderRadius: BorderRadius.circular(16),
-                );
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Category? _getCategoryById(String categoryId) {
-    try {
-      return _categories.firstWhere((c) => c.id == categoryId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Future<List<String>> _getStepImages(List<String> stepIds) async {
-    final images = <String>[];
-    final stepService = StepService();
-    
-    for (String id in stepIds) {
-      try {
-        final step = await stepService.getStepById(id);
-        if (step != null && step.image.isNotEmpty) {
-          images.add(step.image);
-        }
-      } catch (e) {
-        print('Erreur lors de la récupération de l\'image pour step $id: $e');
-      }
-    }
-    
-    if (images.isEmpty) {
-      images.add('https://via.placeholder.com/300x200/EDEDED/888888?text=Plany');
-    }
-    
-    return images;
-  }
-  
 }

@@ -18,10 +18,8 @@ class PlanService {
 
   Future<List<Plan>> getPlans() async {
     final response = await http.get(Uri.parse('$baseUrl/api/plans'));
-    if (kDebugMode) {
-      }
+    if (kDebugMode) {}
     if (response.statusCode == 200) {
-
       final List<dynamic> plans = json.decode(response.body);
       return plans.map((plan) => Plan.fromJson(plan)).toList();
     } else {
@@ -116,9 +114,10 @@ class PlanService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (kDebugMode) {
-          return true;
-      } else {
+          print('Plan deleted successfully');
         }
+        return true;
+      } else {
         throw Exception(
             'Erreur lors de la suppression du plan : ${response.body}');
       }

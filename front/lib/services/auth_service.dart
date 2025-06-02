@@ -5,14 +5,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:front/services/user_service.dart';
 
 class AuthService {
+  final String baseUrl = dotenv.env['BASE_URL'] ?? '';
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
 
   // Méthode de connexion
   Future<User?> login(String email, String password) async {
     try {
-      final UserCredential userCredential =
-          await _auth.signInWithEmailAndPassword(
+      // Tentative de connexion via Firebase Authentication
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -21,42 +22,37 @@ class AuthService {
       // Si la connexion est réussie, renvoyer l'utilisateur Firebase
       return userCredential.user;
     } catch (e) {
-      if (kDebugMode) {
-        print('Erreur de connexion: $e');
-      }
-      rethrow;
+      // Gérer les erreurs de connexion et retourner un message descriptif
+      throw Exception('Échec de la connexion : $e');
     }
   }
 
-  // Inscription avec email et mot de passe
+  // Méthode d'inscription
   Future<User?> register(String email, String password, String username,
       String description) async {
     try {
-      final UserCredential userCredential =
+      // Créer un utilisateur via Firebase Authentication
+      UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Mettre à jour le profil utilisateur avec le nom d'utilisateur
-      await userCredential.user?.updateDisplayName(username);
+      // Récupérer l'identifiant Firebase (UID)
+      String? firebaseUid = userCredential.user?.uid;
 
+      // Enregistrer les informations supplémentaires dans MongoDB via l'API NestJS
+      await saveUserToMongoDB(firebaseUid!, username, description, email);
+
+      // Retourner l'utilisateur créé
       return userCredential.user;
     } catch (e) {
-      if (kDebugMode) {
-        print('Erreur d\'inscription: $e');
-      }
-      rethrow;
+      // Gérer les erreurs d'inscription
+      throw Exception('Échec de l\'inscription : $e');
     }
   }
 
-  // Sauvegarder les informations utilisateur dans MongoDB
-  Future<void> saveUserToMongoDB(
-      String uid, String username, String description, String email) async {
-    // Implémentez cette méthode pour stocker les données utilisateur dans MongoDB
-  }
-
-  // Déconnexion
+  // Méthode de déconnexion
   Future<void> logout() async {
     try {
       await _auth.signOut();
@@ -109,13 +105,13 @@ class AuthService {
       if (currentUser == null || currentUser.email == null) {
         throw Exception('Aucun utilisateur connecté');
       }
-      
+
       // Créer des informations d'identification
       AuthCredential credential = EmailAuthProvider.credential(
         email: currentUser.email!,
         password: password,
       );
-      
+
       // Réauthentifier l'utilisateur
       await currentUser.reauthenticateWithCredential(credential);
     } catch (e) {
@@ -128,27 +124,26 @@ class AuthService {
     try {
       // Réauthentification nécessaire avant de changer l'email
       await reauthenticate(password);
-      
+
       // Mettre à jour l'email dans Firebase
       await _auth.currentUser?.updateEmail(newEmail);
-      
+
       // Mettre à jour dans MongoDB via votre API
       await UserService().updateUserEmail(newEmail);
-      
     } catch (e) {
       throw Exception('Échec de mise à jour de l\'email: $e');
     }
   }
 
   // Méthode pour mettre à jour le mot de passe
-  Future<void> updatePassword(String currentPassword, String newPassword) async {
+  Future<void> updatePassword(
+      String currentPassword, String newPassword) async {
     try {
       // Réauthentification nécessaire avant de changer le mot de passe
       await reauthenticate(currentPassword);
-      
+
       // Mettre à jour le mot de passe dans Firebase
       await _auth.currentUser?.updatePassword(newPassword);
-      
     } catch (e) {
       throw Exception('Échec de mise à jour du mot de passe: $e');
     }

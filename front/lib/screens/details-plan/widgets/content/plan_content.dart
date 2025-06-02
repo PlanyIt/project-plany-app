@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/categorie.dart';
+import 'package:front/models/category.dart';
 import 'package:front/models/plan.dart';
 import 'package:front/models/step.dart' as plan_steps;
 import 'package:front/screens/details-plan/widgets/content/info_plan/plan_info_section.dart';
-import 'package:front/screens/details-plan/widgets/content/steps_carousel/steps_carousel.dart'; 
+import 'package:front/screens/details-plan/widgets/content/steps_carousel/steps_carousel.dart';
 import 'package:front/screens/details-plan/widgets/content/comments/comment_section.dart';
 
 class PlanContent extends StatelessWidget {
@@ -13,15 +13,14 @@ class PlanContent extends StatelessWidget {
   final Category? category;
   final List<plan_steps.Step>? steps;
 
-  
   const PlanContent({
-    Key? key,
+    super.key,
     required this.plan,
     required this.categoryColor,
     required this.scrollController,
     this.category,
     this.steps,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +52,7 @@ class PlanContent extends StatelessWidget {
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-          
+
           // Contenu défilable
           Expanded(
             child: ListView(
@@ -68,10 +67,10 @@ class PlanContent extends StatelessWidget {
                   categoryIcon: category?.icon,
                   steps: steps,
                 ),
-                
+
                 // Séparateur
                 _buildElegantDivider(icon: Icons.map_outlined),
-                
+
                 //Étapes du plan
                 SizedBox(
                   height: 400,
@@ -80,17 +79,17 @@ class PlanContent extends StatelessWidget {
                     categoryColor: categoryColor,
                   ),
                 ),
-                
+
                 // Séparateur
                 _buildElegantDivider(icon: Icons.chat_bubble_outline),
-                
+
                 //Commentaires
                 CommentSection(
                   planId: plan.id!,
                   isEmbedded: true,
                   categoryColor: categoryColor,
                 ),
-                
+
                 // Espace en bas pour éviter que le dernier élément soit coupé
                 const SizedBox(height: 40),
               ],
@@ -100,7 +99,7 @@ class PlanContent extends StatelessWidget {
       ),
     );
   }
-  
+
   // Séparateur entre les sections
   Widget _buildElegantDivider({IconData? icon}) {
     return Padding(

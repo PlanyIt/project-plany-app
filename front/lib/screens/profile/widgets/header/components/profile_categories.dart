@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/categorie.dart';
+import 'package:front/models/category.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/utils/icon_utils.dart';
@@ -140,9 +140,7 @@ class _ProfileCategoriesState extends State<ProfileCategories> {
                 runSpacing: 10,
                 children: categories.map((category) {
                   return _buildActivityTagWithIcon(
-                      category.name,
-                      category.icon 
-                      );
+                      category.name, category.icon);
                 }).toList(),
               );
             },

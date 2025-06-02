@@ -446,7 +446,7 @@ class ChooseLocationState extends State<ChooseLocation>
               onPositionChanged: (position, hasGesture) {
                 if (hasGesture) {
                   setState(() {
-                    _mapZoom = position.zoom;
+                    _mapZoom = position.zoom ?? _mapZoom;
                   });
                 }
               },

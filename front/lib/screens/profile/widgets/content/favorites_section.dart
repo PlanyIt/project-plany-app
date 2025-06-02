@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:front/models/category.dart';
 import 'package:front/models/plan.dart';
 import 'package:front/models/step.dart' as plan_steps;
-import 'package:front/models/categorie.dart';
 import 'package:front/screens/profile/widgets/common/section_header.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/step_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/utils/helpers.dart';
-import 'package:front/widgets/card/plan_card.dart';
+import 'package:front/widgets/card/compact_plan_card.dart';
 
 class FavoritesSection extends StatefulWidget {
   final String userId;
@@ -183,27 +183,27 @@ class _FavoritesSectionState extends State<FavoritesSection>
         FutureBuilder<Map<String, dynamic>>(
           future: _getStepData(plan.steps),
           builder: (context, snapshot) {
-            String? cost;
-            String? duration;
             List<String>? imageUrls;
+            double? cost;
+            int? duration;
 
             if (snapshot.hasData) {
               final data = snapshot.data!;
-              cost = "${data['cost'].toStringAsFixed(0)} €";
-              duration = data['duration'];
+              cost = data['cost'];
+              duration = data['durationMinutes'];
               imageUrls = data['imageUrls'];
             }
 
             final category = _findCategoryForPlan(plan);
 
-            return PlanCard(
+            return CompactPlanCard(
               title: plan.title,
               description: plan.description,
               imageUrls: imageUrls,
               category: category,
               stepsCount: plan.steps.length,
-              cost: cost,
-              duration: duration,
+              totalCost: cost,
+              totalDuration: duration,
               onTap: () {
                 Navigator.pushNamed(
                   context,
@@ -211,7 +211,6 @@ class _FavoritesSectionState extends State<FavoritesSection>
                   arguments: plan.id,
                 );
               },
-              margin: EdgeInsets.zero,
               borderRadius: BorderRadius.circular(16),
             );
           },
@@ -243,8 +242,7 @@ class _FavoritesSectionState extends State<FavoritesSection>
     );
   }
 
-  Future<Map<String, dynamic>> _getStepData(
-      List<String> stepIds) async {
+  Future<Map<String, dynamic>> _getStepData(List<String> stepIds) async {
     List<String> imageUrls = [];
     List<plan_steps.Step> steps = [];
 
@@ -260,21 +258,38 @@ class _FavoritesSectionState extends State<FavoritesSection>
         }
       }
 
-      // Calculer le coût total et la durée
+      // Calculer le coût total et la durée en minutes
       final totalCost = calculateTotalStepsCost(steps);
-      final totalDuration = calculateTotalStepsDuration(steps);
+      final durationString = calculateTotalStepsDuration(steps);
+
+      // Convertir la durée en minutes pour CompactPlanCard
+      int durationMinutes = 0;
+      if (durationString.contains('heure')) {
+        final parts = durationString.split(' ');
+        if (parts.length >= 3) {
+          durationMinutes = int.parse(parts[0]) * 60;
+          if (parts.length >= 4) {
+            durationMinutes += int.parse(parts[2]);
+          }
+        }
+      } else if (durationString.contains('minute')) {
+        final parts = durationString.split(' ');
+        if (parts.length >= 2) {
+          durationMinutes = int.parse(parts[0]);
+        }
+      }
 
       return {
         'imageUrls': imageUrls,
         'cost': totalCost,
-        'duration': totalDuration,
+        'durationMinutes': durationMinutes,
       };
     } catch (e) {
       print('Erreur lors de la récupération des données des étapes: $e');
       return {
         'imageUrls': <String>[],
         'cost': 0.0,
-        'duration': "0 minute",
+        'durationMinutes': 0,
       };
     }
   }

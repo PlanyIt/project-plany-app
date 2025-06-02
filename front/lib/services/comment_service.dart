@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http show delete, get, post, put;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -266,7 +267,9 @@ class CommentService {
       );
 
       if (response.statusCode != 200 && response.statusCode != 204) {
-        print('Erreur : ${response.statusCode} - ${response.body}');
+        if (kDebugMode) {
+          print('Erreur : ${response.statusCode} - ${response.body}');
+        }
         throw Exception(
             'Erreur lors de la suppression de la réponse : ${response.body}');
       }

@@ -128,22 +128,28 @@ class StepService {
   }
 
   Future<Step?> getStepById(String stepId) async {
-  try {
-    final response = await http.get(Uri.parse('$baseUrl/api/steps/$stepId'));
-    if (response.statusCode == 200) {
-      final jsonBody = response.body;
-      
-      final parsedJson = json.decode(jsonBody);
-      
-      try {
-        final step = Step.fromJson(parsedJson);
-        return step;
-      } catch (e) {
-        print("Erreur lors de la conversion JSON → Step: $e");
-        return null;
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/api/steps/$stepId'));
+      if (response.statusCode == 200) {
+        final jsonBody = response.body;
+
+        final parsedJson = json.decode(jsonBody);
+
+        try {
+          final step = Step.fromJson(parsedJson);
+          return step;
+        } catch (e) {
+          print("Erreur lors de la conversion JSON → Step: $e");
+          return null;
+        }
+      } else {
+        throw Exception('Failed to load step');
       }
-    } else {
-      throw Exception('Failed to load step');
+    } catch (error) {
+      if (kDebugMode) {
+        print('Exception capturée: $error');
+      }
+      return null;
     }
   }
 

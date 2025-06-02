@@ -1,60 +1,32 @@
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 class Step {
   final String? id;
   final String title;
   final String description;
+  final LatLng? position;
   final int order;
-  final String userId;
+  final String image;
   final String? duration;
   final double? cost;
-  final LatLng? position; // Ne sera pas envoyé directement au serveur
-  final String? image;
-  final String? address; // Ne sera pas envoyé directement au serveur
+  final DateTime? createdAt;
+  final String userId;
 
   Step({
     this.id,
     required this.title,
     required this.description,
+    this.position,
     required this.order,
-    required this.userId,
+    required this.image,
     this.duration,
     this.cost,
-    this.position,
-    this.image,
-    this.address,
+    this.createdAt,
+    required this.userId,
   });
 
-  Map<String, dynamic> toJson() {
-    // On supprime les propriétés qui causent des erreurs 400
-    final Map<String, dynamic> data = {
-      'title': title,
-      'description': description,
-      'order': order,
-      'userId': userId,
-      'image': image,
-    };
-
-    if (duration != null) data['duration'] = duration;
-    if (cost != null) data['cost'] = cost;
-
-    // Ajouter les coordonnées séparément plutôt que l'objet position
-    // Seulement si nous avons une position valide
-    if (position != null) {
-      data['latitude'] = position!.latitude;
-      data['longitude'] = position!.longitude;
-    }
-
-    // Nous n'envoyons pas la propriété 'address' au serveur
-    // car elle n'est pas acceptée par le backend
-
-    if (id != null) data['_id'] = id;
-
-    return data;
-  }
-
   factory Step.fromJson(Map<String, dynamic> json) {
-    // Reconstruction de l'objet LatLng à partir de lat/lng
     LatLng? position;
 
     if (json['latitude'] != null && json['longitude'] != null) {
@@ -67,13 +39,16 @@ class Step {
             ? (json['longitude'] as int).toDouble()
             : json['longitude'];
 
-
         position = LatLng(latitude, longitude);
       } catch (e) {
-        print("Erreur position: $e");
+        if (kDebugMode) {
+          print("Erreur position: $e");
+        }
       }
     } else {
-      print("Coordonnées non trouvées dans le JSON");
+      if (kDebugMode) {
+        print("Coordonnées non trouvées dans le JSON");
+      }
     }
 
     double? cost;
@@ -86,8 +61,9 @@ class Step {
       id: json['_id'],
       title: json['title'],
       description: json['description'],
+      position: position,
       order: json['order'],
-      userId: json['userId'],
+      image: json['image'],
       duration: json['duration'],
       cost: cost,
       createdAt:

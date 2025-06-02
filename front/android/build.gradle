@@ -1,11 +1,13 @@
 buildscript {
+    ext.kotlin_version = '1.8.22'
     repositories {
         google()
         mavenCentral()
     }
-    
+
     dependencies {
         classpath 'com.android.tools.build:gradle:8.2.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.0' 
     }
 
@@ -19,6 +21,13 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+    
+    // Apply consistent Kotlin settings for all projects
+    plugins.withId('kotlin-android') {
+        kotlin {
+            jvmToolchain(17)
+        }
     }
 }
 

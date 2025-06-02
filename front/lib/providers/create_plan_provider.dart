@@ -342,7 +342,6 @@ class CreatePlanProvider extends ChangeNotifier {
     titlePlanController.clear();
     descriptionPlanController.clear();
     _selectedCategory = null;
-    _selectedTags.clear();
     _showTagContainer = false;
     _stepCards.clear();
     _currentStep = 1;
