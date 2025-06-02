@@ -37,8 +37,7 @@ class CreatePlanProvider extends ChangeNotifier {
 
   List<Category> _categories = [];
   Category? _selectedCategory;
-  bool _showTagContainer =
-      false; // Cette propriété peut rester, mais ne sera plus utilisée
+  bool _showTagContainer = false;
   XFile? _imageStep;
   final List<StepCard> _stepCards = [];
   bool _isLoading = false;
@@ -57,8 +56,7 @@ class CreatePlanProvider extends ChangeNotifier {
   int get currentStep => _currentStep;
   List<Category> get categories => _categories;
   Category? get selectedCategory => _selectedCategory;
-  bool get showTagContainer =>
-      _showTagContainer; // Cette propriété peut rester, mais ne sera plus utilisée
+  bool get showTagContainer => _showTagContainer;
   XFile? get imageStep => _imageStep;
   List<StepCard> get stepCards => _stepCards;
   bool get isLoading => _isLoading;
@@ -344,6 +342,7 @@ class CreatePlanProvider extends ChangeNotifier {
     titlePlanController.clear();
     descriptionPlanController.clear();
     _selectedCategory = null;
+    _selectedTags.clear();
     _showTagContainer = false;
     _stepCards.clear();
     _currentStep = 1;

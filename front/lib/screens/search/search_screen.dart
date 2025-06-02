@@ -6,6 +6,7 @@ import 'package:front/models/plan.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/step_service.dart';
+import 'package:front/services/step_service.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/card/compact_plan_card.dart';
 import 'package:front/widgets/tag/cutom_chip.dart';
@@ -129,6 +130,14 @@ class _SearchScreenState extends State<SearchScreen> {
         });
       }
     }
+  }
+
+  void _navigateToDetails(String planId) {
+    Navigator.pushNamed(
+      context,
+      '/details',
+      arguments: planId,
+    );
   }
 
   @override

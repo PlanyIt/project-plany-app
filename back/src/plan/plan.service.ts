@@ -1,31 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PlanDto } from './dto/plan.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from './schemas/plan.schema';
 import { Model } from 'mongoose';
 import { StepDto } from 'src/step/dto/step.dto';
+import { User, UserDocument } from 'src/user/schemas/user.schema';
 
 @Injectable()
 export class PlanService {
-  constructor(@InjectModel(Plan.name) private planModel: Model<PlanDocument>) {}
+  constructor(
+    @InjectModel(Plan.name) private planModel: Model<PlanDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+  ) {}
 
-  // Création de plan avec userId
   async createPlan(createPlanDto: PlanDto): Promise<PlanDocument> {
     const createdPlan = new this.planModel(createPlanDto);
     return createdPlan.save();
   }
 
-  // Récupérer tous les plans
   async findAll(): Promise<PlanDocument[]> {
     return this.planModel.find().exec();
   }
 
-  // Supprimer un plan par son ID et userId
   async removeById(planId: string, userId: string): Promise<PlanDocument> {
     return this.planModel.findOneAndDelete({ _id: planId, userId }).exec();
   }
 
-  // Mettre à jour un plan par son ID et userId
   async updateById(
     planId: string,
     updatePlanDto: PlanDto,
@@ -36,12 +36,10 @@ export class PlanService {
       .exec();
   }
 
-  // Récupérer un plan par son ID
   async findById(planId: string): Promise<PlanDocument | undefined> {
     return this.planModel.findOne({ _id: planId }).exec();
   }
 
-  /// ajouter les steps dans le plan
   async addStepToPlan(
     planId: string,
     stepDto: StepDto,
@@ -53,5 +51,82 @@ export class PlanService {
         { new: true },
       )
       .exec();
+  }
+
+  async addToFavorites(planId: string, userId: string): Promise<PlanDocument> {
+    try {
+      const plan = await this.planModel.findById(planId);
+      if (!plan) {
+        throw new NotFoundException(`Plan with ID ${planId} not found`);
+      }
+
+      if (plan.favorites === null) {
+        await this.planModel.updateOne(
+          { _id: planId },
+          { $set: { favorites: [] } },
+        );
+      }
+
+      return this.planModel.findByIdAndUpdate(
+        planId,
+        { $addToSet: { favorites: userId } },
+        { new: true },
+      );
+    } catch (error) {
+      console.error(`Error adding favorite: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async removeFromFavorites(
+    planId: string,
+    userId: string,
+  ): Promise<PlanDocument> {
+    try {
+      const plan = await this.planModel.findById(planId);
+      if (!plan) {
+        throw new NotFoundException(`Plan with ID ${planId} not found`);
+      }
+      if (plan.favorites === null) {
+        return plan;
+      }
+
+      return this.planModel.findByIdAndUpdate(
+        planId,
+        { $pull: { favorites: userId } },
+        { new: true },
+      );
+    } catch (error) {
+      console.error(`Error removing favorite: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async findAllByUserId(userId: string): Promise<PlanDocument[]> {
+    return this.planModel.find({ userId }).sort({ createdAt: -1 }).exec();
+  }
+
+  async findFavoritesByUserId(userId: string): Promise<PlanDocument[]> {
+    return this.planModel
+      .find({ favorites: userId })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async countUserPlans(userId: string): Promise<number> {
+    return this.planModel.countDocuments({ userId }).exec();
+  }
+
+  async countUserFavorites(userId: string): Promise<number> {
+    return this.planModel.countDocuments({ favorites: userId }).exec();
+  }
+
+  async fixNullFavorites() {
+    const result = await this.planModel.updateMany(
+      { favorites: null },
+      { $set: { favorites: [] } },
+    );
+
+    return result;
   }
 }

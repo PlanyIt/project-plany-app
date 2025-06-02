@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
 class Plan {
   final String? id;
   final String title;
@@ -8,6 +10,8 @@ class Plan {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final List<String> steps;
+  final List<String>? favorites; 
+  final bool isFavorite; 
   final double? estimatedCost; // Added this field
 
   Plan({
@@ -20,10 +24,15 @@ class Plan {
     this.isPublic = true,
     this.createdAt,
     this.updatedAt,
+    this.favorites, 
+    this.isFavorite = false, 
     this.estimatedCost, // Added to constructor
   });
 
   factory Plan.fromJson(Map<String, dynamic> json) {
+    final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final List<String> favoritesFromJson = List<String>.from(json['favorites'] ?? []);
+    
     return Plan(
       id: json['_id'],
       title: json['title'],
@@ -36,10 +45,16 @@ class Plan {
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt:
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      favorites: favoritesFromJson, 
+      isFavorite: currentUserId != null && favoritesFromJson.contains(currentUserId), 
       estimatedCost: json['estimatedCost']?.toDouble(), // Parse from JSON
     );
   }
 
+  get rating => null;
+
+  get totalCost => null;
+  
   Map<String, dynamic> toJson() {
     final map = {
       'title': title,
@@ -48,6 +63,7 @@ class Plan {
       'category': category,
       'isPublic': isPublic,
       'steps': steps,
+      'favorites': favorites, 
     };
 
     if (estimatedCost != null) {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as Math;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -127,10 +128,20 @@ class StepService {
   }
 
   Future<Step?> getStepById(String stepId) async {
+  try {
     final response = await http.get(Uri.parse('$baseUrl/api/steps/$stepId'));
-
     if (response.statusCode == 200) {
-      return Step.fromJson(json.decode(response.body));
+      final jsonBody = response.body;
+      
+      final parsedJson = json.decode(jsonBody);
+      
+      try {
+        final step = Step.fromJson(parsedJson);
+        return step;
+      } catch (e) {
+        print("Erreur lors de la conversion JSON → Step: $e");
+        return null;
+      }
     } else {
       throw Exception('Failed to load step');
     }

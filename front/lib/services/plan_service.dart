@@ -19,9 +19,9 @@ class PlanService {
   Future<List<Plan>> getPlans() async {
     final response = await http.get(Uri.parse('$baseUrl/api/plans'));
     if (kDebugMode) {
-      print(response.body);
-    }
+      }
     if (response.statusCode == 200) {
+
       final List<dynamic> plans = json.decode(response.body);
       return plans.map((plan) => Plan.fromJson(plan)).toList();
     } else {
@@ -99,13 +99,13 @@ class PlanService {
     }
   }
 
-  Future<void> deletePlan(String planId) async {
+  Future<bool> deletePlan(String planId) async {
     try {
       // Récupération du token Firebase
       final token = await getAuthToken();
       if (token == null) throw Exception('No authentication token found');
 
-      // Requête HTTP avec le token dans l’en-tête
+      // Requête HTTP avec le token dans l'en-tête
       final response = await http.delete(
         Uri.parse('$baseUrl/api/plans/$planId'),
         headers: {
@@ -114,9 +114,10 @@ class PlanService {
         },
       );
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         if (kDebugMode) {
-          print('Erreur : ${response.statusCode} - ${response.body}');
+          return true;
+      } else {
         }
         throw Exception(
             'Erreur lors de la suppression du plan : ${response.body}');
@@ -136,6 +137,51 @@ class PlanService {
       return Plan.fromJson(plan);
     } else {
       throw Exception('Failed to load plan');
+    }
+  }
+
+  Future<void> addToFavorites(String planId) async {
+    try {
+      final token = await getAuthToken();
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/plans/$planId/favorite'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(
+            'Erreur lors de l\'ajout aux favoris: ${response.body}');
+      }
+    } catch (error) {
+      print('Exception capturée: $error');
+      rethrow;
+    }
+  }
+
+  Future<void> removeFromFavorites(String planId) async {
+    try {
+      final token = await getAuthToken();
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/plans/$planId/unfavorite'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Erreur lors du retrait des favoris: ${response.body}');
+      }
+    } catch (error) {
+      print('Exception capturée: $error');
+      rethrow;
     }
   }
 

@@ -58,6 +58,20 @@ IconData getIconData(String? iconName) {
     'church': Icons.church,
 
     // Icônes spécifiques
+    'favorite': Icons.favorite,
+    'nightlife': Icons.nightlife,
+    'nature': Icons.landscape,
+    'celebration': Icons.celebration,
+    'shopping_bag': Icons.shopping_bag,
+    'museum': Icons.museum,
+    'sports': Icons.sports_soccer,
+    'home_filled': Icons.home,
+    'home_rounded': Icons.home_rounded,
+    'house': Icons.house,
+    'house_outlined': Icons.house_outlined,
+    // ...
+
+    // Mappages de secours pour les icônes non trouvées
     'place_outlined': Icons.place_outlined,
     'access_time_outlined': Icons.access_time_outlined,
     'euro_outlined': Icons.euro_outlined,

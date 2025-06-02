@@ -6,18 +6,27 @@ import {
   Param,
   Delete,
   Put,
+  Patch,
   UseGuards,
   Req,
   HttpException,
   HttpStatus,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PlanService } from './plan.service';
 import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
 import { PlanDto } from './dto/plan.dto';
+import { UserService } from '../user/user.service';
+import { UpdateUserDto } from '../user/dto/update-user.dto';
 
 @Controller('api/plans')
 export class PlanController {
-  constructor(private readonly planService: PlanService) {}
+  constructor(
+    private readonly planService: PlanService,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
+  ) {}
 
   @Get()
   findAll() {
@@ -57,8 +66,39 @@ export class PlanController {
     return this.planService.updateById(planId, updatePlanDto, userId);
   }
 
+  @UseGuards(FirebaseAuthGuard)
   @Delete(':planId')
-  removePlan(@Param('planId') planId: string, @Body('userId') userId: string) {
-    return this.planService.removeById(planId, userId);
+  removePlan(@Param('planId') planId: string, @Req() req) {
+    return this.planService.removeById(planId, req.userId);
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Put(':planId/favorite')
+  async addToFavorites(@Param('planId') planId: string, @Req() req) {
+    return this.planService.addToFavorites(planId, req.userId);
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Put(':planId/unfavorite')
+  async removeFromFavorites(@Param('planId') planId: string, @Req() req) {
+    return this.planService.removeFromFavorites(planId, req.userId);
+  }
+
+  @Get('user/:userId')
+  async findAllByUserId(@Param('userId') userId: string) {
+    return this.planService.findAllByUserId(userId);
+  }
+
+  @Get('user/:userId/favorites')
+  async findFavoritesByUserId(@Param('userId') userId: string) {
+    return this.planService.findFavoritesByUserId(userId);
+  }
+
+  @Patch(':firebaseUid/profile')
+  async updateUserProfile(
+    @Param('firebaseUid') firebaseUid: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.userService.updateByFirebaseUid(firebaseUid, updateUserDto);
   }
 }

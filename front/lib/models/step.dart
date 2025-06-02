@@ -56,9 +56,30 @@ class Step {
   factory Step.fromJson(Map<String, dynamic> json) {
     // Reconstruction de l'objet LatLng à partir de lat/lng
     LatLng? position;
-    if (json.containsKey('latitude') && json.containsKey('longitude')) {
-      position = LatLng(double.parse(json['latitude'].toString()),
-          double.parse(json['longitude'].toString()));
+
+    if (json['latitude'] != null && json['longitude'] != null) {
+      try {
+        final double latitude = (json['latitude'] is int)
+            ? (json['latitude'] as int).toDouble()
+            : json['latitude'];
+
+        final double longitude = (json['longitude'] is int)
+            ? (json['longitude'] as int).toDouble()
+            : json['longitude'];
+
+
+        position = LatLng(latitude, longitude);
+      } catch (e) {
+        print("Erreur position: $e");
+      }
+    } else {
+      print("Coordonnées non trouvées dans le JSON");
+    }
+
+    double? cost;
+    if (json['cost'] != null) {
+      cost =
+          json['cost'] is int ? (json['cost'] as int).toDouble() : json['cost'];
     }
 
     return Step(
@@ -68,13 +89,30 @@ class Step {
       order: json['order'],
       userId: json['userId'],
       duration: json['duration'],
-      cost: json['cost']?.toDouble(),
-      position: position,
-      image: json['image'],
-
-      // Nous conservons l'adresse localement dans l'application
-      // même si elle n'existe pas dans la réponse du serveur
-      address: json['address'],
+      cost: cost,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      userId: json['userId'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {
+      'title': title,
+      'description': description,
+      'order': order,
+      'image': image,
+      'duration': duration,
+      'cost': cost,
+      'userId': userId,
+    };
+
+    // Envoyer latitude et longitude directement au niveau racine
+    if (position != null) {
+      data['latitude'] = position!.latitude;
+      data['longitude'] = position!.longitude;
+    }
+
+    return data;
   }
 }

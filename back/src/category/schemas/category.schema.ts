@@ -10,6 +10,9 @@ export class Category {
 
   @Prop({ required: true })
   icon: string;
+
+  @Prop({ required: true })
+  color: string;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);

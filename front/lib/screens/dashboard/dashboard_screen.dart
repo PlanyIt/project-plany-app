@@ -81,6 +81,11 @@ class DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(Icons.person_outline),
             label: 'Profil',
           ),
+          // BottomNavigationBarItem(
+          //   backgroundColor: Colors.white,
+          //   icon: Icon(Icons.person),
+          //   label: 'Profil',
+          // ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
