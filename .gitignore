@@ -1,1 +1,4 @@
 .vscode/
+front/.vscode/
+front/.env
+playground-1.mongodb.js

@@ -1,4 +1,3 @@
-// src/auth/auth.service.ts
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 

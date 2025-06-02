@@ -1,114 +1,170 @@
 import 'package:flutter/material.dart';
-import 'package:front/services/auth_service.dart';
-import 'package:front/widgets/buttons/p_primarybutton.dart';
+import 'package:front/theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import 'package:front/widgets/common/custom_text_field.dart';
+import 'package:front/providers/auth/login_provider.dart';
+import 'package:front/widgets/common/plany_logo.dart';
+import 'package:front/widgets/common/plany_button.dart';
+import 'package:front/screens/dashboard/dashboard_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  LoginScreenState createState() => LoginScreenState();
-}
-
-class LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
-  bool _isLoading = false;
-
-  // Méthode pour gérer la connexion
-  Future<void> _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      // Si l'un des champs est vide, afficher un message d'erreur
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs.')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // Tentative de connexion via le service Firebase
-      final user = await _authService.login(
-        _emailController.text,
-        _passwordController.text,
-      );
-
-      if (user != null) {
-        // Rediriger l'utilisateur vers l'écran d'accueil après la connexion réussie
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      }
-    } catch (e) {
-      // Si la connexion échoue, afficher un message d'erreur
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Connexion échouée : $e')),
-      );
-      print('Login failed: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  // Méthode pour rediriger vers l'écran de réinitialisation du mot de passe
-  void _resetPassword() {
-    Navigator.pushNamed(context,
-        '/reset-password'); // Redirige vers une page de réinitialisation
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Connexion'),
+    return ChangeNotifierProvider(
+      create: (_) => LoginProvider(),
+      child: Scaffold(
+        // Use resizeToAvoidBottomInset to prevent keyboard issues
+        resizeToAvoidBottomInset: true,
+        body: Stack(
+          children: [
+            Consumer<LoginProvider>(
+              builder: (context, provider, _) {
+                return provider.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : SafeArea(
+                        child: SingleChildScrollView(
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: EdgeInsets.only(
+                            left: AppTheme.paddingL,
+                            right: AppTheme.paddingL,
+                            bottom:
+                                MediaQuery.of(context).viewInsets.bottom + 16,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 40),
+                              _buildLogo(),
+                              const SizedBox(height: 40),
+                              _buildWelcomeText(context),
+                              const SizedBox(height: 40),
+                              CustomTextField(
+                                controller: provider.emailController,
+                                labelText: 'Email',
+                                hintText: 'Entrez votre email',
+                                prefixIcon: Icons.email_outlined,
+                              ),
+                              const SizedBox(height: 20),
+                              CustomTextField(
+                                controller: provider.passwordController,
+                                labelText: 'Mot de passe',
+                                hintText: 'Entrez votre mot de passe',
+                                prefixIcon: Icons.lock_outline,
+                                obscureText: provider.obscurePassword,
+                                suffixIcon: provider.obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                onSuffixIconPressed:
+                                    provider.togglePasswordVisibility,
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () =>
+                                      provider.navigateToResetPassword(context),
+                                  child: Text(
+                                    'Mot de passe oublié ?',
+                                    style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+                              PlanyButton(
+                                text: 'Connexion',
+                                onPressed: () => provider.login(
+                                  () => Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const DashboardScreen()),
+                                    (route) =>
+                                        false, // Supprime toutes les routes précédentes
+                                  ),
+                                  (errorMessage) =>
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                    SnackBar(content: Text(errorMessage)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _buildRegisterLink(context, provider),
+                            ],
+                          ),
+                        ),
+                      );
+              },
+            ),
+          ],
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  TextField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      labelStyle: TextStyle(color: Colors.grey[600]),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Mot de passe',
-                      labelStyle: TextStyle(color: Colors.grey[600]),
-                    ),
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 10),
-                  // Lien pour réinitialiser le mot de passe
-                  TextButton(
-                    onPressed: _resetPassword,
-                    child: Text(
-                      'Mot de passe oublié ?',
-                      style: TextStyle(color: Theme.of(context).primaryColor),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  SizedBox(
-                    width: double.infinity,
-                    child: PrimaryButton(
-                      text: "Connexion",
-                      onPressed: _login,
-                    ),
-                  ),
-                ],
+    );
+  }
+
+  Widget _buildLogo() {
+    return Center(
+      child: PlanyLogo(fontSize: 50),
+    );
+  }
+
+  Widget _buildWelcomeText(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Connexion',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Bienvenue ! Veuillez vous connecter pour continuer',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.7),
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRegisterLink(BuildContext context, LoginProvider provider) {
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Pas encore de compte ? ',
+            style: TextStyle(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.7),
+            ),
+          ),
+          TextButton(
+            onPressed: () => provider.navigateToRegister(context),
+            child: Text(
+              'S\'enregistrer',
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontWeight: FontWeight.bold,
               ),
             ),
+          ),
+        ],
+      ),
     );
   }
 }

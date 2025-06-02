@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:front/widgets/buttons/p_primarybutton.dart';
+import 'package:front/widgets/common/plany_logo.dart';
+import 'package:front/widgets/common/plany_button.dart';
+import 'package:front/theme/app_theme.dart';
+import 'package:front/widgets/common/custom_text_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -29,17 +32,21 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     try {
       await _auth.sendPasswordResetEmail(email: _emailController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Email de réinitialisation du mot de passe envoyé.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Email de réinitialisation du mot de passe envoyé.')),
+        );
 
-      // Rediriger vers la page de connexion après l'envoi de l'email
-      Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la réinitialisation : $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la réinitialisation : $e')),
+        );
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -50,45 +57,85 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Réinitialisation du mot de passe'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
+      // Use resizeToAvoidBottomInset to prevent keyboard issues
+      resizeToAvoidBottomInset: true,
+      body: Stack(
+        children: [
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            SafeArea(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.only(
+                  left: AppTheme.paddingL,
+                  right: AppTheme.paddingL,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 40),
+                    Center(child: const PlanyLogo(fontSize: 50)),
+                    const SizedBox(height: 40),
+                    Text(
+                      'Réinitialisation du mot de passe',
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Entrez votre adresse email pour recevoir un lien de réinitialisation.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7),
+                          ),
+                    ),
+                    const SizedBox(height: 40),
+                    CustomTextField(
+                      controller: _emailController,
                       labelText: 'Email',
-                      filled: true,
-                      fillColor: Colors.white,
+                      hintText: 'Entrez votre email',
+                      prefixIcon: Icons.email_outlined,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: PrimaryButton(
+                    const SizedBox(height: 30),
+                    PlanyButton(
+                      text: 'Envoyer le lien de réinitialisation',
                       onPressed: _resetPassword,
-                      text: 'Envoyer l\'email de réinitialisation',
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/login');
-                    },
-                    child: Text(
-                      'Retour à la connexion',
-                      style: TextStyle(color: Theme.of(context).primaryColor),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/login');
+                        },
+                        child: Text(
+                          'Retour à la connexion',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+        ],
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
   }
 }

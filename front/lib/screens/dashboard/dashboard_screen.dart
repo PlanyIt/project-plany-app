@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:front/screens/auth/login_screen.dart';
-import 'package:front/screens/auth/signup_screen.dart';
-import 'package:front/screens/create-plan/plans_screen.dart';
-import 'package:front/screens/home/home_screen.dart';
+import 'package:front/screens/create-plan/create_plans_screen.dart';
+import 'package:front/screens/dashboard/dashboard_home_screen.dart';
+import 'package:front/screens/profile/profile_screen.dart';
+import 'package:front/widgets/drawer/profile_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,14 +15,24 @@ class DashboardScreen extends StatefulWidget {
 class DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Liste des pages pour chaque onglet de la barre de navigation
-  static final List<Widget> _pages = <Widget>[
-    HomeScreen(),
-    const LoginScreen(),
-    const SignupScreen(),
-    PlansScreen(),
-  ];
+  Widget get _currentPage {
+    switch (_selectedIndex) {
+      case 0:
+        return DashboardHomeScreen(
+          onProfileTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+        );
+      case 1:
+        return const CreatePlansScreen();
+      case 2:
+        return const ProfileScreen();
+      default:
+        return DashboardHomeScreen(
+          onProfileTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+        );
+    }
+  }
 
   @override
   void initState() {
@@ -47,31 +57,35 @@ class DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       body: Center(
-        child: _pages.elementAt(_selectedIndex), // Affiche la page sélectionnée
+        child: _currentPage,
+      ),
+      endDrawer: ProfileDrawer(
+        onClose: () => _scaffoldKey.currentState?.closeEndDrawer(),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             backgroundColor: Colors.white,
-            icon: Icon(Icons.home),
-            label: 'Accueil',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.white,
-            icon: Icon(Icons.view_list),
-            label: 'Login',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.white,
-            icon: Icon(Icons.person),
-            label: 'Signin',
+            icon: Icon(Icons.dashboard_customize_outlined),
+            label: 'Tableau de bord',
           ),
           BottomNavigationBarItem(
             backgroundColor: Colors.white,
             icon: Icon(Icons.add_circle_outline),
             label: 'Créer',
           ),
+          BottomNavigationBarItem(
+            backgroundColor: Colors.white,
+            icon: Icon(Icons.person_outline),
+            label: 'Profil',
+          ),
+          // BottomNavigationBarItem(
+          //   backgroundColor: Colors.white,
+          //   icon: Icon(Icons.person),
+          //   label: 'Profil',
+          // ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

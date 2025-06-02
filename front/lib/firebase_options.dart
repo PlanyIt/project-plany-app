@@ -55,6 +55,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '19289060333',
     projectId: 'plany-87a3a',
     storageBucket: 'plany-87a3a.appspot.com',
+    androidClientId: 'com.plany.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
