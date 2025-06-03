@@ -28,16 +28,31 @@ class SignupProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authService.register(
+      final user = await _authService.register(
         usernameController.text,
         descriptionController.text,
         emailController.text,
         passwordController.text,
       );
 
-      onSuccess();
+      // Vérifier que l'utilisateur a bien été retourné
+      if (user != null) {
+        onSuccess();
+      } else {
+        onError('Échec de l\'inscription: aucun utilisateur retourné');
+      }
     } catch (e) {
-      onError('Inscription échouée : $e');
+      String errorMessage = 'Inscription échouée';
+
+      // Extraire le message d'erreur de l'exception
+      final exceptionMessage = e.toString();
+      if (exceptionMessage.contains('Exception:')) {
+        errorMessage = exceptionMessage.replaceAll('Exception:', '').trim();
+      } else {
+        errorMessage = '$errorMessage: $exceptionMessage';
+      }
+
+      onError(errorMessage);
     } finally {
       isLoading = false;
       notifyListeners();

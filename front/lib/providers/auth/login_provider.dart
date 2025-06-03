@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:front/services/auth_service.dart';
 import 'package:front/utils/messages.dart';
@@ -25,23 +24,23 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final user = await _authService.login(
+      await _authService.login(
         emailController.text,
         passwordController.text,
       );
 
-      if (user != null) {
-        onSuccess();
-      }
-    } on FirebaseAuthException catch (e) {
+      onSuccess();
+    } catch (e) {
       String errorMessage;
-      if (e.code == 'user-not-found') {
-        errorMessage = 'Utilisateur non trouvé.';
-      } else if (e.code == 'wrong-password') {
-        errorMessage = 'Mot de passe incorrect.';
+
+      // Extraire le message d'erreur de l'exception
+      final exceptionMessage = e.toString();
+      if (exceptionMessage.contains('Exception:')) {
+        errorMessage = exceptionMessage.replaceAll('Exception:', '').trim();
       } else {
-        errorMessage = Messages.loginFailed;
+        errorMessage = '${Messages.loginFailed} ${e.toString()}';
       }
+
       onError(errorMessage);
     } finally {
       isLoading = false;

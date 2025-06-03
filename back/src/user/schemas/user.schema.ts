@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import * as bcrypt from 'bcrypt';
 
 export type UserDocument = User & Document;
 
@@ -48,27 +47,5 @@ export class User {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-// Ajouter un middleware pre-save pour hacher les mots de passe
-UserSchema.pre('save', async function (next) {
-  // Ne hacher le mot de passe que s'il a été modifié ou est nouveau
-  if (!this.isModified('password')) return next();
-
-  try {
-    // Générer un salt et hacher le mot de passe
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(this.password, salt);
-
-    // Remplacer le mot de passe en clair par le mot de passe haché
-    this.password = hashedPassword;
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Ajouter une méthode pour vérifier les mots de passe
-UserSchema.methods.comparePassword = async function (
-  candidatePassword: string,
-): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
-};
+// Supprimer le middleware pre-save ou le conserver comme sécurité secondaire
+// mais ne pas s'y fier exclusivement

@@ -4,15 +4,13 @@ import 'package:front/screens/profile/widgets/content/premium_popup.dart';
 import 'package:front/services/auth_service.dart';
 import 'package:front/widgets/section/section_text_field.dart';
 
-
 class AccountSettings extends StatefulWidget {
   final UserProfile userProfile;
   final Function onProfileUpdated;
   final Function(String, String) showInfoCard;
   final Function(String) showErrorCard;
   final AuthService _authService = AuthService();
-  bool _isLoading = false;
-  
+
   AccountSettings({
     super.key,
     required this.userProfile,
@@ -22,10 +20,10 @@ class AccountSettings extends StatefulWidget {
   });
 
   @override
-  _AccountSettingsState createState() => _AccountSettingsState();
+  AccountSettingsState createState() => AccountSettingsState();
 }
 
-class _AccountSettingsState extends State<AccountSettings> {
+class AccountSettingsState extends State<AccountSettings> {
   String _formatDate(DateTime date) {
     return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
   }
@@ -83,7 +81,7 @@ class _AccountSettingsState extends State<AccountSettings> {
                         labelText: 'Entrez votre nouvelle adresse email',
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Ajout du champ mot de passe pour la réauthentification
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +104,9 @@ class _AccountSettingsState extends State<AccountSettings> {
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                  obscurePassword
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                 ),
                                 onPressed: () {
                                   setStateDialog(() {
@@ -141,7 +141,7 @@ class _AccountSettingsState extends State<AccountSettings> {
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 30),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -169,35 +169,28 @@ class _AccountSettingsState extends State<AccountSettings> {
                             onPressed: () async {
                               if (formKey.currentState!.validate()) {
                                 Navigator.pop(context);
-                                
+
                                 // Afficher l'indicateur de chargement
-                                setState(() {
-                                  widget._isLoading = true;
-                                });
-                                
+                                setState(() {});
+
                                 try {
                                   await widget._authService.updateEmail(
                                     emailController.text,
                                     passwordController.text,
                                   );
-                                  
+
                                   // Mettre à jour l'interface
                                   widget.onProfileUpdated();
-                                  widget.showInfoCard(
-                                    'Succès',
-                                    'Votre adresse email a été modifiée avec succès.'
-                                  );
+                                  widget.showInfoCard('Succès',
+                                      'Votre adresse email a été modifiée avec succès.');
                                 } catch (e) {
                                   // Afficher l'erreur
                                   widget.showErrorCard(
-                                    'Erreur: ${e.toString().replaceAll('Exception: ', '')}'
-                                  );
+                                      'Erreur: ${e.toString().replaceAll('Exception: ', '')}');
                                 } finally {
                                   // Masquer l'indicateur de chargement
                                   if (mounted) {
-                                    setState(() {
-                                      widget._isLoading = false;
-                                    });
+                                    setState(() {});
                                   }
                                 }
                               }

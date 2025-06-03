@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:front/providers/auth_provider.dart';
 import 'package:front/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:front/widgets/common/custom_text_field.dart';
@@ -79,14 +80,22 @@ class LoginScreen extends StatelessWidget {
                               PlanyButton(
                                 text: 'Connexion',
                                 onPressed: () => provider.login(
-                                  () => Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const DashboardScreen()),
-                                    (route) =>
-                                        false, // Supprime toutes les routes précédentes
-                                  ),
+                                  () {
+                                    // Mettre à jour l'état d'authentification global
+                                    Provider.of<AuthProvider>(context,
+                                            listen: false)
+                                        .checkAuthStatus();
+
+                                    // Navigation vers le tableau de bord
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const DashboardScreen()),
+                                      (route) =>
+                                          false, // Supprime toutes les routes précédentes
+                                    );
+                                  },
                                   (errorMessage) =>
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(

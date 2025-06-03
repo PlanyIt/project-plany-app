@@ -4,30 +4,52 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
-import * as bcrypt from 'bcrypt';
+import { PasswordService } from './password.service';
+import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
-    private readonly jwtService: JwtService,
+    private usersService: UserService,
+    private jwtService: JwtService,
+    private passwordService: PasswordService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userService.findOneByEmail(email);
+    const user = await this.usersService.findOneByEmail(email);
+
     if (!user) {
-      throw new UnauthorizedException('Identifiants invalides');
+      return null;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Identifiants invalides');
+    // Tenter avec Argon2 d'abord, puis avec bcrypt si nécessaire
+    let isPasswordValid = false;
+
+    try {
+      isPasswordValid = await this.passwordService.verifyPassword(
+        password,
+        user.password,
+      );
+    } catch (e) {
+      // Si le format n'est pas compatible avec Argon2, essayer bcrypt
+      try {
+        isPasswordValid = await this.passwordService.verifyLegacyPassword(
+          password,
+          user.password,
+        );
+      } catch (e) {
+        return null;
+      }
     }
 
-    return user;
+    if (isPasswordValid) {
+      const { password, ...result } = user.toObject();
+      return result;
+    }
+
+    return null;
   }
 
   async login(loginDto: LoginDto) {
@@ -51,26 +73,16 @@ export class AuthService {
     };
   }
 
-  async register(registerDto: RegisterDto) {
-    // Vérifier si l'email est déjà utilisé
-    const existingEmail = await this.userService.findOneByEmail(
-      registerDto.email,
+  async register(createUserDto: CreateUserDto) {
+    // Hacher le mot de passe avec notre service spécialisé
+    const hashedPassword = await this.passwordService.hashPassword(
+      createUserDto.password,
     );
-    if (existingEmail) {
-      throw new BadRequestException('Cet email est déjà utilisé');
-    }
 
-    // Vérifier si le nom d'utilisateur est déjà utilisé
-    const existingUsername = await this.userService.findOneByUsername(
-      registerDto.username,
-    );
-    if (existingUsername) {
-      throw new BadRequestException("Ce nom d'utilisateur est déjà utilisé");
-    }
-
-    // Ne pas hacher le mot de passe ici, car le middleware pre-save le fera
-    const newUser = await this.userService.create({
-      ...registerDto,
+    // Créer l'utilisateur avec le mot de passe déjà haché
+    const newUser = await this.usersService.create({
+      ...createUserDto,
+      password: hashedPassword,
       isActive: true,
     });
 
@@ -94,7 +106,7 @@ export class AuthService {
   }
 
   async refreshToken(userId: string) {
-    const user = await this.userService.findById(userId);
+    const user = await this.usersService.findById(userId);
     if (!user) {
       throw new UnauthorizedException('Utilisateur non trouvé');
     }

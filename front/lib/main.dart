@@ -1,12 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:front/firebase_options.dart';
+import 'package:front/providers/auth_provider.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/routing/routes.dart';
-import 'package:front/screens/auth/home_screen.dart';
-import 'package:front/screens/dashboard/dashboard_screen.dart';
+import 'package:front/screens/auth/login_screen.dart';
+import 'package:front/screens/auth/signup_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -24,13 +22,10 @@ void main() async {
     }
   }
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => PlanProvider()),
+      ChangeNotifierProvider(create: (_) => AuthProvider()),
     ],
     child: const MyApp(),
   ));
@@ -80,29 +75,18 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    final authProvider = Provider.of<AuthProvider>(context);
 
-        if (snapshot.hasError) {
-          return Scaffold(
-            body: Center(
-              child: Text('Erreur: ${snapshot.error}'),
-            ),
-          );
-        }
+    if (authProvider.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-        if (snapshot.hasData && snapshot.data != null) {
-          return const DashboardScreen();
-        } else {
-          return const HomeScreen();
-        }
-      },
-    );
+    if (authProvider.isAuthenticated) {
+      return const SignupScreen(); // Rediriger vers DashboardScreen si authentifié
+    } else {
+      return const LoginScreen(); // Rediriger vers HomeScreen si non authentifié
+    }
   }
 }

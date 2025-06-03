@@ -85,6 +85,27 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Patch(':id/email')
+  async updateEmail(
+    @Param('id') id: string,
+    @Body('email') email: string,
+    @Request() req,
+  ) {
+    // Vérifier que l'utilisateur ne modifie que son propre email
+    if (req.user._id.toString() !== id) {
+      throw new UnauthorizedException('Vous ne pouvez pas modifier cet email');
+    }
+
+    // Vérifier si l'email est déjà utilisé
+    const existingUser = await this.userService.findOneByEmail(email);
+    if (existingUser && existingUser._id.toString() !== id) {
+      throw new UnauthorizedException('Cet email est déjà utilisé');
+    }
+
+    return this.userService.updateById(id, { email });
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/photo')
   updateUserPhoto(
     @Param('id') id: string,
