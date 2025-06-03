@@ -13,4 +13,12 @@ class Messages {
       'Veuillez fermer le clavier pour continuer.';
   static const String cannotShowModalWithKeyboard =
       'Impossible d\'afficher le menu avec le clavier ouvert.';
+
+  // Messages liés à la sécurité
+  static const String passwordInsecure =
+      'Votre mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule et un chiffre.';
+  static const String accountSecurityAlert =
+      'Pour votre sécurité, utilisez un mot de passe fort et unique.';
+  static const String passwordResetAlert =
+      'Si vous n\'avez pas demandé cette réinitialisation, veuillez sécuriser votre compte immédiatement.';
 }

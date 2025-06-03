@@ -68,13 +68,9 @@ export class AuthService {
       throw new BadRequestException("Ce nom d'utilisateur est déjà utilisé");
     }
 
-    // Hacher le mot de passe
-    const hashedPassword = await bcrypt.hash(registerDto.password, 12);
-
-    // Créer l'utilisateur
+    // Ne pas hacher le mot de passe ici, car le middleware pre-save le fera
     const newUser = await this.userService.create({
       ...registerDto,
-      password: hashedPassword,
       isActive: true,
     });
 

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:front/domain/models/user_final.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,71 +9,42 @@ class AuthService {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
   // Méthode de connexion
-  Future<User?> login(String email, String password) async {
+  Future<UserModel?> login(String email, String password) async {
     try {
-      // Tentative de connexion via Firebase Authentication
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
+      var user = {
+        'email': email,
+        'password': password,
+      };
+
+      var body = json.encode(user);
+
+      // Envoi de la requête de connexion à l'API
+      var response = await http.post(
+        Uri.parse('$baseUrl/api/auth/login'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: body,
       );
 
-      await UserService().syncUserAfterLogin();
-      // Si la connexion est réussie, renvoyer l'utilisateur Firebase
-      return userCredential.user;
+      if (response.statusCode == 200) {
+        // Si la connexion est réussie, on récupère l'utilisateur
+        var data = json.decode(response.body);
+
+        return data['user'] != null ? UserModel.fromJson(data['user']) : null;
+      } else {
+        // Si la connexion échoue, on lance une exception
+        throw Exception('Échec de la connexion : ${response.reasonPhrase}');
+      }
     } catch (e) {
       // Gérer les erreurs de connexion et retourner un message descriptif
       throw Exception('Échec de la connexion : $e');
     }
   }
 
-  // Méthode d'inscription
-  /*Future<User?> register(String email, String password, String username,
-      String description) async {
-    try {
-      // Créer un utilisateur via Firebase Authentication
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // Récupérer l'identifiant Firebase (UID)
-      String? firebaseUid = userCredential.user?.uid;
-
-      // Enregistrer les informations supplémentaires dans MongoDB via l'API NestJS
-      await saveUserToMongoDB(firebaseUid!, username, description, email);
-
-      // Retourner l'utilisateur créé
-      return userCredential.user;
-    } catch (e) {
-      // Gérer les erreurs d'inscription
-      throw Exception('Échec de l\'inscription : $e');
-    }
-  }*/
-
-  // Méthode de déconnexion
-  Future<void> logout() async {
-    try {
-      await _auth.signOut();
-    } catch (e) {
-      throw Exception('Échec de la déconnexion : $e');
-    }
-  }
-
-  // Méthode pour réinitialiser le mot de passe
-  Future<void> resetPassword(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-    } catch (e) {
-      throw Exception(
-          'Échec de l\'envoi de l\'e-mail de réinitialisation : $e');
-    }
-  }
-
-  Future<void> saveUserToMongoDB(String username, String description,
-      String email, String password) async {
+  Future<void> register(String username, String description, String email,
+      String password) async {
     try {
       var user = {
         'username': username,
@@ -92,6 +64,25 @@ class AuthService {
       );
     } catch (e) {
       throw Exception('Échec de l\'enregistrement de l\'utilisateur : $e');
+    }
+  }
+
+  // Méthode de déconnexion
+  Future<void> logout() async {
+    try {
+      await _auth.signOut();
+    } catch (e) {
+      throw Exception('Échec de la déconnexion : $e');
+    }
+  }
+
+  // Méthode pour réinitialiser le mot de passe
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      throw Exception(
+          'Échec de l\'envoi de l\'e-mail de réinitialisation : $e');
     }
   }
 

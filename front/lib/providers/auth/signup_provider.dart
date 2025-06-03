@@ -28,7 +28,7 @@ class SignupProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authService.saveUserToMongoDB(
+      await _authService.register(
         usernameController.text,
         descriptionController.text,
         emailController.text,

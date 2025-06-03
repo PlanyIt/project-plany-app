@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -16,7 +20,21 @@ export class UserService {
     @InjectConnection() private connection: Connection,
   ) {}
 
+  // Vérifier si le mot de passe est sécurisé
+  private isPasswordSecure(password: string): boolean {
+    // Au moins 8 caractères, une majuscule, une minuscule et un chiffre
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    return passwordRegex.test(password);
+  }
+
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
+    // Vérifier si le mot de passe est sécurisé
+    if (!this.isPasswordSecure(createUserDto.password)) {
+      throw new BadRequestException(
+        'Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule et un chiffre',
+      );
+    }
+
     const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
   }
