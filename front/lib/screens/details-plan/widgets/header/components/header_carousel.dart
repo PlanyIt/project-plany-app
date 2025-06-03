@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:front/models/step.dart' as custom;
+import 'package:front/domain/models/step.dart' as custom;
 
 class HeaderCarousel extends StatelessWidget {
   final List<custom.Step> steps;

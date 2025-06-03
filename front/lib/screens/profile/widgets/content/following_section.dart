@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/user_profile.dart';
+import 'package:front/domain/models/user_profile.dart';
 import 'package:front/screens/profile/profile_screen.dart';
 import 'package:front/screens/profile/widgets/common/section_header.dart';
 import 'package:front/screens/profile/widgets/content/user_list.dart';

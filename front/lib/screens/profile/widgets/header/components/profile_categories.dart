@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/category.dart';
+import 'package:front/domain/models/category.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/utils/icon_utils.dart';

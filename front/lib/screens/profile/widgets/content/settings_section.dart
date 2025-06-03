@@ -4,7 +4,7 @@ import 'package:front/screens/profile/widgets/settings/account_settings.dart';
 import 'package:front/screens/profile/widgets/settings/components/settings_card.dart';
 import 'package:front/screens/profile/widgets/settings/general_settings.dart';
 import 'package:front/screens/profile/widgets/settings/profile_settings.dart';
-import 'package:front/models/user_profile.dart';
+import 'package:front/domain/models/user_profile.dart';
 
 class SettingsSection extends StatefulWidget {
   final UserProfile userProfile;

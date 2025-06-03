@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/comment.dart';
-import 'package:front/models/user_profile.dart';
+import 'package:front/domain/models/comment.dart';
+import 'package:front/domain/models/user_profile.dart';
 import 'package:front/services/user_service.dart';
 
 class ResponseCard extends StatefulWidget {

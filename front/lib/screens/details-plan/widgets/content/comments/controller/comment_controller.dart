@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:front/models/comment.dart';
-import 'package:front/models/imgur_response.dart';
+import 'package:front/domain/models/comment.dart';
+import 'package:front/domain/models/imgur_response.dart';
 import 'package:front/services/comment_service.dart';
 import 'package:front/services/imgur_service.dart';
 

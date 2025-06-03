@@ -28,21 +28,12 @@ class SignupProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final user = await _authService.register(
-        emailController.text,
-        passwordController.text,
+      await _authService.saveUserToMongoDB(
         usernameController.text,
         descriptionController.text,
+        emailController.text,
+        passwordController.text,
       );
-
-      if (user != null) {
-        await _authService.saveUserToMongoDB(
-          user.uid,
-          usernameController.text,
-          descriptionController.text,
-          emailController.text,
-        );
-      }
 
       onSuccess();
     } catch (e) {

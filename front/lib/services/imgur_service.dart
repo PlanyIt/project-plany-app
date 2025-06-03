@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../models/imgur_response.dart';
+import '../domain/models/imgur_response.dart';
 
 class ImgurService {
   final Dio _dio = Dio(

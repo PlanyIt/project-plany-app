@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' hide Category;
-import 'package:front/models/category.dart';
+import 'package:front/domain/models/category.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

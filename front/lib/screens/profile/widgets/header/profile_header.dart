@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/user_profile.dart';
+import 'package:front/domain/models/user_profile.dart';
 import 'package:front/screens/profile/widgets/header/components/profile_user_info.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/screens/profile/widgets/content/premium_popup.dart';

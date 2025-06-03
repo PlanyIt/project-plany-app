@@ -40,7 +40,6 @@ class DashboardScreenState extends State<DashboardScreen> {
     _checkAuthStatus();
   }
 
-  // Vérifie si l'utilisateur est connecté
   Future<void> _checkAuthStatus() async {
     User? user = _auth.currentUser;
     if (user == null) {
@@ -81,11 +80,6 @@ class DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(Icons.person_outline),
             label: 'Profil',
           ),
-          // BottomNavigationBarItem(
-          //   backgroundColor: Colors.white,
-          //   icon: Icon(Icons.person),
-          //   label: 'Profil',
-          // ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

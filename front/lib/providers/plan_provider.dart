@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:front/models/plan.dart';
-import 'package:front/models/step.dart' as step_model;
+import 'package:front/domain/models/plan.dart';
+import 'package:front/domain/models/step.dart' as step_model;
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/step_service.dart';
 

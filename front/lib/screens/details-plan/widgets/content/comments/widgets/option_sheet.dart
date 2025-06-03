@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/comment.dart';
+import 'package:front/domain/models/comment.dart';
 
 class CommentOptionSheet extends StatelessWidget {
   final Comment comment;

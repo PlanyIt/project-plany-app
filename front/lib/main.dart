@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:front/firebase_options.dart';
 import 'package:front/providers/plan_provider.dart';
-import 'package:front/routes/routes.dart';
+import 'package:front/routing/routes.dart';
 import 'package:front/screens/auth/home_screen.dart';
 import 'package:front/screens/dashboard/dashboard_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,7 +24,6 @@ void main() async {
     }
   }
 
-  // Specify the options to ensure Firebase initializes properly
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -69,33 +68,27 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      // Use AuthWrapper as the home widget to reliably handle auth state
       home: const AuthWrapper(),
-      // Add routes from AppRoutes
       routes: AppRoutes.routes(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-// New AuthWrapper widget that actively listens to authentication state
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Use StreamBuilder to actively listen to auth state changes
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // While waiting for the initial state, show a loading indicator
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        // When there's an error, show an error message
         if (snapshot.hasError) {
           return Scaffold(
             body: Center(
@@ -104,7 +97,6 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // Depending on authentication state, show appropriate screen
         if (snapshot.hasData && snapshot.data != null) {
           return const DashboardScreen();
         } else {

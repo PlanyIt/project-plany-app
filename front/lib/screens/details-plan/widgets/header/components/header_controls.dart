@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
-import 'package:front/models/step.dart' as custom;
+import 'package:front/domain/models/step.dart' as custom;
 import 'package:front/services/navigation_service.dart';
 
 class HeaderControls extends StatelessWidget {

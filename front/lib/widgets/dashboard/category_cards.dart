@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/category.dart';
+import 'package:front/domain/models/category.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:shimmer/shimmer.dart';
 

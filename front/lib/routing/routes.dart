@@ -17,7 +17,6 @@ class AppRoutes {
       '/dashboard': (context) => const DashboardScreen(),
       '/profile': (context) => const ProfileScreen(),
       '/details': (context) => DetailScreen(),
-      '/profile': (context) => const ProfileScreen(),
     };
   }
 }

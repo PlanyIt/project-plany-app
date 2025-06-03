@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:front/models/category.dart' as app_category;
-import 'package:front/models/plan.dart';
+import 'package:front/domain/models/category.dart' as app_category;
+import 'package:front/domain/models/plan.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/screens/search/search_screen.dart';
 import 'package:front/services/categorie_service.dart';
-import 'package:front/widgets/card/compact_plan_card.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:front/widgets/dashboard/category_cards.dart';
 import 'package:front/widgets/dashboard/horizontal_plan_list.dart';

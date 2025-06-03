@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/category.dart';
+import 'package:front/domain/models/category.dart';
 import 'package:front/screens/details-plan/widgets/content/plan_content.dart';
 import 'package:front/screens/details-plan/widgets/header/details_header.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/step_service.dart';
-import 'package:front/models/plan.dart';
-import 'package:front/models/step.dart' as plan_steps;
+import 'package:front/domain/models/plan.dart';
+import 'package:front/domain/models/step.dart' as plan_steps;
 import 'package:front/services/categorie_service.dart';
 
 final GlobalKey<DetailsHeaderState> _headerKey =

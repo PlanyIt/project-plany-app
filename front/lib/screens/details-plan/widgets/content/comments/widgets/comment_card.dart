@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:front/models/comment.dart';
+import 'package:front/domain/models/comment.dart';
 import 'package:front/screens/details-plan/widgets/content/comments/widgets/response_card.dart';
-import 'package:front/models/user_profile.dart';
+import 'package:front/domain/models/user_profile.dart';
 
 class CommentCard extends StatefulWidget {
   final Comment comment;

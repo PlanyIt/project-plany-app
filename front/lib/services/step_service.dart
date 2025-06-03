@@ -4,8 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:front/models/step.dart';
-import 'package:front/models/plan.dart'; // Import the Plan class
+import 'package:front/domain/models/step.dart';
+import 'package:front/domain/models/plan.dart'; // Import the Plan class
 import 'package:front/utils/helpers.dart'; // Import helper functions for duration conversion
 
 class StepService {

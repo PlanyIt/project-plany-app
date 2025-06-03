@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:front/models/step.dart' as custom;
+import 'package:front/domain/models/step.dart' as custom;
 import 'package:front/services/step_service.dart';
 import 'dart:math' as math;
 

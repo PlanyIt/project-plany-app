@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/screens/details-plan/widgets/header/components/header_controls.dart';
 import 'package:front/screens/details-plan/widgets/header/components/map_view.dart';
-import 'package:front/models/step.dart' as custom;
+import 'package:front/domain/models/step.dart' as custom;
 import 'package:front/screens/details-plan/widgets/header/components/step_info_card.dart';
 import 'package:front/screens/details-plan/widgets/header/components/header_carousel.dart';
 import 'package:front/services/step_service.dart';

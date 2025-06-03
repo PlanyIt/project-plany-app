@@ -28,7 +28,7 @@ class AuthService {
   }
 
   // Méthode d'inscription
-  Future<User?> register(String email, String password, String username,
+  /*Future<User?> register(String email, String password, String username,
       String description) async {
     try {
       // Créer un utilisateur via Firebase Authentication
@@ -50,7 +50,7 @@ class AuthService {
       // Gérer les erreurs d'inscription
       throw Exception('Échec de l\'inscription : $e');
     }
-  }
+  }*/
 
   // Méthode de déconnexion
   Future<void> logout() async {
@@ -71,21 +71,18 @@ class AuthService {
     }
   }
 
-  Future<void> saveUserToMongoDB(String firebaseUid, String username,
-      String description, String email) async {
+  Future<void> saveUserToMongoDB(String username, String description,
+      String email, String password) async {
     try {
-      // Créer un objet contenant les informations de l'utilisateur
       var user = {
-        'firebaseUid': firebaseUid,
         'username': username,
         'description': description,
         'email': email,
+        'password': password,
       };
 
-      // Convertir l'objet en JSON
       var body = json.encode(user);
 
-      // Envoyer une requête POST à l'API NestJS pour enregistrer l'utilisateur
       await http.post(
         Uri.parse('$baseUrl/api/users'),
         headers: <String, String>{

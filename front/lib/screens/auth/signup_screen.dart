@@ -14,7 +14,6 @@ class SignupScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => SignupProvider(),
       child: Scaffold(
-        // Use resizeToAvoidBottomInset to prevent keyboard issues
         resizeToAvoidBottomInset: true,
         body: Stack(
           children: [

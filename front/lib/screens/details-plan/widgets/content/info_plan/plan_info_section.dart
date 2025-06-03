@@ -1,8 +1,8 @@
 
 import 'package:flutter/material.dart';
-import 'package:front/models/plan.dart';
-import 'package:front/models/step.dart' as plan_steps;
-import 'package:front/models/user_profile.dart';
+import 'package:front/domain/models/plan.dart';
+import 'package:front/domain/models/step.dart' as plan_steps;
+import 'package:front/domain/models/user_profile.dart';
 import 'package:front/screens/profile/profile_screen.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/user_service.dart';

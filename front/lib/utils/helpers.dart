@@ -1,4 +1,4 @@
-import 'package:front/models/step.dart' as step_model;
+import 'package:front/domain/models/step.dart' as step_model;
 
 /// Calculates the total cost of steps from a list of Step objects.
 ///
