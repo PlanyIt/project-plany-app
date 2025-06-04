@@ -1,12 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/services/user_service.dart';
 
 class PremiumPopup {
   static Future<void> show({
     required BuildContext context,
-    required UserProfile userProfile,
+    required User userProfile,
     required Function onProfileUpdated,
     required Function(String, String) showInfoCard,
     required Function(String) showErrorCard,
@@ -61,7 +60,7 @@ class PremiumPopup {
                       width: double.infinity,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.1),
+                        color: Colors.amber.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.amber),
                       ),
@@ -106,14 +105,11 @@ class PremiumPopup {
               }
 
               try {
-                final firebaseUser = FirebaseAuth.instance.currentUser;
-                if (firebaseUser == null) {
-                  throw Exception("Utilisateur non connecté");
-                }
-
                 final success = isPremium
-                    ? await _userService.updatePremiumStatus(firebaseUser.uid, false)
-                    : await _userService.updatePremiumStatus(firebaseUser.uid, true);
+                    ? await _userService.updatePremiumStatus(
+                        userProfile.id, false)
+                    : await _userService.updatePremiumStatus(
+                        userProfile.id, true);
 
                 if (success) {
                   userProfile.isPremium = !isPremium;

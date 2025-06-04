@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/widgets/common/section_header.dart';
 import 'package:front/screens/profile/widgets/settings/account_settings.dart';
 import 'package:front/screens/profile/widgets/settings/components/settings_card.dart';
 import 'package:front/screens/profile/widgets/settings/general_settings.dart';
 import 'package:front/screens/profile/widgets/settings/profile_settings.dart';
-import 'package:front/domain/models/user_profile.dart';
 
 class SettingsSection extends StatefulWidget {
-  final UserProfile userProfile;
+  final User userProfile;
   final Function onProfileUpdated;
 
   const SettingsSection({
@@ -17,11 +17,11 @@ class SettingsSection extends StatefulWidget {
   });
 
   @override
-  _SettingsSectionState createState() => _SettingsSectionState();
+  SettingsSectionState createState() => SettingsSectionState();
 }
 
-class _SettingsSectionState extends State<SettingsSection> {
-  bool _isLoading = false;
+class SettingsSectionState extends State<SettingsSection> {
+  final bool _isLoading = false;
 
   @override
   void initState() {
@@ -152,7 +152,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         // Indicateur de chargement
         if (_isLoading)
           Container(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             child: const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3425B5)),

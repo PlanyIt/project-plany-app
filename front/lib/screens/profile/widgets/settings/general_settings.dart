@@ -1,10 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GeneralSettings extends StatefulWidget {
-  final UserProfile userProfile;
+  final User userProfile;
   final Function(String, String) showInfoCard;
   final Function(String) showErrorCard;
 
@@ -16,10 +16,10 @@ class GeneralSettings extends StatefulWidget {
   });
 
   @override
-  _GeneralSettingsState createState() => _GeneralSettingsState();
+  GeneralSettingsState createState() => GeneralSettingsState();
 }
 
-class _GeneralSettingsState extends State<GeneralSettings> {
+class GeneralSettingsState extends State<GeneralSettings> {
   bool _darkMode = false;
   bool _notifications = true;
 
@@ -123,7 +123,8 @@ class _GeneralSettingsState extends State<GeneralSettings> {
 
   Future<void> _logout() async {
     try {
-      await FirebaseAuth.instance.signOut();
+      final AuthService authService = AuthService();
+      await authService.logout();
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       widget.showErrorCard('Erreur lors de la déconnexion: $e');
@@ -175,7 +176,7 @@ class _GeneralSettingsState extends State<GeneralSettings> {
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.red.withOpacity(0.3),
+                  color: Colors.red.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),

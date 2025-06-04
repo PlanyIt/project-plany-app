@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/widgets/content/premium_popup.dart';
 import 'package:front/services/auth_service.dart';
 import 'package:front/widgets/section/section_text_field.dart';
 
 class AccountSettings extends StatefulWidget {
-  final UserProfile userProfile;
+  final User userProfile;
   final Function onProfileUpdated;
   final Function(String, String) showInfoCard;
   final Function(String) showErrorCard;
@@ -644,13 +644,13 @@ class AccountSettingsState extends State<AccountSettings> {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: isPremium
-              ? Colors.amber.withOpacity(0.1)
-              : const Color(0xFF3425B5).withOpacity(0.05),
+              ? Colors.amber.withValues(alpha: 0.1)
+              : const Color(0xFF3425B5).withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isPremium
                 ? Colors.amber
-                : const Color(0xFF3425B5).withOpacity(0.2),
+                : const Color(0xFF3425B5).withValues(alpha: 0.2),
           ),
         ),
         child: Row(
@@ -691,8 +691,8 @@ class AccountSettingsState extends State<AccountSettings> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: isPremium
-                    ? Colors.amber.withOpacity(0.2)
-                    : const Color(0xFF3425B5).withOpacity(0.1),
+                    ? Colors.amber.withValues(alpha: 0.2)
+                    : const Color(0xFF3425B5).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

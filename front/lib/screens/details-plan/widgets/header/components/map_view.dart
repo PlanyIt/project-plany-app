@@ -57,7 +57,6 @@ class MapViewState extends State<MapView> {
       for (String id in widget.stepIds) {
         final step = await _stepService.getStepById(id);
         if (step != null) {
-
           if (step.position != null) {
             loadedSteps.add(step);
           } else {
@@ -67,7 +66,6 @@ class MapViewState extends State<MapView> {
           print("Étape non trouvée: $id");
         }
       }
-
 
       if (mounted) {
         setState(() {
@@ -253,7 +251,7 @@ class MapViewState extends State<MapView> {
                                     size: isSelected ? 45 : 35,
                                     color: isSelected
                                         ? categoryColor
-                                        : categoryColor.withOpacity(0.7),
+                                        : categoryColor.withValues(alpha: 0.7),
                                   ),
                                 ),
                               ),

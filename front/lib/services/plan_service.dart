@@ -1,6 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:front/domain/models/plan.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/services/step_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -12,8 +12,8 @@ class PlanService {
   final StepService stepService = StepService();
 
   Future<String?> getAuthToken() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    return user != null ? await user.getIdToken() : null;
+    final AuthService authService = AuthService();
+    return await authService.getToken();
   }
 
   Future<List<Plan>> getPlans() async {
@@ -157,7 +157,9 @@ class PlanService {
             'Erreur lors de l\'ajout aux favoris: ${response.body}');
       }
     } catch (error) {
-      print('Exception capturée: $error');
+      if (kDebugMode) {
+        print('Exception capturée: $error');
+      }
       rethrow;
     }
   }
@@ -179,7 +181,9 @@ class PlanService {
         throw Exception('Erreur lors du retrait des favoris: ${response.body}');
       }
     } catch (error) {
-      print('Exception capturée: $error');
+      if (kDebugMode) {
+        print('Exception capturée: $error');
+      }
       rethrow;
     }
   }
@@ -197,18 +201,21 @@ class PlanService {
     // Construire les paramètres de requête
     final queryParams = <String, String>{};
     if (query != null && query.isNotEmpty) queryParams['query'] = query;
-    if (category != null && category.isNotEmpty)
+    if (category != null && category.isNotEmpty) {
       queryParams['category'] = category;
+    }
 
     // S'assurer que les valeurs de coût sont correctement formatées
     // Utiliser des entiers pour éviter les problèmes de formatage avec les décimaux
     if (minCost != null) queryParams['minCost'] = minCost.toInt().toString();
     if (maxCost != null) queryParams['maxCost'] = maxCost.toInt().toString();
 
-    if (minDuration != null)
+    if (minDuration != null) {
       queryParams['minDuration'] = minDuration.toString();
-    if (maxDuration != null)
+    }
+    if (maxDuration != null) {
       queryParams['maxDuration'] = maxDuration.toString();
+    }
     if (sortBy != null) queryParams['sortBy'] = sortBy;
     queryParams['order'] = ascending ? 'asc' : 'desc';
 

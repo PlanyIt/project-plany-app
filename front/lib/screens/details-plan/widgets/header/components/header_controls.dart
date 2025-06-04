@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:android_intent_plus/android_intent.dart';
@@ -31,13 +30,12 @@ class HeaderControls extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        showBackButton 
+        showBackButton
             ? _buildGlassIconButton(
                 icon: Icons.arrow_back,
                 onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
               )
             : const SizedBox(width: 50),
-        
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -141,15 +139,15 @@ class HeaderControls extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(25),
         onTap: onPressed,
-        splashColor: Colors.white.withOpacity(0.15),
-        highlightColor: Colors.white.withOpacity(0.1),
+        splashColor: Colors.white.withValues(alpha: 0.15),
+        highlightColor: Colors.white.withValues(alpha: 0.1),
         child: Container(
           width: 50,
           height: 50,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 1.5,
             ),
           ),

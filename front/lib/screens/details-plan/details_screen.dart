@@ -15,10 +15,10 @@ class DetailScreen extends StatefulWidget {
   const DetailScreen({super.key});
 
   @override
-  _DetailScreenState createState() => _DetailScreenState();
+  DetailScreenState createState() => DetailScreenState();
 }
 
-class _DetailScreenState extends State<DetailScreen>
+class DetailScreenState extends State<DetailScreen>
     with SingleTickerProviderStateMixin {
   final PlanService _planService = PlanService();
   final StepService _stepService = StepService();
@@ -122,7 +122,7 @@ class _DetailScreenState extends State<DetailScreen>
         body: Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(
-              Theme.of(context).primaryColor.withOpacity(0.7),
+              Theme.of(context).primaryColor.withValues(alpha: 0.7),
             ),
           ),
         ),

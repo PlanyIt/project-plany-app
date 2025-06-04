@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/profile_screen.dart';
 import 'package:front/screens/profile/widgets/common/section_header.dart';
 import 'package:front/screens/profile/widgets/content/user_list.dart';
@@ -16,16 +16,16 @@ class FollowersSection extends StatefulWidget {
   });
 
   @override
-  _FollowersSectionState createState() => _FollowersSectionState();
+  FollowersSectionState createState() => FollowersSectionState();
 }
 
-class _FollowersSectionState extends State<FollowersSection> {
+class FollowersSectionState extends State<FollowersSection> {
   final UserService _userService = UserService();
-  late Future<List<UserProfile>> _followersFuture;
+  late Future<List<User>> _followersFuture;
   Map<String, bool> followingStatus = {};
   bool _isLoading = false;
   Set<String> loadingUserIds = {};
-  List<UserProfile> _followersList = [];
+  List<User> _followersList = [];
 
   @override
   void initState() {
@@ -33,7 +33,7 @@ class _FollowersSectionState extends State<FollowersSection> {
     _followersFuture = _loadFollowers();
   }
 
-  Future<List<UserProfile>> _loadFollowers() async {
+  Future<List<User>> _loadFollowers() async {
     setState(() => _isLoading = true);
     try {
       final followers = await _userService.getUserFollowers(widget.userId);
@@ -60,7 +60,7 @@ class _FollowersSectionState extends State<FollowersSection> {
     }
   }
 
-  Widget _buildHeader(List<UserProfile> followers) {
+  Widget _buildHeader(List<User> followers) {
     return SectionHeader(
       title: "Abonnés",
       subtitle:
@@ -79,7 +79,7 @@ class _FollowersSectionState extends State<FollowersSection> {
           padding: const EdgeInsets.all(16),
           child: _buildHeader(_followersList),
         ),
-        FutureBuilder<List<UserProfile>>(
+        FutureBuilder<List<User>>(
           future: _followersFuture,
           builder: (context, snapshot) {
             if (_isLoading) {

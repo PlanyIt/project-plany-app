@@ -1,5 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
-
 class Plan {
   final String? id;
   final String title;
@@ -26,11 +24,10 @@ class Plan {
     this.updatedAt,
     this.favorites,
     this.isFavorite = false,
-    this.estimatedCost, // Added to constructor
+    this.estimatedCost,
   });
 
   factory Plan.fromJson(Map<String, dynamic> json) {
-    final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final List<String> favoritesFromJson =
         List<String>.from(json['favorites'] ?? []);
 
@@ -47,8 +44,7 @@ class Plan {
       updatedAt:
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       favorites: favoritesFromJson,
-      isFavorite:
-          currentUserId != null && favoritesFromJson.contains(currentUserId),
+      isFavorite: json['isFavorite'] ?? false,
       estimatedCost: json['estimatedCost']?.toDouble(), // Parse from JSON
     );
   }

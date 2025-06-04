@@ -20,7 +20,7 @@ class StepDetailCard extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -82,7 +82,7 @@ class StepDetailCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -143,8 +143,7 @@ class StepDetailCard extends StatelessWidget {
                         ),
                       if (step.createdAt != null)
                         _buildInfoChip(
-                          Icons
-                              .add_circle_outline,
+                          Icons.add_circle_outline,
                           "Ajouté le ${step.createdAt!.day}/${step.createdAt!.month}/${step.createdAt!.year}",
                           color,
                         ),
@@ -180,7 +179,7 @@ class StepDetailCard extends StatelessWidget {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -189,7 +188,7 @@ class StepDetailCard extends StatelessWidget {
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                backgroundColor: color.withOpacity(0.1),
+                backgroundColor: color.withValues(alpha: 0.1),
                 foregroundColor: color,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -217,9 +216,9 @@ class StepDetailCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: chipColor.withOpacity(0.1),
+          color: chipColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: chipColor.withOpacity(0.3)),
+          border: Border.all(color: chipColor.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

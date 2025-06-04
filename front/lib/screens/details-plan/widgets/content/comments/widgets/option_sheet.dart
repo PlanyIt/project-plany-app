@@ -14,7 +14,7 @@ class CommentOptionSheet extends StatelessWidget {
     required this.categoryColor,
     required this.onEdit,
     required this.onDelete,
-    this.isResponse = false, 
+    this.isResponse = false,
   }) : super(key: key);
 
   @override
@@ -26,7 +26,7 @@ class CommentOptionSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -44,23 +44,22 @@ class CommentOptionSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          
           _buildOptionButton(
             icon: Icons.edit_outlined,
-            label: isResponse ? 'Modifier la réponse' : 'Modifier le commentaire',
+            label:
+                isResponse ? 'Modifier la réponse' : 'Modifier le commentaire',
             color: categoryColor,
             onTap: onEdit,
           ),
-          
           const SizedBox(height: 12),
-          
           _buildOptionButton(
             icon: Icons.delete_outline,
-            label: isResponse ? 'Supprimer la réponse' : 'Supprimer le commentaire',
+            label: isResponse
+                ? 'Supprimer la réponse'
+                : 'Supprimer le commentaire',
             color: Colors.redAccent,
             onTap: onDelete,
           ),
-          
           const SizedBox(height: 20),
         ],
       ),
@@ -78,7 +77,7 @@ class CommentOptionSheet extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -108,7 +107,7 @@ void showCommentOptions({
   required Function(String, String?) onDelete,
 }) {
   bool isResponse = comment.parentId != null;
-  
+
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,

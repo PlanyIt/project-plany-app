@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
-import 'package:front/domain/models/user_final.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/services/auth_service.dart';
 
 class AuthProvider with ChangeNotifier {
-  UserModel? _user;
+  User? _user;
   bool _isLoading =
       true; // Commence par true pour indiquer la vérification initiale
   bool _isAuthenticated = false;
   final AuthService _authService = AuthService();
 
-  UserModel? get user => _user;
+  User? get user => _user;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;
 

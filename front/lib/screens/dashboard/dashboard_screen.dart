@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
 import 'package:front/screens/dashboard/dashboard_home_screen.dart';
 import 'package:front/screens/profile/profile_screen.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/widgets/drawer/profile_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -14,8 +14,19 @@ class DashboardScreen extends StatefulWidget {
 
 class DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final AuthService _authService = AuthService();
+  late final String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    getUserId();
+  }
+
+  void getUserId() async {
+    userId = await _authService.getCurrentUserId();
+  }
 
   Widget get _currentPage {
     switch (_selectedIndex) {
@@ -26,24 +37,14 @@ class DashboardScreenState extends State<DashboardScreen> {
       case 1:
         return const CreatePlansScreen();
       case 2:
-        return const ProfileScreen();
+        return ProfileScreen(
+          userId: userId,
+          isCurrentUser: false,
+        );
       default:
         return DashboardHomeScreen(
           onProfileTap: () => _scaffoldKey.currentState?.openEndDrawer(),
         );
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAuthStatus();
-  }
-
-  Future<void> _checkAuthStatus() async {
-    User? user = _auth.currentUser;
-    if (user == null) {
-      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 

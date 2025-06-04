@@ -1,24 +1,24 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/services/imgur_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileAvatar extends StatefulWidget {
-  final UserProfile userProfile;
+  final User userProfile;
   final Function(String) onUpdatePhoto;
   final Function onProfileUpdated;
   final bool isCurrentUser;
 
   const ProfileAvatar({
-    Key? key,
+    super.key,
     required this.userProfile,
     required this.onUpdatePhoto,
     required this.onProfileUpdated,
     required this.isCurrentUser,
-  }) : super(key: key);
+  });
 
   @override
   State<ProfileAvatar> createState() => _ProfileAvatarState();
@@ -72,9 +72,9 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
 
       await _userService.updateUserPhoto(widget.userProfile.id, imageUrl);
 
-
       if (!mounted) {
-        print('Widget non monté après téléchargement, annulation des mises à jour d\'état');
+        print(
+            'Widget non monté après téléchargement, annulation des mises à jour d\'état');
         return;
       }
 
@@ -110,10 +110,11 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
           height: avatarSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: primaryColor.withOpacity(0.2), width: 3),
+            border: Border.all(
+                color: primaryColor.withValues(alpha: 0.2), width: 3),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -156,7 +157,6 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
                       ),
           ),
         ),
-
         if (widget.isCurrentUser)
           Positioned(
             bottom: 0,

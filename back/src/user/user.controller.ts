@@ -121,6 +121,18 @@ export class UserController {
     return this.userService.updateById(id, { photoUrl });
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/photo')
+  deleteUserPhoto(@Param('id') id: string, @Request() req) {
+    // Vérifier que l'utilisateur ne supprime que sa propre photo
+    if (req.user._id.toString() !== id) {
+      throw new UnauthorizedException(
+        'Vous ne pouvez pas supprimer cette photo',
+      );
+    }
+    return this.userService.updateById(id, { photoUrl: null });
+  }
+
   @Get(':id/stats')
   async getUserStats(@Param('id') userId: string) {
     try {

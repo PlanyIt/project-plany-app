@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:http/http.dart' as http show delete, get, post, put;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -8,11 +8,7 @@ import 'package:front/domain/models/comment.dart';
 
 class CommentService {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
-
-  Future<String?> getAuthToken() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    return user != null ? await user.getIdToken() : null;
-  }
+  final AuthService authService = AuthService();
 
   Future<List<Comment>> getComments(String planId,
       {int page = 1, int limit = 10}) async {
@@ -32,7 +28,7 @@ class CommentService {
   }
 
   Future<List<Comment>> getCommentResponses(String commentId) async {
-    final token = await getAuthToken();
+    final token = await authService.getToken();
     if (token == null) throw Exception('No authentication token found');
 
     final response = await http.get(
@@ -53,7 +49,7 @@ class CommentService {
 
   Future<void> deleteComment(String commentId) async {
     try {
-      final token = await getAuthToken();
+      final token = await authService.getToken();
       if (token == null) throw Exception('No authentication token found');
 
       final response = await http.delete(
@@ -78,7 +74,7 @@ class CommentService {
   Future<Comment> createComment(String planId, Comment comment) async {
     final body = json.encode(comment.toJson());
     try {
-      final token = await getAuthToken();
+      final token = await authService.getToken();
       if (token == null) {
         throw Exception('No authentication token found');
       }
@@ -119,8 +115,8 @@ class CommentService {
     }
 
     try {
-      // Récupération du token Firebase
-      final token = await getAuthToken();
+      final token = await authService.getToken();
+
       if (token == null) throw Exception('No authentication token found');
 
       final response = await http.put(
@@ -145,7 +141,7 @@ class CommentService {
 
   Future<Comment> getCommentById(String commentId) async {
     try {
-      final token = await getAuthToken();
+      final token = await authService.getToken();
       if (token == null) throw Exception('No authentication token found');
 
       final response = await http.get(
@@ -176,7 +172,7 @@ class CommentService {
   // like comment
   Future<void> likeComment(String commentId) async {
     try {
-      final token = await getAuthToken();
+      final token = await authService.getToken();
       if (token == null) throw Exception('No authentication token found');
 
       final response = await http.put(
@@ -201,7 +197,7 @@ class CommentService {
   // unlike comment
   Future<void> unlikeComment(String commentId) async {
     try {
-      final token = await getAuthToken();
+      final token = await authService.getToken();
       if (token == null) throw Exception('No authentication token found');
 
       final response = await http.put(
@@ -229,7 +225,7 @@ class CommentService {
 
     final body = json.encode(payload);
     try {
-      final token = await getAuthToken();
+      final token = await authService.getToken();
       if (token == null) throw Exception('No authentication token found');
 
       final response = await http.post(
@@ -255,7 +251,7 @@ class CommentService {
 
   Future<void> deleteResponse(String commentId, String responseId) async {
     try {
-      final token = await getAuthToken();
+      final token = await authService.getToken();
       if (token == null) throw Exception('No authentication token found');
 
       final response = await http.delete(

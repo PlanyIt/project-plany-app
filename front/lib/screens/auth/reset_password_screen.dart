@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:front/widgets/common/plany_button.dart';
 import 'package:front/theme/app_theme.dart';
@@ -15,7 +14,6 @@ class ResetPasswordScreen extends StatefulWidget {
 class ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Méthode pour gérer la réinitialisation du mot de passe via Firebase
   Future<void> _resetPassword() async {
@@ -31,7 +29,8 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
 
     try {
-      await _auth.sendPasswordResetEmail(email: _emailController.text);
+      /// Todo : Mettre en place la logique de réinitialisation du mot de passe
+      //await _auth.sendPasswordResetEmail(email: _emailController.text);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

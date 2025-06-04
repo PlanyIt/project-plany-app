@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 
 class ProfileStats extends StatelessWidget {
-  final UserProfile userProfile;
+  final User userProfile;
   final bool isCurrentUser;
   final Function(String) onNavigationSelected;
 
@@ -27,7 +27,7 @@ class ProfileStats extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -92,8 +92,7 @@ class ProfileStats extends StatelessWidget {
                 ),
               ],
             ),
-          ] 
-          else ...[
+          ] else ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -129,7 +128,7 @@ class ProfileStats extends StatelessWidget {
       height: 40,
       width: 1,
       margin: const EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.grey.withOpacity(0.2),
+      color: Colors.grey.withValues(alpha: 0.2),
     );
   }
 
@@ -155,7 +154,7 @@ class ProfileStats extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 18),
@@ -189,7 +188,7 @@ class ProfileStats extends StatelessWidget {
                         Icon(
                           Icons.arrow_forward_ios,
                           size: 10,
-                          color: color.withOpacity(0.7),
+                          color: color.withValues(alpha: 0.7),
                         ),
                       ],
                     ),

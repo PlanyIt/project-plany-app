@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/comment.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/details-plan/widgets/content/comments/widgets/response_card.dart';
-import 'package:front/domain/models/user_profile.dart';
 
 class CommentCard extends StatefulWidget {
   final Comment comment;
@@ -18,7 +18,7 @@ class CommentCard extends StatefulWidget {
   final String? respondingToCommentId;
   final Widget? responseInputWidget;
   final String Function(DateTime) formatTimeAgo;
-  final Future<UserProfile?> Function(String userId) getUserProfile;
+  final Future<User?> Function(String userId) getUserProfile;
 
   const CommentCard({
     super.key,
@@ -40,11 +40,11 @@ class CommentCard extends StatefulWidget {
   });
 
   @override
-  _CommentCardState createState() => _CommentCardState();
+  CommentCardState createState() => CommentCardState();
 }
 
-class _CommentCardState extends State<CommentCard> {
-  UserProfile? _userProfile;
+class CommentCardState extends State<CommentCard> {
+  User? _userProfile;
   bool _isLoadingProfile = true;
 
   @override
@@ -75,7 +75,8 @@ class _CommentCardState extends State<CommentCard> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isLiked = widget.comment.likes?.contains(widget.currentUserId) ?? false;
+    final bool isLiked =
+        widget.comment.likes?.contains(widget.currentUserId) ?? false;
     final bool isOwner = widget.comment.userId == widget.currentUserId;
 
     return Container(
@@ -89,7 +90,7 @@ class _CommentCardState extends State<CommentCard> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -99,7 +100,6 @@ class _CommentCardState extends State<CommentCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCommentHeader(isOwner),
-
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
@@ -107,8 +107,8 @@ class _CommentCardState extends State<CommentCard> {
               style: const TextStyle(fontSize: 14),
             ),
           ),
-
-          if (widget.comment.imageUrl != null && widget.comment.imageUrl!.isNotEmpty)
+          if (widget.comment.imageUrl != null &&
+              widget.comment.imageUrl!.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(top: 8, bottom: 10),
               height: 150,
@@ -145,12 +145,10 @@ class _CommentCardState extends State<CommentCard> {
                 ),
               ),
             ),
-
           _buildCommentActions(isLiked),
-
           _buildResponsesSection(),
-
-          if (widget.respondingToCommentId == widget.comment.id && widget.responseInputWidget != null)
+          if (widget.respondingToCommentId == widget.comment.id &&
+              widget.responseInputWidget != null)
             widget.responseInputWidget!,
         ],
       ),
@@ -169,7 +167,7 @@ class _CommentCardState extends State<CommentCard> {
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -178,16 +176,20 @@ class _CommentCardState extends State<CommentCard> {
           child: _isLoadingProfile
               ? const Center(
                   child: SizedBox(
-                      width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2)),
                 )
-              : (_userProfile?.photoUrl != null && _userProfile!.photoUrl!.isNotEmpty
+              : (_userProfile?.photoUrl != null &&
+                      _userProfile!.photoUrl!.isNotEmpty
                   ? ClipOval(
                       child: Image.network(
                         _userProfile!.photoUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           print("Erreur de chargement de photo: $error");
-                          return Icon(Icons.person, size: 22, color: Colors.grey[600]);
+                          return Icon(Icons.person,
+                              size: 22, color: Colors.grey[600]);
                         },
                         headers: const {"cache-control": "no-cache"},
                       ),
@@ -203,8 +205,11 @@ class _CommentCardState extends State<CommentCard> {
                 children: [
                   Expanded(
                     child: Text(
-                      _isLoadingProfile ? 'Chargement...' : (_userProfile?.username ?? 'Utilisateur inconnu'),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      _isLoadingProfile
+                          ? 'Chargement...'
+                          : (_userProfile?.username ?? 'Utilisateur inconnu'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -221,12 +226,12 @@ class _CommentCardState extends State<CommentCard> {
                 ],
               ),
               const SizedBox(height: 4),
-
               if (isOwner)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: widget.categoryColor.withOpacity(0.1),
+                    color: widget.categoryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -241,19 +246,18 @@ class _CommentCardState extends State<CommentCard> {
             ],
           ),
         ),
-
         if (isOwner)
           GestureDetector(
             onTap: () => widget.onShowOptions(widget.comment),
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: widget.categoryColor.withOpacity(0.05),
+                color: widget.categoryColor.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.more_vert,
-                color: widget.categoryColor.withOpacity(0.8),
+                color: widget.categoryColor.withValues(alpha: 0.8),
                 size: 20,
               ),
             ),
@@ -289,15 +293,13 @@ class _CommentCardState extends State<CommentCard> {
               ],
             ),
           ),
-
           const SizedBox(width: 12),
-
           TextButton(
             onPressed: () => widget.onReplyTap(widget.comment.id!),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               backgroundColor: widget.respondingToCommentId == widget.comment.id
-                  ? widget.categoryColor.withOpacity(0.1)
+                  ? widget.categoryColor.withValues(alpha: 0.1)
                   : Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -332,7 +334,8 @@ class _CommentCardState extends State<CommentCard> {
   }
 
   Widget _buildResponsesSection() {
-    if (!widget.responses.containsKey(widget.comment.id) || widget.responses[widget.comment.id]!.isEmpty) {
+    if (!widget.responses.containsKey(widget.comment.id) ||
+        widget.responses[widget.comment.id]!.isEmpty) {
       return Container();
     }
 
@@ -340,7 +343,8 @@ class _CommentCardState extends State<CommentCard> {
     final showAll = widget.showAllResponsesMap[widget.comment.id] ?? false;
 
     if (widget.comment.responses.isNotEmpty &&
-        (!widget.responses.containsKey(widget.comment.id) || widget.responses[widget.comment.id]!.isEmpty)) {
+        (!widget.responses.containsKey(widget.comment.id) ||
+            widget.responses[widget.comment.id]!.isEmpty)) {
       return TextButton.icon(
         onPressed: () => widget.loadResponses(widget.comment.id!),
         icon: Icon(Icons.forum_outlined, size: 14, color: widget.categoryColor),
@@ -357,7 +361,7 @@ class _CommentCardState extends State<CommentCard> {
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +370,8 @@ class _CommentCardState extends State<CommentCard> {
             padding: const EdgeInsets.only(bottom: 8.0),
             child: Row(
               children: [
-                Icon(Icons.forum_outlined, size: 14, color: widget.categoryColor),
+                Icon(Icons.forum_outlined,
+                    size: 14, color: widget.categoryColor),
                 const SizedBox(width: 4),
                 Text(
                   "Réponses (${commentResponses.length})",
@@ -379,7 +384,6 @@ class _CommentCardState extends State<CommentCard> {
               ],
             ),
           ),
-
           ListView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
@@ -398,7 +402,6 @@ class _CommentCardState extends State<CommentCard> {
               );
             },
           ),
-
           if (commentResponses.length > 1)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
@@ -407,7 +410,9 @@ class _CommentCardState extends State<CommentCard> {
                 child: Row(
                   children: [
                     Icon(
-                      showAll ? Icons.keyboard_arrow_up : Icons.subdirectory_arrow_right,
+                      showAll
+                          ? Icons.keyboard_arrow_up
+                          : Icons.subdirectory_arrow_right,
                       size: 14,
                       color: widget.categoryColor,
                     ),

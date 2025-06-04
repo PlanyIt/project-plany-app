@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/profile_screen.dart';
 import 'package:front/screens/profile/widgets/common/section_header.dart';
 import 'package:front/screens/profile/widgets/content/user_list.dart';
@@ -13,15 +13,15 @@ class FollowingSection extends StatefulWidget {
       {super.key, required this.userId, this.onFollowChanged});
 
   @override
-  _FollowingSectionState createState() => _FollowingSectionState();
+  FollowingSectionState createState() => FollowingSectionState();
 }
 
-class _FollowingSectionState extends State<FollowingSection> {
+class FollowingSectionState extends State<FollowingSection> {
   final UserService _userService = UserService();
-  late Future<List<UserProfile>> _followingFuture;
+  late Future<List<User>> _followingFuture;
   Map<String, bool> followingStatus = {};
   bool _isLoading = false;
-  List<UserProfile> _followingList = [];
+  List<User> _followingList = [];
   Set<String> loadingUserIds = {};
 
   @override
@@ -36,7 +36,7 @@ class _FollowingSectionState extends State<FollowingSection> {
     });
   }
 
-  Future<List<UserProfile>> _loadFollowing() async {
+  Future<List<User>> _loadFollowing() async {
     setState(() => _isLoading = true);
     try {
       final following = await _userService.getUserFollowing(widget.userId);
@@ -55,7 +55,7 @@ class _FollowingSectionState extends State<FollowingSection> {
     }
   }
 
-  Future<void> _unfollowUser(UserProfile user) async {
+  Future<void> _unfollowUser(User user) async {
     try {
       setState(() {
         loadingUserIds.add(user.id);
@@ -88,10 +88,11 @@ class _FollowingSectionState extends State<FollowingSection> {
     }
   }
 
-  Widget _buildHeader(List<UserProfile> following) {
+  Widget _buildHeader(List<User> following) {
     return SectionHeader(
       title: "Abonnements",
-      subtitle: "${following.length} utilisateur${following.length > 1 ? 's' : ''} suivi${following.length > 1 ? 's' : ''}",
+      subtitle:
+          "${following.length} utilisateur${following.length > 1 ? 's' : ''} suivi${following.length > 1 ? 's' : ''}",
       icon: Icons.people_rounded,
       gradientColors: const [Colors.green, Colors.greenAccent],
     );
@@ -106,7 +107,7 @@ class _FollowingSectionState extends State<FollowingSection> {
           padding: const EdgeInsets.all(16.0),
           child: _buildHeader(_followingList),
         ),
-        FutureBuilder<List<UserProfile>>(
+        FutureBuilder<List<User>>(
           future: _followingFuture,
           builder: (context, snapshot) {
             if (_isLoading) {

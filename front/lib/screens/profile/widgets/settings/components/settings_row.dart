@@ -177,13 +177,13 @@ class PremiumStatusRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: isPremium
-              ? Colors.amber.withOpacity(0.1)
-              : const Color(0xFF3425B5).withOpacity(0.05),
+              ? Colors.amber.withValues(alpha: 0.1)
+              : const Color(0xFF3425B5).withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isPremium
                 ? Colors.amber
-                : const Color(0xFF3425B5).withOpacity(0.2),
+                : const Color(0xFF3425B5).withValues(alpha: 0.2),
           ),
         ),
         child: Row(
@@ -224,8 +224,8 @@ class PremiumStatusRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: isPremium
-                    ? Colors.amber.withOpacity(0.2)
-                    : const Color(0xFF3425B5).withOpacity(0.1),
+                    ? Colors.amber.withValues(alpha: 0.2)
+                    : const Color(0xFF3425B5).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

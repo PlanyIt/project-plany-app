@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/step.dart' as custom;
 
@@ -32,7 +31,7 @@ class HeaderCarousel extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             spreadRadius: 0,
             offset: const Offset(0, 2),
@@ -67,7 +66,7 @@ class HeaderCarousel extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black
-                                .withOpacity(isSelected ? 0.25 : 0.1),
+                                .withValues(alpha: isSelected ? 0.25 : 0.1),
                             blurRadius: isSelected ? 10 : 4,
                             spreadRadius: isSelected ? 1 : 0,
                             offset: isSelected
@@ -88,7 +87,8 @@ class HeaderCarousel extends StatelessWidget {
                                       width: 2.5,
                                     )
                                   : Border.all(
-                                      color: Colors.white.withOpacity(0.4),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.4),
                                       width: 1,
                                     ),
                             ),
@@ -116,8 +116,8 @@ class HeaderCarousel extends StatelessWidget {
                                         begin: Alignment.topCenter,
                                         end: Alignment.bottomCenter,
                                         colors: [
-                                          Colors.black.withOpacity(0.1),
-                                          Colors.black.withOpacity(0.5),
+                                          Colors.black.withValues(alpha: 0.1),
+                                          Colors.black.withValues(alpha: 0.5),
                                         ],
                                       ),
                                     ),
@@ -132,12 +132,13 @@ class HeaderCarousel extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? categoryColor
-                                            : Colors.black.withOpacity(0.5),
+                                            : Colors.black
+                                                .withValues(alpha: 0.5),
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.2),
+                                            color: Colors.black
+                                                .withValues(alpha: 0.2),
                                             blurRadius: 4,
                                             spreadRadius: 0,
                                           ),
@@ -163,8 +164,10 @@ class HeaderCarousel extends StatelessWidget {
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? Colors.black.withOpacity(0.7)
-                                            : Colors.black.withOpacity(0.5),
+                                            ? Colors.black
+                                                .withValues(alpha: 0.7)
+                                            : Colors.black
+                                                .withValues(alpha: 0.5),
                                         borderRadius: const BorderRadius.only(
                                           bottomLeft: Radius.circular(10),
                                           bottomRight: Radius.circular(10),
@@ -199,8 +202,8 @@ class HeaderCarousel extends StatelessWidget {
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: categoryColor
-                                                  .withOpacity(0.6),
+                                              color: categoryColor.withValues(
+                                                  alpha: 0.6),
                                               blurRadius: 6,
                                               spreadRadius: 0,
                                             ),
@@ -226,7 +229,7 @@ class HeaderCarousel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
             ),
             child: Text(
               "${currentIndex + 1}/${steps.length}",
@@ -251,8 +254,7 @@ class HeaderCarousel extends StatelessWidget {
   // Image par défaut simplifiée pour les étapes sans image
   Widget _defaultStepImage(custom.Step step) {
     return Container(
-      color: categoryColor
-          .withOpacity(0.8),
+      color: categoryColor.withValues(alpha: 0.8),
       child: Center(
         child: Text(
           step.title.substring(0, 1).toUpperCase(),

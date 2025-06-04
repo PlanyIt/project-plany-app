@@ -1,26 +1,23 @@
 import 'dart:convert';
-import 'dart:math' as Math;
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:front/domain/models/step.dart';
-import 'package:front/domain/models/plan.dart'; // Import the Plan class
-import 'package:front/utils/helpers.dart'; // Import helper functions for duration conversion
+import 'package:front/domain/models/plan.dart';
 
 class StepService {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
 
   Future<String?> getAuthToken() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    return user != null ? await user.getIdToken() : null;
+    final AuthService authService = AuthService();
+    return await authService.getToken();
   }
 
   Future<String> createStep(Step step) async {
     final body = json.encode(step.toJson());
 
     try {
-      // Récupération du token Firebase
       final token = await getAuthToken();
       if (token == null) throw Exception('No authentication token found');
 
@@ -99,7 +96,7 @@ class StepService {
 
   Future<void> deleteStep(String stepId) async {
     try {
-      // Récupération du token Firebase
+      // Récupération du token d'authentification (plus de Firebase)
       final token = await getAuthToken();
       if (token == null) throw Exception('No authentication token found');
 

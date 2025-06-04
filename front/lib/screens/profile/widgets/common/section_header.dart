@@ -6,7 +6,7 @@ class SectionHeader extends StatelessWidget {
   final IconData icon;
   final List<Color> gradientColors;
   final Widget? action;
-  
+
   const SectionHeader({
     super.key,
     required this.title,
@@ -44,7 +44,7 @@ class SectionHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: gradientColors[0].withOpacity(0.2),
+                  color: gradientColors[0].withValues(alpha: 0.2),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -68,8 +68,7 @@ class SectionHeader extends StatelessWidget {
                   color: Colors.grey[850],
                 ),
               ),
-              if (subtitle != null)
-                const SizedBox(height: 2),
+              if (subtitle != null) const SizedBox(height: 2),
               if (subtitle != null)
                 Text(
                   subtitle!,

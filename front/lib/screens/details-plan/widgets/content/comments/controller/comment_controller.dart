@@ -10,7 +10,7 @@ class CommentController extends ChangeNotifier {
   final String planId;
   final BuildContext context;
   final Function(int)? onCommentCountChanged;
-  
+
   final CommentService _commentService = CommentService();
   final ImgurService _imgurService = ImgurService();
 
@@ -18,9 +18,9 @@ class CommentController extends ChangeNotifier {
   Map<String, List<Comment>> responses = {};
   Map<String, bool> showAllResponsesMap = {};
   String? currentUserId;
-  
+
   bool hasMoreComments = true;
-  
+
   File? selectedImage;
   File? selectedResponseImage;
   String? existingImageUrl;
@@ -34,15 +34,19 @@ class CommentController extends ChangeNotifier {
     this.currentUserId,
   });
 
-  
-  Future<List<Comment>> loadComments({bool reset = false, int currentPage = 1, int pageLimit = 10}) async {
+  void updateCurrentUserId(String? userId) {
+    currentUserId = userId;
+  }
+
+  Future<List<Comment>> loadComments(
+      {bool reset = false, int currentPage = 1, int pageLimit = 10}) async {
     try {
       final commentsData = await _commentService.getComments(
         planId,
         page: currentPage,
         limit: pageLimit,
       );
-      
+
       if (commentsData.length < pageLimit) {
         hasMoreComments = false;
       }
@@ -52,7 +56,7 @@ class CommentController extends ChangeNotifier {
       } else {
         comments.addAll(commentsData);
       }
-      
+
       if (onCommentCountChanged != null) {
         onCommentCountChanged!(comments.length);
       }
@@ -62,11 +66,12 @@ class CommentController extends ChangeNotifier {
           loadResponses(comment.id!);
         }
       }
-      
+
       return commentsData;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors du chargement des commentaires : $e')),
+        SnackBar(
+            content: Text('Erreur lors du chargement des commentaires : $e')),
       );
       print('Erreur lors du chargement des commentaires : $e');
       rethrow;
@@ -76,7 +81,7 @@ class CommentController extends ChangeNotifier {
   Future<void> loadResponses(String commentId) async {
     try {
       if (responses.containsKey(commentId)) return;
-      
+
       final comment = comments.firstWhere((c) => c.id == commentId);
       if (comment.responses.isEmpty) {
         responses[commentId] = [];
@@ -99,7 +104,6 @@ class CommentController extends ChangeNotifier {
     }
   }
 
-
   Future<Comment?> saveComment(String content) async {
     bool hasText = content.trim().isNotEmpty;
     bool hasImage = selectedImage != null || existingImageUrl != null;
@@ -110,7 +114,7 @@ class CommentController extends ChangeNotifier {
       );
       return null;
     }
-    
+
     String? imageUrl;
     if (selectedImage != null) {
       imageUrl = await uploadImage(selectedImage!);
@@ -125,16 +129,17 @@ class CommentController extends ChangeNotifier {
         imageUrl: imageUrl,
       );
 
-      final createdComment = await _commentService.createComment(planId, newComment);
-      
+      final createdComment =
+          await _commentService.createComment(planId, newComment);
+
       comments.insert(0, createdComment);
-      
+
       if (onCommentCountChanged != null) {
         onCommentCountChanged!(comments.length);
       }
-      
+
       Fluttertoast.showToast(msg: 'Commentaire ajouté avec succès');
-      
+
       return createdComment;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -144,17 +149,19 @@ class CommentController extends ChangeNotifier {
     }
   }
 
-  Future<Comment?> editComment(String commentId, String content, {File? newImage}) async {
+  Future<Comment?> editComment(String commentId, String content,
+      {File? newImage}) async {
     Comment? commentToEdit;
     bool isResponse = false;
     String? parentCommentId;
-    
+
     try {
       commentToEdit = comments.firstWhere((comment) => comment.id == commentId);
     } catch (e) {
       for (var parentId in responses.keys) {
         try {
-          commentToEdit = responses[parentId]!.firstWhere((response) => response.id == commentId);
+          commentToEdit = responses[parentId]!
+              .firstWhere((response) => response.id == commentId);
           isResponse = true;
           parentCommentId = parentId;
           break;
@@ -165,14 +172,14 @@ class CommentController extends ChangeNotifier {
     }
 
     if (commentToEdit == null) return null;
-    
+
     String? finalImageUrl;
     if (newImage != null) {
       finalImageUrl = await uploadImage(newImage);
     } else if (existingImageUrl != null) {
       finalImageUrl = existingImageUrl;
     }
-    
+
     final updatedComment = Comment(
       id: commentId,
       content: content.trim(),
@@ -184,11 +191,12 @@ class CommentController extends ChangeNotifier {
       parentId: commentToEdit.parentId,
       imageUrl: finalImageUrl,
     );
-    
+
     await _commentService.editComment(commentId, updatedComment);
-    
+
     if (isResponse && parentCommentId != null) {
-      final index = responses[parentCommentId]!.indexWhere((r) => r.id == commentId);
+      final index =
+          responses[parentCommentId]!.indexWhere((r) => r.id == commentId);
       if (index != -1) {
         responses[parentCommentId]![index] = updatedComment;
       }
@@ -198,30 +206,31 @@ class CommentController extends ChangeNotifier {
         comments[index] = updatedComment;
       }
     }
-    
+
     Fluttertoast.showToast(msg: 'Commentaire modifié avec succès');
-    
+
     return updatedComment;
   }
-  
+
   Future<bool> deleteComment(String commentId) async {
     try {
       await _commentService.deleteComment(commentId);
-      
+
       final index = comments.indexWhere((comment) => comment.id == commentId);
       if (index != -1) {
         comments.removeAt(index);
-        
+
         if (responses.containsKey(commentId)) {
           responses.remove(commentId);
         }
-        
+
         if (onCommentCountChanged != null) {
           onCommentCountChanged!(comments.length);
         }
       }
-      
-      Fluttertoast.showToast(msg: 'Commentaire et ses réponses supprimés avec succès');
+
+      Fluttertoast.showToast(
+          msg: 'Commentaire et ses réponses supprimés avec succès');
       return true;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -230,8 +239,7 @@ class CommentController extends ChangeNotifier {
       return false;
     }
   }
-  
-  
+
   Future<Comment?> saveResponse(String commentId, String content) async {
     bool hasText = content.trim().isNotEmpty;
     bool hasImage = selectedResponseImage != null || existingImageUrl != null;
@@ -242,14 +250,14 @@ class CommentController extends ChangeNotifier {
       );
       return null;
     }
-    
+
     String? imageUrl;
     if (selectedResponseImage != null) {
       imageUrl = await uploadImage(selectedResponseImage!);
     } else if (existingImageUrl != null) {
       imageUrl = existingImageUrl;
     }
-    
+
     try {
       final response = Comment(
         content: content.trim(),
@@ -257,22 +265,23 @@ class CommentController extends ChangeNotifier {
         parentId: commentId,
         imageUrl: imageUrl,
       );
-      
-      final createdResponse = await _commentService.createComment(planId, response);
+
+      final createdResponse =
+          await _commentService.createComment(planId, response);
       await _commentService.respondToComment(commentId, createdResponse);
-      
+
       if (!responses.containsKey(commentId)) {
         responses[commentId] = [];
       }
       responses[commentId]!.add(createdResponse);
-      
+
       final index = comments.indexWhere((c) => c.id == commentId);
       if (index != -1) {
         comments[index].responses.add(createdResponse.id!);
       }
-      
+
       showAllResponsesMap[commentId] = true;
-      
+
       Fluttertoast.showToast(msg: 'Réponse ajoutée avec succès');
       return createdResponse;
     } catch (e) {
@@ -282,31 +291,31 @@ class CommentController extends ChangeNotifier {
       return null;
     }
   }
-  
+
   Future<bool> deleteResponse(String commentId, String responseId) async {
     try {
       await _commentService.deleteResponse(commentId, responseId);
-      
+
       if (responses.containsKey(commentId)) {
         responses[commentId]?.removeWhere((r) => r.id == responseId);
       }
-      
+
       final index = comments.indexWhere((c) => c.id == commentId);
       if (index != -1) {
         comments[index].responses.removeWhere((id) => id == responseId);
       }
-      
+
       Fluttertoast.showToast(msg: 'Réponse supprimée avec succès');
       return true;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la suppression de la réponse : $e')),
+        SnackBar(
+            content: Text('Erreur lors de la suppression de la réponse : $e')),
       );
       return false;
     }
   }
 
-  
   Future<bool> toggleLike(Comment comment, bool isLiked) async {
     try {
       if (isLiked) {
@@ -326,7 +335,6 @@ class CommentController extends ChangeNotifier {
     }
   }
 
-  
   void removeImage() {
     selectedImage = null;
     existingImageUrl = null;
@@ -353,7 +361,6 @@ class CommentController extends ChangeNotifier {
     }
   }
 
-  
   String formatTimeAgo(DateTime dateTime) {
     final Duration difference = DateTime.now().difference(dateTime);
 
@@ -369,7 +376,7 @@ class CommentController extends ChangeNotifier {
       return 'À l\'instant';
     }
   }
-  
+
   CommentResult? findCommentById(String commentId) {
     try {
       final comment = comments.firstWhere((c) => c.id == commentId);
@@ -377,7 +384,8 @@ class CommentController extends ChangeNotifier {
     } catch (e) {
       for (var parentId in responses.keys) {
         try {
-          final response = responses[parentId]!.firstWhere((r) => r.id == commentId);
+          final response =
+              responses[parentId]!.firstWhere((r) => r.id == commentId);
           return CommentResult(response, true, parentId);
         } catch (e) {
           // Continue searching
@@ -398,6 +406,6 @@ class CommentResult {
   final Comment comment;
   final bool isResponse;
   final String? parentCommentId;
-  
+
   CommentResult(this.comment, this.isResponse, this.parentCommentId);
 }

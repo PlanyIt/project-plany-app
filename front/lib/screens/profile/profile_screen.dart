@@ -1,18 +1,19 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/widgets/content/favorites_section.dart';
 import 'package:front/screens/profile/widgets/content/followers_section.dart';
-import 'package:front/screens/profile/widgets/content/following_section.dart' show FollowingSection;
+import 'package:front/screens/profile/widgets/content/following_section.dart'
+    show FollowingSection;
 import 'package:front/screens/profile/widgets/content/my_plans_section.dart';
 import 'package:front/screens/profile/widgets/content/settings_section.dart';
 import 'package:front/screens/profile/widgets/header/profile_header.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userId;
   final bool isCurrentUser;
-  
+
   const ProfileScreen({
     super.key,
     this.userId,
@@ -20,14 +21,15 @@ class ProfileScreen extends StatefulWidget {
   });
 
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  ProfileScreenState createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
-  UserProfile? _userProfile;
+  User? _userProfile;
   String _selectedSection = '';
   final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -40,21 +42,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadUserData() async {
     try {
       setState(() => _isLoading = true);
-      
-      final userProfile = await _userService.getUserProfile(widget.userId ?? FirebaseAuth.instance.currentUser!.uid, forceRefresh: true);
-      
-      final stats = await _userService.getUserStats(widget.userId ?? FirebaseAuth.instance.currentUser!.uid);
-      
+
+      final userProfile = await _userService.getUserProfile(
+          widget.userId ?? _authService.getCurrentUserId().toString(),
+          forceRefresh: true);
+
+      final stats = await _userService.getUserStats(
+          widget.userId ?? _authService.getCurrentUserId().toString());
+
       userProfile.followersCount = stats['followersCount'];
-      userProfile.followingCount = stats['followingCount']; 
+      userProfile.followingCount = stats['followingCount'];
       userProfile.plansCount = stats['plansCount'];
       userProfile.favoritesCount = stats['favoritesCount'];
-      
+
       setState(() {
         _userProfile = userProfile;
         _isLoading = false;
       });
-          } catch (e) {
+    } catch (e) {
       print('Erreur lors du chargement du profil: $e');
       setState(() => _isLoading = false);
     }
@@ -62,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _updateUserPhoto(String newPhotoUrl) {
     setState(() {
-      _userProfile = UserProfile(
+      _userProfile = User(
         id: _userProfile!.id,
         username: _userProfile!.username,
         email: _userProfile!.email,
@@ -74,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _refreshProfileStats() async {
     try {
       final stats = await _userService.getUserStats(_userProfile!.id);
-      
+
       setState(() {
         if (_userProfile != null) {
           _userProfile!.followingCount = stats['followingCount'];
@@ -93,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -122,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Icon(
                   Icons.error_outline,
                   size: 50,
-                  color: const Color(0xFF3425B5).withOpacity(0.7),
+                  color: const Color(0xFF3425B5).withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 20),
@@ -140,7 +145,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3425B5),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -169,17 +175,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onFollowChanged: () {
                   _refreshProfileStats();
                 },
-                scrollController: _scrollController, 
+                scrollController: _scrollController,
               ),
-
-           _getSelectedSection(),
-              
-           
+              _getSelectedSection(),
             ],
           ),
         ),
       ),
-
     );
   }
 
@@ -187,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _selectedSection = section;
     });
-    
+
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -199,28 +201,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  Widget _getSelectedSection() {    
+  Widget _getSelectedSection() {
     switch (_selectedSection) {
       case 'plans':
         return MyPlansSection(
-          userId: widget.userId ?? FirebaseAuth.instance.currentUser!.uid,
+          userId: _userProfile!.id,
           onPlansUpdated: () {
             _refreshProfileStats();
           },
         );
       case 'favorites':
-        return widget.isCurrentUser 
+        return widget.isCurrentUser
             ? FavoritesSection(userId: _userProfile!.id)
             : const Center(child: Text('Section non disponible'));
       case 'subscriptions':
         return widget.isCurrentUser
-            ? FollowingSection(userId: _userProfile!.id, onFollowChanged: _refreshProfileStats)
+            ? FollowingSection(
+                userId: _userProfile!.id, onFollowChanged: _refreshProfileStats)
             : const Center(child: Text('Section non disponible'));
       case 'followers':
-        return FollowersSection(userId: _userProfile!.id, onFollowChanged: _refreshProfileStats);
+        return FollowersSection(
+            userId: _userProfile!.id, onFollowChanged: _refreshProfileStats);
       case 'settings':
         return widget.isCurrentUser
-            ? SettingsSection(onProfileUpdated: _loadUserData, userProfile:  _userProfile!,)
+            ? SettingsSection(
+                onProfileUpdated: _loadUserData,
+                userProfile: _userProfile!,
+              )
             : const Center(child: Text('Section non disponible'));
       default:
         return MyPlansSection(userId: _userProfile!.id);

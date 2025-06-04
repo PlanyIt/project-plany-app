@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:front/providers/auth_provider.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/routing/routes.dart';
-import 'package:front/screens/auth/login_screen.dart';
-import 'package:front/screens/auth/signup_screen.dart';
+import 'package:front/screens/auth/home_screen.dart';
+import 'package:front/screens/dashboard/dashboard_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -84,9 +84,9 @@ class AuthWrapper extends StatelessWidget {
     }
 
     if (authProvider.isAuthenticated) {
-      return const SignupScreen(); // Rediriger vers DashboardScreen si authentifié
+      return const DashboardScreen();
     } else {
-      return const LoginScreen(); // Rediriger vers HomeScreen si non authentifié
+      return const HomeScreen();
     }
   }
 }

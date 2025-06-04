@@ -76,7 +76,7 @@ class CommentInput extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -1),
           ),
@@ -107,7 +107,7 @@ class CommentInput extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -143,7 +143,7 @@ class CommentInput extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -164,9 +164,8 @@ class CommentInput extends StatelessWidget {
                   Icons.camera_alt,
                   color: categoryColor,
                 ),
-                onPressed: isUploadingImage
-                    ? null
-                    : () => _directImagePicker(context),
+                onPressed:
+                    isUploadingImage ? null : () => _directImagePicker(context),
                 splashRadius: 20,
               ),
               Expanded(

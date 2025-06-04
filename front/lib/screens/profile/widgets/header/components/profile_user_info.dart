@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 
 class ProfileUserInfo extends StatelessWidget {
-  final UserProfile userProfile;
+  final User userProfile;
   final bool isCurrentUser;
   final bool isFollowing;
   final bool loadingFollow;
@@ -65,7 +65,6 @@ class ProfileUserInfo extends StatelessWidget {
             ),
           ],
         ),
-
         Text(
           userProfile.email,
           style: TextStyle(
@@ -73,15 +72,13 @@ class ProfileUserInfo extends StatelessWidget {
             color: Colors.grey[600],
           ),
         ),
-
         const SizedBox(height: 10),
-
         Row(
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: _getUserLevelColor().withOpacity(0.15),
+                color: _getUserLevelColor().withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -103,24 +100,29 @@ class ProfileUserInfo extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(width: 8),
-
             isCurrentUser
                 ? Expanded(
                     child: GestureDetector(
                       onTap: onPremiumTap,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 6, horizontal: 10),
                         decoration: BoxDecoration(
                           gradient: (userProfile.isPremium)
                               ? const LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFF8C00)
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 )
                               : LinearGradient(
-                                  colors: [Colors.grey[300]!, Colors.grey[400]!],
+                                  colors: [
+                                    Colors.grey[300]!,
+                                    Colors.grey[400]!
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -128,8 +130,8 @@ class ProfileUserInfo extends StatelessWidget {
                           boxShadow: [
                             BoxShadow(
                               color: (userProfile.isPremium)
-                                  ? Colors.amber.withOpacity(0.4)
-                                  : Colors.grey.withOpacity(0.3),
+                                  ? Colors.amber.withValues(alpha: 0.4)
+                                  : Colors.grey.withValues(alpha: 0.3),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -141,7 +143,7 @@ class ProfileUserInfo extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha: 0.3),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -180,7 +182,8 @@ class ProfileUserInfo extends StatelessWidget {
                   )
                 : userProfile.isPremium == true
                     ? Container(
-                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 8),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
@@ -190,7 +193,7 @@ class ProfileUserInfo extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.amber.withOpacity(0.4),
+                              color: Colors.amber.withValues(alpha: 0.4),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -202,7 +205,7 @@ class ProfileUserInfo extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha: 0.3),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -233,7 +236,6 @@ class ProfileUserInfo extends StatelessWidget {
                     : const SizedBox.shrink(),
           ],
         ),
-        
         if (!isCurrentUser)
           Padding(
             padding: const EdgeInsets.only(top: 10),
@@ -242,11 +244,12 @@ class ProfileUserInfo extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
-                  if (!isFollowing) BoxShadow(
-                    color: const Color(0xFF3425B5).withOpacity(0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  )
+                  if (!isFollowing)
+                    BoxShadow(
+                      color: const Color(0xFF3425B5).withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    )
                 ],
               ),
               child: Material(
@@ -257,63 +260,61 @@ class ProfileUserInfo extends StatelessWidget {
                   child: Ink(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      gradient: isFollowing 
-                        ? null
-                        : const LinearGradient(
-                            colors: [Color(0xFF3425B5), Color(0xFF5B4CDA)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                      border: isFollowing 
-                        ? Border.all(color: Colors.grey[400]!, width: 1)
-                        : null,
+                      gradient: isFollowing
+                          ? null
+                          : const LinearGradient(
+                              colors: [Color(0xFF3425B5), Color(0xFF5B4CDA)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                      border: isFollowing
+                          ? Border.all(color: Colors.grey[400]!, width: 1)
+                          : null,
                       color: isFollowing ? Colors.white : null,
                     ),
                     child: loadingFollow
-                      ? Container(
-                          width: 120,
-                          alignment: Alignment.center,
-                          child: SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                isFollowing ? const Color(0xFF3425B5) : Colors.white),
+                        ? Container(
+                            width: 120,
+                            alignment: Alignment.center,
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    isFollowing
+                                        ? const Color(0xFF3425B5)
+                                        : Colors.white),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isFollowing ? Icons.check : Icons.add,
+                                  size: 16,
+                                  color: isFollowing
+                                      ? Colors.grey[700]
+                                      : Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isFollowing ? 'Abonné' : 'S\'abonner',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                    color: isFollowing
+                                        ? Colors.grey[700]
+                                        : Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        )
-                      : Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          alignment: Alignment.center,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isFollowing 
-                                  ? Icons.check
-                                  : Icons.add,
-                                size: 16,
-                                color: isFollowing 
-                                  ? Colors.grey[700]
-                                  : Colors.white,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                isFollowing 
-                                  ? 'Abonné'
-                                  : 'S\'abonner',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                  color: isFollowing 
-                                    ? Colors.grey[700]
-                                    : Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                   ),
                 ),
               ),

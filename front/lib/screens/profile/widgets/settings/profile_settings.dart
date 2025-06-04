@@ -1,7 +1,8 @@
 import 'dart:io';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/services/imgur_service.dart';
 import 'package:front/screens/profile/widgets/settings/components/settings_row.dart';
@@ -12,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart' as paintingBinding;
 
 class ProfileSettings extends StatefulWidget {
-  final UserProfile userProfile;
+  final User userProfile;
   final Function onProfileUpdated;
   final Function(String, String) showInfoCard;
   final Function(String) showErrorCard;
@@ -26,11 +27,13 @@ class ProfileSettings extends StatefulWidget {
   });
 
   @override
-  _ProfileSettingsState createState() => _ProfileSettingsState();
+  ProfileSettingsState createState() => ProfileSettingsState();
 }
 
-class _ProfileSettingsState extends State<ProfileSettings> {
+class ProfileSettingsState extends State<ProfileSettings> {
   final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
+  User? _currentUser;
   Key _photoKey = UniqueKey();
 
   final List<String> _genderOptions = [
@@ -39,6 +42,21 @@ class _ProfileSettingsState extends State<ProfileSettings> {
     'Non-binaire',
     'Préfère ne pas préciser'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentUser().then((user) {
+      setState(() {
+        _currentUser = user;
+      });
+    });
+  }
+
+  Future<User?> _getCurrentUser() async {
+    final currentUser = _authService.getUser();
+    return currentUser;
+  }
 
   String _formatDate(DateTime date) {
     return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
@@ -225,7 +243,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                             border: Border.all(color: Colors.grey[300]!),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
+                                color: Colors.grey.withValues(alpha: 0.1),
                                 spreadRadius: 1,
                                 blurRadius: 2,
                                 offset: const Offset(0, 1),
@@ -363,7 +381,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
                                 setState(() {
                                   widget.userProfile.username =
-                                      updatedProfile.username;
+                                      updatedProfile!.username;
                                   widget.userProfile.description =
                                       updatedProfile.description;
                                   widget.userProfile.birthDate =
@@ -440,10 +458,13 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
       if (updatedProfile != null) {
         try {
-          final currentUser = FirebaseAuth.instance.currentUser;
+          final currentUser = _currentUser;
           if (currentUser != null) {
-            await currentUser.updatePhotoURL(null);
-            await currentUser.reload();
+            await _userService.deleteUserPhoto(currentUser.id);
+          } else {
+            if (kDebugMode) {
+              print('Utilisateur non trouvé pour la suppression de la photo');
+            }
           }
         } catch (e) {
           print('Erreur lors de la suppression de la photo Firebase: $e');
@@ -616,7 +637,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3425B5).withOpacity(0.1),
+                      color: const Color(0xFF3425B5).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

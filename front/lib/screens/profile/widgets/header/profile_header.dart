@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/widgets/header/components/profile_user_info.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/screens/profile/widgets/content/premium_popup.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'components/profile_avatar.dart';
 import 'components/profile_stats.dart';
 import 'components/profile_categories.dart';
 
 class ProfileHeader extends StatefulWidget {
-  final UserProfile userProfile;
+  final User userProfile;
   final Function onProfileUpdated;
   final Function(String) onUpdatePhoto;
   final Function(String) onNavigationSelected;
@@ -18,7 +18,7 @@ class ProfileHeader extends StatefulWidget {
   final ScrollController scrollController;
 
   const ProfileHeader({
-    Key? key,
+    super.key,
     required this.userProfile,
     required this.onUpdatePhoto,
     required this.onProfileUpdated,
@@ -26,7 +26,7 @@ class ProfileHeader extends StatefulWidget {
     required this.isCurrentUser,
     this.onFollowChanged,
     required this.scrollController,
-  }) : super(key: key);
+  });
 
   @override
   _ProfileHeaderState createState() => _ProfileHeaderState();
@@ -34,6 +34,7 @@ class ProfileHeader extends StatefulWidget {
 
 class _ProfileHeaderState extends State<ProfileHeader> {
   final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
   bool _isFollowing = false;
   bool _loadingFollow = false;
 
@@ -49,11 +50,8 @@ class _ProfileHeaderState extends State<ProfileHeader> {
   Future<void> _checkFollowStatus() async {
     if (!widget.isCurrentUser) {
       try {
-        final firebaseUser = FirebaseAuth.instance.currentUser;
-        if (firebaseUser != null) {
-          _isFollowing = await _userService.isFollowing(widget.userProfile.id);
-          setState(() {});
-        }
+        _isFollowing = await _userService.isFollowing(widget.userProfile.id);
+        setState(() {});
       } catch (e) {
         print('Erreur lors de la vérification du statut de suivi: $e');
       }
@@ -166,7 +164,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -201,7 +199,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -289,10 +287,10 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.05),
+                  color: primaryColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: primaryColor.withOpacity(0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -302,7 +300,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
+                        color: primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(

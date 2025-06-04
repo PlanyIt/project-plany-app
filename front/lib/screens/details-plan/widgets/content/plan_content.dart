@@ -33,7 +33,7 @@ class PlanContent extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             spreadRadius: 0,
             blurRadius: 10,
             offset: const Offset(0, -5),
@@ -113,7 +113,7 @@ class PlanContent extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Colors.grey.shade200,
-                    categoryColor.withOpacity(0.5),
+                    categoryColor.withValues(alpha: 0.5),
                   ],
                   begin: Alignment.centerLeft,
                   end: Alignment.center,
@@ -129,7 +129,7 @@ class PlanContent extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: categoryColor.withOpacity(0.1),
+                    color: categoryColor.withValues(alpha: 0.1),
                     blurRadius: 8,
                     spreadRadius: 0,
                     offset: const Offset(0, 2),
@@ -148,7 +148,7 @@ class PlanContent extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    categoryColor.withOpacity(0.5),
+                    categoryColor.withValues(alpha: 0.5),
                     Colors.grey.shade200,
                   ],
                   begin: Alignment.center,

@@ -1,15 +1,14 @@
-
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/plan.dart';
 import 'package:front/domain/models/step.dart' as plan_steps;
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/profile_screen.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/user_service.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/utils/helpers.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class PlanInfoSection extends StatefulWidget {
   final Plan plan;
@@ -28,26 +27,38 @@ class PlanInfoSection extends StatefulWidget {
   });
 
   @override
-  _PlanInfoSectionState createState() => _PlanInfoSectionState();
+  PlanInfoSectionState createState() => PlanInfoSectionState();
 }
 
-class _PlanInfoSectionState extends State<PlanInfoSection> {
+class PlanInfoSectionState extends State<PlanInfoSection> {
   bool _isFavorite = false;
   bool _isProcessing = false;
   int _favoritesCount = 0;
   bool _isLoadingAuthor = true;
   bool _isFollowing = false;
   bool _isLoadingFollow = false;
-  UserProfile? _authorProfile;
+  User? _authorProfile;
+  String? _currentUserId;
   final PlanService _planService = PlanService();
   final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
     _isFavorite = widget.plan.isFavorite;
     _favoritesCount = widget.plan.favorites?.length ?? 0;
-    _loadAuthorProfile();
+    _loadCurrentUserAndAuthor();
+  }
+
+  Future<void> _loadCurrentUserAndAuthor() async {
+    try {
+      _currentUserId = await _authService.getCurrentUserId();
+      _loadAuthorProfile();
+    } catch (e) {
+      print('Erreur lors du chargement de l\'ID utilisateur: $e');
+      _loadAuthorProfile(); // Charger quand même le profil auteur
+    }
   }
 
   String get capitalizedTitle => widget.plan.title.isNotEmpty
@@ -121,26 +132,32 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
           action: SnackBarAction(
             label: 'VOIR',
             textColor: Colors.amber,
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ProfileScreen(
-                    userId: FirebaseAuth.instance.currentUser?.uid,
-                    isCurrentUser: true,
-                  ),
-                ),
-              ).then((_) {
+            onPressed: () async {
+              final userId = await _authService.getCurrentUserId();
+              if (userId != null && mounted) {
                 Navigator.of(context)
-                    .push(PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const SizedBox(),
-                      transitionDuration: Duration.zero,
-                      opaque: false,
-                      maintainState: true,
-                    ))
+                    .push(
+                  MaterialPageRoute(
+                    builder: (context) => ProfileScreen(
+                      userId: userId,
+                      isCurrentUser: true,
+                    ),
+                  ),
+                )
                     .then((_) {
-                  Navigator.of(context).pop(); 
+                  Navigator.of(context)
+                      .push(PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const SizedBox(),
+                    transitionDuration: Duration.zero,
+                    opaque: false,
+                    maintainState: true,
+                  ))
+                      .then((_) {
+                    Navigator.of(context).pop();
+                  });
                 });
-              });
+              }
             },
           ),
         ));
@@ -156,24 +173,21 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
   }
 
   Future<void> _loadAuthorProfile() async {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    
     if (widget.plan.userId == null || widget.plan.userId!.isEmpty) {
       setState(() => _isLoadingAuthor = false);
       return;
     }
-    
+
     setState(() => _isLoadingAuthor = true);
-    
+
     try {
       final author = await _userService.getUserProfile(widget.plan.userId!);
-            
-      final currentUser = FirebaseAuth.instance.currentUser;
+
       bool isFollowing = false;
-      if (currentUser != null && currentUser.uid != widget.plan.userId) {
+      if (_currentUserId != null && _currentUserId != widget.plan.userId) {
         isFollowing = await _userService.isFollowing(author.id);
       }
-      
+
       setState(() {
         _authorProfile = author;
         _isFollowing = isFollowing;
@@ -225,9 +239,10 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
   void _navigateToAuthorProfile(BuildContext context) {
     if (_authorProfile == null) return;
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final isOwnPlan = currentUser != null && currentUser.uid == widget.plan.userId;
-    
+    // Utiliser directement _currentUserId au lieu de FirebaseAuth
+    final isOwnPlan =
+        _currentUserId != null && _currentUserId == widget.plan.userId;
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ProfileScreen(
@@ -260,8 +275,8 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            widget.categoryColor.withOpacity(0.6),
-            widget.categoryColor.withOpacity(0.5),
+            widget.categoryColor.withValues(alpha: 0.6),
+            widget.categoryColor.withValues(alpha: 0.5),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -290,7 +305,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade400.withOpacity(0.3),
+                  color: Colors.amber.shade400.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -317,7 +332,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -343,7 +358,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
               const Spacer(),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
@@ -356,7 +371,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
               const SizedBox(width: 8),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: _isProcessing
@@ -396,7 +411,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               spreadRadius: 1,
               blurRadius: 8,
               offset: const Offset(0, 2),
@@ -420,7 +435,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               spreadRadius: 1,
               blurRadius: 8,
               offset: const Offset(0, 2),
@@ -435,8 +450,8 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
 
     final String followers = "${_authorProfile!.followersCount ?? 0}";
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final isOwnPlan = currentUser != null && currentUser.uid == widget.plan.userId;
+    final isOwnPlan =
+        _currentUserId != null && _currentUserId == widget.plan.userId;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -445,7 +460,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -466,22 +481,25 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: _authorProfile!.photoUrl != null && _authorProfile!.photoUrl!.isNotEmpty
-                ? ClipOval(
-                    child: Image.network(
-                      _authorProfile!.photoUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => 
-                        Icon(Icons.person, size: 30, color: Colors.grey[600]),
-                    ),
-                  )
-                : Icon(Icons.person, size: 30, color: Colors.grey[600]),
+              child: _authorProfile!.photoUrl != null &&
+                      _authorProfile!.photoUrl!.isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        _authorProfile!.photoUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.person,
+                            size: 30,
+                            color: Colors.grey[600]),
+                      ),
+                    )
+                  : Icon(Icons.person, size: 30, color: Colors.grey[600]),
             ),
             Expanded(
               child: Column(
@@ -501,12 +519,13 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (_authorProfile != null && _authorProfile!.isPremium == true)
+                      if (_authorProfile != null &&
+                          _authorProfile!.isPremium == true)
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: widget.categoryColor.withOpacity(0.1),
+                            color: widget.categoryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
@@ -547,7 +566,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
                   gradient: LinearGradient(
                     colors: [
                       widget.categoryColor,
-                      widget.categoryColor.withOpacity(0.8),
+                      widget.categoryColor.withValues(alpha: 0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -555,7 +574,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: widget.categoryColor.withOpacity(0.3),
+                      color: widget.categoryColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -567,18 +586,22 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
                     onTap: _toggleFollow,
                     borderRadius: BorderRadius.circular(14),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: _isLoadingFollow
                           ? const SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
                           : Icon(
-                              _isFollowing ? Icons.person_remove : Icons.person_add_rounded,
+                              _isFollowing
+                                  ? Icons.person_remove
+                                  : Icons.person_add_rounded,
                               color: Colors.white,
                               size: 18,
                             ),
@@ -589,7 +612,8 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
             } else ...{
               Container(
                 margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(14),
@@ -723,14 +747,14 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             spreadRadius: 0,
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
         border: Border.all(
-          color: widget.categoryColor.withOpacity(0.1),
+          color: widget.categoryColor.withValues(alpha: 0.1),
           width: 1.5,
         ),
       ),
@@ -742,7 +766,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
             child: Icon(
               Icons.format_quote,
               size: 30,
-              color: widget.categoryColor.withOpacity(0.3),
+              color: widget.categoryColor.withValues(alpha: 0.3),
             ),
           ),
           Text(
@@ -756,7 +780,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
               shadows: [
                 Shadow(
                   blurRadius: 0.5,
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   offset: const Offset(0, 0.5),
                 ),
               ],
@@ -772,7 +796,7 @@ class _PlanInfoSectionState extends State<PlanInfoSection> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          widget.categoryColor.withOpacity(0.2),
+                          widget.categoryColor.withValues(alpha: 0.2),
                           Colors.transparent,
                         ],
                         begin: Alignment.centerLeft,

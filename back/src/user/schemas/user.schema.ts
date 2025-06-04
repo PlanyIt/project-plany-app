@@ -46,6 +46,3 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
-// Supprimer le middleware pre-save ou le conserver comme sécurité secondaire
-// mais ne pas s'y fier exclusivement

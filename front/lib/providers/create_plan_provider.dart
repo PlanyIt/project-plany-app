@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/category.dart';
 import 'package:front/domain/models/plan.dart';
 import 'package:front/domain/models/step.dart' as step_model;
+import 'package:front/services/auth_service.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/imgur_service.dart';
 import 'package:front/services/plan_service.dart';
@@ -19,7 +19,8 @@ class CreatePlanProvider extends ChangeNotifier {
   final StepService _stepService = StepService();
   final ImgurService _imgurService = ImgurService();
   final CategorieService _categorieService = CategorieService();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService =
+      AuthService(); // Ajouter le service d'auth personnalisé
 
   int _currentStep = 1;
 
@@ -238,6 +239,12 @@ class CreatePlanProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<String?> _getCurrentUserId() async {
+    final user = await _authService
+        .getUser(); // Utiliser le service d'auth au lieu de Firebase
+    return user?.id;
+  }
+
   Future<bool> createPlan() async {
     try {
       _setLoading(true);
@@ -261,6 +268,13 @@ class CreatePlanProvider extends ChangeNotifier {
 
       if (_stepCards.isEmpty) {
         _setError('Ajoutez au moins une étape à votre plan');
+        return false;
+      }
+
+      // Obtenir l'ID utilisateur à partir du service personnalisé
+      final String? userId = await _getCurrentUserId();
+      if (userId == null) {
+        _setError('Utilisateur non connecté');
         return false;
       }
 
@@ -299,7 +313,7 @@ class CreatePlanProvider extends ChangeNotifier {
           title: _stepCards[i].title,
           description: _stepCards[i].description,
           order: i + 1,
-          userId: _auth.currentUser!.uid,
+          userId: userId, // Utiliser l'ID utilisateur récupéré
           duration: formattedDuration,
           cost: _stepCards[i].cost,
           position: _stepCards[i].location,
@@ -318,7 +332,7 @@ class CreatePlanProvider extends ChangeNotifier {
         title: titlePlanController.text.trim(),
         description: descriptionPlanController.text.trim(),
         category: _selectedCategory!.id,
-        userId: _auth.currentUser!.uid,
+        userId: userId, // Utiliser l'ID utilisateur récupéré
         steps: stepIds,
         isPublic: true,
       );

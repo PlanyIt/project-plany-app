@@ -154,7 +154,7 @@ class _ProfileCategoriesState extends State<ProfileCategories> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF3425B5).withOpacity(0.08),
+        color: const Color(0xFF3425B5).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

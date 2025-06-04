@@ -41,10 +41,10 @@ class ResponseInput extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: categoryColor.withOpacity(0.1)),
+        border: Border.all(color: categoryColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -76,7 +76,7 @@ class ResponseInput extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -89,7 +89,6 @@ class ResponseInput extends StatelessWidget {
                 ),
               ],
             ),
-
           if (selectedImage == null && existingImageUrl != null)
             Stack(
               children: [
@@ -115,7 +114,7 @@ class ResponseInput extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -128,7 +127,6 @@ class ResponseInput extends StatelessWidget {
                 ),
               ],
             ),
-
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -147,7 +145,6 @@ class ResponseInput extends StatelessWidget {
                   minLines: 1,
                 ),
               ),
-
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -156,7 +153,7 @@ class ResponseInput extends StatelessWidget {
                     height: 32,
                     margin: const EdgeInsets.symmetric(horizontal: 2),
                     decoration: BoxDecoration(
-                      color: categoryColor.withOpacity(0.1),
+                      color: categoryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
@@ -173,7 +170,6 @@ class ResponseInput extends StatelessWidget {
                       splashRadius: 16,
                     ),
                   ),
-
                   isUploadingImage
                       ? Container(
                           width: 32,
@@ -181,7 +177,7 @@ class ResponseInput extends StatelessWidget {
                           margin: const EdgeInsets.symmetric(horizontal: 2),
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: categoryColor.withOpacity(0.1),
+                            color: categoryColor.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: CircularProgressIndicator(
@@ -194,7 +190,8 @@ class ResponseInput extends StatelessWidget {
                           height: 32,
                           margin: const EdgeInsets.symmetric(horizontal: 2),
                           decoration: BoxDecoration(
-                            color: isSubmitting ? Colors.grey[400] : categoryColor,
+                            color:
+                                isSubmitting ? Colors.grey[400] : categoryColor,
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -203,12 +200,13 @@ class ResponseInput extends StatelessWidget {
                               color: Colors.white,
                               size: 16,
                             ),
-                            onPressed: isSubmitting ? null : () => onSubmit(parentComment.id!),
+                            onPressed: isSubmitting
+                                ? null
+                                : () => onSubmit(parentComment.id!),
                             padding: EdgeInsets.zero,
                             splashRadius: 16,
                           ),
                         ),
-
                   Container(
                     width: 32,
                     height: 32,

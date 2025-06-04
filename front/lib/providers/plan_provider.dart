@@ -1,7 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:front/domain/models/plan.dart';
 import 'package:front/domain/models/step.dart' as step_model;
+import 'package:front/services/auth_service.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/step_service.dart';
 
@@ -9,7 +9,7 @@ class PlanProvider extends ChangeNotifier {
   // Services
   final PlanService _planService = PlanService();
   final StepService _stepService = StepService();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _auth = AuthService();
 
   // Data
   List<Plan> _plans = [];
@@ -89,19 +89,18 @@ class PlanProvider extends ChangeNotifier {
   Future<bool> deletePlan(String planId) async {
     try {
       _setLoading(true);
+      _setError(null);
 
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) {
-        _setError('Utilisateur non connecté');
+      final success = await _planService.deletePlan(planId);
+      if (success) {
+        // Supprimer le plan de la liste locale
+        _plans.removeWhere((plan) => plan.id == planId);
+        notifyListeners();
+        return true;
+      } else {
+        _setError('Échec de la suppression du plan');
         return false;
       }
-
-      await _planService.deletePlan(planId);
-
-      _plans.removeWhere((plan) => plan.id == planId);
-      notifyListeners();
-
-      return true;
     } catch (e) {
       _setError('Erreur lors de la suppression du plan: ${e.toString()}');
       return false;
@@ -143,10 +142,8 @@ class PlanProvider extends ChangeNotifier {
   }
 
   // Obtenir les plans créés par l'utilisateur courant
-  List<Plan> get userPlans {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) return [];
-
+  Future<List<Plan>> get userPlans async {
+    final userId = await _auth.getCurrentUserId();
     return _plans.where((plan) => plan.userId == userId).toList();
   }
 

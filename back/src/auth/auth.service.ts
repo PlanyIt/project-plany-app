@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PasswordService } from './password.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
@@ -33,14 +29,13 @@ export class AuthService {
         user.password,
       );
     } catch (e) {
-      // Si le format n'est pas compatible avec Argon2, essayer bcrypt
-      try {
-        isPasswordValid = await this.passwordService.verifyLegacyPassword(
-          password,
-          user.password,
-        );
-      } catch (e) {
-        return null;
+      isPasswordValid = await this.passwordService.verifyLegacyPassword(
+        password,
+        user.password,
+      );
+
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Mot de passe incorrect', e.message);
       }
     }
 

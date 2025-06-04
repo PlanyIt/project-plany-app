@@ -220,7 +220,7 @@ class _FavoritesSectionState extends State<FavoritesSection>
           right: 8,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -310,7 +310,7 @@ class _FavoritesSectionState extends State<FavoritesSection>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -324,7 +324,7 @@ class _FavoritesSectionState extends State<FavoritesSection>
                 width: 70,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.pink.withOpacity(0.1),
+                  color: Colors.pink.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(

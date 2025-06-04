@@ -7,7 +7,7 @@ class VerticalFlightPathPainter extends CustomPainter {
   final Color color;
   final bool showDistance;
   final double distance;
-  
+
   VerticalFlightPathPainter({
     required this.progress,
     this.isActive = false,
@@ -21,67 +21,64 @@ class VerticalFlightPathPainter extends CustomPainter {
     // Points de référence
     final startX = 18.0;
     final startY = 36.0;
-    
+
     final targetY = 270.0;
-    
+
     final dashPaint = Paint()
-      ..color = color.withOpacity(0.6)
+      ..color = color.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
-    
+
     // Tracer le chemin de la ligne pointillée qui va plus loin
     final path = Path();
     path.moveTo(startX, startY);
     path.lineTo(startX, startY + (targetY * progress * 1.1));
-    
+
     // Position exacte de l'avion - également ajustée
     final planeY = startY + (targetY * progress * 1.1);
-    
+
     try {
       // Dessiner la ligne pointillée
       final pathMetrics = path.computeMetrics().first;
       final pathLength = pathMetrics.length;
       final extractPath = pathMetrics.extractPath(0, pathLength);
-      
+
       final dashWidth = 5.0;
       final dashSpace = 5.0;
       final dash = PathDashPattern(dashWidth, dashSpace);
       final dashPath = dash.dashPath(extractPath);
-      
+
       canvas.drawPath(dashPath, dashPaint);
-      
+
       // Dessiner l'avion à la position calculée
       final avionPaint = Paint()
-        ..color = color.withOpacity(0.8)
+        ..color = color.withValues(alpha: 0.8)
         ..style = PaintingStyle.fill;
 
       final avionPath = Path();
       final avionSize = 9.0;
-      
+
       avionPath.moveTo(startX, planeY + avionSize);
-      avionPath.lineTo(startX - avionSize/1.5, planeY);
-      avionPath.lineTo(startX, planeY + avionSize/3);
-      avionPath.lineTo(startX + avionSize/1.5, planeY);
+      avionPath.lineTo(startX - avionSize / 1.5, planeY);
+      avionPath.lineTo(startX, planeY + avionSize / 3);
+      avionPath.lineTo(startX + avionSize / 1.5, planeY);
       avionPath.close();
-      
+
       canvas.drawPath(avionPath, avionPaint);
-      
+
       // Contour blanc de l'avion
       final contourPaint = Paint()
-        ..color = Colors.white.withOpacity(0.5)
+        ..color = Colors.white.withValues(alpha: 0.5)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1;
       canvas.drawPath(avionPath, contourPaint);
     } catch (e) {
       // Fallback simple en cas d'erreur
       canvas.drawLine(
-        Offset(startX, startY), 
-        Offset(startX, planeY),
-        dashPaint
-      );
+          Offset(startX, startY), Offset(startX, planeY), dashPaint);
     }
-    
+
     // Dessiner la distance si nécessaire
     if (showDistance && distance > 0) {
       // Contenu du texte de distance
@@ -98,37 +95,37 @@ class VerticalFlightPathPainter extends CustomPainter {
         textAlign: TextAlign.center,
       );
       textPainter.layout();
-      
+
       // Dimensions du badge
       final textWidth = textPainter.width;
       final textHeight = textPainter.height;
       final badgePadding = 8.0;
       final badgeHeight = textHeight + badgePadding;
       final badgeWidth = textWidth + badgePadding * 2 + 16;
-      
+
       // Position du badge - légèrement décalé vers la droite pour éviter la coupure
-      final badgeX = startX + 2; 
+      final badgeX = startX + 2;
       final badgeY = planeY - badgeHeight - 15;
-      
+
       // Fond avec dégradé
       final badgeRect = RRect.fromRectAndRadius(
         Rect.fromLTWH(badgeX, badgeY, badgeWidth, badgeHeight),
         Radius.circular(badgeHeight / 2), // Coins parfaitement arrondis
       );
-      
+
       // Créer un dégradé
       final gradient = LinearGradient(
         colors: [
           color,
-          color.withOpacity(0.7),
+          color.withValues(alpha: 0.7),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
-      
+
       // Dessiner l'ombre du badge
       final shadowPaint = Paint()
-        ..color = Colors.black.withOpacity(0.2)
+        ..color = Colors.black.withValues(alpha: 0.2)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3);
       canvas.drawRRect(
         RRect.fromRectAndRadius(
@@ -137,27 +134,28 @@ class VerticalFlightPathPainter extends CustomPainter {
         ),
         shadowPaint,
       );
-      
+
       // Dessiner le badge avec dégradé
       final badgePaint = Paint()
         ..shader = gradient.createShader(badgeRect.outerRect);
       canvas.drawRRect(badgeRect, badgePaint);
-      
+
       // Bordure légère
       final borderPaint = Paint()
-        ..color = Colors.white.withOpacity(0.3)
+        ..color = Colors.white.withValues(alpha: 0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.8;
       canvas.drawRRect(badgeRect, borderPaint);
-      
+
       // Position de l'icône
       final iconX = badgeX + badgePadding + 4;
       final iconY = badgeY + badgeHeight / 2;
-      
+
       // Dessiner une simple icône de marcheur
       final walkIcon = Path();
       // Tête
-      walkIcon.addOval(Rect.fromCircle(center: Offset(iconX, iconY - 3), radius: 1.5));
+      walkIcon.addOval(
+          Rect.fromCircle(center: Offset(iconX, iconY - 3), radius: 1.5));
       // Corps et jambes
       walkIcon.moveTo(iconX, iconY - 1.5);
       walkIcon.lineTo(iconX, iconY + 1);
@@ -172,15 +170,15 @@ class VerticalFlightPathPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2;
       canvas.drawPath(walkIcon, walkIconStrokePaint);
-      
+
       // Dessiner le texte
       textPainter.paint(canvas, Offset(iconX + 8, badgeY + badgePadding / 2));
     }
   }
-  
+
   @override
-  bool shouldRepaint(VerticalFlightPathPainter oldDelegate) => 
-      oldDelegate.progress != progress || 
+  bool shouldRepaint(VerticalFlightPathPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
       oldDelegate.isActive != isActive ||
       oldDelegate.color != color;
 }

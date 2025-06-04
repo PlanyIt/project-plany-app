@@ -1,8 +1,7 @@
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:front/screens/details-plan/widgets/content/comments/widgets/comment_input.dart';
 import 'package:front/screens/details-plan/widgets/content/comments/widgets/empty_state.dart';
 import 'package:front/screens/details-plan/widgets/content/comments/widgets/option_sheet.dart';
@@ -11,6 +10,7 @@ import 'package:front/domain/models/comment.dart';
 import 'dart:math';
 import 'package:front/screens/details-plan/widgets/content/comments/widgets/comment_card.dart';
 import 'package:front/screens/details-plan/widgets/content/comments/controller/comment_controller.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/services/user_service.dart';
 
 class CommentSection extends StatefulWidget {
@@ -28,21 +28,20 @@ class CommentSection extends StatefulWidget {
   });
 
   @override
-  _CommentSectionState createState() => _CommentSectionState();
+  CommentSectionState createState() => CommentSectionState();
 }
 
-class _CommentSectionState extends State<CommentSection> {
+class CommentSectionState extends State<CommentSection> {
   late CommentController _controller;
   late final UserService _userService = UserService();
-  
+  final AuthService _auth = AuthService();
   final TextEditingController _commentController = TextEditingController();
   final TextEditingController _responseController = TextEditingController();
   final FocusNode _commentFocusNode = FocusNode();
   final FocusNode _responseFocusNode = FocusNode();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   String? _respondingToCommentId;
-  String? _editingCommentId;  
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  String? _editingCommentId;
   int _currentPage = 1;
   final int _pageLimit = 10;
   bool _isLoading = false;
@@ -51,21 +50,46 @@ class _CommentSectionState extends State<CommentSection> {
   final int _initialCommentsToShow = 2;
   bool _isSubmittingComment = false;
   bool _isSubmittingResponse = false;
+  String? _currentUserId;
 
-  final Map<String, UserProfile> _userProfilesCache = {};
+  final Map<String, User> _userProfilesCache = {};
 
   @override
   void initState() {
     super.initState();
-    
+
     _controller = CommentController(
       planId: widget.planId,
       context: context,
       onCommentCountChanged: widget.onCommentCountChanged,
-      currentUserId: _auth.currentUser?.uid,
+      currentUserId: null, // Initialement null
     );
-    
-    _loadComments(reset: true);
+
+    // Charger l'ID utilisateur, puis les commentaires
+    _loadUserIdAndComments();
+  }
+
+  Future<void> _loadUserIdAndComments() async {
+    try {
+      // Récupérer l'ID utilisateur de façon asynchrone
+      _currentUserId = await _auth.getCurrentUserId();
+
+      // Mettre à jour le contrôleur avec l'ID utilisateur
+      _controller.updateCurrentUserId(_currentUserId);
+
+      // Charger les commentaires
+      _loadComments(reset: true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Erreur de chargement des données utilisateur: $e')),
+        );
+      }
+      // Charger quand même les commentaires même en cas d'erreur
+      _loadComments(reset: true);
+    }
   }
 
   void _loadComments({bool reset = false}) async {
@@ -84,17 +108,15 @@ class _CommentSectionState extends State<CommentSection> {
 
     try {
       await _controller.loadComments(
-        reset: reset,
-        currentPage: _currentPage,
-        pageLimit: _pageLimit
-      );
-      
+          reset: reset, currentPage: _currentPage, pageLimit: _pageLimit);
+
       setState(() {
         _isInitialLoad = false;
       });
 
       if (_listKey.currentState != null && !widget.isEmbedded) {
-        final int startIndex = reset ? 0 : _controller.comments.length - (_pageLimit);
+        final int startIndex =
+            reset ? 0 : _controller.comments.length - (_pageLimit);
         for (int i = 0; i < _pageLimit; i++) {
           if (i + startIndex < _controller.comments.length) {
             _listKey.currentState!.insertItem(startIndex + i);
@@ -112,20 +134,18 @@ class _CommentSectionState extends State<CommentSection> {
 
   Future<void> _saveComment() async {
     if (_isSubmittingComment) return;
-    
+
     setState(() {
       _isSubmittingComment = true;
     });
-    
+
     try {
       if (_editingCommentId != null) {
         // Mode édition
         final updatedComment = await _controller.editComment(
-          _editingCommentId!,
-          _commentController.text,
-          newImage: _controller.selectedImage
-        );
-        
+            _editingCommentId!, _commentController.text,
+            newImage: _controller.selectedImage);
+
         if (updatedComment != null) {
           _commentController.clear();
           _controller.removeImage();
@@ -140,11 +160,11 @@ class _CommentSectionState extends State<CommentSection> {
           _commentController.clear();
           _controller.removeImage();
           _commentFocusNode.unfocus();
-          
+
           if (!widget.isEmbedded) {
             _listKey.currentState?.insertItem(0);
           }
-          
+
           setState(() {});
         }
       }
@@ -159,20 +179,18 @@ class _CommentSectionState extends State<CommentSection> {
 
   Future<void> _saveResponse(String commentId) async {
     if (_isSubmittingResponse) return;
-  
+
     setState(() {
       _isSubmittingResponse = true;
     });
-  
+
     try {
       if (_editingCommentId != null) {
         // Mode édition
         final updatedResponse = await _controller.editComment(
-          _editingCommentId!,
-          _responseController.text,
-          newImage: _controller.selectedResponseImage
-        );
-        
+            _editingCommentId!, _responseController.text,
+            newImage: _controller.selectedResponseImage);
+
         if (updatedResponse != null) {
           setState(() {
             _respondingToCommentId = null;
@@ -183,7 +201,8 @@ class _CommentSectionState extends State<CommentSection> {
         }
       } else {
         // Mode création
-        final response = await _controller.saveResponse(commentId, _responseController.text);
+        final response =
+            await _controller.saveResponse(commentId, _responseController.text);
         if (response != null) {
           setState(() {
             _respondingToCommentId = null;
@@ -232,19 +251,21 @@ class _CommentSectionState extends State<CommentSection> {
 
   void _deleteComment(String commentId) async {
     try {
-      final index = _controller.comments.indexWhere((comment) => comment.id == commentId);
+      final index =
+          _controller.comments.indexWhere((comment) => comment.id == commentId);
       if (index == -1) return;
-      
+
       final removedComment = _controller.comments[index];
       final success = await _controller.deleteComment(commentId);
-      
+
       if (success) {
-        setState(() {}); 
-        
+        setState(() {});
+
         if (!widget.isEmbedded) {
           _listKey.currentState?.removeItem(
             index,
-            (context, animation) => _buildCommentItem(removedComment, animation),
+            (context, animation) =>
+                _buildCommentItem(removedComment, animation),
           );
         }
       }
@@ -256,18 +277,18 @@ class _CommentSectionState extends State<CommentSection> {
   void _deleteResponse(String commentId, String responseId) async {
     final success = await _controller.deleteResponse(commentId, responseId);
     if (success) {
-      setState(() {}); 
+      setState(() {});
     }
   }
 
   void _editComment(String commentId) {
     CommentResult? result = _controller.findCommentById(commentId);
     if (result == null) return;
-    
+
     final Comment commentToEdit = result.comment;
     final bool isResponse = result.isResponse;
     final String? parentCommentId = result.parentCommentId;
-    
+
     setState(() {
       if (isResponse) {
         _responseController.text = commentToEdit.content;
@@ -277,19 +298,19 @@ class _CommentSectionState extends State<CommentSection> {
         _commentController.text = commentToEdit.content;
         _controller.existingImageUrl = commentToEdit.imageUrl;
       }
-      
+
       _editingCommentId = commentId;
-      
+
       _controller.selectedImage = null;
       _controller.selectedResponseImage = null;
     });
-    
+
     if (isResponse) {
       _responseFocusNode.requestFocus();
     } else {
       _commentFocusNode.requestFocus();
     }
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text("Modification en cours..."),
@@ -320,17 +341,17 @@ class _CommentSectionState extends State<CommentSection> {
       },
       onClearExistingImage: () {
         _controller.existingImageUrl = null;
-        setState(() {}); 
+        setState(() {});
       },
       onSubmit: _saveComment,
     );
   }
 
-  Future<UserProfile?> _getUserProfile(String userId) async {
+  Future<User?> _getUserProfile(String userId) async {
     if (_userProfilesCache.containsKey(userId)) {
       return _userProfilesCache[userId];
     }
-    
+
     try {
       final profile = await _userService.getUserProfile(userId);
       _userProfilesCache[userId] = profile;
@@ -372,7 +393,8 @@ class _CommentSectionState extends State<CommentSection> {
                                 ),
                               ),
                               const Spacer(),
-                              if (_controller.comments.length > _initialCommentsToShow)
+                              if (_controller.comments.length >
+                                  _initialCommentsToShow)
                                 TextButton.icon(
                                   onPressed: () {
                                     setState(() {
@@ -388,9 +410,8 @@ class _CommentSectionState extends State<CommentSection> {
                                   ),
                                   label: Text(
                                     _showAllComments ? 'Réduire' : 'Voir tout',
-                                    style: TextStyle(
-                                        color: widget
-                                            .categoryColor), 
+                                    style:
+                                        TextStyle(color: widget.categoryColor),
                                   ),
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
@@ -407,10 +428,12 @@ class _CommentSectionState extends State<CommentSection> {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _showAllComments
                               ? _controller.comments.length
-                              : min(_initialCommentsToShow, _controller.comments.length),
+                              : min(_initialCommentsToShow,
+                                  _controller.comments.length),
                           itemBuilder: (context, index) {
                             return _buildCommentItem(
-                                _controller.comments[index], AlwaysStoppedAnimation(1.0));
+                                _controller.comments[index],
+                                AlwaysStoppedAnimation(1.0));
                           },
                         ),
                       ],
@@ -433,7 +456,8 @@ class _CommentSectionState extends State<CommentSection> {
                     key: _listKey,
                     initialItemCount: _controller.comments.length,
                     itemBuilder: (context, index, animation) {
-                      return _buildCommentItem(_controller.comments[index], animation);
+                      return _buildCommentItem(
+                          _controller.comments[index], animation);
                     },
                   ),
           ),
@@ -448,7 +472,7 @@ class _CommentSectionState extends State<CommentSection> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: CommentCard(
-          key: ValueKey('${comment.id}_${comment.userId}'), 
+          key: ValueKey('${comment.id}_${comment.userId}'),
           comment: comment,
           currentUserId: _controller.currentUserId,
           categoryColor: widget.categoryColor,
@@ -456,7 +480,7 @@ class _CommentSectionState extends State<CommentSection> {
           onLikeToggle: (comment, isLiked) async {
             final success = await _controller.toggleLike(comment, isLiked);
             if (success) {
-              setState(() {}); 
+              setState(() {});
             }
           },
           onReplyTap: (commentId) {
@@ -498,7 +522,7 @@ class _CommentSectionState extends State<CommentSection> {
                   },
                   onRemoveImage: () {
                     _controller.removeResponseImage();
-                    setState(() {}); 
+                    setState(() {});
                   },
                   onCancel: () {
                     setState(() {

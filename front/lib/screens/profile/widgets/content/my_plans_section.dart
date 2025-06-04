@@ -4,12 +4,12 @@ import 'package:front/domain/models/plan.dart';
 import 'package:front/domain/models/step.dart' as plan_steps;
 import 'package:front/screens/create-plan/create_plans_screen.dart';
 import 'package:front/screens/profile/widgets/common/section_header.dart';
+import 'package:front/services/auth_service.dart';
 import 'package:front/services/step_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/utils/helpers.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/widgets/card/compact_plan_card.dart';
 
 class MyPlansSection extends StatefulWidget {
@@ -265,30 +265,29 @@ class MyPlansSectionState extends State<MyPlansSection>
             );
           },
         ),
-        if (widget.userId == FirebaseAuth.instance.currentUser?.uid)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.delete_outline,
-                    color: Colors.white, size: 20),
-                onPressed: () async {
-                  final confirm = await _showDeleteConfirmation(context, plan);
-                  if (confirm == true) {
-                    await _deletePlan(plan.id!);
-                  }
-                },
-                tooltip: 'Supprimer ce plan',
-                constraints: BoxConstraints.tight(const Size(36, 36)),
-                padding: EdgeInsets.zero,
-              ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.delete_outline,
+                  color: Colors.white, size: 20),
+              onPressed: () async {
+                final confirm = await _showDeleteConfirmation(context, plan);
+                if (confirm == true) {
+                  await _deletePlan(plan.id!);
+                }
+              },
+              tooltip: 'Supprimer ce plan',
+              constraints: BoxConstraints.tight(const Size(36, 36)),
+              padding: EdgeInsets.zero,
             ),
           ),
+        ),
       ],
     );
   }
@@ -362,7 +361,7 @@ class MyPlansSectionState extends State<MyPlansSection>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -376,7 +375,7 @@ class MyPlansSectionState extends State<MyPlansSection>
                 width: 70,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(

@@ -540,7 +540,7 @@ class _SearchScreenState extends State<SearchScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             spreadRadius: 0,
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -554,7 +554,7 @@ class _SearchScreenState extends State<SearchScreen> {
           child: CircularProgressIndicator(
             strokeWidth: 2,
             valueColor: AlwaysStoppedAnimation<Color>(
-              Theme.of(context).primaryColor.withOpacity(0.7),
+              Theme.of(context).primaryColor.withValues(alpha: 0.7),
             ),
           ),
         ),
@@ -570,7 +570,7 @@ class _SearchScreenState extends State<SearchScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             spreadRadius: 0,
             blurRadius: 8,
             offset: const Offset(0, 2),

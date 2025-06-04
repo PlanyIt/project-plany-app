@@ -1,34 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user_profile.dart';
+import 'package:front/domain/models/user.dart';
 
 class UserListItem extends StatelessWidget {
-  final UserProfile user;
+  final User user;
   final VoidCallback onTap;
   final bool showFollowButton;
   final bool isFollowing;
   final bool isLoading;
   final Function(bool)? onFollowChanged;
-  
+
   const UserListItem({
-    Key? key,
+    super.key,
     required this.user,
     required this.onTap,
     this.showFollowButton = false,
     this.isFollowing = false,
     this.isLoading = false,
     this.onFollowChanged,
-  }) : super(key: key);
+  });
 
   String _getUserLevelEmoji() {
-    final plansCount =  user.plansCount ?? 0;
+    final plansCount = user.plansCount ?? 0;
     if (plansCount >= 50) return "🏆";
-    if (plansCount >= 20) return "⭐"; 
+    if (plansCount >= 20) return "⭐";
     if (plansCount >= 10) return "🎯";
     return "🌱";
   }
 
   Color _getUserLevelColor() {
-    final plansCount =  user.plansCount ?? 0;
+    final plansCount = user.plansCount ?? 0;
     if (plansCount >= 50) return Colors.amber;
     if (plansCount >= 20) return Colors.lightBlue;
     if (plansCount >= 10) return Colors.orange;
@@ -37,7 +37,6 @@ class UserListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -54,25 +53,27 @@ class UserListItem extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ],
               ),
               child: user.photoUrl != null
-                ? ClipOval(
-                    child: Image.network(
-                      user.photoUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => 
-                        Icon(Icons.person, size: 30, color: Colors.grey[600]),
-                    ),
-                  )
-                : Icon(Icons.person, size: 30, color: Colors.grey[600]),
+                  ? ClipOval(
+                      child: Image.network(
+                        user.photoUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.person,
+                            size: 30,
+                            color: Colors.grey[600]),
+                      ),
+                    )
+                  : Icon(Icons.person, size: 30, color: Colors.grey[600]),
             ),
             const SizedBox(width: 16),
-            
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,10 +91,10 @@ class UserListItem extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      
                       if (user.isPremium == true)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
@@ -105,21 +106,20 @@ class UserListItem extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.workspace_premium, size: 12, color: Colors.white),
+                              Icon(Icons.workspace_premium,
+                                  size: 12, color: Colors.white),
                               const SizedBox(width: 2),
-                             
                             ],
                           ),
                         ),
                     ],
                   ),
-                  
                   const SizedBox(height: 4),
-                  
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: _getUserLevelColor().withOpacity(0.15),
+                      color: _getUserLevelColor().withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -143,9 +143,8 @@ class UserListItem extends StatelessWidget {
                 ],
               ),
             ),
-            
-            if (showFollowButton)
-              _buildFollowButton(),
+
+            if (showFollowButton) _buildFollowButton(),
           ],
         ),
       ),
@@ -154,14 +153,14 @@ class UserListItem extends StatelessWidget {
 
   Widget _buildFollowButton() {
     final categoryColor = const Color(0xFF3425B5);
-    
+
     return Container(
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
             categoryColor,
-            categoryColor.withOpacity(0.8),
+            categoryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -169,7 +168,7 @@ class UserListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: categoryColor.withOpacity(0.3),
+            color: categoryColor.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -192,7 +191,9 @@ class UserListItem extends StatelessWidget {
                     ),
                   )
                 : Icon(
-                    isFollowing ? Icons.person_remove : Icons.person_add_rounded,
+                    isFollowing
+                        ? Icons.person_remove
+                        : Icons.person_add_rounded,
                     color: Colors.white,
                     size: 18,
                   ),

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:front/domain/models/user_final.dart';
+import 'package:front/domain/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,16 +19,16 @@ class AuthService {
     return prefs.getString('access_token');
   }
 
-  Future<void> _saveUser(UserModel user) async {
+  Future<void> _saveUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user', jsonEncode(user.toJson()));
   }
 
-  Future<UserModel?> getUser() async {
+  Future<User?> getUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('user');
     if (userJson == null) return null;
-    return UserModel.fromJson(jsonDecode(userJson));
+    return User.fromJson(jsonDecode(userJson));
   }
 
   Future<void> logout() async {
@@ -37,7 +37,7 @@ class AuthService {
     await prefs.remove('user');
   }
 
-  Future<UserModel> login(String email, String password) async {
+  Future<User> login(String email, String password) async {
     try {
       if (kDebugMode) {
         print('Tentative de connexion avec: $email');
@@ -74,7 +74,7 @@ class AuthService {
           throw Exception('Données utilisateur manquantes dans la réponse');
         }
 
-        final user = UserModel.fromJson(data['user']);
+        final user = User.fromJson(data['user']);
         await _saveUser(user);
         return user;
       } else {
@@ -93,7 +93,7 @@ class AuthService {
     }
   }
 
-  Future<UserModel> register(String username, String description, String email,
+  Future<User> register(String username, String description, String email,
       String password) async {
     try {
       if (kDebugMode) {
@@ -133,7 +133,7 @@ class AuthService {
           throw Exception('Données utilisateur manquantes dans la réponse');
         }
 
-        final user = UserModel.fromJson(data['user']);
+        final user = User.fromJson(data['user']);
         await _saveUser(user);
         return user;
       } else {
@@ -185,7 +185,7 @@ class AuthService {
 
       if (response.statusCode == 200) {
         // Mettre à jour l'utilisateur local avec le nouvel email
-        final updatedUser = UserModel(
+        final updatedUser = User(
             id: user.id,
             email: newEmail,
             username: user.username,
@@ -225,6 +225,18 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('Échec de la validation des identifiants');
+    }
+  }
+
+  Future<String?> getCurrentUserId() async {
+    try {
+      final user = await getUser();
+      return user?.id;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erreur lors de la récupération de l\'ID utilisateur: $e');
+      }
+      return null;
     }
   }
 }
