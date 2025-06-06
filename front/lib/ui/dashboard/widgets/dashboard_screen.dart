@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:front/screens/create-plan/create_plans_screen.dart';
-import 'package:front/screens/dashboard/dashboard_home_screen.dart';
+import 'package:front/ui/dashboard/widgets/dashboard_home_screen.dart';
 import 'package:front/screens/profile/profile_screen.dart';
 import 'package:front/services/auth_service.dart';
+import 'package:front/ui/home/widgets/home_screen.dart';
 import 'package:front/widgets/drawer/profile_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -31,20 +32,19 @@ class DashboardScreenState extends State<DashboardScreen> {
   Widget get _currentPage {
     switch (_selectedIndex) {
       case 0:
-        return DashboardHomeScreen(
-          onProfileTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-        );
+        return HomeScreen();
+
+      /// Todo à changer en dashboard
       case 1:
         return const CreatePlansScreen();
       case 2:
         return ProfileScreen(
           userId: userId,
-          isCurrentUser: false,
         );
       default:
-        return DashboardHomeScreen(
-          onProfileTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-        );
+        return HomeScreen();
+
+      ///Todo à changer en dashboard
     }
   }
 

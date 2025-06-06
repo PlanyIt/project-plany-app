@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:front/routing/routes.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:front/widgets/common/plany_button.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,8 +57,10 @@ class HomeScreenState extends State<HomeScreen>
             right: 30,
             child: PlanyButton(
               text: 'Se connecter',
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/login');
+              onPressed: () => {
+                context.push(
+                  Routes.login,
+                ),
               },
               filled: true,
             ),
@@ -67,9 +71,7 @@ class HomeScreenState extends State<HomeScreen>
             right: 30,
             child: PlanyButton(
               text: "S'inscrire",
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/signup');
-              },
+              onPressed: () {},
               filled: false,
             ),
           ),

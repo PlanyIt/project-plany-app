@@ -61,7 +61,7 @@ class ProfileDrawer extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              user!.photoUrl!.isNotEmpty
+              user != null && user.photoUrl != null && user.photoUrl!.isNotEmpty
                   ? CircleAvatar(
                       radius: 35,
                       backgroundImage: NetworkImage(user.photoUrl!),
@@ -95,8 +95,8 @@ class ProfileDrawer extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          user?.email != null
-                              ? user!.email.substring(0, 1).toUpperCase()
+                          user?.email != null && user!.email.isNotEmpty
+                              ? user.email.substring(0, 1).toUpperCase()
                               : 'U',
                           style: const TextStyle(
                             color: Colors.white,

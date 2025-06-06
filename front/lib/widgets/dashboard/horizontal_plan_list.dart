@@ -53,17 +53,30 @@ class HorizontalPlanList extends StatelessWidget {
                     ? [snapshot.data!.first]
                     : null;
 
-                return CompactPlanCard(
-                  title: plan.title,
-                  description: plan.description,
-                  category: getCategoryById(plan.category),
-                  stepsCount: plan.steps.length,
-                  imageUrls: firstImage, // Pass only the first image
-                  onTap: () => onPlanTap(plan),
-                  borderRadius: BorderRadius.circular(16),
-                  // Calculate total cost and duration
-                  totalCost: _calculateTotalCost(plan),
-                  totalDuration: _calculateTotalDuration(plan),
+                // Wrap category loading in a FutureBuilder
+                return FutureBuilder<dynamic>(
+                  future: getCategoryById(plan.category),
+                  builder: (context, categorySnapshot) {
+                    // Show a placeholder while category is loading
+                    if (categorySnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return _buildLoadingCard(plan);
+                    }
+
+                    final category = categorySnapshot.data;
+
+                    return CompactPlanCard(
+                      title: plan.title,
+                      description: plan.description,
+                      category: category,
+                      stepsCount: plan.steps.length,
+                      imageUrls: firstImage,
+                      onTap: () => onPlanTap(plan),
+                      borderRadius: BorderRadius.circular(16),
+                      totalCost: _calculateTotalCost(plan),
+                      totalDuration: _calculateTotalDuration(plan),
+                    );
+                  },
                 );
               },
             ),
@@ -119,8 +132,8 @@ class HorizontalPlanList extends StatelessWidget {
     for (final stepId in stepsToFetch) {
       try {
         final step = await stepService.getStepById(stepId);
-        if (step != null && step.image != null && step.image!.isNotEmpty) {
-          images.add(step.image!);
+        if (step != null && step.image.isNotEmpty) {
+          images.add(step.image);
         }
       } catch (e) {
         // Ignorer les erreurs de chargement d'images
@@ -155,5 +168,39 @@ class HorizontalPlanList extends StatelessWidget {
       // Gérer les erreurs silencieusement
     }
     return totalMinutes;
+  }
+
+  // Helper method to show a loading placeholder card
+  Widget _buildLoadingCard(Plan plan) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              plan.title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              plan.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

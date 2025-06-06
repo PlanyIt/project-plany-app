@@ -462,12 +462,7 @@ class ChooseLocationState extends State<ChooseLocation>
                 subdomains: const ['a', 'b', 'c'],
                 maxZoom: 19,
                 minZoom: 3,
-                retinaMode: MediaQuery.of(context).devicePixelRatio > 1.0
-                    ? true
-                    : false,
-                additionalOptions: const {
-                  'apikey': '', // Ajoutez votre clé API si nécessaire
-                },
+                retinaMode: MediaQuery.of(context).devicePixelRatio > 1.0,
                 tileProvider: NetworkTileProvider(),
               ),
               MarkerLayer(

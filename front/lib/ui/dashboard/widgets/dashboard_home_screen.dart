@@ -2,61 +2,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:front/domain/models/category.dart' as app_category;
 import 'package:front/domain/models/plan.dart';
-import 'package:front/providers/plan_provider.dart';
 import 'package:front/screens/search/search_screen.dart';
-import 'package:front/services/categorie_service.dart';
+import 'package:front/ui/dashboard/view_models/dashboard_viewmodel.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:front/widgets/dashboard/category_cards.dart';
 import 'package:front/widgets/dashboard/horizontal_plan_list.dart';
 import 'package:front/widgets/dashboard/search_bar.dart';
 import 'package:front/widgets/dashboard/section_header.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart';
 
 class DashboardHomeScreen extends StatefulWidget {
-  final VoidCallback? onProfileTap;
-
   const DashboardHomeScreen({
     super.key,
-    this.onProfileTap,
+    required this.viewModel,
   });
+
+  final DashboardViewModel viewModel;
 
   @override
   State<DashboardHomeScreen> createState() => _DashboardHomeScreenState();
 }
 
 class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
-  List<app_category.Category> _categories = [];
   bool _isLoadingCategories = true;
 
   @override
   void initState() {
     super.initState();
-    _loadCategories();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PlanProvider>(context, listen: false).fetchPlans();
-    });
-  }
+    // Initialiser avec la valeur actuelle
+    _isLoadingCategories = widget.viewModel.categories.isEmpty;
 
-  Future<void> _loadCategories() async {
-    try {
-      final categories = await CategorieService().getCategories();
-      if (mounted) {
-        setState(() {
-          _categories = List<app_category.Category>.from(categories);
-          _isLoadingCategories = false;
-        });
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print("Erreur lors du chargement des catégories: $e");
-      }
+    // Mettre à jour après un délai pour permettre le chargement
+    Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() {
           _isLoadingCategories = false;
         });
       }
-    }
+    });
   }
 
   void _navigateToSearch(BuildContext context,
@@ -73,18 +55,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 
-  app_category.Category? _getCategoryById(String categoryId) {
-    try {
-      return _categories.firstWhere((c) => c.id == categoryId);
-    } catch (e) {
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final planProvider = Provider.of<PlanProvider>(context);
-
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.dark.copyWith(
@@ -94,14 +66,13 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
           child: RefreshIndicator(
             color: Theme.of(context).primaryColor,
             onRefresh: () async {
-              await _loadCategories();
-              await planProvider.fetchPlans();
+              // Rafraîchir les données du ViewModel
+              await widget.viewModel.load.execute();
             },
             child: CustomScrollView(
               slivers: [
                 // App Bar avec logo et bouton de profil
                 _buildAppBar(),
-
                 // Barre de recherche
                 SliverToBoxAdapter(
                   child: Padding(
@@ -126,7 +97,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                     child: SectionHeader(
                       title: 'Catégories',
-                      onSeeAllPressed: () => _navigateToSearch(context),
+                      onSeeAllPressed: () =>
+                          print('Voir toutes les catégories'),
+                      //_navigateToSearch(context),
                     ),
                   ),
                 ),
@@ -134,7 +107,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                 // Carrousel de catégories
                 SliverToBoxAdapter(
                   child: CategoryCards(
-                    categories: _categories,
+                    categories: widget.viewModel.categories,
                     isLoading: _isLoadingCategories,
                     onCategoryTap: (category) =>
                         _navigateToSearch(context, category: category),
@@ -155,10 +128,10 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                 // Plans tendances
                 SliverToBoxAdapter(
                   child: HorizontalPlanList(
-                    plans: _getFilteredTrendingPlans(planProvider.plans),
-                    isLoading: planProvider.isLoading,
+                    plans: _getFilteredTrendingPlans(widget.viewModel.plans),
+                    isLoading: widget.viewModel.plans.isEmpty,
                     getCategoryById: (categoryId) =>
-                        _getCategoryById(categoryId as String),
+                        widget.viewModel.getCategoryById(categoryId),
                     height: 250,
                     cardWidth: 200,
                     onPlanTap: (plan) {
@@ -184,11 +157,11 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                 // Plans à découvrir
                 SliverToBoxAdapter(
                   child: HorizontalPlanList(
-                    plans: _getRandomPlans(planProvider.plans),
-                    isLoading: planProvider.isLoading,
+                    plans: _getRandomPlans(widget.viewModel.plans),
+                    isLoading: widget.viewModel.plans.isEmpty,
                     getCategoryById: (categoryId) =>
-                        _getCategoryById(categoryId as String),
-                    height: 250, // Augmenter la hauteur pour le carousel
+                        widget.viewModel.getCategoryById(categoryId),
+                    height: 250,
                     cardWidth: 200,
                     onPlanTap: (plan) {
                       // Navigation vers détail du plan
@@ -223,7 +196,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             children: [
               const PlanyLogo(fontSize: 30),
               GestureDetector(
-                onTap: widget.onProfileTap,
+                onTap: () {
+                  // Navigation vers le profil de l'utilisateur
+                },
                 child: Hero(
                   tag: 'profileAvatar',
                   child: Container(
