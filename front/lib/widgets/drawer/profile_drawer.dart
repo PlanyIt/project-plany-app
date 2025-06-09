@@ -3,19 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/profile_screen.dart';
 import 'package:front/theme/app_theme.dart';
-import 'package:front/services/auth_service.dart';
 
 class ProfileDrawer extends StatelessWidget {
   final VoidCallback onClose;
+  final VoidCallback onLogout;
+  final User? user;
 
   const ProfileDrawer({
     super.key,
     required this.onClose,
+    required this.onLogout,
+    this.user,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Future<User?> user = AuthService().getUser();
     final size = MediaQuery.of(context).size;
     final drawerWidth = size.width * 0.85;
 
@@ -41,7 +43,7 @@ class ProfileDrawer extends StatelessWidget {
             _buildHeader(context, user),
             _buildDivider(),
             Expanded(
-              child: _buildMenuItems(context),
+              child: _buildMenuItems(context, user?.id ?? ''),
             ),
             _buildDivider(),
             _buildLogoutButton(context),
@@ -51,107 +53,101 @@ class ProfileDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, Future<User?> userFuture) {
-    return FutureBuilder<User?>(
-      future: userFuture,
-      builder: (context, snapshot) {
-        final user = snapshot.data;
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              user != null && user.photoUrl != null && user.photoUrl!.isNotEmpty
-                  ? CircleAvatar(
-                      radius: 35,
-                      backgroundImage: NetworkImage(user.photoUrl!),
-                      backgroundColor: Colors.transparent,
-                      onBackgroundImageError: (error, stackTrace) {
-                        if (kDebugMode) {
-                          print('Image loading error: $error');
-                        }
-                      },
-                    )
-                  : Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.primaryColor,
-                            AppTheme.secondaryColor,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          user?.email != null && user!.email.isNotEmpty
-                              ? user.email.substring(0, 1).toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+  Widget _buildHeader(BuildContext context, User? user) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          user != null && user.photoUrl != null && user.photoUrl!.isNotEmpty
+              ? CircleAvatar(
+                  radius: 35,
+                  backgroundImage: NetworkImage(user.photoUrl!),
+                  backgroundColor: Colors.transparent,
+                  onBackgroundImageError: (error, stackTrace) {
+                    if (kDebugMode) {
+                      print('Image loading error: $error');
+                    }
+                  },
+                )
+              : Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryColor,
+                        AppTheme.secondaryColor,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user?.username ?? 'Utilisateur',
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      user?.email != null && user!.email.isNotEmpty
+                          ? user.email.substring(0, 1).toUpperCase()
+                          : 'U',
                       style: const TextStyle(
-                        fontSize: 22,
+                        color: Colors.white,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      user?.email ?? 'Pas d\'email',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.black54,
-                    size: 20,
                   ),
                 ),
-                onPressed: onClose,
-              ),
-            ],
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user?.username ?? 'Utilisateur',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  user?.email ?? 'Pas d\'email',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-        );
-      },
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close,
+                color: Colors.black54,
+                size: 20,
+              ),
+            ),
+            onPressed: onClose,
+          ),
+        ],
+      ),
     );
   }
 
@@ -164,71 +160,63 @@ class ProfileDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItems(BuildContext context) {
-    return FutureBuilder<User?>(
-      future: AuthService().getUser(),
-      builder: (context, snapshot) {
-        final user = snapshot.data;
-        final String userId = user?.id ?? '';
-
-        return ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _buildMenuItem(
-              context,
-              'Mon profil',
-              Icons.person_outline,
-              AppTheme.primaryColor,
-              () {
-                onClose();
-                if (userId.isNotEmpty) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ProfileScreen(
-                        userId: userId,
-                      ),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Utilisateur non connecté')),
-                  );
-                }
-              },
-            ),
-            _buildMenuItem(
-              context,
-              'Mes plans & favoris',
-              Icons.map_outlined,
-              Colors.green,
-              () {
-                onClose();
-                Navigator.pushNamed(context, '/my-plans');
-              },
-            ),
-            _buildMenuItem(
-              context,
-              'Paramètres',
-              Icons.settings_outlined,
-              Colors.orange,
-              () {
-                onClose();
-                // Navigation vers paramètres
-              },
-            ),
-            _buildMenuItem(
-              context,
-              'Aide & Support',
-              Icons.help_outline,
-              Colors.blue,
-              () {
-                onClose();
-                // Navigation vers aide
-              },
-            ),
-          ],
-        );
-      },
+  Widget _buildMenuItems(BuildContext context, String userId) {
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        _buildMenuItem(
+          context,
+          'Mon profil',
+          Icons.person_outline,
+          AppTheme.primaryColor,
+          () {
+            onClose();
+            if (userId.isNotEmpty) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ProfileScreen(
+                    userId: userId,
+                  ),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Utilisateur non connecté')),
+              );
+            }
+          },
+        ),
+        _buildMenuItem(
+          context,
+          'Mes plans & favoris',
+          Icons.map_outlined,
+          Colors.green,
+          () {
+            onClose();
+            Navigator.pushNamed(context, '/my-plans');
+          },
+        ),
+        _buildMenuItem(
+          context,
+          'Paramètres',
+          Icons.settings_outlined,
+          Colors.orange,
+          () {
+            onClose();
+            // Navigation vers paramètres
+          },
+        ),
+        _buildMenuItem(
+          context,
+          'Aide & Support',
+          Icons.help_outline,
+          Colors.blue,
+          () {
+            onClose();
+            // Navigation vers aide
+          },
+        ),
+      ],
     );
   }
 
@@ -278,8 +266,7 @@ class ProfileDrawer extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () async {
           onClose();
-          await AuthService().logout();
-          // L'écouteur AuthWrapper dans main.dart détectera automatiquement la déconnexion
+          onLogout(); // Invoke the logout callback
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.grey[100],

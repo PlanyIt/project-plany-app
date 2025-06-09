@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:front/data/repositories/auth/auth_repository.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
 import 'package:front/data/repositories/step/step_repository.dart';
@@ -16,17 +17,21 @@ class DashboardViewModel extends ChangeNotifier {
     required UserRepository userRepository,
     required PlanRepository planRepository,
     required StepRepository stepRepository,
+    required AuthRepository authRepository,
   })  : _categoryRepository = categoryRepository,
         _userRepository = userRepository,
         _planRepository = planRepository,
-        _stepRepository = stepRepository {
+        _stepRepository = stepRepository,
+        _authRepository = authRepository {
     load = Command0(_load)..execute();
+    logout = Command0(_logout);
   }
 
   final CategoryRepository _categoryRepository;
   final PlanRepository _planRepository;
   final UserRepository _userRepository;
   final StepRepository _stepRepository;
+  final AuthRepository _authRepository;
   final _log = Logger('DashboardViewModel');
   List<Category> _categories = [];
   List<Plan> _plans = [];
@@ -34,15 +39,15 @@ class DashboardViewModel extends ChangeNotifier {
   List<String> _stepImages = [];
 
   late Command0 load;
+  late Command0 logout;
 
   List<Category> get categories => _categories;
   List<Plan> get plans => _plans;
   List<String> get stepImages => _stepImages;
+  User? get user => _user;
 
   /// Loads categort by id
   late final Command1<void, String> categoryById;
-
-  User? get user => _user;
 
   // Ajoutez ou modifiez la propriété isLoading
   bool _isLoading = true;
@@ -127,5 +132,23 @@ class DashboardViewModel extends ChangeNotifier {
         _log.warning('Failed to load category by id: $id', result.error);
         return result;
     }
+  }
+
+  Future<Result> _logout() async {
+    _log.info('Logging out user...');
+    final result = await _authRepository.logout();
+    if (result is Ok<void>) {
+      _log.info('User logged out successfully');
+      _user = null;
+      _categories = [];
+      _plans = [];
+      _stepImages = [];
+    } else {
+      if (result is Error<void>) {
+        _log.warning('Failed to log out user', result.error);
+      }
+    }
+    notifyListeners();
+    return result;
   }
 }

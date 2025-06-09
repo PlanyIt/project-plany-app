@@ -10,6 +10,8 @@ import '../data/repositories/auth/auth_repository.dart';
 
 import '../ui/auth/login/view_models/login_viewmodel.dart';
 import '../ui/auth/login/widgets/login_screen.dart';
+import 'package:front/screens/create-plan/create_plans_screen.dart';
+import 'package:front/screens/profile/profile_screen.dart';
 
 /// Top go_router entry point.
 ///
@@ -45,11 +47,27 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
               userRepository: context.read(),
               planRepository: context.read(),
               stepRepository: context.read(),
+              authRepository: context.read(),
             );
             return DashboardHomeScreen(
               viewModel: viewModel,
             );
           },
+          routes: [
+            GoRoute(
+              path: 'create',
+              builder: (context, state) {
+                return const CreatePlansScreen();
+              },
+            ),
+            GoRoute(
+              path: 'profile',
+              builder: (context, state) {
+                return ProfileScreen(
+                    userId: state.uri.queryParameters['userId']);
+              },
+            ),
+          ],
         ),
       ],
     );
