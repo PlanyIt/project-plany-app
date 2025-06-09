@@ -2,6 +2,8 @@ import 'package:front/data/services/api/api_client.dart';
 import 'package:front/data/services/api/auth_api_client.dart';
 import 'package:front/data/services/api/model/login_request/login_request.dart';
 import 'package:front/data/services/api/model/login_response/login_response.dart';
+import 'package:front/data/services/api/model/register_request/register_request_api_model.dart';
+import 'package:front/data/services/api/model/register_response/register_response_api_model.dart';
 import 'package:front/data/services/shared_preferences_service.dart';
 import 'package:front/utils/result.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -110,12 +112,31 @@ class AuthRepositoryRemote extends AuthRepository {
       _authToken != null ? 'Bearer $_authToken' : null;
 
   @override
-  Future<Result<void>> register(
-      {required String email,
-      required String username,
-      required String description,
-      required String password}) {
-    // TODO: implement register
-    throw UnimplementedError();
+  Future<Result<void>> register({
+    required String email,
+    required String username,
+    required String description,
+    required String password,
+  }) async {
+    try {
+      final result = await _authApiClient.register(
+        RegisterRequestApiModel(
+          email: email,
+          username: username,
+          description: description,
+          password: password,
+        ),
+      );
+      switch (result) {
+        case Ok<RegisterResponseApiModel>():
+          _log.info('User registered successfully');
+          return await login(email: email, password: password);
+        case Error<RegisterResponseApiModel>():
+          _log.warning('Error registering user: ${result.error}');
+          return Result.error(result.error);
+      }
+    } finally {
+      notifyListeners();
+    }
   }
 }

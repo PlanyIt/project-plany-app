@@ -45,103 +45,98 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: EdgeInsets.only(
-                left: AppTheme.paddingL,
-                right: AppTheme.paddingL,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.only(
+            left: AppTheme.paddingL,
+            right: AppTheme.paddingL,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              Center(
+                child: PlanyLogo(fontSize: 50),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 40),
-                  Center(
-                    child: PlanyLogo(fontSize: 50),
+              const SizedBox(height: 40),
+              _buildWelcomeText(context),
+              const SizedBox(height: 40),
+              CustomTextField(
+                controller: _email,
+                labelText: 'Email',
+                hintText: 'Entrez votre email',
+                prefixIcon: Icons.email_outlined,
+              ),
+              const SizedBox(height: 20),
+              CustomTextField(
+                controller: _password,
+                labelText: 'Mot de passe',
+                hintText: 'Entrez votre mot de passe',
+                prefixIcon: Icons.lock_outline,
+                obscureText: obscurePassword,
+                suffixIcon:
+                    obscurePassword ? Icons.visibility_off : Icons.visibility,
+                onSuffixIconPressed: togglePasswordVisibility,
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => {},
+                  child: Text(
+                    'Mot de passe oublié ?',
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(height: 40),
-                  _buildWelcomeText(context),
-                  const SizedBox(height: 40),
-                  CustomTextField(
-                    controller: _email,
-                    labelText: 'Email',
-                    hintText: 'Entrez votre email',
-                    prefixIcon: Icons.email_outlined,
-                  ),
-                  const SizedBox(height: 20),
-                  CustomTextField(
-                    controller: _password,
-                    labelText: 'Mot de passe',
-                    hintText: 'Entrez votre mot de passe',
-                    prefixIcon: Icons.lock_outline,
-                    obscureText: obscurePassword,
-                    suffixIcon: obscurePassword
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                    onSuffixIconPressed: togglePasswordVisibility,
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => {},
+                ),
+              ),
+              const SizedBox(height: 30),
+              ListenableBuilder(
+                listenable: widget.viewModel.login,
+                builder: (context, _) {
+                  return PlanyButton(
+                      text: AppLocalization.of(context).login,
+                      onPressed: () {
+                        widget.viewModel.login.execute(
+                          (_email.value.text, _password.value.text),
+                        );
+                      });
+                },
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Pas encore de compte ? ',
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => context.go(Routes.register),
                       child: Text(
-                        'Mot de passe oublié ?',
+                        'S\'enregistrer',
                         style: TextStyle(
                           color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  ListenableBuilder(
-                    listenable: widget.viewModel.login,
-                    builder: (context, _) {
-                      return PlanyButton(
-                          text: AppLocalization.of(context).login,
-                          onPressed: () {
-                            widget.viewModel.login.execute(
-                              (_email.value.text, _password.value.text),
-                            );
-                          });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Pas encore de compte ? ',
-                          style: TextStyle(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.7),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            'S\'enregistrer',
-                            style: TextStyle(
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -151,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Connexion',
+          AppLocalization.of(context).login,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -187,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
       widget.viewModel.login.clearResult();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalization.of(context).errorWhileLogin),
+          content: Text(AppLocalization.of(context).errorWhileRegister),
           action: SnackBarAction(
             label: AppLocalization.of(context).tryAgain,
             onPressed: () => widget.viewModel.login.execute((

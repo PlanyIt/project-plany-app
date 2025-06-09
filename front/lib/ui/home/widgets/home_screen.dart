@@ -67,7 +67,7 @@ class HomeScreenState extends State<HomeScreen>
             right: 30,
             child: PlanyButton(
               text: "S'inscrire",
-              onPressed: () {},
+              onPressed: () => context.push(Routes.register),
               filled: false,
             ),
           ),

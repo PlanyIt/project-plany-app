@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:front/routing/routes.dart';
+import 'package:front/ui/auth/signup/view_models/signup_viewmodel.dart';
+import 'package:front/ui/auth/signup/widgets/signup_screen.dart';
 import 'package:front/ui/dashboard/view_models/dashboard_viewmodel.dart';
 import 'package:front/ui/dashboard/widgets/dashboard_home_screen.dart';
 import 'package:front/ui/home/widgets/home_screen.dart';
@@ -34,6 +36,16 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
               builder: (context, state) {
                 return LoginScreen(
                   viewModel: LoginViewModel(authRepository: context.read()),
+                );
+              },
+            ),
+            GoRoute(
+              path: Routes.register,
+              builder: (context, state) {
+                return SignupScreen(
+                  viewModel: SignupViewModel(
+                    authRepository: context.read(),
+                  ),
                 );
               },
             ),
@@ -77,7 +89,8 @@ Future<String?> _redirect(BuildContext context, GoRouterState state) async {
   // Check authentication status
   final authRepository = context.read<AuthRepository>();
   final loggedIn = await authRepository.isAuthenticated;
-  final loggingIn = state.matchedLocation == Routes.login;
+  final loggingIn = state.matchedLocation == Routes.login ||
+      state.matchedLocation == Routes.register;
   final isHomePage = state.matchedLocation == Routes.home;
 
   // If not logged in or token expired, allow access to home and login pages, but redirect other requests to home

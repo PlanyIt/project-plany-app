@@ -1,8 +1,7 @@
+import 'package:front/data/repositories/auth/auth_repository.dart';
+import 'package:front/utils/command.dart';
+import 'package:front/utils/result.dart';
 import 'package:logging/logging.dart';
-
-import '../../../../data/repositories/auth/auth_repository.dart';
-import '../../../../utils/command.dart';
-import '../../../../utils/result.dart';
 
 class LoginViewModel {
   LoginViewModel({required AuthRepository authRepository})
