@@ -54,6 +54,10 @@ export class AuthService {
       loginRequestDto.password,
     );
 
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
     const payload = {
       sub: user._id,
       email: user.email,
@@ -61,7 +65,7 @@ export class AuthService {
     };
 
     return {
-      token: this.jwtService.sign(payload),
+      token: this.jwtService.sign(payload, { expiresIn: '10m' }),
       userId: user._id.toString(),
     };
   }
@@ -87,7 +91,7 @@ export class AuthService {
     };
 
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn: '10m' }),
       user: {
         id: newUser._id,
         email: newUser.email,
@@ -98,20 +102,12 @@ export class AuthService {
     };
   }
 
-  async refreshToken(userId: string) {
-    const user = await this.usersService.findById(userId);
-    if (!user) {
-      throw new UnauthorizedException('Utilisateur non trouvé');
+  async validateToken(token: string): Promise<boolean> {
+    try {
+      const decoded = this.jwtService.verify(token);
+      return !!decoded;
+    } catch (e) {
+      throw new UnauthorizedException('Token invalide ou expiré');
     }
-
-    const payload = {
-      sub: user._id,
-      email: user.email,
-      username: user.username,
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
   }
 }

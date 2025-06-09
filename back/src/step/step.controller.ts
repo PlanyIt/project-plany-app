@@ -8,6 +8,7 @@ import {
   Put,
   UseGuards,
   Req,
+  NotFoundException,
 } from '@nestjs/common';
 import { StepService } from './step.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -31,7 +32,14 @@ export class StepController {
 
   @Get(':stepId')
   async findById(@Param('stepId') stepId: string) {
-    return this.stepService.findById(stepId);
+    console.log(`Fetching step for ID: ${stepId}`);
+    const step = await this.stepService.findById(stepId);
+    if (!step) {
+      console.log(`Step not found for ID: ${stepId}`);
+      throw new NotFoundException(`Step with ID ${stepId} not found`);
+    }
+    console.log(`Found step for ID: ${stepId}`);
+    return step;
   }
 
   @UseGuards(JwtAuthGuard)

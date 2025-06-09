@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:front/domain/models/category.dart';
 import 'package:front/domain/models/plan.dart';
+import 'package:front/utils/result.dart';
 import 'package:front/widgets/card/compact_plan_card.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:front/services/step_service.dart';
 
 class HorizontalPlanList extends StatelessWidget {
   final List<Plan> plans;
@@ -12,6 +13,7 @@ class HorizontalPlanList extends StatelessWidget {
   final String emptyMessage;
   final double height;
   final double cardWidth;
+  final List<String>? stepImages;
 
   const HorizontalPlanList({
     super.key,
@@ -22,6 +24,7 @@ class HorizontalPlanList extends StatelessWidget {
     required this.emptyMessage,
     this.height = 250,
     this.cardWidth = 200,
+    this.stepImages,
   });
 
   @override
@@ -46,7 +49,15 @@ class HorizontalPlanList extends StatelessWidget {
             width: cardWidth,
             margin: const EdgeInsets.only(right: 16, bottom: 8),
             child: FutureBuilder<List<String>>(
-              future: _getStepImages(plan),
+              future: stepImages != null
+                  ? Future.value(stepImages)
+                  : getCategoryById(plan.category).then((result) {
+                      if (result is Ok<List<String>>) {
+                        return result.value;
+                      } else {
+                        return [];
+                      }
+                    }),
               builder: (context, snapshot) {
                 // Use only the first image if available
                 final firstImage = snapshot.data?.isNotEmpty == true
@@ -54,28 +65,36 @@ class HorizontalPlanList extends StatelessWidget {
                     : null;
 
                 // Wrap category loading in a FutureBuilder
-                return FutureBuilder<dynamic>(
+                return FutureBuilder<Result<Category>>(
                   future: getCategoryById(plan.category),
                   builder: (context, categorySnapshot) {
-                    // Show a placeholder while category is loading
                     if (categorySnapshot.connectionState ==
                         ConnectionState.waiting) {
                       return _buildLoadingCard(plan);
                     }
 
-                    final category = categorySnapshot.data;
+                    if (categorySnapshot.hasError ||
+                        !categorySnapshot.hasData) {
+                      return _buildErrorCard(plan);
+                    }
 
-                    return CompactPlanCard(
-                      title: plan.title,
-                      description: plan.description,
-                      category: category,
-                      stepsCount: plan.steps.length,
-                      imageUrls: firstImage,
-                      onTap: () => onPlanTap(plan),
-                      borderRadius: BorderRadius.circular(16),
-                      totalCost: _calculateTotalCost(plan),
-                      totalDuration: _calculateTotalDuration(plan),
-                    );
+                    final result = categorySnapshot.data;
+                    if (result is Ok<Category>) {
+                      final category = result.value;
+                      return CompactPlanCard(
+                        title: plan.title,
+                        description: plan.description,
+                        category: category,
+                        stepsCount: plan.steps.length,
+                        imageUrls: firstImage,
+                        onTap: () => onPlanTap(plan),
+                        borderRadius: BorderRadius.circular(16),
+                        totalCost: _calculateTotalCost(plan),
+                        totalDuration: _calculateTotalDuration(plan),
+                      );
+                    } else {
+                      return _buildErrorCard(plan);
+                    }
                   },
                 );
               },
@@ -118,28 +137,6 @@ class HorizontalPlanList extends StatelessWidget {
         child: Text(emptyMessage),
       ),
     );
-  }
-
-  // Méthode pour récupérer les images de toutes les étapes
-  Future<List<String>> _getStepImages(Plan plan) async {
-    final stepService = StepService();
-    final List<String> images = [];
-
-    // Limiter à 5 étapes maximum pour éviter trop de requêtes
-    final stepsToFetch =
-        plan.steps.length > 5 ? plan.steps.sublist(0, 5) : plan.steps;
-
-    for (final stepId in stepsToFetch) {
-      try {
-        final step = await stepService.getStepById(stepId);
-        if (step != null && step.image.isNotEmpty) {
-          images.add(step.image);
-        }
-      } catch (e) {
-        // Ignorer les erreurs de chargement d'images
-      }
-    }
-    return images;
   }
 
   // Nouvelle méthode pour calculer le coût total d'un plan
@@ -196,6 +193,38 @@ class HorizontalPlanList extends StatelessWidget {
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(Plan plan) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              plan.title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              plan.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            Center(
+              child: Text(
+                'Erreur de chargement',
+                style: TextStyle(color: Colors.red.shade700),
               ),
             ),
           ],

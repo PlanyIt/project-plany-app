@@ -4,6 +4,7 @@ import 'package:front/data/services/api/model/login_request/login_request.dart';
 import 'package:front/data/services/api/model/login_response/login_response.dart';
 import 'package:front/data/services/shared_preferences_service.dart';
 import 'package:front/utils/result.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:logging/logging.dart';
 
 import 'auth_repository.dart';
@@ -42,15 +43,20 @@ class AuthRepositoryRemote extends AuthRepository {
     }
   }
 
+  bool _isTokenExpired() {
+    if (_authToken == null) return true;
+    return JwtDecoder.isExpired(_authToken!);
+  }
+
   @override
   Future<bool> get isAuthenticated async {
     // Status is cached
     if (_isAuthenticated != null) {
-      return _isAuthenticated!;
+      return _isAuthenticated! && !_isTokenExpired();
     }
     // No status cached, fetch from storage
     await _fetch();
-    return _isAuthenticated ?? false;
+    return (_isAuthenticated ?? false) && !_isTokenExpired();
   }
 
   @override

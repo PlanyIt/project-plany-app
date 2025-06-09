@@ -58,124 +58,121 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark.copyWith(
-          statusBarColor: Colors.transparent,
-        ),
-        child: SafeArea(
-          child: RefreshIndicator(
-            color: Theme.of(context).primaryColor,
-            onRefresh: () async {
-              // Rafraîchir les données du ViewModel
-              await widget.viewModel.load.execute();
-            },
-            child: CustomScrollView(
-              slivers: [
-                // App Bar avec logo et bouton de profil
-                _buildAppBar(),
-                // Barre de recherche
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                    child: InkWell(
-                      // Change GestureDetector to InkWell for better tap feedback
-                      onTap: () => _navigateToSearch(context),
-                      child: AbsorbPointer(
-                        // Wrap DashboardSearchBar with AbsorbPointer to prevent direct interactions
-                        child: DashboardSearchBar(
-                          hintText: 'Rechercher des plans...',
-                          readOnly: true,
-                        ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: Theme.of(context).primaryColor,
+          onRefresh: () async {
+            // Rafraîchir les données du ViewModel
+            await widget.viewModel.load.execute();
+          },
+          child: CustomScrollView(
+            slivers: [
+              // App Bar avec logo et bouton de profil
+              _buildAppBar(),
+              // Barre de recherche
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                  child: InkWell(
+                    // Change GestureDetector to InkWell for better tap feedback
+                    onTap: () => _navigateToSearch(context),
+                    child: AbsorbPointer(
+                      // Wrap DashboardSearchBar with AbsorbPointer to prevent direct interactions
+                      child: DashboardSearchBar(
+                        hintText: 'Rechercher des plans...',
+                        readOnly: true,
                       ),
                     ),
                   ),
                 ),
+              ),
 
-                // Section Catégories
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                    child: SectionHeader(
-                      title: 'Catégories',
-                      onSeeAllPressed: () =>
-                          print('Voir toutes les catégories'),
-                      //_navigateToSearch(context),
-                    ),
+              // Section Catégories
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                  child: SectionHeader(
+                    title: 'Catégories',
+                    onSeeAllPressed: () => print('Voir toutes les catégories'),
+                    //_navigateToSearch(context),
                   ),
                 ),
+              ),
 
-                // Carrousel de catégories
-                SliverToBoxAdapter(
-                  child: CategoryCards(
-                    categories: widget.viewModel.categories,
-                    isLoading: _isLoadingCategories,
-                    onCategoryTap: (category) =>
-                        _navigateToSearch(context, category: category),
+              // Carrousel de catégories
+              SliverToBoxAdapter(
+                child: CategoryCards(
+                  categories: widget.viewModel.categories,
+                  isLoading: _isLoadingCategories,
+                  onCategoryTap: (category) =>
+                      _navigateToSearch(context, category: category),
+                ),
+              ),
+
+              // Section Plans tendances
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                  child: SectionHeader(
+                    title: 'Tendances',
+                    onSeeAllPressed: () => _navigateToSearch(context),
                   ),
                 ),
+              ),
 
-                // Section Plans tendances
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-                    child: SectionHeader(
-                      title: 'Tendances',
-                      onSeeAllPressed: () => _navigateToSearch(context),
-                    ),
+              // Plans tendances
+              SliverToBoxAdapter(
+                child: HorizontalPlanList(
+                  stepImages: widget.viewModel.stepImages,
+                  plans: _getFilteredTrendingPlans(widget.viewModel.plans),
+                  isLoading: widget.viewModel.plans.isEmpty,
+                  getCategoryById: (categoryId) =>
+                      widget.viewModel.getCategoryById(categoryId),
+                  height: 250,
+                  cardWidth: 200,
+                  onPlanTap: (plan) {
+                    // Navigation vers détail du plan
+                    /*Navigator.pushNamed(context, '/details',
+                        arguments: plan.id);*/
+                  },
+                  emptyMessage: 'Aucun plan tendance disponible',
+                ),
+              ),
+
+              // Section "À découvrir"
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                  child: SectionHeader(
+                    title: 'À découvrir',
+                    onSeeAllPressed: () => _navigateToSearch(context),
                   ),
                 ),
+              ),
 
-                // Plans tendances
-                SliverToBoxAdapter(
-                  child: HorizontalPlanList(
-                    plans: _getFilteredTrendingPlans(widget.viewModel.plans),
-                    isLoading: widget.viewModel.plans.isEmpty,
-                    getCategoryById: (categoryId) =>
-                        widget.viewModel.getCategoryById(categoryId),
-                    height: 250,
-                    cardWidth: 200,
-                    onPlanTap: (plan) {
-                      // Navigation vers détail du plan
-                      Navigator.pushNamed(context, '/details',
-                          arguments: plan.id);
-                    },
-                    emptyMessage: 'Aucun plan tendance disponible',
-                  ),
+              // Plans à découvrir
+              SliverToBoxAdapter(
+                child: HorizontalPlanList(
+                  stepImages: widget.viewModel.stepImages,
+                  plans: _getRandomPlans(widget.viewModel.plans),
+                  isLoading: widget.viewModel.plans.isEmpty,
+                  getCategoryById: (categoryId) =>
+                      widget.viewModel.getCategoryById(categoryId),
+                  height: 250,
+                  cardWidth: 200,
+                  onPlanTap: (plan) {
+                    print(widget.viewModel.stepImages);
+                    // Navigation vers détail du plan
+                    /* Navigator.pushNamed(context, '/details',
+                        arguments: plan.id);*/
+                  },
+                  emptyMessage: 'Aucun plan à découvrir disponible',
                 ),
+              ),
 
-                // Section "À découvrir"
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                    child: SectionHeader(
-                      title: 'À découvrir',
-                      onSeeAllPressed: () => _navigateToSearch(context),
-                    ),
-                  ),
-                ),
-
-                // Plans à découvrir
-                SliverToBoxAdapter(
-                  child: HorizontalPlanList(
-                    plans: _getRandomPlans(widget.viewModel.plans),
-                    isLoading: widget.viewModel.plans.isEmpty,
-                    getCategoryById: (categoryId) =>
-                        widget.viewModel.getCategoryById(categoryId),
-                    height: 250,
-                    cardWidth: 200,
-                    onPlanTap: (plan) {
-                      // Navigation vers détail du plan
-                      Navigator.pushNamed(context, '/details',
-                          arguments: plan.id);
-                    },
-                    emptyMessage: 'Aucun plan à découvrir disponible',
-                  ),
-                ),
-
-                // Espace en bas
-                const SliverToBoxAdapter(child: SizedBox(height: 32))
-              ],
-            ),
+              // Espace en bas
+              const SliverToBoxAdapter(child: SizedBox(height: 32))
+            ],
           ),
         ),
       ),
@@ -187,7 +184,6 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
       leading: const SizedBox.shrink(),
       backgroundColor: Colors.transparent,
       expandedHeight: 80,
-      floating: true,
       flexibleSpace: FlexibleSpaceBar(
         background: Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),

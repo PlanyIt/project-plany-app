@@ -44,6 +44,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
               categoryRepository: context.read(),
               userRepository: context.read(),
               planRepository: context.read(),
+              stepRepository: context.read(),
             );
             return DashboardHomeScreen(
               viewModel: viewModel,
@@ -55,19 +56,25 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
 
 // From https://github.com/flutter/packages/blob/main/packages/go_router/example/lib/redirection.dart
 Future<String?> _redirect(BuildContext context, GoRouterState state) async {
-  // if the user is not logged in, they need to login
-  final loggedIn = await context.read<AuthRepository>().isAuthenticated;
+  // Check authentication status
+  final authRepository = context.read<AuthRepository>();
+  final loggedIn = await authRepository.isAuthenticated;
   final loggingIn = state.matchedLocation == Routes.login;
+  final isHomePage = state.matchedLocation == Routes.home;
+
+  // If not logged in or token expired, allow access to home and login pages, but redirect other requests to home
   if (!loggedIn) {
-    return Routes.home;
+    if (loggingIn || isHomePage) {
+      return null; // No redirection needed
+    }
+    return Routes.home; // Redirect all other routes to home
   }
 
-  // if the user is logged in but still on the login page, send them to
-  // the home page
-  if (loggingIn) {
+  // If the user is logged in but still on the home or login page, send them to the dashboard
+  if (loggingIn || isHomePage) {
     return Routes.dashboard;
   }
 
-  // no need to redirect at all
+  // No need to redirect at all
   return null;
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:front/data/services/api/model/user/user_api_model.dart';
 import 'package:front/domain/models/category.dart';
 import 'package:front/domain/models/plan.dart';
+import 'package:front/domain/models/step.dart';
 import 'package:front/utils/result.dart';
 
 /// Adds the `Authentication` header to a header configuration.
@@ -11,7 +12,7 @@ typedef AuthHeaderProvider = String? Function();
 
 class ApiClient {
   ApiClient({String? host, int? port, HttpClient Function()? clientFactory})
-      : _host = host ?? '192.168.1.181',
+      : _host = host ?? '192.168.1.135',
         _port = port ?? 3000,
         _clientFactory = clientFactory ?? HttpClient.new;
 
@@ -187,6 +188,40 @@ class ApiClient {
         return const Result.error(HttpException("Invalid response"));
       }
     } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<Step>> getStepById(String id) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.get(_host, _port, '/api/steps/$id');
+      await _authHeader(request.headers);
+      final response = await request.close();
+      print('Steps API response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final stringData = await response.transform(utf8.decoder).join();
+        print('Steps API raw response: $stringData');
+
+        try {
+          final json = jsonDecode(stringData);
+          final step = Step.fromJson(json);
+          print('Parsed step for ID: $id');
+          return Result.ok(step);
+        } catch (e) {
+          print('Error parsing step JSON: $e');
+          return Result.error(Exception('Failed to parse step: $e'));
+        }
+      } else {
+        print('Steps API error: ${response.statusCode}');
+        return Result.error(
+            HttpException("Invalid response: ${response.statusCode}"));
+      }
+    } on Exception catch (error) {
+      print('Steps API exception: $error');
       return Result.error(error);
     } finally {
       client.close();

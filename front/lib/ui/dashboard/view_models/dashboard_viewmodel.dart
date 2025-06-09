@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
+import 'package:front/data/repositories/step/step_repository.dart';
 import 'package:front/data/repositories/user/user_repository.dart';
 import 'package:front/domain/models/category.dart';
 import 'package:front/domain/models/plan.dart';
@@ -14,25 +15,29 @@ class DashboardViewModel extends ChangeNotifier {
     required CategoryRepository categoryRepository,
     required UserRepository userRepository,
     required PlanRepository planRepository,
+    required StepRepository stepRepository,
   })  : _categoryRepository = categoryRepository,
         _userRepository = userRepository,
-        _planRepository = planRepository {
+        _planRepository = planRepository,
+        _stepRepository = stepRepository {
     load = Command0(_load)..execute();
-    categoryById = Command1((id) => getCategoryById(id));
   }
 
   final CategoryRepository _categoryRepository;
   final PlanRepository _planRepository;
   final UserRepository _userRepository;
+  final StepRepository _stepRepository;
   final _log = Logger('DashboardViewModel');
   List<Category> _categories = [];
   List<Plan> _plans = [];
   User? _user;
+  List<String> _stepImages = [];
 
   late Command0 load;
 
   List<Category> get categories => _categories;
   List<Plan> get plans => _plans;
+  List<String> get stepImages => _stepImages;
 
   /// Loads categort by id
   late final Command1<void, String> categoryById;
@@ -54,11 +59,6 @@ class DashboardViewModel extends ChangeNotifier {
         case Ok<List<Category>>():
           _categories = result.value;
           _log.info('Successfully loaded ${_categories.length} categories');
-          if (_categories.isEmpty) {
-            _log.warning('Categories list is empty');
-          } else {
-            _log.fine('First category: ${_categories.first.name}');
-          }
         case Error<List<Category>>():
           _log.severe('Failed to load categories', result.error);
           return result;
@@ -75,6 +75,26 @@ class DashboardViewModel extends ChangeNotifier {
           _log.warning('Failed to load plans', planResult.error);
           return planResult;
       }
+
+      // Load steps for each plan
+      _log.info('Fetching steps for each plan...');
+      List<String> allStepImages = [];
+      for (final plan in _plans) {
+        for (final stepId in plan.steps) {
+          final stepResult = await _stepRepository.getStepById(stepId);
+          switch (stepResult) {
+            case Ok(value: final step):
+              if (step.image.isNotEmpty) {
+                allStepImages.add(step.image);
+              }
+            case Error():
+              _log.warning('Failed to load step with ID: $stepId');
+          }
+        }
+      }
+      _stepImages = allStepImages;
+
+      _log.info('Total step images loaded: ${_stepImages.length}');
 
       // Load user
       _log.info('Fetching user profile...');

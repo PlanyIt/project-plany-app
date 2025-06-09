@@ -57,11 +57,7 @@ class HomeScreenState extends State<HomeScreen>
             right: 30,
             child: PlanyButton(
               text: 'Se connecter',
-              onPressed: () => {
-                context.push(
-                  Routes.login,
-                ),
-              },
+              onPressed: () => context.push(Routes.login),
               filled: true,
             ),
           ),

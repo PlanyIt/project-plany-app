@@ -4,6 +4,8 @@ import 'package:front/data/repositories/plan/plan_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository_remote.dart';
 import 'package:front/data/repositories/user/user_repository.dart';
 import 'package:front/data/repositories/user/user_repository_remote.dart';
+import 'package:front/data/repositories/step/step_repository.dart';
+import 'package:front/data/repositories/step/step_repository_remote.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -43,6 +45,11 @@ List<SingleChildWidget> get providersRemote {
       create: (context) => PlanRepositoryRemote(
         apiClient: context.read(),
       ) as PlanRepository,
+    ),
+    Provider(
+      create: (context) => StepRepositoryRemote(
+        apiClient: context.read(),
+      ) as StepRepository,
     ),
     ..._sharedProviders,
   ];

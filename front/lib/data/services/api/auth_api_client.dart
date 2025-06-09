@@ -7,7 +7,7 @@ import 'package:front/utils/result.dart';
 
 class AuthApiClient {
   AuthApiClient({String? host, int? port, HttpClient Function()? clientFactory})
-      : _host = host ?? '192.168.1.181',
+      : _host = host ?? '192.168.1.135',
         _port = port ?? 3000,
         _clientFactory = clientFactory ?? HttpClient.new;
 
