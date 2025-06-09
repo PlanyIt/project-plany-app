@@ -9,7 +9,7 @@ import 'package:front/widgets/dashboard/category_cards.dart';
 import 'package:front/widgets/dashboard/horizontal_plan_list.dart';
 import 'package:front/widgets/dashboard/search_bar.dart';
 import 'package:front/widgets/dashboard/section_header.dart';
-import 'package:front/widgets/drawer/profile_drawer.dart';
+import 'package:front/ui/dashboard/widgets/profile_drawer.dart';
 
 class DashboardHomeScreen extends StatefulWidget {
   const DashboardHomeScreen({
