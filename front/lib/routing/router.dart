@@ -1,5 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:front/data/repositories/auth/auth_repository.dart';
+import 'package:front/data/repositories/categorie/category_repository_remote.dart';
+import 'package:front/data/repositories/plan/plan_repository_remote.dart';
+import 'package:front/data/repositories/step/step_repository_remote.dart';
+import 'package:front/data/repositories/user/user_repository_remote.dart';
+import 'package:front/data/repositories/comment/comment_repository.dart';
 import 'package:front/routing/routes.dart';
 import 'package:front/ui/auth/login/view_models/login_viewmodel.dart';
 import 'package:front/ui/auth/login/widgets/login_screen.dart';
@@ -41,7 +46,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
               path: Routes.login,
               builder: (context, state) {
                 return LoginScreen(
-                  viewModel: LoginViewModel(sessionManager: context.read()),
+                  viewModel: context.read<LoginViewModel>(),
                 );
               },
             ),
@@ -49,9 +54,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
               path: Routes.register,
               builder: (context, state) {
                 return SignupScreen(
-                  viewModel: SignupViewModel(
-                    sessionManager: context.read(),
-                  ),
+                  viewModel: context.read<SignupViewModel>(),
                 );
               },
             ),
@@ -60,30 +63,16 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
         GoRoute(
           path: Routes.dashboard,
           builder: (context, state) {
-            final viewModel = DashboardViewModel(
-              categoryRepository: context.read(),
-              userRepository: context.read(),
-              planRepository: context.read(),
-              stepRepository: context.read(),
-              sessionManager: context.read(),
-            );
             return DashboardScreen(
-              viewModel: viewModel,
+              viewModel: context.read<DashboardViewModel>(),
             );
           },
           routes: [
             GoRoute(
               path: Routes.search,
               builder: (context, state) {
-                final viewModel = DashboardViewModel(
-                  categoryRepository: context.read(),
-                  userRepository: context.read(),
-                  planRepository: context.read(),
-                  stepRepository: context.read(),
-                  sessionManager: context.read(),
-                );
                 return SearchScreen(
-                  viewModel: viewModel,
+                  viewModel: context.read<DashboardViewModel>(),
                 );
               },
             ),
@@ -94,10 +83,10 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           builder: (context, state) {
             return ProfilScreen(
               viewModel: ProfilViewModel(
-                userRepository: context.read(),
-                categoryRepository: context.read(),
-                planRepository: context.read(),
-                stepRepository: context.read(),
+                userRepository: context.read<UserRepositoryRemote>(),
+                categoryRepository: context.read<CategoryRepositoryRemote>(),
+                planRepository: context.read<PlanRepositoryRemote>(),
+                stepRepository: context.read<StepRepositoryRemote>(),
               ),
             );
           },
@@ -109,11 +98,11 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
             final planId = state.uri.queryParameters['planId'];
             return DetailScreen(
               viewModel: DetailsPlanViewModel(
-                userRepository: context.read(),
-                categoryRepository: context.read(),
-                planRepository: context.read(),
-                stepRepository: context.read(),
-                commentRepository: context.read(),
+                userRepository: context.read<UserRepositoryRemote>(),
+                categoryRepository: context.read<CategoryRepositoryRemote>(),
+                planRepository: context.read<PlanRepositoryRemote>(),
+                stepRepository: context.read<StepRepositoryRemote>(),
+                commentRepository: context.read<CommentRepository>(),
               ),
               planId: planId ?? '',
             );
@@ -124,10 +113,10 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
             builder: (context, state) {
               return CreatePlanScreen(
                 viewModel: CreatePlanViewModel(
-                  planRepository: context.read(),
-                  stepRepository: context.read(),
-                  categoryRepository: context.read(),
-                  userRepository: context.read(),
+                  planRepository: context.read<PlanRepositoryRemote>(),
+                  stepRepository: context.read<StepRepositoryRemote>(),
+                  categoryRepository: context.read<CategoryRepositoryRemote>(),
+                  userRepository: context.read<UserRepositoryRemote>(),
                 ),
               );
             },
@@ -137,10 +126,11 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
                 builder: (context, state) {
                   return StepOneContent(
                     viewModel: CreatePlanViewModel(
-                      planRepository: context.read(),
-                      stepRepository: context.read(),
-                      categoryRepository: context.read(),
-                      userRepository: context.read(),
+                      planRepository: context.read<PlanRepositoryRemote>(),
+                      stepRepository: context.read<StepRepositoryRemote>(),
+                      categoryRepository:
+                          context.read<CategoryRepositoryRemote>(),
+                      userRepository: context.read<UserRepositoryRemote>(),
                     ),
                   );
                 },
@@ -150,10 +140,11 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
                 builder: (context, state) {
                   return StepTwoContent(
                     viewModel: CreatePlanViewModel(
-                      planRepository: context.read(),
-                      stepRepository: context.read(),
-                      categoryRepository: context.read(),
-                      userRepository: context.read(),
+                      planRepository: context.read<PlanRepositoryRemote>(),
+                      stepRepository: context.read<StepRepositoryRemote>(),
+                      categoryRepository:
+                          context.read<CategoryRepositoryRemote>(),
+                      userRepository: context.read<UserRepositoryRemote>(),
                     ),
                   );
                 },
@@ -163,10 +154,11 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
                 builder: (context, state) {
                   return StepThreeContent(
                     viewModel: CreatePlanViewModel(
-                      planRepository: context.read(),
-                      stepRepository: context.read(),
-                      categoryRepository: context.read(),
-                      userRepository: context.read(),
+                      planRepository: context.read<PlanRepositoryRemote>(),
+                      stepRepository: context.read<StepRepositoryRemote>(),
+                      categoryRepository:
+                          context.read<CategoryRepositoryRemote>(),
+                      userRepository: context.read<UserRepositoryRemote>(),
                     ),
                   );
                 },

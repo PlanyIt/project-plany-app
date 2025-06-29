@@ -27,5 +27,8 @@ Future<void> main() async {
   }
   Logger.root.level = Level.ALL;
 
-  runApp(MultiProvider(providers: providersRemote, child: const MainApp()));
+  // Désactive la vérification Provider pour les types Listenable
+  Provider.debugCheckInvalidValueType = null;
+
+  runApp(MultiProvider(providers: unifiedProviders, child: const MainApp()));
 }

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:front/application/session_manager.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
@@ -8,12 +7,14 @@ import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/step/step.dart' as step_model;
 import 'package:front/domain/models/user/user.dart';
+import 'package:front/ui/core/base/base_viewmodel.dart';
+import 'package:front/ui/core/state/list_state.dart';
 import 'package:front/utils/command.dart';
 import 'package:front/utils/result.dart';
 import 'package:logging/logging.dart';
 import 'dart:math' as math;
 
-class DashboardViewModel extends ChangeNotifier {
+class DashboardViewModel extends BaseViewModel {
   DashboardViewModel({
     required CategoryRepository categoryRepository,
     required UserRepository userRepository,
@@ -28,7 +29,6 @@ class DashboardViewModel extends ChangeNotifier {
     load = Command0(_load);
     logout = Command0(_logout);
   }
-
   final CategoryRepository _categoryRepository;
   final PlanRepository _planRepository;
   final UserRepository _userRepository;
@@ -36,90 +36,119 @@ class DashboardViewModel extends ChangeNotifier {
   final SessionManager _sessionManager;
   final _log = Logger('DashboardViewModel');
 
-  final Map<String, String> _stepImageCache = {};
-  final Map<String, List<step_model.Step>> _planSteps = {};
+  // Commands
+  late Command0 load;
+  late Command0 logout;
 
-  List<Category> _categories = [];
-  List<Plan> _plans = [];
-  User? _user;
+  // Search and filter state
   String searchQuery = '';
   Category? selectedCategory;
   String? sortBy;
   bool sortAscending = true;
-  double? locationRadius; // in kilometers
+  double? locationRadius;
   double? userLatitude;
   double? userLongitude;
 
-  late Command0 load;
-  late Command0 logout;
+  // Cache for performance
+  final Map<String, String> _stepImageCache = {};
+  final Map<String, List<step_model.Step>> _planSteps = {};
 
-  bool _isLoading = true;
-  bool get isLoading => _isLoading;
+  // State management using the new unified approach
+  ListState<Category> _categoriesState = ListState.initial();
+  ListState<Plan> _plansState = ListState.initial();
+  User? _user;
 
-  List<Category> get categories => _categories;
-  List<Plan> get plans => _plans;
+  // Getters for state
+  ListState<Category> get categoriesState => _categoriesState;
+  ListState<Plan> get plansState => _plansState;
+  List<Category> get categories => _categoriesState.items;
+  List<Plan> get plans => _plansState.items;
   Map<String, List<step_model.Step>> get planSteps => _planSteps;
   User? get user => _user;
 
+  // Legacy compatibility getters
+  bool get isLoading => _categoriesState.isLoading || _plansState.isLoading;
   bool get hasLoadedData =>
-      _categories.isNotEmpty && _plans.isNotEmpty && _planSteps.isNotEmpty;
-
+      !_categoriesState.isInitial && !_plansState.isInitial;
   Future<Result> _load() async {
+    // Set categories and plans to loading state
+    _categoriesState = ListState.loading();
+    _plansState = ListState.loading();
+    notifyListeners();
+
     try {
       _log.info('Loading dashboard data...');
-      _isLoading = true;
-      notifyListeners();
 
+      // Load user
+      final userResult = await _userRepository.getCurrentUser();
+      if (userResult is Ok<User>) {
+        _user = userResult.value;
+      }
+
+      // Load categories
       final categoryResult = await _categoryRepository.getCategoriesList();
-      if (categoryResult case Ok(value: final cats)) {
-        _categories = cats;
+      if (categoryResult is Ok<List<Category>>) {
+        _categoriesState = ListState.success(items: categoryResult.value);
       } else {
+        _categoriesState = ListState.error('Failed to load categories');
+        notifyListeners();
         return categoryResult;
       }
 
+      // Load plans
       final planResult = await _planRepository.getPlanList();
-      if (planResult case Ok(value: final plans)) {
-        _plans = plans;
+      if (planResult is Ok<List<Plan>>) {
+        _plansState = ListState.success(items: planResult.value);
+
+        // Clear existing caches
+        _planSteps.clear();
+        _stepImageCache.clear();
+
+        // Load steps for each plan
+        for (final plan in planResult.value) {
+          await _loadStepsForPlan(plan);
+        }
       } else {
+        _plansState = ListState.error('Failed to load plans');
+        notifyListeners();
         return planResult;
       }
 
-      _planSteps.clear();
-      _stepImageCache.clear();
-
-      for (final plan in _plans) {
-        final steps = <step_model.Step>[];
-        for (final stepId in plan.steps) {
-          final stepResult = await _stepRepository.getStepById(stepId);
-          if (stepResult case Ok(value: final step)) {
-            steps.add(step);
-            if (step.image.isNotEmpty) _stepImageCache[stepId] = step.image;
-          }
-        }
-        if (plan.id != null) _planSteps[plan.id!] = steps;
-      }
-
-      final userResult = await _userRepository.getCurrentUser();
-      if (userResult case Ok(value: final usr)) {
-        _user = usr;
-      }
-
+      notifyListeners();
       return Result.ok(null);
     } catch (e, st) {
       _log.severe('Unexpected error in load()', e, st);
-      return Result.error(Exception('Unexpected error: $e'));
-    } finally {
-      _isLoading = false;
+      _categoriesState = ListState.error(e.toString());
+      _plansState = ListState.error(e.toString());
       notifyListeners();
+      return Result.error(Exception('Unexpected error: $e'));
     }
+  }
+
+  Future<void> _loadStepsForPlan(Plan plan) async {
+    if (plan.id == null || _planSteps.containsKey(plan.id)) return;
+
+    final List<step_model.Step> stepsList = [];
+    for (final stepId in plan.steps) {
+      final stepResult = await _stepRepository.getStepById(stepId);
+      if (stepResult is Ok<step_model.Step>) {
+        stepsList.add(stepResult.value);
+
+        // Cache step image if available
+        if (stepResult.value.image.isNotEmpty) {
+          _stepImageCache[stepId] = stepResult.value.image;
+        }
+      }
+    }
+    _planSteps[plan.id!] = stepsList;
   }
 
   Future<Result> _logout() async {
     final result = await _sessionManager.logout();
     if (result case Ok()) {
       _user = null;
-      _plans.clear();
-      _categories.clear();
+      _categoriesState = ListState.initial();
+      _plansState = ListState.initial();
       _planSteps.clear();
       _stepImageCache.clear();
     }
@@ -248,7 +277,7 @@ class DashboardViewModel extends ChangeNotifier {
     print('=== DEBUG: Step Positions ===');
     print('User location: lat=${userLatitude}, lon=${userLongitude}');
 
-    for (final plan in _plans.take(3)) {
+    for (final plan in plans.take(3)) {
       // Check first 3 plans
       final steps = _planSteps[plan.id] ?? [];
       print('Plan "${plan.title}":');

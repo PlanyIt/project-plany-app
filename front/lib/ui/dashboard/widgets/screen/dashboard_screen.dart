@@ -26,16 +26,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   DashboardViewModel get viewModel => widget.viewModel;
-
   @override
   void initState() {
     super.initState();
 
-    if (!viewModel.hasLoadedData) {
-      viewModel.load.execute();
-    }
+    // Éviter d'appeler load pendant le build en utilisant addPostFrameCallback
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!viewModel.hasLoadedData) {
+        viewModel.load.execute();
+      }
+    });
 
-    viewModel.load.addListener(() {
+    viewModel.addListener(() {
       if (mounted) setState(() {});
     });
   }
