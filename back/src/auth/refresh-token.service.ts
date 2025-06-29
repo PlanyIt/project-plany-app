@@ -15,8 +15,7 @@ export class RefreshTokenService {
   async generateRefreshToken(userId: string): Promise<string> {
     const payload = { sub: userId };
     const refreshToken = this.jwtService.sign(payload, {
-      secret:
-        this.configService.get('JWT_REFRESH_SECRET') || 'refreshSecretKey',
+      secret: this.configService.get('JWT_REFRESH_SECRET'),
       expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || '7d',
     });
 
@@ -31,8 +30,7 @@ export class RefreshTokenService {
     try {
       // Vérifier et décoder le refresh token
       const payload = this.jwtService.verify(refreshToken, {
-        secret:
-          this.configService.get('JWT_REFRESH_SECRET') || 'refreshSecretKey',
+        secret: this.configService.get('JWT_REFRESH_SECRET'),
       });
 
       // Trouver l'utilisateur
@@ -56,7 +54,7 @@ export class RefreshTokenService {
         username: user.username,
       };
       const accessToken = this.jwtService.sign(newPayload, {
-        expiresIn: '15m',
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
       });
       const newRefreshToken = await this.generateRefreshToken(
         (user._id as any).toString(),
@@ -66,7 +64,7 @@ export class RefreshTokenService {
         accessToken,
         refreshToken: newRefreshToken,
       };
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Refresh token invalide');
     }
   }

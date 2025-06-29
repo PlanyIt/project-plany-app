@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
 import { LoginRequestDto } from './dto/login/login-request.dto';
 import { LoginResponseDto } from './dto/login/login-response.dto';
@@ -12,6 +13,7 @@ export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
     private readonly passwordService: PasswordService,
     private readonly refreshTokenService: RefreshTokenService,
   ) {}
@@ -41,7 +43,9 @@ export class AuthService {
       sub: (user._id as any).toString(),
       username: user.username,
     };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
+    });
     const refreshToken = await this.refreshTokenService.generateRefreshToken(
       (user._id as any).toString(),
     );
@@ -87,7 +91,9 @@ export class AuthService {
       sub: (user._id as any).toString(),
       username: user.username,
     };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
+    });
     const refreshToken = await this.refreshTokenService.generateRefreshToken(
       (user._id as any).toString(),
     );
