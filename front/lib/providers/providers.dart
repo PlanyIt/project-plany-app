@@ -16,13 +16,6 @@ import 'package:front/data/services/api/auth_api_client.dart';
 import 'package:front/data/services/auth_storage_service.dart';
 import 'package:front/data/services/imgur_service.dart';
 import 'package:front/application/session_manager.dart';
-import 'package:front/providers/auth/login_provider.dart';
-import 'package:front/providers/auth/signup_provider.dart';
-import 'package:front/providers/dashboard/dashboard_provider.dart';
-import 'package:front/providers/app/app_provider.dart';
-import 'package:front/providers/create_plan/create_plan_provider.dart';
-import 'package:front/providers/profile/profile_provider.dart';
-import 'package:front/providers/plan_details/plan_details_provider.dart';
 
 // =========================================================================
 // SERVICES CORE
@@ -102,55 +95,5 @@ final sessionManagerProvider = Provider<SessionManager>((ref) {
     userRepository: ref.read(userRepositoryProvider) as UserRepositoryRemote,
     commentRepository:
         ref.read(commentRepositoryProvider) as CommentRepositoryRemote,
-  );
-});
-
-// =========================================================================
-// STATE PROVIDERS
-// =========================================================================
-
-final loginProvider = StateNotifierProvider<LoginNotifier, LoginState>((ref) {
-  return LoginNotifier(ref.read(authRepositoryProvider));
-});
-
-final signupProvider =
-    StateNotifierProvider<SignupNotifier, SignupState>((ref) {
-  return SignupNotifier(ref.read(authRepositoryProvider));
-});
-
-final dashboardProvider =
-    StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
-  return DashboardNotifier(
-    ref.read(categoryRepositoryProvider),
-    ref.read(planRepositoryProvider),
-    ref.read(userRepositoryProvider),
-  );
-});
-
-final createPlanProvider =
-    StateNotifierProvider<CreatePlanNotifier, CreatePlanState>((ref) {
-  return CreatePlanNotifier(
-    ref.read(planRepositoryProvider),
-    ref.read(categoryRepositoryProvider),
-  );
-});
-
-final profileProvider =
-    StateNotifierProvider<ProfileNotifier, ProfileState>((ref) {
-  return ProfileNotifier(
-    ref.read(userRepositoryProvider),
-    ref.read(planRepositoryProvider),
-    ref.read(categoryRepositoryProvider),
-  );
-});
-
-final planDetailsProvider =
-    StateNotifierProvider<PlanDetailsNotifier, PlanDetailsState>((ref) {
-  return PlanDetailsNotifier(
-    ref.read(planRepositoryProvider),
-    ref.read(stepRepositoryProvider),
-    ref.read(categoryRepositoryProvider),
-    ref.read(userRepositoryProvider),
-    ref.read(commentRepositoryProvider),
   );
 });

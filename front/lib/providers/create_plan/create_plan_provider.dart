@@ -5,11 +5,11 @@ import 'package:front/domain/models/category/category.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/utils/result.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/providers/ui/unified_state_management.dart';
 
 // État pour la création de plan
-class CreatePlanState {
-  final bool isLoading;
-  final String? error;
+class CreatePlanState extends UnifiedState {
   final List<Category> categories;
   final Category? selectedCategory;
   final List<plan_steps.Step> steps;
@@ -17,37 +17,64 @@ class CreatePlanState {
   final String planDescription;
 
   const CreatePlanState({
-    this.isLoading = false,
-    this.error,
     this.categories = const [],
     this.selectedCategory,
     this.steps = const [],
     this.planTitle = '',
     this.planDescription = '',
+    super.isLoading = false,
+    super.error,
+    super.isInitialized = false,
   });
 
   CreatePlanState copyWith({
-    bool? isLoading,
-    String? error,
     List<Category>? categories,
     Category? selectedCategory,
     List<plan_steps.Step>? steps,
     String? planTitle,
     String? planDescription,
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
   }) {
     return CreatePlanState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
       categories: categories ?? this.categories,
       selectedCategory: selectedCategory ?? this.selectedCategory,
       steps: steps ?? this.steps,
       planTitle: planTitle ?? this.planTitle,
       planDescription: planDescription ?? this.planDescription,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
+  }
+
+  @override
+  CreatePlanState copyWithBase({
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
+  }) {
+    return copyWith(
+      isLoading: isLoading,
+      error: error,
+      isInitialized: isInitialized,
+    );
+  }
+
+  @override
+  CreatePlanState clearError() {
+    return copyWith(error: null);
+  }
+
+  @override
+  CreatePlanState reset() {
+    return const CreatePlanState();
   }
 }
 
-class CreatePlanNotifier extends StateNotifier<CreatePlanState> {
+class CreatePlanNotifier extends StateNotifier<CreatePlanState>
+    with UnifiedStateManagement<CreatePlanState> {
   CreatePlanNotifier(
     this._planRepository,
     this._categoryRepository,
@@ -57,23 +84,18 @@ class CreatePlanNotifier extends StateNotifier<CreatePlanState> {
   final CategoryRepository _categoryRepository;
 
   Future<void> loadCategories() async {
-    state = state.copyWith(isLoading: true);
-
-    final result = await _categoryRepository.getCategoriesList();
-    switch (result) {
-      case Ok<List<Category>>():
-        state = state.copyWith(
-          categories: result.value,
-          isLoading: false,
-        );
-        break;
-      case Error<List<Category>>():
-        state = state.copyWith(
-          error: 'Erreur lors du chargement des catégories',
-          isLoading: false,
-        );
-        break;
-    }
+    await executeWithStateManagement(
+      () async {
+        final result = await _categoryRepository.getCategoriesList();
+        switch (result) {
+          case Ok<List<Category>>():
+            state = state.copyWith(categories: result.value);
+            break;
+          case Error<List<Category>>():
+            throw Exception('Erreur lors du chargement des catégories');
+        }
+      },
+    );
   }
 
   void setCategory(Category category) {
@@ -111,34 +133,40 @@ class CreatePlanNotifier extends StateNotifier<CreatePlanState> {
       return false;
     }
 
-    state = state.copyWith(isLoading: true);
+    return await executeWithStateManagement(
+          () async {
+            final plan = Plan(
+              title: state.planTitle,
+              description: state.planDescription,
+              category: state.selectedCategory!.id,
+              steps: [],
+            );
 
-    final plan = Plan(
-      title: state.planTitle,
-      description: state.planDescription,
-      category: state.selectedCategory!.id,
-      steps: [], // Les étapes seront ajoutées après
-    );
-
-    final result = await _planRepository.createPlan(plan);
-    switch (result) {
-      case Ok<Plan>():
-        state = state.copyWith(isLoading: false);
-        return true;
-      case Error<Plan>():
-        state = state.copyWith(
-          error: 'Erreur lors de la création du plan',
-          isLoading: false,
-        );
-        return false;
-    }
+            final result = await _planRepository.createPlan(plan);
+            switch (result) {
+              case Ok<Plan>():
+                return true;
+              case Error<Plan>():
+                throw Exception('Erreur lors de la création du plan');
+            }
+          },
+        ) ??
+        false;
   }
 
-  void clearError() {
-    state = state.copyWith(error: null);
+  void clearCreatePlanError() {
+    clearError();
   }
 
   void reset() {
-    state = const CreatePlanState();
+    resetState();
   }
 }
+
+final createPlanProvider =
+    StateNotifierProvider<CreatePlanNotifier, CreatePlanState>((ref) {
+  return CreatePlanNotifier(
+    ref.read(planRepositoryProvider),
+    ref.read(categoryRepositoryProvider),
+  );
+});

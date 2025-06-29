@@ -3,6 +3,10 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import {
+  NotFoundResourceException,
+  ValidationException,
+} from '../common/exceptions';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -30,7 +34,7 @@ export class UserService {
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     // Vérifier si le mot de passe est sécurisé
     if (!this.isPasswordSecure(createUserDto.password)) {
-      throw new BadRequestException(
+      throw new ValidationException(
         'Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule et un chiffre',
       );
     }
@@ -90,7 +94,7 @@ export class UserService {
       .exec();
 
     if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundResourceException('User', id);
     }
 
     return updatedUser;

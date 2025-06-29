@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
+import 'package:front/providers/dashboard/dashboard_provider.dart';
 import 'package:front/utils/result.dart';
 
 import 'package:front/widgets/tag/cutom_chip.dart';

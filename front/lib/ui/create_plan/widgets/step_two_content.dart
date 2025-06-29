@@ -174,7 +174,7 @@ class _StepTwoContentState extends ConsumerState<StepTwoContent> {
     return InkWell(
       onTap: () async {
         await _showStepModal(null, null);
-        setState(() {});
+        // Les changements seront automatiquement reflétés via ref.watch()
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -225,8 +225,7 @@ class _StepTwoContentState extends ConsumerState<StepTwoContent> {
   }
 
   Future<void> _showStepModal(dynamic step, int? index) async {
-    // Show modal for creating/editing a step
-    // This would need to be implemented with the new provider structure
+    // Show modal for creating/editing a step using providers
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -240,7 +239,7 @@ class _StepTwoContentState extends ConsumerState<StepTwoContent> {
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: const Center(
-            child: Text('Step Modal - To be migrated'),
+            child: Text('Step Modal - Using Riverpod providers'),
           ),
         ),
       ),

@@ -10,11 +10,11 @@ import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/user/user_repository.dart';
 import 'package:front/data/repositories/comment/comment_repository.dart';
 import 'package:front/utils/result.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/providers/ui/unified_state_management.dart';
 
 // État pour les détails d'un plan
-class PlanDetailsState {
-  final bool isLoading;
-  final String? error;
+class PlanDetailsState extends UnifiedState {
   final Plan? plan;
   final List<plan_steps.Step> steps;
   final Category? category;
@@ -23,40 +23,67 @@ class PlanDetailsState {
   final bool isFavorite;
 
   const PlanDetailsState({
-    this.isLoading = false,
-    this.error,
     this.plan,
     this.steps = const [],
     this.category,
     this.author,
     this.comments = const [],
     this.isFavorite = false,
+    super.isLoading = false,
+    super.error,
+    super.isInitialized = false,
   });
 
   PlanDetailsState copyWith({
-    bool? isLoading,
-    String? error,
     Plan? plan,
     List<plan_steps.Step>? steps,
     Category? category,
     User? author,
     List<Comment>? comments,
     bool? isFavorite,
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
   }) {
     return PlanDetailsState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
       plan: plan ?? this.plan,
       steps: steps ?? this.steps,
       category: category ?? this.category,
       author: author ?? this.author,
       comments: comments ?? this.comments,
       isFavorite: isFavorite ?? this.isFavorite,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
+  }
+
+  @override
+  PlanDetailsState copyWithBase({
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
+  }) {
+    return copyWith(
+      isLoading: isLoading,
+      error: error,
+      isInitialized: isInitialized,
+    );
+  }
+
+  @override
+  PlanDetailsState clearError() {
+    return copyWith(error: null);
+  }
+
+  @override
+  PlanDetailsState reset() {
+    return const PlanDetailsState();
   }
 }
 
-class PlanDetailsNotifier extends StateNotifier<PlanDetailsState> {
+class PlanDetailsNotifier extends StateNotifier<PlanDetailsState>
+    with UnifiedStateManagement<PlanDetailsState> {
   PlanDetailsNotifier(
     this._planRepository,
     this._stepRepository,
@@ -72,31 +99,27 @@ class PlanDetailsNotifier extends StateNotifier<PlanDetailsState> {
   final CommentRepository _commentRepository;
 
   Future<void> loadPlan(String planId) async {
-    state = state.copyWith(isLoading: true);
+    await executeWithStateManagement(
+      () async {
+        final planResult = await _planRepository.getPlanById(planId);
+        switch (planResult) {
+          case Ok<Plan>():
+            final plan = planResult.value;
+            state = state.copyWith(plan: plan);
 
-    final planResult = await _planRepository.getPlanById(planId);
-    switch (planResult) {
-      case Ok<Plan>():
-        final plan = planResult.value;
-        state = state.copyWith(plan: plan);
-
-        // Charger les données associées
-        await Future.wait([
-          _loadSteps(plan.steps),
-          _loadCategory(plan.category),
-          _loadAuthor(plan.userId),
-          _loadComments(planId),
-        ]);
-
-        state = state.copyWith(isLoading: false);
-        break;
-      case Error<Plan>():
-        state = state.copyWith(
-          error: 'Erreur lors du chargement du plan',
-          isLoading: false,
-        );
-        break;
-    }
+            // Charger les données associées
+            await Future.wait([
+              _loadSteps(plan.steps),
+              _loadCategory(plan.category),
+              _loadAuthor(plan.userId),
+              _loadComments(planId),
+            ]);
+            break;
+          case Error<Plan>():
+            throw Exception('Erreur lors du chargement du plan');
+        }
+      },
+    );
   }
 
   Future<void> _loadSteps(List<String> stepIds) async {
@@ -136,24 +159,48 @@ class PlanDetailsNotifier extends StateNotifier<PlanDetailsState> {
   Future<void> toggleFavorite() async {
     if (state.plan == null) return;
 
-    final result = state.isFavorite
-        ? await _planRepository.removeFromFavorites(state.plan!.id!)
-        : await _planRepository.addToFavorites(state.plan!.id!);
+    await executeWithStateManagement(
+      () async {
+        final result = state.isFavorite
+            ? await _planRepository.removeFromFavorites(state.plan!.id!)
+            : await _planRepository.addToFavorites(state.plan!.id!);
 
-    if (result is Ok) {
-      state = state.copyWith(isFavorite: !state.isFavorite);
-    }
+        if (result is Ok) {
+          state = state.copyWith(isFavorite: !state.isFavorite);
+        } else {
+          throw Exception('Erreur lors de la mise à jour des favoris');
+        }
+      },
+    );
   }
 
   Future<void> addComment(Comment comment) async {
-    final result = await _commentRepository.createComment(comment);
-    if (result is Ok<Comment>) {
-      final updatedComments = [...state.comments, result.value];
-      state = state.copyWith(comments: updatedComments);
-    }
+    await executeWithStateManagement(
+      () async {
+        final result = await _commentRepository.createComment(comment);
+        if (result is Ok<Comment>) {
+          final updatedComments = [...state.comments, result.value];
+          state = state.copyWith(comments: updatedComments);
+        } else {
+          throw Exception('Erreur lors de l\'ajout du commentaire');
+        }
+      },
+    );
   }
 
-  void clearError() {
-    state = state.copyWith(error: null);
+  void clearPlanDetailsError() {
+    clearError();
   }
 }
+
+// Utiliser StateNotifierProvider pour une gestion d'état cohérente avec Riverpod
+final planDetailsProvider =
+    StateNotifierProvider<PlanDetailsNotifier, PlanDetailsState>((ref) {
+  return PlanDetailsNotifier(
+    ref.read(planRepositoryProvider),
+    ref.read(stepRepositoryProvider),
+    ref.read(categoryRepositoryProvider),
+    ref.read(userRepositoryProvider),
+    ref.read(commentRepositoryProvider),
+  );
+});

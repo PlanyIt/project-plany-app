@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart' as app_category;
 import 'package:front/domain/models/plan/plan.dart';
+import 'package:front/providers/dashboard/dashboard_provider.dart';
 import 'package:front/ui/dashboard/widgets/card/category_cards.dart';
 import 'package:front/ui/dashboard/widgets/list/horizontal_plan_list.dart';
 import 'package:front/ui/dashboard/widgets/screen/search_screen.dart';

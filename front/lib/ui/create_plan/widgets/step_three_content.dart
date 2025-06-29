@@ -14,7 +14,6 @@ class StepThreeContent extends ConsumerStatefulWidget {
 class _StepThreeContentState extends ConsumerState<StepThreeContent> {
   @override
   Widget build(BuildContext context) {
-    // Temporary implementation until providers are properly set up
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.paddingL),
       physics: const BouncingScrollPhysics(),

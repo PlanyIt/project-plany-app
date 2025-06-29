@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/theme/app_theme.dart';
+import 'package:front/providers/ui/ui_providers.dart';
 
-class CustomTextField extends StatefulWidget {
+class CustomTextField extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final String labelText;
   final String hintText;
@@ -26,11 +28,15 @@ class CustomTextField extends StatefulWidget {
   });
 
   @override
-  State<CustomTextField> createState() => _CustomTextFieldState();
+  ConsumerState<CustomTextField> createState() => _CustomTextFieldState();
 }
 
-class _CustomTextFieldState extends State<CustomTextField> {
+class _CustomTextFieldState extends ConsumerState<CustomTextField>
+    with StateManagementMixin {
   late FocusNode _focusNode;
+
+  @override
+  String get widgetKey => '${widget.hashCode}_field';
 
   @override
   void initState() {

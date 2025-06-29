@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:front/providers/ui/ui_providers.dart';
 
 class CustomTextField extends ConsumerStatefulWidget {
   final String label;
@@ -25,27 +26,24 @@ class CustomTextField extends ConsumerStatefulWidget {
   ConsumerState<CustomTextField> createState() => _CustomTextFieldState();
 }
 
-class _CustomTextFieldState extends ConsumerState<CustomTextField> {
-  late bool _obscureText;
-
+class _CustomTextFieldState extends ConsumerState<CustomTextField>
+    with StateManagementMixin {
   @override
-  void initState() {
-    super.initState();
-    _obscureText = widget.isPassword;
-  }
+  String get widgetKey => '${widget.hashCode}_password_field';
 
   void _togglePasswordVisibility() {
-    setState(() {
-      _obscureText = !_obscureText;
-    });
+    togglePasswordVisibility(ref, widgetKey);
   }
 
   @override
   Widget build(BuildContext context) {
+    final obscureText =
+        widget.isPassword ? getPasswordVisibility(ref, widgetKey) : false;
+
     return TextFormField(
       controller: widget.controller,
       readOnly: widget.isReadOnly,
-      obscureText: _obscureText,
+      obscureText: obscureText,
       onChanged: widget.onChanged,
       validator: widget.validator,
       decoration: InputDecoration(
@@ -54,7 +52,7 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(
-                  _obscureText ? Icons.visibility : Icons.visibility_off,
+                  obscureText ? Icons.visibility : Icons.visibility_off,
                 ),
                 onPressed: _togglePasswordVisibility,
               )

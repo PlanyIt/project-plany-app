@@ -5,14 +5,14 @@ import 'package:front/domain/models/user/user.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
 import 'package:front/data/repositories/user/user_repository.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/utils/result.dart' as result_utils;
+import 'package:front/providers/providers.dart';
+import 'package:front/providers/ui/unified_state_management.dart';
 
-class DashboardState {
+class DashboardState extends UnifiedState {
   final List<Category> categories;
   final List<Plan> plans;
   final User? user;
-  final bool isLoading;
-  final String? error;
   final String searchQuery;
   final Category? selectedCategory;
 
@@ -20,34 +20,61 @@ class DashboardState {
     this.categories = const [],
     this.plans = const [],
     this.user,
-    this.isLoading = false,
-    this.error,
     this.searchQuery = '',
     this.selectedCategory,
+    super.isLoading = false,
+    super.error,
+    super.isInitialized = false,
   });
 
   DashboardState copyWith({
     List<Category>? categories,
     List<Plan>? plans,
     User? user,
-    bool? isLoading,
-    String? error,
     String? searchQuery,
     Category? selectedCategory,
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
   }) {
     return DashboardState(
       categories: categories ?? this.categories,
       plans: plans ?? this.plans,
       user: user ?? this.user,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedCategory: selectedCategory ?? this.selectedCategory,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
+  }
+
+  @override
+  DashboardState copyWithBase({
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
+  }) {
+    return copyWith(
+      isLoading: isLoading,
+      error: error,
+      isInitialized: isInitialized,
+    );
+  }
+
+  @override
+  DashboardState clearError() {
+    return copyWith(error: null);
+  }
+
+  @override
+  DashboardState reset() {
+    return const DashboardState();
   }
 }
 
-class DashboardNotifier extends StateNotifier<DashboardState> {
+class DashboardNotifier extends StateNotifier<DashboardState>
+    with UnifiedStateManagement<DashboardState> {
   DashboardNotifier(
     this._categoryRepository,
     this._planRepository,
@@ -59,57 +86,45 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
   final UserRepository _userRepository;
 
   Future<void> loadInitialData() async {
-    state = state.copyWith(isLoading: true, error: null);
+    await executeWithStateManagement(
+      () async {
+        // Load categories
+        final categoriesResult = await _categoryRepository.getCategoriesList();
+        final plansResult = await _planRepository.getPlanList();
+        final userResult = await _userRepository.getCurrentUser();
 
-    try {
-      // Load categories
-      final categoriesResult = await _categoryRepository.getCategoriesList();
-      final plansResult = await _planRepository.getPlanList();
-      final userResult = await _userRepository.getCurrentUser();
+        List<Category> categories = [];
+        List<Plan> plans = [];
+        User? user;
+        switch (categoriesResult) {
+          case result_utils.Ok():
+            categories = categoriesResult.value;
+          case result_utils.Error():
+            throw Exception('Erreur lors du chargement des catégories');
+        }
 
-      List<Category> categories = [];
-      List<Plan> plans = [];
-      User? user;
+        switch (plansResult) {
+          case result_utils.Ok():
+            plans = plansResult.value;
+          case result_utils.Error():
+            throw Exception('Erreur lors du chargement des plans');
+        }
 
-      switch (categoriesResult) {
-        case Ok():
-          categories = categoriesResult.value;
-        case Error():
-          state = state.copyWith(
-              isLoading: false,
-              error: 'Erreur lors du chargement des catégories');
-          return;
-      }
+        switch (userResult) {
+          case result_utils.Ok():
+            user = userResult.value;
+          case result_utils.Error():
+            // User is optional for dashboard
+            break;
+        }
 
-      switch (plansResult) {
-        case Ok():
-          plans = plansResult.value;
-        case Error():
-          state = state.copyWith(
-              isLoading: false, error: 'Erreur lors du chargement des plans');
-          return;
-      }
-
-      switch (userResult) {
-        case Ok():
-          user = userResult.value;
-        case Error():
-          // User is optional for dashboard
-          break;
-      }
-
-      state = state.copyWith(
-        categories: categories,
-        plans: plans,
-        user: user,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Erreur inattendue: $e',
-      );
-    }
+        state = state.copyWith(
+          categories: categories,
+          plans: plans,
+          user: user,
+        );
+      },
+    );
   }
 
   void updateSearchQuery(String query) {
@@ -144,7 +159,17 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     return filtered;
   }
 
-  void clearError() {
-    state = state.copyWith(error: null);
+  void clearDashboardError() {
+    clearError();
   }
 }
+
+// Utiliser StateNotifierProvider pour une gestion d'état cohérente avec Riverpod
+final dashboardProvider =
+    StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
+  return DashboardNotifier(
+    ref.read(categoryRepositoryProvider),
+    ref.read(planRepositoryProvider),
+    ref.read(userRepositoryProvider),
+  );
+});

@@ -2,7 +2,6 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -10,6 +9,7 @@ import {
   THROTTLE_KEY,
   ThrottleOptions,
 } from '../decorators/throttle.decorator';
+import { ThrottleException } from '../exceptions';
 
 @Injectable()
 export class ThrottleGuard implements CanActivate {
@@ -57,13 +57,10 @@ export class ThrottleGuard implements CanActivate {
       );
       response.setHeader('Retry-After', retryAfter);
 
-      throw new HttpException(
-        {
-          statusCode: HttpStatus.TOO_MANY_REQUESTS,
-          message: 'Too many requests, please try again later.',
-          retryAfter,
-        },
-        HttpStatus.TOO_MANY_REQUESTS,
+      throw new ThrottleException(
+        throttleOptions.limit,
+        throttleOptions.ttl,
+        retryAfter,
       );
     }
 

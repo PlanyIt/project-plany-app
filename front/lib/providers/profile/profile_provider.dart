@@ -6,46 +6,73 @@ import 'package:front/data/repositories/user/user_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/utils/result.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/providers/ui/unified_state_management.dart';
 import 'dart:io';
 
 // État pour le profil utilisateur
-class ProfileState {
-  final bool isLoading;
-  final String? error;
+class ProfileState extends UnifiedState {
   final User? user;
   final List<Plan> userPlans;
   final List<Plan> favorites;
   final List<Category> categories;
 
   const ProfileState({
-    this.isLoading = false,
-    this.error,
     this.user,
     this.userPlans = const [],
     this.favorites = const [],
     this.categories = const [],
+    super.isLoading = false,
+    super.error,
+    super.isInitialized = false,
   });
 
   ProfileState copyWith({
-    bool? isLoading,
-    String? error,
     User? user,
     List<Plan>? userPlans,
     List<Plan>? favorites,
     List<Category>? categories,
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
   }) {
     return ProfileState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
       user: user ?? this.user,
       userPlans: userPlans ?? this.userPlans,
       favorites: favorites ?? this.favorites,
       categories: categories ?? this.categories,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
+  }
+
+  @override
+  ProfileState copyWithBase({
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
+  }) {
+    return copyWith(
+      isLoading: isLoading,
+      error: error,
+      isInitialized: isInitialized,
+    );
+  }
+
+  @override
+  ProfileState clearError() {
+    return copyWith(error: null);
+  }
+
+  @override
+  ProfileState reset() {
+    return const ProfileState();
   }
 }
 
-class ProfileNotifier extends StateNotifier<ProfileState> {
+class ProfileNotifier extends StateNotifier<ProfileState>
+    with UnifiedStateManagement<ProfileState> {
   ProfileNotifier(
     this._userRepository,
     this._planRepository,
@@ -57,21 +84,19 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   final CategoryRepository _categoryRepository;
 
   Future<void> loadProfile() async {
-    state = state.copyWith(isLoading: true);
-
-    final userResult = await _userRepository.getCurrentUser();
-    switch (userResult) {
-      case Ok<User>():
-        state = state.copyWith(user: userResult.value);
-        await _loadUserData(userResult.value.id);
-        break;
-      case Error<User>():
-        state = state.copyWith(
-          error: 'Erreur lors du chargement du profil',
-          isLoading: false,
-        );
-        return;
-    }
+    await executeWithStateManagement(
+      () async {
+        final userResult = await _userRepository.getCurrentUser();
+        switch (userResult) {
+          case Ok<User>():
+            state = state.copyWith(user: userResult.value);
+            await _loadUserData(userResult.value.id);
+            break;
+          case Error<User>():
+            throw Exception('Erreur lors du chargement du profil');
+        }
+      },
+    );
   }
 
   Future<void> _loadUserData(String userId) async {
@@ -100,56 +125,57 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       userPlans: userPlans,
       favorites: favorites,
       categories: categories,
-      isLoading: false,
     );
   }
 
   Future<bool> updateProfile(Map<String, dynamic> data) async {
     if (state.user == null) return false;
 
-    state = state.copyWith(isLoading: true);
-
-    final result = await _userRepository.patchCurrentUser(data);
-    switch (result) {
-      case Ok<User>():
-        state = state.copyWith(
-          user: result.value,
-          isLoading: false,
-        );
-        return true;
-      case Error<User>():
-        state = state.copyWith(
-          error: 'Erreur lors de la mise à jour du profil',
-          isLoading: false,
-        );
-        return false;
-    }
+    return await executeWithStateManagement(
+          () async {
+            final result = await _userRepository.patchCurrentUser(data);
+            switch (result) {
+              case Ok<User>():
+                state = state.copyWith(user: result.value);
+                return true;
+              case Error<User>():
+                throw Exception('Erreur lors de la mise à jour du profil');
+            }
+          },
+        ) ??
+        false;
   }
 
   Future<bool> updateProfilePhoto(File imageFile) async {
     if (state.user == null) return false;
 
-    state = state.copyWith(isLoading: true);
-
-    final result =
-        await _userRepository.updateUserPhoto(state.user!.id, imageFile.path);
-    switch (result) {
-      case Ok<User>():
-        state = state.copyWith(
-          user: result.value,
-          isLoading: false,
-        );
-        return true;
-      case Error<User>():
-        state = state.copyWith(
-          error: 'Erreur lors de la mise à jour de la photo',
-          isLoading: false,
-        );
-        return false;
-    }
+    return await executeWithStateManagement(
+          () async {
+            final result = await _userRepository.updateUserPhoto(
+                state.user!.id, imageFile.path);
+            switch (result) {
+              case Ok<User>():
+                state = state.copyWith(user: result.value);
+                return true;
+              case Error<User>():
+                throw Exception('Erreur lors de la mise à jour de la photo');
+            }
+          },
+        ) ??
+        false;
   }
 
-  void clearError() {
-    state = state.copyWith(error: null);
+  void clearProfileError() {
+    clearError();
   }
 }
+
+// Utiliser StateNotifierProvider pour une gestion d'état cohérente avec Riverpod
+final profileProvider =
+    StateNotifierProvider<ProfileNotifier, ProfileState>((ref) {
+  return ProfileNotifier(
+    ref.read(userRepositoryProvider),
+    ref.read(planRepositoryProvider),
+    ref.read(categoryRepositoryProvider),
+  );
+});

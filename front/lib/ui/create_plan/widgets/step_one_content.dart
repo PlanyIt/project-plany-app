@@ -5,12 +5,7 @@ import 'package:front/theme/app_theme.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/button/select_button.dart';
 import 'package:front/widgets/modal/grid_selector_modal.dart';
-
-// Providers pour l'état du step one
-final stepOneTitleProvider = StateProvider<String>((ref) => '');
-final stepOneDescriptionProvider = StateProvider<String>((ref) => '');
-final stepOneSelectedCategoryProvider = StateProvider<Category?>((ref) => null);
-final stepOneCategoriesProvider = StateProvider<List<Category>>((ref) => []);
+import 'package:front/providers/plan/plan_ui_providers.dart';
 
 class StepOneContent extends ConsumerWidget {
   const StepOneContent({super.key});

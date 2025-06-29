@@ -36,7 +36,6 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   final FocusNode _commentFocusNode = FocusNode();
   bool _hasInitialized = false;
   final ImagePicker _imagePicker = ImagePicker();
-
   @override
   void initState() {
     super.initState();
@@ -44,9 +43,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!_hasInitialized) {
         await _initializeComments();
-        setState(() {
-          _hasInitialized = true;
-        });
+        _hasInitialized = true;
       }
     });
   }

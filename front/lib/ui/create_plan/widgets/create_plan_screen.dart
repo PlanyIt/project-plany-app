@@ -6,10 +6,7 @@ import 'package:front/ui/create_plan/widgets/step_three_content.dart';
 import 'package:front/ui/create_plan/widgets/step_one_content.dart';
 import 'package:front/ui/create_plan/widgets/step_two_content.dart';
 import 'package:front/theme/app_theme.dart';
-
-// Providers pour l'état
-final createPlanCurrentStepProvider = StateProvider<int>((ref) => 1);
-final createPlanIsPublishingProvider = StateProvider<bool>((ref) => false);
+import 'package:front/providers/plan/plan_ui_providers.dart';
 
 class CreatePlanScreen extends ConsumerWidget {
   const CreatePlanScreen({

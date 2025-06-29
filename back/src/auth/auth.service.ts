@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
@@ -7,6 +7,10 @@ import { LoginResponseDto } from './dto/login/login-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenService } from './refresh-token.service';
 import { PasswordService } from './password.service';
+import {
+  InvalidCredentialsException,
+  ConflictException,
+} from '../common/exceptions';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +29,7 @@ export class AuthService {
     const user = await this.userService.findByEmail(email);
 
     if (!user) {
-      throw new UnauthorizedException('Identifiants invalides');
+      throw new InvalidCredentialsException('Identifiants invalides');
     }
 
     // Vérifier le mot de passe
@@ -35,7 +39,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Identifiants invalides');
+      throw new InvalidCredentialsException('Identifiants invalides');
     }
 
     // Générer les tokens
@@ -68,12 +72,12 @@ export class AuthService {
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await this.userService.findByEmail(email);
     if (existingUser) {
-      throw new UnauthorizedException('Cet email est déjà utilisé');
+      throw new ConflictException('Cet email est déjà utilisé');
     }
 
     const existingUsername = await this.userService.findByUsername(username);
     if (existingUsername) {
-      throw new UnauthorizedException("Ce nom d'utilisateur est déjà utilisé");
+      throw new ConflictException("Ce nom d'utilisateur est déjà utilisé");
     }
 
     // Hasher le mot de passe

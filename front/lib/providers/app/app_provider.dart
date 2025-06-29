@@ -3,37 +3,59 @@ import 'package:front/data/repositories/auth/auth_repository.dart';
 import 'package:front/application/session_manager.dart';
 import 'package:front/utils/result.dart';
 import 'package:front/providers/providers.dart';
+import 'package:front/providers/ui/unified_state_management.dart';
 
 // État global de l'application
-class AppState {
-  final bool isInitialized;
+class AppState extends UnifiedState {
   final bool isAuthenticated;
-  final bool isLoading;
-  final String? error;
 
   const AppState({
-    this.isInitialized = false,
     this.isAuthenticated = false,
-    this.isLoading = false,
-    this.error,
+    super.isLoading = false,
+    super.error,
+    super.isInitialized = false,
   });
 
   AppState copyWith({
-    bool? isInitialized,
     bool? isAuthenticated,
     bool? isLoading,
     String? error,
+    bool? isInitialized,
   }) {
     return AppState(
-      isInitialized: isInitialized ?? this.isInitialized,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
+  }
+
+  @override
+  AppState copyWithBase({
+    bool? isLoading,
+    String? error,
+    bool? isInitialized,
+  }) {
+    return copyWith(
+      isLoading: isLoading,
+      error: error,
+      isInitialized: isInitialized,
+    );
+  }
+
+  @override
+  AppState clearError() {
+    return copyWith(error: null);
+  }
+
+  @override
+  AppState reset() {
+    return const AppState();
   }
 }
 
-class AppNotifier extends StateNotifier<AppState> {
+class AppNotifier extends StateNotifier<AppState>
+    with UnifiedStateManagement<AppState> {
   AppNotifier(this._authRepository, this._sessionManager)
       : super(const AppState()) {
     _initialize();
@@ -43,57 +65,47 @@ class AppNotifier extends StateNotifier<AppState> {
   final SessionManager _sessionManager;
 
   Future<void> _initialize() async {
-    state = state.copyWith(isLoading: true);
-
-    try {
-      final isAuth = await _authRepository.isAuthenticated;
-      state = state.copyWith(
-        isInitialized: true,
-        isAuthenticated: isAuth,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isInitialized: true,
-        isLoading: false,
-        error: e.toString(),
-      );
-    }
+    await executeWithStateManagement(
+      () async {
+        final isAuth = await _authRepository.isAuthenticated;
+        state = state.copyWith(
+          isInitialized: true,
+          isAuthenticated: isAuth,
+        );
+      },
+    );
   }
 
   Future<void> logout() async {
-    state = state.copyWith(isLoading: true);
-
-    final result = await _sessionManager.logout();
-    switch (result) {
-      case Ok():
-        state = state.copyWith(
-          isAuthenticated: false,
-          isLoading: false,
-        );
-        break;
-      case Error():
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Erreur lors de la déconnexion',
-        );
-        break;
-    }
+    await executeWithStateManagement(
+      () async {
+        final result = await _sessionManager.logout();
+        switch (result) {
+          case Ok():
+            state = state.copyWith(
+              isAuthenticated: false,
+            );
+            break;
+          case Error():
+            throw Exception('Erreur lors de la déconnexion');
+        }
+      },
+    );
   }
 
   Future<bool> checkAuthStatus() async {
-    try {
-      final isAuth = await _authRepository.isAuthenticated;
-      state = state.copyWith(isAuthenticated: isAuth);
-      return isAuth;
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-      return false;
-    }
+    return await executeWithStateManagement(
+          () async {
+            final isAuth = await _authRepository.isAuthenticated;
+            state = state.copyWith(isAuthenticated: isAuth);
+            return isAuth;
+          },
+        ) ??
+        false;
   }
 
-  void clearError() {
-    state = state.copyWith(error: null);
+  void setAuthenticated(bool isAuthenticated) {
+    state = state.copyWith(isAuthenticated: isAuthenticated);
   }
 }
 

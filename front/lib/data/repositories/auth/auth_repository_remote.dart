@@ -7,6 +7,7 @@ import 'package:front/data/services/api/model/register_response/register_respons
 import 'package:front/data/services/api/model/refresh_token_request/refresh_token_request_api_model.dart';
 import 'package:front/data/services/auth_storage_service.dart';
 import 'package:front/utils/result.dart';
+import 'package:front/utils/exceptions.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:logging/logging.dart';
 
@@ -112,37 +113,108 @@ class AuthRepositoryRemote extends AuthRepository {
     required String password,
   }) async {
     try {
+      // Validate input
+      if (email.isEmpty || password.isEmpty) {
+        _log.warning('Login attempted with empty credentials');
+        return Result.error(
+          const ValidationException('Email et mot de passe sont requis'),
+        );
+      }
+
+      if (!_isValidEmail(email)) {
+        _log.warning('Login attempted with invalid email format: $email');
+        return Result.error(
+          const ValidationException('Format d\'email invalide'),
+        );
+      }
+
       final result = await _authApiClient.login(
         LoginRequestApiModel(email: email, password: password),
       );
+
       switch (result) {
         case Ok<LoginResponseApiModel>():
-          _log.info('User logged in');
+          _log.info('User logged in successfully');
+
           // Use accessToken if available, otherwise fall back to token
           final token = result.value.accessToken ?? result.value.token;
           final refreshToken = result.value.refreshToken;
 
-          if (token == null) {
-            _log.severe('No token received from login response');
-            return Result.error(Exception('No token received'));
+          if (token == null || token.isEmpty) {
+            _log.severe('No valid token received from login response');
+            return Result.error(
+              const AuthenticationException('Token invalide reçu du serveur'),
+            );
+          }
+
+          // Validate token format
+          if (!_isValidJWT(token)) {
+            _log.severe('Invalid JWT token format received');
+            return Result.error(
+              const AuthenticationException('Format de token invalide'),
+            );
           }
 
           _authToken = token;
           _refreshToken = refreshToken;
-          await _authStorageService.saveToken(token);
-          if (refreshToken != null) {
-            await _authStorageService.saveRefreshToken(refreshToken);
+
+          // Save tokens with error handling
+          final tokenSaveResult = await _authStorageService.saveToken(token);
+          if (tokenSaveResult is Error) {
+            _log.severe('Failed to save auth token');
+            return Result.error(
+              const StorageException('Erreur lors de la sauvegarde du token'),
+            );
           }
-          await _authStorageService.saveUserId(result.value.userId);
+
+          if (refreshToken != null) {
+            final refreshSaveResult =
+                await _authStorageService.saveRefreshToken(refreshToken);
+            if (refreshSaveResult is Error) {
+              _log.warning('Failed to save refresh token');
+            }
+          }
+          if (result.value.userId.isNotEmpty) {
+            final userIdSaveResult =
+                await _authStorageService.saveUserId(result.value.userId);
+            if (userIdSaveResult is Error) {
+              _log.warning('Failed to save user ID');
+            }
+          }
 
           _apiClient.authHeaderProvider = _authHeaderProvider;
-
           return const Result.ok(null);
 
         case Error<LoginResponseApiModel>():
-          _log.warning('Error logging in: ${result.error}');
+          _log.warning('Login failed: ${result.error}');
+
+          // Handle specific error types
+          if (result.error is NetworkException) {
+            return Result.error(
+              const NetworkException('Problème de connexion réseau'),
+            );
+          } else if (result.error is ApiException) {
+            final apiError = result.error as ApiException;
+            if (apiError.statusCode == 401) {
+              return Result.error(
+                const AuthenticationException(
+                    'Email ou mot de passe incorrect'),
+              );
+            } else if (apiError.statusCode == 429) {
+              return Result.error(
+                const RateLimitException(
+                    'Trop de tentatives, réessayez plus tard'),
+              );
+            }
+          }
+
           return Result.error(result.error);
       }
+    } catch (e, stackTrace) {
+      _log.severe('Unexpected error during login', e, stackTrace);
+      return Result.error(
+        const UnknownException('Erreur inattendue lors de la connexion'),
+      );
     } finally {
       notifyListeners();
     }
@@ -205,5 +277,18 @@ class AuthRepositoryRemote extends AuthRepository {
     } finally {
       notifyListeners();
     }
+  }
+
+  /// Validates email format
+  bool _isValidEmail(String email) {
+    final emailRegex =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  /// Validates JWT token format
+  bool _isValidJWT(String token) {
+    final parts = token.split('.');
+    return parts.length == 3;
   }
 }

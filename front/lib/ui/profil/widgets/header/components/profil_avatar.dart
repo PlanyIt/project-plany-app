@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/providers/providers.dart';
+import 'package:front/providers/profile/profile_provider.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfilAvatar extends ConsumerStatefulWidget {
@@ -37,15 +37,18 @@ class _ProfileAvatarState extends ConsumerState<ProfilAvatar> {
       if (pickedFile == null) {
         return;
       }
-
       if (!mounted) {
         print('Widget non monté, annulation de l\'opération');
         return;
       }
 
-      setState(() {
-        _uploading = true;
-      });
+      // Utiliser le provider pour l'état de chargement
+      if (mounted) {
+        setState(() {
+          _uploading = true;
+        });
+      }
+
       final imageFile = File(pickedFile.path);
 
       if (!await imageFile.exists()) {
@@ -62,7 +65,6 @@ class _ProfileAvatarState extends ConsumerState<ProfilAvatar> {
       if (!success) {
         throw Exception('Échec de la mise à jour de la photo de profil');
       }
-
       if (!mounted) {
         print(
             'Widget non monté après téléchargement, annulation des mises à jour d\'état');
@@ -80,8 +82,6 @@ class _ProfileAvatarState extends ConsumerState<ProfilAvatar> {
         setState(() {
           _uploading = false;
         });
-      } else {
-        print('Widget non monté dans finally, setState ignoré');
       }
     }
   }
@@ -90,6 +90,10 @@ class _ProfileAvatarState extends ConsumerState<ProfilAvatar> {
   Widget build(BuildContext context) {
     final avatarSize = 85.0;
     final primaryColor = const Color(0xFF3425B5);
+
+    // Utiliser le provider pour l'état de chargement
+    final profileState = ref.watch(profileProvider);
+    final isUploading = _uploading || profileState.isLoading;
 
     return Stack(
       children: [
@@ -110,7 +114,7 @@ class _ProfileAvatarState extends ConsumerState<ProfilAvatar> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(avatarSize / 2),
-            child: _uploading
+            child: isUploading
                 ? Center(
                     child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(primaryColor),

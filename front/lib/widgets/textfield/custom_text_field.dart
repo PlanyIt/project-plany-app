@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:front/providers/ui/ui_providers.dart';
 
 class CustomTextField extends ConsumerStatefulWidget {
   final TextEditingController controller;
@@ -27,7 +28,8 @@ class CustomTextField extends ConsumerStatefulWidget {
   ConsumerState<CustomTextField> createState() => _CustomTextFieldState();
 }
 
-class _CustomTextFieldState extends ConsumerState<CustomTextField> {
+class _CustomTextFieldState extends ConsumerState<CustomTextField>
+    with StateManagementMixin {
   late FocusNode _focusNode;
 
   @override

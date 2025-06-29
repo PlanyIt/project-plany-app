@@ -5,19 +5,7 @@ import 'package:front/ui/create_plan/widgets/choose_location.dart';
 import 'package:front/theme/app_theme.dart';
 import 'package:front/widgets/card/image_picker_card.dart';
 import 'package:image_picker/image_picker.dart';
-
-// Providers pour l'état du modal
-final stepModalCurrentTabProvider =
-    StateProvider.family<int, String>((ref, modalId) => 0);
-final stepModalTitleProvider = StateProvider<String>((ref) => '');
-final stepModalDescriptionProvider = StateProvider<String>((ref) => '');
-final stepModalDurationProvider = StateProvider<String>((ref) => '');
-final stepModalCostProvider = StateProvider<String>((ref) => '');
-final stepModalSelectedUnitProvider = StateProvider<String>((ref) => 'Heures');
-final stepModalSelectedImageProvider = StateProvider<File?>((ref) => null);
-final stepModalSelectedLocationProvider = StateProvider<dynamic>((ref) => null);
-final stepModalSelectedLocationNameProvider =
-    StateProvider<String?>((ref) => null);
+import 'package:front/providers/plan/plan_ui_providers.dart';
 
 class StepModal extends ConsumerWidget {
   const StepModal({super.key});
