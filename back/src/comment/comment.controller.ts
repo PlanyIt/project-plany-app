@@ -22,7 +22,7 @@ export class CommentController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async createComment(@Body() createCommentDto: CommentDto, @Req() req) {
+  async createComment(@Body() createCommentDto: CommentDto, @Req() req: any) {
     const commentData = { ...createCommentDto, userId: req.user._id };
     return this.commentService.create(commentData);
   }
@@ -67,7 +67,7 @@ export class CommentController {
   async removeResponse(
     @Param('commentId') commentId: string,
     @Param('responseId') responseId: string,
-    @Req() req,
+    @Req() req: any,
   ) {
     const response = await this.commentService.findById(responseId);
 
@@ -87,7 +87,7 @@ export class CommentController {
   async updateComment(
     @Param('commentId') commentId: string,
     @Body() updateCommentDto: CommentDto,
-    @Req() req,
+    @Req() req: any,
   ) {
     return this.commentService.updateById(commentId, {
       ...updateCommentDto,
@@ -97,13 +97,13 @@ export class CommentController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':commentId/like')
-  async likeComment(@Param('commentId') commentId: string, @Req() req) {
+  async likeComment(@Param('commentId') commentId: string, @Req() req: any) {
     return this.commentService.likeComment(commentId, req.user._id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put(':commentId/unlike')
-  async unlikeComment(@Param('commentId') commentId: string, @Req() req) {
+  async unlikeComment(@Param('commentId') commentId: string, @Req() req: any) {
     return this.commentService.unlikeComment(commentId, req.user._id);
   }
 
@@ -112,7 +112,7 @@ export class CommentController {
   async addResponse(
     @Param('commentId') commentId: string,
     @Body() responseDto: CommentDto,
-    @Req() req,
+    @Req() req: any,
   ) {
     const responseData = { ...responseDto, userId: req.user._id };
     return this.commentService.addResponse(commentId, responseData);
@@ -125,7 +125,7 @@ export class CommentController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':commentId')
-  async removeComment(@Param('commentId') commentId: string, @Req() req) {
+  async removeComment(@Param('commentId') commentId: string, @Req() req: any) {
     const comment = await this.commentService.findById(commentId);
 
     if (!comment) {

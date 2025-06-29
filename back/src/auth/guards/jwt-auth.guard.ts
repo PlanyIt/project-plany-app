@@ -11,10 +11,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const authHeader = request.headers.authorization;
+    console.log('Authorization header:', authHeader);
+
     return super.canActivate(context);
   }
 
-  handleRequest(err, user) {
+  handleRequest(err: any, user: any, info: any) {
+    console.log('JwtAuthGuard - Erreur:', err);
+    console.log('JwtAuthGuard - Utilisateur:', user);
+    console.log('JwtAuthGuard - Info:', info);
+
     if (err || !user) {
       throw err || new UnauthorizedException('Authentification requise');
     }

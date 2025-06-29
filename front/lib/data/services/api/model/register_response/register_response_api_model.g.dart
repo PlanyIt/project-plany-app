@@ -9,11 +9,15 @@ part of 'register_response_api_model.dart';
 _$RegisterResponseApiModelImpl _$$RegisterResponseApiModelImplFromJson(
         Map<String, dynamic> json) =>
     _$RegisterResponseApiModelImpl(
-      access_token: json['access_token'] as String,
+      accessToken: json['accessToken'] as String?,
+      refreshToken: json['refreshToken'] as String?,
+      userId: json['user_id'] as String,
     );
 
 Map<String, dynamic> _$$RegisterResponseApiModelImplToJson(
         _$RegisterResponseApiModelImpl instance) =>
     <String, dynamic>{
-      'access_token': instance.access_token,
+      'accessToken': instance.accessToken,
+      'refreshToken': instance.refreshToken,
+      'user_id': instance.userId,
     };

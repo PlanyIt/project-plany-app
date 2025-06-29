@@ -1,4 +1,4 @@
-import 'package:front/domain/models/category.dart';
+import 'package:front/domain/models/category/category.dart';
 import 'package:front/utils/result.dart';
 
 abstract class CategoryRepository {

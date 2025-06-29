@@ -4,7 +4,7 @@ import 'package:front/theme/app_theme.dart';
 import 'package:front/ui/auth/login/view_models/login_viewmodel.dart';
 import 'package:front/ui/core/localization/applocalization.dart';
 import 'package:front/widgets/common/custom_text_field.dart';
-import 'package:front/widgets/common/plany_button.dart';
+import 'package:front/ui/core/ui/button/plany_button.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:go_router/go_router.dart';
 
@@ -100,6 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 builder: (context, _) {
                   return PlanyButton(
                       text: AppLocalization.of(context).login,
+                      isLoading: widget.viewModel.login.running,
                       onPressed: () {
                         widget.viewModel.login.execute(
                           (_email.value.text, _password.value.text),
@@ -182,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
       widget.viewModel.login.clearResult();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalization.of(context).errorWhileRegister),
+          content: Text(AppLocalization.of(context).errorWhileLogin),
           action: SnackBarAction(
             label: AppLocalization.of(context).tryAgain,
             onPressed: () => widget.viewModel.login.execute((

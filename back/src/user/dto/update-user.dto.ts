@@ -4,7 +4,6 @@ import { IsString, IsBoolean, IsOptional, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
-  // Tous les champs sont optionnels pour une mise à jour
   @IsOptional()
   @IsString()
   username?: string;
@@ -23,7 +22,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @IsOptional()
   @IsString()
-  photoUrl?: string;
+  photoUrl?: string | null;
 
   @IsOptional()
   @IsDate()

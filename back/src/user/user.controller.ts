@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanService } from 'src/plan/plan.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
+@UseGuards(JwtAuthGuard)
 @Controller('api/users')
 export class UserController {
   constructor(
@@ -37,9 +38,26 @@ export class UserController {
   async findOne(@Param('id') id: string) {
     const user = await this.userService.findById(id);
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException('Utilisateur non trouvé');
     }
-    return user;
+    return {
+      id: (user._id as any).toString(),
+      username: user.username,
+      email: user.email,
+      description: user.description,
+      isPremium: user.isPremium,
+      photoUrl: user.photoUrl,
+      birthDate: user.birthDate,
+      gender: user.gender,
+      role: user.role,
+      isActive: user.isActive,
+      followers: user.followers,
+      following: user.following,
+      // followersCount: user.followersCount,
+      // followingCount: user.followingCount,
+      // plansCount: user.plansCount,
+      // favoritesCount: user.favoritesCount,
+    };
   }
 
   @Post()
@@ -50,23 +68,46 @@ export class UserController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/profile')
-  updateProfile(
+  async updateProfile(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @Request() req,
+    @Request() req: any,
   ) {
+    // Vérifier que l'utilisateur est authentifié
+    if (!req.user) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+
     // Vérifier que l'utilisateur ne modifie que son propre profil
     if (req.user._id.toString() !== id) {
       throw new UnauthorizedException('Vous ne pouvez pas modifier ce profil');
     }
-    return this.userService.updateById(id, updateUserDto);
+
+    const updatedUser = await this.userService.updateById(id, updateUserDto);
+    if (!updatedUser) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+    return {
+      id: (updatedUser._id as any).toString(),
+      username: updatedUser.username,
+      email: updatedUser.email,
+      description: updatedUser.description,
+      isPremium: updatedUser.isPremium,
+      photoUrl: updatedUser.photoUrl,
+      birthDate: updatedUser.birthDate,
+      gender: updatedUser.gender,
+      role: updatedUser.role,
+      isActive: updatedUser.isActive,
+      followers: updatedUser.followers,
+      following: updatedUser.following,
+      followersCount: updatedUser.followers?.length ?? 0,
+      followingCount: updatedUser.following?.length ?? 0,
+    };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  removeById(@Param('id') id: string, @Request() req) {
+  async removeById(@Param('id') id: string, @Request() req: any) {
     // Vérifier que l'utilisateur ne supprime que son propre compte
     if (req.user._id.toString() !== id) {
       throw new UnauthorizedException('Vous ne pouvez pas supprimer ce compte');
@@ -76,20 +117,19 @@ export class UserController {
 
   @Get('username/:username')
   findOneByUsername(@Param('username') username: string) {
-    return this.userService.findOneByUsername(username);
+    return this.userService.findByUsername(username);
   }
 
   @Get('email/:email')
   findOneByEmail(@Param('email') email: string) {
-    return this.userService.findOneByEmail(email);
+    return this.userService.findByEmail(email);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/email')
   async updateEmail(
     @Param('id') id: string,
     @Body('email') email: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     // Vérifier que l'utilisateur ne modifie que son propre email
     if (req.user._id.toString() !== id) {
@@ -97,20 +137,19 @@ export class UserController {
     }
 
     // Vérifier si l'email est déjà utilisé
-    const existingUser = await this.userService.findOneByEmail(email);
-    if (existingUser && existingUser._id.toString() !== id) {
+    const existingUser = await this.userService.findByEmail(email);
+    if (existingUser && (existingUser._id as any).toString() !== id) {
       throw new UnauthorizedException('Cet email est déjà utilisé');
     }
 
     return this.userService.updateById(id, { email });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/photo')
-  updateUserPhoto(
+  async updateUserPhoto(
     @Param('id') id: string,
     @Body('photoUrl') photoUrl: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     // Vérifier que l'utilisateur ne modifie que sa propre photo
     if (req.user._id.toString() !== id) {
@@ -121,9 +160,8 @@ export class UserController {
     return this.userService.updateById(id, { photoUrl });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id/photo')
-  deleteUserPhoto(@Param('id') id: string, @Request() req) {
+  async deleteUserPhoto(@Param('id') id: string, @Request() req: any) {
     // Vérifier que l'utilisateur ne supprime que sa propre photo
     if (req.user._id.toString() !== id) {
       throw new UnauthorizedException(
@@ -165,12 +203,11 @@ export class UserController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/premium')
   async updatePremiumStatus(
     @Param('id') id: string,
     @Body('isPremium') isPremium: boolean,
-    @Request() req,
+    @Request() req: any,
   ) {
     // Vérifier si l'utilisateur est admin ou modifie son propre statut
     if (req.user._id.toString() !== id && req.user.role !== 'admin') {
@@ -179,10 +216,9 @@ export class UserController {
     return this.userService.updateById(id, { isPremium });
   }
 
-  // Suivre un utilisateur
   @UseGuards(JwtAuthGuard)
   @Post(':id/follow')
-  async followUser(@Param('id') targetUserId: string, @Request() req) {
+  async followUser(@Param('id') targetUserId: string, @Request() req: any) {
     if (!req.user) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
@@ -201,10 +237,8 @@ export class UserController {
     }
   }
 
-  // Ne plus suivre un utilisateur
-  @UseGuards(JwtAuthGuard)
   @Delete(':id/follow')
-  async unfollowUser(@Param('id') targetUserId: string, @Request() req) {
+  async unfollowUser(@Param('id') targetUserId: string, @Request() req: any) {
     if (!req.user) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
@@ -213,13 +247,11 @@ export class UserController {
     return this.userService.unfollowUser(followerId, targetUserId);
   }
 
-  // Récupérer les abonnés d'un utilisateur
   @Get(':id/followers')
   async getUserFollowers(@Param('id') userId: string) {
     return this.userService.getUserFollowers(userId);
   }
 
-  // Récupérer les abonnements d'un utilisateur
   @Get(':id/following')
   async getUserFollowing(@Param('id') userId: string) {
     try {
@@ -230,7 +262,6 @@ export class UserController {
     }
   }
 
-  // Vérifier si un utilisateur suit un autre utilisateur
   @Get(':id/following/:targetId')
   async checkFollowing(
     @Param('id') followerId: string,

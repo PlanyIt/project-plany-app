@@ -64,6 +64,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   jwt_decoder: ^2.0.1
+  flutter_web_auth_2: ^4.1.0
 
 dev_dependencies:
   flutter_test:

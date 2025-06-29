@@ -3,8 +3,8 @@ import { PlanDto } from './dto/plan.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from './schemas/plan.schema';
 import { Model } from 'mongoose';
-import { StepDto } from 'src/step/dto/step.dto';
 import { User, UserDocument } from 'src/user/schemas/user.schema';
+import { StepDto } from 'src/step/dto/step.dto';
 
 @Injectable()
 export class PlanService {
@@ -22,7 +22,10 @@ export class PlanService {
     return this.planModel.find().exec();
   }
 
-  async removeById(planId: string, userId: string): Promise<PlanDocument> {
+  async removeById(
+    planId: string,
+    userId: string,
+  ): Promise<PlanDocument | null> {
     return this.planModel.findOneAndDelete({ _id: planId, userId }).exec();
   }
 
@@ -30,20 +33,20 @@ export class PlanService {
     planId: string,
     updatePlanDto: PlanDto,
     userId: string,
-  ): Promise<PlanDocument> {
+  ): Promise<PlanDocument | null> {
     return this.planModel
       .findOneAndUpdate({ _id: planId, userId }, updatePlanDto, { new: true })
       .exec();
   }
 
-  async findById(planId: string): Promise<PlanDocument | undefined> {
+  async findById(planId: string): Promise<PlanDocument | null> {
     return this.planModel.findOne({ _id: planId }).exec();
   }
 
   async addStepToPlan(
     planId: string,
     stepDto: StepDto,
-  ): Promise<PlanDocument | undefined> {
+  ): Promise<PlanDocument | null> {
     return this.planModel
       .findOneAndUpdate(
         { _id: planId },
@@ -53,7 +56,10 @@ export class PlanService {
       .exec();
   }
 
-  async addToFavorites(planId: string, userId: string): Promise<PlanDocument> {
+  async addToFavorites(
+    planId: string,
+    userId: string,
+  ): Promise<PlanDocument | null> {
     try {
       const plan = await this.planModel.findById(planId);
       if (!plan) {
@@ -81,7 +87,7 @@ export class PlanService {
   async removeFromFavorites(
     planId: string,
     userId: string,
-  ): Promise<PlanDocument> {
+  ): Promise<PlanDocument | null> {
     try {
       const plan = await this.planModel.findById(planId);
       if (!plan) {

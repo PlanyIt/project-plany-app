@@ -50,15 +50,15 @@ export class UserService {
     return this.userModel.findById(id).exec();
   }
 
-  async findOneByEmail(email: string): Promise<UserDocument | undefined> {
+  async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
   }
 
-  async removeById(id: string): Promise<UserDocument> {
+  async removeById(id: string): Promise<UserDocument | null> {
     return this.userModel.findByIdAndDelete(id).exec();
   }
 
-  async findOneByUsername(username: string): Promise<UserDocument | undefined> {
+  async findByUsername(username: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ username }).exec();
   }
 
@@ -200,17 +200,15 @@ export class UserService {
     return { message: 'Désabonnement réussi', success: true };
   }
 
-  async getUserFollowers(userId: string) {
-    const user = await this.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException(`Utilisateur avec ID ${userId} non trouvé`);
-    }
-
+  async getUserFollowers(userId: string): Promise<any[]> {
     const populatedUser = await this.userModel
-      .findById(user._id)
-      .populate('followers', 'username photoUrl')
+      .findById(userId)
+      .populate('followers', 'username email photoUrl')
       .exec();
+
+    if (!populatedUser) {
+      return [];
+    }
 
     return populatedUser.followers;
   }
@@ -249,7 +247,7 @@ export class UserService {
     }
 
     const isFollowing = follower.following.some(
-      (id) => id.toString() === target._id.toString(),
+      (id) => id.toString() === (target._id as any).toString(),
     );
 
     return { isFollowing };
@@ -303,5 +301,12 @@ export class UserService {
       followersCount,
       followingCount,
     };
+  }
+
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+  ): Promise<void> {
+    await this.userModel.updateOne({ _id: userId }, { refreshToken }).exec();
   }
 }

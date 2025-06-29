@@ -1,106 +1,106 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PasswordService } from './password.service';
-import { CreateUserDto } from '../user/dto/create-user.dto';
+import { UserService } from '../user/user.service';
 import { LoginRequestDto } from './dto/login/login-request.dto';
-import { UserService } from 'src/user/user.service';
 import { LoginResponseDto } from './dto/login/login-response.dto';
+import { RegisterDto } from './dto/register.dto';
+import { RefreshTokenService } from './refresh-token.service';
+import { PasswordService } from './password.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UserService,
-    private jwtService: JwtService,
-    private passwordService: PasswordService,
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+    private readonly passwordService: PasswordService,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findOneByEmail(email);
+  async login(loginRequestDto: LoginRequestDto): Promise<LoginResponseDto> {
+    const { email, password } = loginRequestDto;
+
+    // Trouver l'utilisateur par email
+    const user = await this.userService.findByEmail(email);
 
     if (!user) {
-      return null;
+      throw new UnauthorizedException('Identifiants invalides');
     }
 
-    // Tenter avec Argon2 d'abord, puis avec bcrypt si nécessaire
-    let isPasswordValid = false;
-
-    try {
-      isPasswordValid = await this.passwordService.verifyPassword(
-        password,
-        user.password,
-      );
-    } catch (e) {
-      isPasswordValid = await this.passwordService.verifyLegacyPassword(
-        password,
-        user.password,
-      );
-
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Mot de passe incorrect', e.message);
-      }
-    }
-
-    if (isPasswordValid) {
-      const { password, ...result } = user.toObject();
-      return result;
-    }
-
-    return null;
-  }
-
-  async login(loginRequestDto: LoginRequestDto): Promise<LoginResponseDto> {
-    const user = await this.validateUser(
-      loginRequestDto.email,
-      loginRequestDto.password,
+    // Vérifier le mot de passe
+    const isPasswordValid = await this.passwordService.verifyPassword(
+      password,
+      user.password,
     );
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Identifiants invalides');
     }
 
+    // Générer les tokens
     const payload = {
-      sub: user._id,
-      email: user.email,
+      sub: (user._id as any).toString(),
       username: user.username,
     };
-
-    return {
-      token: this.jwtService.sign(payload, { expiresIn: '10m' }),
-      userId: user._id.toString(),
-    };
-  }
-
-  async register(createUserDto: CreateUserDto) {
-    // Hacher le mot de passe avec notre service spécialisé
-    const hashedPassword = await this.passwordService.hashPassword(
-      createUserDto.password,
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refreshToken = await this.refreshTokenService.generateRefreshToken(
+      (user._id as any).toString(),
     );
 
-    // Créer l'utilisateur avec le mot de passe déjà haché
-    const newUser = await this.usersService.create({
-      ...createUserDto,
-      password: hashedPassword,
-      isActive: true,
-    });
-
-    // Générer un token JWT
-    const payload = {
-      sub: newUser._id,
-      email: newUser.email,
-      username: newUser.username,
-    };
-
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '10m' }),
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      user_id: (user._id as any).toString(),
+      user: {
+        id: (user._id as any).toString(),
+        username: user.username,
+        email: user.email,
+      },
     };
   }
 
-  async validateToken(token: string): Promise<boolean> {
-    try {
-      const decoded = this.jwtService.verify(token);
-      return !!decoded;
-    } catch (e) {
-      throw new UnauthorizedException('Token invalide ou expiré');
+  async register(registerDto: RegisterDto) {
+    const { username, email, password } = registerDto;
+
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await this.userService.findByEmail(email);
+    if (existingUser) {
+      throw new UnauthorizedException('Cet email est déjà utilisé');
     }
+
+    const existingUsername = await this.userService.findByUsername(username);
+    if (existingUsername) {
+      throw new UnauthorizedException("Ce nom d'utilisateur est déjà utilisé");
+    }
+
+    // Hasher le mot de passe
+    const hashedPassword = await this.passwordService.hashPassword(password);
+
+    // Créer l'utilisateur
+    const user = await this.userService.create({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    // Générer les tokens
+    const payload = {
+      sub: (user._id as any).toString(),
+      username: user.username,
+    };
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refreshToken = await this.refreshTokenService.generateRefreshToken(
+      (user._id as any).toString(),
+    );
+
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      user_id: (user._id as any).toString(),
+      user: {
+        id: (user._id as any).toString(),
+        username: user.username,
+        email: user.email,
+      },
+    };
   }
 }

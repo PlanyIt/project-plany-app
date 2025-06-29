@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanDto } from './dto/plan.dto';
 import { UserService } from '../user/user.service';
 
+@UseGuards(JwtAuthGuard)
 @Controller('api/plans')
 export class PlanController {
   constructor(
@@ -38,11 +39,10 @@ export class PlanController {
     return this.planService.findById(planId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post()
-  async createPlan(@Body() createPlanDto: PlanDto, @Req() req) {
+  async createPlan(@Body() createPlanDto: PlanDto) {
     try {
-      const planData = { ...createPlanDto, userId: req.user._id };
+      const planData = { ...createPlanDto };
       return await this.planService.createPlan(planData);
     } catch (error) {
       console.error('Erreur lors de la création du plan :', error);
@@ -66,21 +66,18 @@ export class PlanController {
     return this.planService.updateById(planId, updatePlanDto, userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':planId')
-  removePlan(@Param('planId') planId: string, @Req() req) {
+  removePlan(@Param('planId') planId: string, @Req() req: any) {
     return this.planService.removeById(planId, req.user._id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':planId/favorite')
-  async addToFavorites(@Param('planId') planId: string, @Req() req) {
+  async addToFavorites(@Param('planId') planId: string, @Req() req: any) {
     return this.planService.addToFavorites(planId, req.user._id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':planId/unfavorite')
-  async removeFromFavorites(@Param('planId') planId: string, @Req() req) {
+  async removeFromFavorites(@Param('planId') planId: string, @Req() req: any) {
     return this.planService.removeFromFavorites(planId, req.user._id);
   }
 
@@ -94,12 +91,11 @@ export class PlanController {
     return this.planService.findFavoritesByUserId(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/profile')
   async updateUserProfile(
     @Param('id') id: string,
     @Body() updateUserDto: any,
-    @Req() req,
+    @Req() req: any,
   ) {
     // Vérifier que l'utilisateur ne modifie que son propre profil
     if (req.user._id.toString() !== id) {

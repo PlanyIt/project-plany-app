@@ -1,20 +1,18 @@
-import {
-  Body,
-  Controller,
-  Post,
-  UseGuards,
-  Get,
-  Request,
-} from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginRequestDto } from './dto/login/login-request.dto';
 import { RegisterDto } from './dto/register.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LoginResponseDto } from './dto/login/login-response.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RefreshTokenService } from './refresh-token.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('api/auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly refreshTokenService: RefreshTokenService,
+  ) {}
 
   @Post('login')
   async login(
@@ -28,9 +26,15 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @Post('refresh')
+  async refresh(@Body() body: { refreshToken: string }) {
+    return this.refreshTokenService.refreshTokens(body.refreshToken);
+  }
+
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  @Post('logout')
+  async logout(@Request() req: any) {
+    // Optionnel: invalider le refresh token côté serveur
+    return { message: 'Déconnexion réussie' };
   }
 }

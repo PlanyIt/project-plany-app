@@ -8,6 +8,7 @@ class CustomTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final Function(bool)? onFocusChange;
   final VoidCallback? onTextFieldTap;
+  final FormFieldValidator<String>? validator;
 
   const CustomTextField({
     super.key,
@@ -18,6 +19,7 @@ class CustomTextField extends StatefulWidget {
     this.focusNode,
     this.onFocusChange,
     this.onTextFieldTap,
+    this.validator,
   });
 
   @override
@@ -30,7 +32,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
   @override
   void initState() {
     super.initState();
-    // Use the provided focusNode or create a new one
     _focusNode = widget.focusNode ?? FocusNode();
 
     if (widget.onFocusChange != null) {
@@ -42,7 +43,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
   void didUpdateWidget(CustomTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
-      // If the focus node has changed, update listeners
       if (oldWidget.onFocusChange != null) {
         _focusNode.removeListener(_handleFocusChange);
       }
@@ -63,11 +63,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   void dispose() {
-    // Only dispose the focus node if we created it internally
     if (widget.focusNode == null) {
       _focusNode.dispose();
     } else if (widget.onFocusChange != null) {
-      // Otherwise just remove our listener
       _focusNode.removeListener(_handleFocusChange);
     }
     super.dispose();
@@ -77,11 +75,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: widget.onTextFieldTap,
-      child: TextField(
+      child: TextFormField(
         controller: widget.controller,
         focusNode: _focusNode,
         maxLines: widget.maxLines,
         keyboardType: widget.keyboardType,
+        validator: widget.validator,
         decoration: InputDecoration(
           labelText: widget.labelText,
           floatingLabelBehavior: FloatingLabelBehavior.auto,

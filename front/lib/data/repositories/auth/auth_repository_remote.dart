@@ -1,9 +1,10 @@
 import 'package:front/data/services/api/api_client.dart';
 import 'package:front/data/services/api/auth_api_client.dart';
-import 'package:front/data/services/api/model/login_request/login_request.dart';
-import 'package:front/data/services/api/model/login_response/login_response.dart';
+import 'package:front/data/services/api/model/login_request/login_request_api_model.dart';
+import 'package:front/data/services/api/model/login_response/login_response_api_model.dart';
 import 'package:front/data/services/api/model/register_request/register_request_api_model.dart';
 import 'package:front/data/services/api/model/register_response/register_response_api_model.dart';
+import 'package:front/data/services/api/model/refresh_token_request/refresh_token_request_api_model.dart';
 import 'package:front/data/services/shared_preferences_service.dart';
 import 'package:front/utils/result.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -25,9 +26,8 @@ class AuthRepositoryRemote extends AuthRepository {
   final AuthApiClient _authApiClient;
   final ApiClient _apiClient;
   final SharedPreferencesService _sharedPreferencesService;
-
-  bool? _isAuthenticated;
   String? _authToken;
+  String? _refreshToken;
   final _log = Logger('AuthRepositoryRemote');
 
   /// Fetch token from shared preferences
@@ -36,10 +36,23 @@ class AuthRepositoryRemote extends AuthRepository {
     switch (result) {
       case Ok<String?>():
         _authToken = result.value;
-        _isAuthenticated = result.value != null;
       case Error<String?>():
         _log.severe(
-          'Failed to fech Token from SharedPreferences',
+          'Failed to fetch Token from SharedPreferences',
+          result.error,
+        );
+    }
+  }
+
+  /// Fetch refresh token from shared preferences
+  Future<void> _fetchRefreshToken() async {
+    final result = await _sharedPreferencesService.fetchRefreshToken();
+    switch (result) {
+      case Ok<String?>():
+        _refreshToken = result.value;
+      case Error<String?>():
+        _log.severe(
+          'Failed to fetch Refresh Token from SharedPreferences',
           result.error,
         );
     }
@@ -50,15 +63,50 @@ class AuthRepositoryRemote extends AuthRepository {
     return JwtDecoder.isExpired(_authToken!);
   }
 
+  /// Try to refresh token if expired
+  Future<bool> _tryRefreshToken() async {
+    if (_refreshToken == null) return false;
+
+    try {
+      final refreshResult = await _authApiClient.refreshToken(
+        RefreshTokenRequestApiModel(refreshToken: _refreshToken!),
+      );
+
+      switch (refreshResult) {
+        case Ok():
+          _authToken = refreshResult.value.accessToken;
+          _refreshToken = refreshResult.value.refreshToken;
+
+          await _sharedPreferencesService
+              .saveToken(refreshResult.value.accessToken);
+          await _sharedPreferencesService
+              .saveRefreshToken(refreshResult.value.refreshToken);
+
+          return true;
+        case Error():
+          _log.warning('Failed to refresh token: ${refreshResult.error}');
+          return false;
+      }
+    } catch (e) {
+      _log.warning('Error during token refresh: $e');
+      return false;
+    }
+  }
+
   @override
   Future<bool> get isAuthenticated async {
-    // Status is cached
-    if (_isAuthenticated != null) {
-      return _isAuthenticated! && !_isTokenExpired();
+    await _fetch(); // Toujours récupérer les dernières données
+    await _fetchRefreshToken(); // Récupérer aussi le refresh token
+
+    if (_authToken == null) return false;
+
+    // Si le token est expiré, essayer de le rafraîchir
+    if (_isTokenExpired()) {
+      final refreshSuccess = await _tryRefreshToken();
+      return refreshSuccess;
     }
-    // No status cached, fetch from storage
-    await _fetch();
-    return (_isAuthenticated ?? false) && !_isTokenExpired();
+
+    return true;
   }
 
   @override
@@ -68,17 +116,34 @@ class AuthRepositoryRemote extends AuthRepository {
   }) async {
     try {
       final result = await _authApiClient.login(
-        LoginRequest(email: email, password: password),
+        LoginRequestApiModel(email: email, password: password),
       );
       switch (result) {
-        case Ok<LoginResponse>():
-          _log.info('User logged int');
-          // Set auth status
-          _isAuthenticated = true;
-          _authToken = result.value.token;
-          // Store in Shared preferences
-          return await _sharedPreferencesService.saveToken(result.value.token);
-        case Error<LoginResponse>():
+        case Ok<LoginResponseApiModel>():
+          _log.info('User logged in');
+          // Use accessToken if available, otherwise fall back to token
+          final token = result.value.accessToken ?? result.value.token;
+          final refreshToken = result.value.refreshToken;
+
+          if (token == null) {
+            _log.severe('No token received from login response');
+            return Result.error(Exception('No token received'));
+          }
+
+          _authToken = token;
+          _refreshToken = refreshToken;
+
+          await _sharedPreferencesService.saveToken(token);
+          if (refreshToken != null) {
+            await _sharedPreferencesService.saveRefreshToken(refreshToken);
+          }
+          await _sharedPreferencesService.saveUserId(result.value.userId);
+
+          _apiClient.authHeaderProvider = _authHeaderProvider;
+
+          return const Result.ok(null);
+
+        case Error<LoginResponseApiModel>():
           _log.warning('Error logging in: ${result.error}');
           return Result.error(result.error);
       }
@@ -91,25 +156,30 @@ class AuthRepositoryRemote extends AuthRepository {
   Future<Result<void>> logout() async {
     _log.info('User logged out');
     try {
-      // Clear stored auth token
       final result = await _sharedPreferencesService.saveToken(null);
+      await _sharedPreferencesService.saveRefreshToken(null);
+      await _sharedPreferencesService.saveUserId(null);
+
       if (result is Error<void>) {
         _log.severe('Failed to clear stored auth token');
       }
 
-      // Clear token in ApiClient
       _authToken = null;
+      _refreshToken = null;
 
-      // Clear authenticated status
-      _isAuthenticated = false;
       return result;
     } finally {
       notifyListeners();
     }
   }
 
-  String? _authHeaderProvider() =>
-      _authToken != null ? 'Bearer $_authToken' : null;
+  String? _authHeaderProvider() {
+    if (_authToken == null) {
+      _log.warning('Auth header requested but token is null');
+      return null;
+    }
+    return 'Bearer $_authToken';
+  }
 
   @override
   Future<Result<void>> register({
@@ -131,6 +201,7 @@ class AuthRepositoryRemote extends AuthRepository {
         case Ok<RegisterResponseApiModel>():
           _log.info('User registered successfully');
           return await login(email: email, password: password);
+
         case Error<RegisterResponseApiModel>():
           _log.warning('Error registering user: ${result.error}');
           return Result.error(result.error);

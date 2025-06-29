@@ -7,7 +7,6 @@ import {
   Delete,
   Put,
   UseGuards,
-  Req,
   NotFoundException,
 } from '@nestjs/common';
 import { StepService } from './step.service';
@@ -18,10 +17,9 @@ import { StepDto } from './dto/step.dto';
 export class StepController {
   constructor(private readonly stepService: StepService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
-  async createStep(@Body() createStepDto: StepDto, @Req() req) {
-    const stepData = { ...createStepDto, userId: req.user._id };
+  async createStep(@Body() createStepDto: StepDto) {
+    const stepData = { ...createStepDto };
     return this.stepService.create(stepData);
   }
 

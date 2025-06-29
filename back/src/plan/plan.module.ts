@@ -1,10 +1,10 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { PlanService } from './plan.service';
 import { PlanController } from './plan.controller';
+import { PlanService } from './plan.service';
 import { Plan, PlanSchema } from './schemas/plan.schema';
-import { UserModule } from '../user/user.module';
 import { User, UserSchema } from '../user/schemas/user.schema';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -16,6 +16,6 @@ import { User, UserSchema } from '../user/schemas/user.schema';
   ],
   controllers: [PlanController],
   providers: [PlanService],
-  exports: [PlanService, MongooseModule],
+  exports: [PlanService],
 })
 export class PlanModule {}

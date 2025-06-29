@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:front/widgets/common/plany_logo.dart';
-import 'package:front/widgets/common/plany_button.dart';
+import 'package:front/ui/core/ui/button/plany_button.dart';
 import 'package:front/theme/app_theme.dart';
 import 'package:front/widgets/common/custom_text_field.dart';
 
@@ -14,8 +14,7 @@ class ResetPasswordScreen extends StatefulWidget {
 class ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
-
-  // Méthode pour gérer la réinitialisation du mot de passe via Firebase
+  // Méthode pour gérer la réinitialisation du mot de passe
   Future<void> _resetPassword() async {
     if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

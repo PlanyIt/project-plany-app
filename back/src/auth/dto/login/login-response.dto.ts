@@ -1,11 +1,38 @@
 export class LoginResponseDto {
   /**
-   * The token to be used for authentication
+   * The access token to be used for authentication
    */
-  token: string;
+  accessToken: string;
 
   /**
-   * The user id
+   * The refresh token to be used for token renewal
    */
-  userId: string;
+  refreshToken: string;
+
+  /**
+   * The user ID
+   */
+  user_id: string;
+
+  /**
+   * The user information
+   */
+  user: {
+    /**
+     * The unique identifier of the user
+     */
+    id: string;
+
+    /**
+     * The username of the user
+     */
+    username: string;
+
+    /**
+     * The email address of the user
+     */
+    email: string;
+
+    // ...other user fields...
+  };
 }

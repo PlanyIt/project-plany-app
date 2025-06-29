@@ -35,14 +35,14 @@ export class User {
   @Prop({ default: true })
   isActive: boolean;
 
-  @Prop({ type: Date, default: Date.now })
-  registrationDate: Date;
-
   @Prop({ type: [String], default: [] })
   followers: string[];
 
   @Prop({ type: [String], default: [] })
   following: string[];
+
+  @Prop({ required: false })
+  refreshToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

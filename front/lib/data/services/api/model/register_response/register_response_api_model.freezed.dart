@@ -22,7 +22,14 @@ RegisterResponseApiModel _$RegisterResponseApiModelFromJson(
 /// @nodoc
 mixin _$RegisterResponseApiModel {
   /// The user's access token.
-  String get access_token => throw _privateConstructorUsedError;
+  String? get accessToken => throw _privateConstructorUsedError;
+
+  /// The user's refresh token.
+  String? get refreshToken => throw _privateConstructorUsedError;
+
+  /// The user ID
+  @JsonKey(name: 'user_id')
+  String get userId => throw _privateConstructorUsedError;
 
   /// Serializes this RegisterResponseApiModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -40,7 +47,10 @@ abstract class $RegisterResponseApiModelCopyWith<$Res> {
           $Res Function(RegisterResponseApiModel) then) =
       _$RegisterResponseApiModelCopyWithImpl<$Res, RegisterResponseApiModel>;
   @useResult
-  $Res call({String access_token});
+  $Res call(
+      {String? accessToken,
+      String? refreshToken,
+      @JsonKey(name: 'user_id') String userId});
 }
 
 /// @nodoc
@@ -59,12 +69,22 @@ class _$RegisterResponseApiModelCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? access_token = null,
+    Object? accessToken = freezed,
+    Object? refreshToken = freezed,
+    Object? userId = null,
   }) {
     return _then(_value.copyWith(
-      access_token: null == access_token
-          ? _value.access_token
-          : access_token // ignore: cast_nullable_to_non_nullable
+      accessToken: freezed == accessToken
+          ? _value.accessToken
+          : accessToken // ignore: cast_nullable_to_non_nullable
+              as String?,
+      refreshToken: freezed == refreshToken
+          ? _value.refreshToken
+          : refreshToken // ignore: cast_nullable_to_non_nullable
+              as String?,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -79,7 +99,10 @@ abstract class _$$RegisterResponseApiModelImplCopyWith<$Res>
       __$$RegisterResponseApiModelImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String access_token});
+  $Res call(
+      {String? accessToken,
+      String? refreshToken,
+      @JsonKey(name: 'user_id') String userId});
 }
 
 /// @nodoc
@@ -97,12 +120,22 @@ class __$$RegisterResponseApiModelImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? access_token = null,
+    Object? accessToken = freezed,
+    Object? refreshToken = freezed,
+    Object? userId = null,
   }) {
     return _then(_$RegisterResponseApiModelImpl(
-      access_token: null == access_token
-          ? _value.access_token
-          : access_token // ignore: cast_nullable_to_non_nullable
+      accessToken: freezed == accessToken
+          ? _value.accessToken
+          : accessToken // ignore: cast_nullable_to_non_nullable
+              as String?,
+      refreshToken: freezed == refreshToken
+          ? _value.refreshToken
+          : refreshToken // ignore: cast_nullable_to_non_nullable
+              as String?,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -111,18 +144,30 @@ class __$$RegisterResponseApiModelImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$RegisterResponseApiModelImpl implements _RegisterResponseApiModel {
-  const _$RegisterResponseApiModelImpl({required this.access_token});
+  const _$RegisterResponseApiModelImpl(
+      {this.accessToken,
+      this.refreshToken,
+      @JsonKey(name: 'user_id') required this.userId});
 
   factory _$RegisterResponseApiModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$RegisterResponseApiModelImplFromJson(json);
 
   /// The user's access token.
   @override
-  final String access_token;
+  final String? accessToken;
+
+  /// The user's refresh token.
+  @override
+  final String? refreshToken;
+
+  /// The user ID
+  @override
+  @JsonKey(name: 'user_id')
+  final String userId;
 
   @override
   String toString() {
-    return 'RegisterResponseApiModel(access_token: $access_token)';
+    return 'RegisterResponseApiModel(accessToken: $accessToken, refreshToken: $refreshToken, userId: $userId)';
   }
 
   @override
@@ -130,13 +175,17 @@ class _$RegisterResponseApiModelImpl implements _RegisterResponseApiModel {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$RegisterResponseApiModelImpl &&
-            (identical(other.access_token, access_token) ||
-                other.access_token == access_token));
+            (identical(other.accessToken, accessToken) ||
+                other.accessToken == accessToken) &&
+            (identical(other.refreshToken, refreshToken) ||
+                other.refreshToken == refreshToken) &&
+            (identical(other.userId, userId) || other.userId == userId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, access_token);
+  int get hashCode =>
+      Object.hash(runtimeType, accessToken, refreshToken, userId);
 
   /// Create a copy of RegisterResponseApiModel
   /// with the given fields replaced by the non-null parameter values.
@@ -157,14 +206,26 @@ class _$RegisterResponseApiModelImpl implements _RegisterResponseApiModel {
 
 abstract class _RegisterResponseApiModel implements RegisterResponseApiModel {
   const factory _RegisterResponseApiModel(
-      {required final String access_token}) = _$RegisterResponseApiModelImpl;
+          {final String? accessToken,
+          final String? refreshToken,
+          @JsonKey(name: 'user_id') required final String userId}) =
+      _$RegisterResponseApiModelImpl;
 
   factory _RegisterResponseApiModel.fromJson(Map<String, dynamic> json) =
       _$RegisterResponseApiModelImpl.fromJson;
 
   /// The user's access token.
   @override
-  String get access_token;
+  String? get accessToken;
+
+  /// The user's refresh token.
+  @override
+  String? get refreshToken;
+
+  /// The user ID
+  @override
+  @JsonKey(name: 'user_id')
+  String get userId;
 
   /// Create a copy of RegisterResponseApiModel
   /// with the given fields replaced by the non-null parameter values.

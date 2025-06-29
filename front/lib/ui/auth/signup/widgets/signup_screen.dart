@@ -6,7 +6,7 @@ import 'package:front/ui/core/localization/applocalization.dart';
 import 'package:go_router/go_router.dart';
 import 'package:front/widgets/common/custom_text_field.dart';
 import 'package:front/widgets/common/plany_logo.dart';
-import 'package:front/widgets/common/plany_button.dart';
+import 'package:front/ui/core/ui/button/plany_button.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key, required this.viewModel});
@@ -97,6 +97,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 30),
               PlanyButton(
                 text: AppLocalization.of(context).register,
+                isLoading: widget.viewModel.register.running,
                 onPressed: () {
                   widget.viewModel.register.execute(
                     (
@@ -160,7 +161,7 @@ Widget _buildWelcomeText(BuildContext context) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        'Inscription',
+        AppLocalization.of(context).register,
         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: Theme.of(context).colorScheme.onSurface,

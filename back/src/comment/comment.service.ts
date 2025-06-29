@@ -70,16 +70,31 @@ export class CommentService {
     const { page, limit } = paginationOptions;
     const skip = (page - 1) * limit;
 
-    return this.commentModel
-      .find({
-        planId,
-        parentId: { $exists: false },
-      })
+    console.log(`🔍 Recherche commentaires pour planId: ${planId}`);
+    console.log(`📄 Pagination: page=${page}, limit=${limit}, skip=${skip}`);
+
+    const query = {
+      planId,
+      $or: [{ parentId: { $exists: false } }, { parentId: null }],
+    };
+    console.log(`🔎 Query MongoDB:`, JSON.stringify(query));
+
+    const comments = await this.commentModel
+      .find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate('responses')
       .exec();
+
+    console.log(`📋 Commentaires trouvés: ${comments.length}`);
+    comments.forEach((comment, index) => {
+      console.log(
+        `  ${index + 1}. ID: ${comment._id}, planId: ${comment.planId}, content: "${comment.content}"`,
+      );
+    });
+
+    return comments;
   }
   async removeResponse(
     commentId: string,
@@ -124,10 +139,10 @@ export class CommentService {
       .findOne({ _id: commentId })
       .populate('responses')
       .exec();
-    return comment;
+    return comment || undefined;
   }
 
-  async removeById(commentId: string): Promise<CommentDocument> {
+  async removeById(commentId: string): Promise<CommentDocument | null> {
     const comment = await this.commentModel.findById(commentId).exec();
 
     if (!comment) {

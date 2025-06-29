@@ -6,6 +6,7 @@ class SectionTextField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final int maxLines;
+  final FormFieldValidator<String>? validator;
 
   const SectionTextField({
     super.key,
@@ -13,6 +14,7 @@ class SectionTextField extends StatelessWidget {
     required this.controller,
     required this.labelText,
     this.maxLines = 1,
+    this.validator,
   });
 
   @override
@@ -34,6 +36,7 @@ class SectionTextField extends StatelessWidget {
           controller: controller,
           labelText: labelText,
           maxLines: maxLines,
+          validator: validator,
         ),
       ],
     );

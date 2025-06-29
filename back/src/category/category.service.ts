@@ -33,11 +33,11 @@ export class CategoryService {
       .exec();
   }
 
-  async findById(categoryId: string): Promise<CategoryDocument | undefined> {
+  async findById(categoryId: string): Promise<CategoryDocument | null> {
     return this.categoryModel.findOne({ _id: categoryId }).exec();
   }
 
-  async findByName(name: string): Promise<CategoryDocument | undefined> {
+  async findByName(name: string): Promise<CategoryDocument | null> {
     return this.categoryModel.findOne({ name }).exec();
   }
 }
