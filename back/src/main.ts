@@ -2,7 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
+import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware';
+import * as helmet from 'helmet';
+import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,8 +20,14 @@ async function bootstrap() {
     console.log('JWT_SECRET is properly configured.');
   }
 
-  // Sécurité: Appliquer des en-têtes HTTP sécurisés
-  app.use(helmet());
+  // Sécurité
+  app.use(helmet.default());
+
+  // Rate limiting global
+  const rateLimitMiddleware = new RateLimitMiddleware();
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    rateLimitMiddleware.use(req, res, next),
+  );
 
   // Validation des données entrantes
   app.useGlobalPipes(
@@ -33,7 +41,6 @@ async function bootstrap() {
   // Configuration CORS
   app.enableCors({
     origin: configService.get<string>('CORS_ORIGIN') || '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 

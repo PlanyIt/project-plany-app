@@ -1,11 +1,11 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginRequestDto } from './dto/login/login-request.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginResponseDto } from './dto/login/login-response.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RefreshTokenService } from './refresh-token.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthThrottle } from '../common/decorators/throttle.decorator';
 
 @Controller('api/auth')
 export class AuthController {
@@ -15,6 +15,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
+  @AuthThrottle() // 5 tentatives par minute
   async login(
     @Body() loginRequestDto: LoginRequestDto,
   ): Promise<LoginResponseDto> {
@@ -22,6 +23,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @AuthThrottle() // 5 tentatives par minute
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
@@ -33,7 +35,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  async logout(@Request() req: any) {
+  async logout() {
     // Optionnel: invalider le refresh token côté serveur
     return { message: 'Déconnexion réussie' };
   }

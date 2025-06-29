@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { CommentModule } from './comment/comment.module';
 import { StepModule } from './step/step.module';
 import { CategoryModule } from './category/category.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottleGuard } from './common/guards/throttle.guard';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -59,6 +61,12 @@ import * as fs from 'fs';
     CategoryModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottleGuard,
+    },
+  ],
 })
 export class AppModule {}
