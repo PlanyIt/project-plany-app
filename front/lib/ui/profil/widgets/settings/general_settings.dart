@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/user/user.dart';
 import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:front/data/services/preferences_service.dart';
 
 class GeneralSettings extends StatefulWidget {
   final User userProfile;
@@ -24,19 +24,22 @@ class GeneralSettings extends StatefulWidget {
 class GeneralSettingsState extends State<GeneralSettings> {
   bool _darkMode = false;
   bool _notifications = true;
+  late PreferencesService _preferencesService;
 
   @override
   void initState() {
     super.initState();
+    _preferencesService = PreferencesService();
     _loadPreferences();
   }
 
   Future<void> _loadPreferences() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final darkMode = await _preferencesService.getDarkMode();
+      final notifications = await _preferencesService.getNotifications();
       setState(() {
-        _darkMode = prefs.getBool('darkMode') ?? false;
-        _notifications = prefs.getBool('notifications') ?? true;
+        _darkMode = darkMode;
+        _notifications = notifications;
       });
     } catch (e) {
       widget.showErrorCard('Erreur lors du chargement des préférences: $e');
@@ -45,8 +48,11 @@ class GeneralSettingsState extends State<GeneralSettings> {
 
   Future<void> _savePreference(String key, bool value) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(key, value);
+      if (key == 'darkMode') {
+        await _preferencesService.setDarkMode(value);
+      } else if (key == 'notifications') {
+        await _preferencesService.setNotifications(value);
+      }
     } catch (e) {
       widget.showErrorCard('Erreur lors de la sauvegarde des préférences: $e');
     }

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:front/data/repositories/user/user_repository.dart';
 import 'package:front/data/services/api/api_client.dart';
-import 'package:front/data/services/shared_preferences_service.dart';
+import 'package:front/data/services/auth_storage_service.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/user/user.dart';
 import 'package:front/utils/result.dart';
@@ -9,12 +9,12 @@ import 'package:front/utils/result.dart';
 class UserRepositoryRemote implements UserRepository {
   UserRepositoryRemote({
     required ApiClient apiClient,
-    required SharedPreferencesService sharedPreferencesService,
+    required AuthStorageService authStorageService,
   })  : _apiClient = apiClient,
-        _sharedPreferencesService = sharedPreferencesService;
+        _authStorageService = authStorageService;
 
   final ApiClient _apiClient;
-  final SharedPreferencesService _sharedPreferencesService;
+  final AuthStorageService _authStorageService;
 
   User? _cachedUser;
 
@@ -25,7 +25,7 @@ class UserRepositoryRemote implements UserRepository {
       return Result.ok(_cachedUser!);
     }
 
-    final userIdResult = await _sharedPreferencesService.fetchUserId();
+    final userIdResult = await _authStorageService.fetchUserId();
     if (kDebugMode) print('🧩 SharedPreferences returned: $userIdResult');
 
     if (userIdResult is Error<String?>) {

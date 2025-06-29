@@ -5,7 +5,7 @@ import 'package:front/data/services/api/model/login_response/login_response_api_
 import 'package:front/data/services/api/model/register_request/register_request_api_model.dart';
 import 'package:front/data/services/api/model/register_response/register_response_api_model.dart';
 import 'package:front/data/services/api/model/refresh_token_request/refresh_token_request_api_model.dart';
-import 'package:front/data/services/shared_preferences_service.dart';
+import 'package:front/data/services/auth_storage_service.dart';
 import 'package:front/utils/result.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:logging/logging.dart';
@@ -16,23 +16,22 @@ class AuthRepositoryRemote extends AuthRepository {
   AuthRepositoryRemote({
     required ApiClient apiClient,
     required AuthApiClient authApiClient,
-    required SharedPreferencesService sharedPreferencesService,
+    required AuthStorageService authStorageService,
   })  : _apiClient = apiClient,
         _authApiClient = authApiClient,
-        _sharedPreferencesService = sharedPreferencesService {
+        _authStorageService = authStorageService {
     _apiClient.authHeaderProvider = _authHeaderProvider;
   }
-
   final AuthApiClient _authApiClient;
   final ApiClient _apiClient;
-  final SharedPreferencesService _sharedPreferencesService;
+  final AuthStorageService _authStorageService;
   String? _authToken;
   String? _refreshToken;
   final _log = Logger('AuthRepositoryRemote');
 
   /// Fetch token from shared preferences
   Future<void> _fetch() async {
-    final result = await _sharedPreferencesService.fetchToken();
+    final result = await _authStorageService.fetchToken();
     switch (result) {
       case Ok<String?>():
         _authToken = result.value;
@@ -46,7 +45,7 @@ class AuthRepositoryRemote extends AuthRepository {
 
   /// Fetch refresh token from shared preferences
   Future<void> _fetchRefreshToken() async {
-    final result = await _sharedPreferencesService.fetchRefreshToken();
+    final result = await _authStorageService.fetchRefreshToken();
     switch (result) {
       case Ok<String?>():
         _refreshToken = result.value;
@@ -76,10 +75,8 @@ class AuthRepositoryRemote extends AuthRepository {
         case Ok():
           _authToken = refreshResult.value.accessToken;
           _refreshToken = refreshResult.value.refreshToken;
-
-          await _sharedPreferencesService
-              .saveToken(refreshResult.value.accessToken);
-          await _sharedPreferencesService
+          await _authStorageService.saveToken(refreshResult.value.accessToken);
+          await _authStorageService
               .saveRefreshToken(refreshResult.value.refreshToken);
 
           return true;
@@ -132,12 +129,11 @@ class AuthRepositoryRemote extends AuthRepository {
 
           _authToken = token;
           _refreshToken = refreshToken;
-
-          await _sharedPreferencesService.saveToken(token);
+          await _authStorageService.saveToken(token);
           if (refreshToken != null) {
-            await _sharedPreferencesService.saveRefreshToken(refreshToken);
+            await _authStorageService.saveRefreshToken(refreshToken);
           }
-          await _sharedPreferencesService.saveUserId(result.value.userId);
+          await _authStorageService.saveUserId(result.value.userId);
 
           _apiClient.authHeaderProvider = _authHeaderProvider;
 
@@ -156,9 +152,9 @@ class AuthRepositoryRemote extends AuthRepository {
   Future<Result<void>> logout() async {
     _log.info('User logged out');
     try {
-      final result = await _sharedPreferencesService.saveToken(null);
-      await _sharedPreferencesService.saveRefreshToken(null);
-      await _sharedPreferencesService.saveUserId(null);
+      final result = await _authStorageService.saveToken(null);
+      await _authStorageService.saveRefreshToken(null);
+      await _authStorageService.saveUserId(null);
 
       if (result is Error<void>) {
         _log.severe('Failed to clear stored auth token');

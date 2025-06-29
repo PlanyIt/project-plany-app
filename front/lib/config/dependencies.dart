@@ -14,7 +14,7 @@ import 'package:front/data/repositories/step/step_repository_remote.dart';
 import 'package:front/data/services/api/api_client.dart';
 import 'package:front/data/services/api/auth_api_client.dart';
 import 'package:front/data/services/imgur_service.dart';
-import 'package:front/data/services/shared_preferences_service.dart';
+import 'package:front/data/services/auth_storage_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -27,13 +27,14 @@ List<SingleChildWidget> get providersRemote {
     Provider(create: (context) => AuthApiClient()),
     Provider(create: (context) => ApiClient()),
     Provider(create: (context) => ImgurService()),
-    Provider(
-        create: (context) => SharedPreferencesService()), // Auth Repository
+    Provider(create: (context) => AuthStorageService()),
+
+    // Auth Repository
     ChangeNotifierProvider<AuthRepository>(
       create: (context) => AuthRepositoryRemote(
         authApiClient: context.read(),
         apiClient: context.read(),
-        sharedPreferencesService: context.read(),
+        authStorageService: context.read(),
       ),
     ),
 
@@ -45,13 +46,11 @@ List<SingleChildWidget> get providersRemote {
     ),
     Provider<CategoryRepository>(
       create: (context) => context.read<CategoryRepositoryRemote>(),
-    ),
-
-    // User Repository
+    ), // User Repository
     Provider<UserRepositoryRemote>(
       create: (context) => UserRepositoryRemote(
         apiClient: context.read(),
-        sharedPreferencesService: context.read(),
+        authStorageService: context.read(),
       ),
     ),
     Provider<UserRepository>(

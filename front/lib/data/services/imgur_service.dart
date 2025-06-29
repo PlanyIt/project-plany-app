@@ -3,10 +3,11 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ImgurService {
   final Dio _dio = Dio(BaseOptions(baseUrl: 'https://api.imgur.com/'));
+  static const _secureStorage = FlutterSecureStorage();
 
   /// Utilise le refresh_token pour obtenir un access_token
   Future<String?> refreshAccessToken() async {
@@ -20,11 +21,10 @@ class ImgurService {
           'refresh_token': dotenv.env['IMGUR_REFRESH_TOKEN'],
         },
       );
-
       if (response.statusCode == 200) {
         final accessToken = response.data['access_token'];
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('imgur_access_token', accessToken);
+        await _secureStorage.write(
+            key: 'imgur_access_token', value: accessToken);
         print('🔁 Nouveau access_token obtenu via refresh_token');
         return accessToken;
       } else {
@@ -39,8 +39,7 @@ class ImgurService {
 
   /// Récupère un access_token valide (depuis le cache ou via refresh_token)
   Future<String?> getValidAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedToken = prefs.getString('imgur_access_token');
+    final storedToken = await _secureStorage.read(key: 'imgur_access_token');
 
     if (storedToken != null) {
       return storedToken;
