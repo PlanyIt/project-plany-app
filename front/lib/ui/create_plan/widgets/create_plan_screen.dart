@@ -1,97 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/ui/core/ui/bottom_bar/bottom_bar.dart';
 import 'package:front/ui/core/ui/plany_button.dart';
 import 'package:front/ui/create_plan/widgets/step_three_content.dart';
 import 'package:front/ui/create_plan/widgets/step_one_content.dart';
 import 'package:front/ui/create_plan/widgets/step_two_content.dart';
 import 'package:front/theme/app_theme.dart';
-import 'package:front/ui/create_plan/view_models/create_plan_viewmodel.dart';
 
-class CreatePlanScreen extends StatefulWidget {
+// Providers pour l'état
+final createPlanCurrentStepProvider = StateProvider<int>((ref) => 1);
+final createPlanIsPublishingProvider = StateProvider<bool>((ref) => false);
+
+class CreatePlanScreen extends ConsumerWidget {
   const CreatePlanScreen({
     super.key,
-    required this.viewModel,
   });
 
-  final CreatePlanViewModel viewModel;
-
   @override
-  State<CreatePlanScreen> createState() => _CreatePlanScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentStep = ref.watch(createPlanCurrentStepProvider);
+    final isPublishing = ref.watch(createPlanIsPublishingProvider);
 
-class _CreatePlanScreenState extends State<CreatePlanScreen>
-    with SingleTickerProviderStateMixin {
-  final PageController _pageController = PageController();
-  bool isPublishing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.viewModel.initAnimationController(this);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    widget.viewModel.disposeAnimationController();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomBar(currentIndex: 1),
       backgroundColor: Colors.white,
       body: Column(
         children: [
           SizedBox(height: MediaQuery.of(context).padding.top),
-          _buildProgressIndicator(),
+          _buildProgressIndicator(context, ref, currentStep),
           Expanded(
             child: PageView(
-              controller: _pageController,
               physics: const NeverScrollableScrollPhysics(),
               onPageChanged: (index) {
-                widget.viewModel.setStepWithoutNotify(index + 1);
+                ref.read(createPlanCurrentStepProvider.notifier).state =
+                    index + 1;
               },
               children: [
-                StepOneContent(viewModel: widget.viewModel),
-                StepTwoContent(viewModel: widget.viewModel),
-                StepThreeContent(viewModel: widget.viewModel),
+                StepOneContent(),
+                StepTwoContent(),
+                StepThreeContent(),
               ],
             ),
           ),
-          _buildBottomNavigation(),
+          _buildBottomNavigation(context, ref, currentStep, isPublishing),
         ],
       ),
     );
   }
 
-  Widget _buildProgressIndicator() {
+  Widget _buildProgressIndicator(
+      BuildContext context, WidgetRef ref, int currentStep) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
       child: Column(
         children: [
-          _buildProgressHeader(),
+          _buildProgressHeader(currentStep),
           const SizedBox(height: 12),
-          _buildProgressCircles(),
+          _buildProgressCircles(currentStep, ref),
           const SizedBox(height: 12),
-          _buildStepTitles(),
+          _buildStepTitles(currentStep),
         ],
       ),
     );
   }
 
-  Widget _buildProgressHeader() {
+  Widget _buildProgressHeader(int currentStep) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Étape ${widget.viewModel.currentStep}/3',
+          'Étape $currentStep/3',
           style: const TextStyle(
               fontWeight: FontWeight.w600, color: Colors.black54),
         ),
         Text(
-          '${(widget.viewModel.currentStep / 3 * 100).toInt()}%',
+          '${(currentStep / 3 * 100).toInt()}%',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: AppTheme.primaryColor,
@@ -101,17 +84,17 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
     );
   }
 
-  Widget _buildProgressCircles() {
+  Widget _buildProgressCircles(int currentStep, WidgetRef ref) {
     return Row(
       children: List.generate(3, (index) {
-        final isActive = index < widget.viewModel.currentStep;
-        final isCurrent = index == widget.viewModel.currentStep - 1;
+        final isActive = index < currentStep;
+        final isCurrent = index == currentStep - 1;
 
         return Expanded(
           child: Row(
             children: [
               GestureDetector(
-                onTap: isActive ? () => _navigateToStep(index + 1) : null,
+                onTap: isActive ? () => _navigateToStep(index + 1, ref) : null,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   height: isCurrent ? 30 : 24,
@@ -150,7 +133,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
                           isActive
                               ? AppTheme.primaryColor
                               : Colors.grey.withOpacity(0.2),
-                          index + 1 < widget.viewModel.currentStep
+                          index + 1 < currentStep
                               ? AppTheme.primaryColor
                               : Colors.grey.withOpacity(0.2),
                         ],
@@ -166,13 +149,13 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
     );
   }
 
-  Widget _buildStepTitles() {
+  Widget _buildStepTitles(int currentStep) {
     final steps = ['Informations', 'Étapes', 'Finalisation'];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(3, (index) {
-        final isCurrent = widget.viewModel.currentStep == index + 1;
+        final isCurrent = currentStep == index + 1;
         return Expanded(
           child: Text(
             steps[index],
@@ -188,14 +171,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
     );
   }
 
-  void _navigateToStep(int stepNumber) {
-    if (stepNumber <= widget.viewModel.currentStep) {
-      _pageController.animateToPage(
-        stepNumber - 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      widget.viewModel.setStepWithoutNotify(stepNumber);
+  void _navigateToStep(int stepNumber, WidgetRef ref) {
+    final currentStep = ref.read(createPlanCurrentStepProvider);
+    if (stepNumber <= currentStep) {
+      ref.read(createPlanCurrentStepProvider.notifier).state = stepNumber;
     }
   }
 
@@ -212,7 +191,8 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
     }
   }
 
-  Widget _buildBottomNavigation() {
+  Widget _buildBottomNavigation(
+      BuildContext context, WidgetRef ref, int currentStep, bool isPublishing) {
     return Container(
       padding: EdgeInsets.only(
         left: 24,
@@ -233,58 +213,84 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
       ),
       child: Row(
         children: [
-          if (widget.viewModel.currentStep > 1)
+          if (currentStep > 1)
             Expanded(
               flex: 1,
               child: OutlinedButton(
                 onPressed: () {
-                  widget.viewModel.handlePreviousStep(_pageController);
+                  _handlePreviousStep(ref);
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   side: BorderSide(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                    color: AppTheme.primaryColor.withOpacity(0.5),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
-                  widget.viewModel.currentStep == 3 ? 'Précédent' : 'Retour',
+                  currentStep == 3 ? 'Précédent' : 'Retour',
                   style: TextStyle(color: AppTheme.primaryColor),
                 ),
               ),
             ),
-          if (widget.viewModel.currentStep > 1) const SizedBox(width: 16),
+          if (currentStep > 1) const SizedBox(width: 16),
           Expanded(
             flex: 2,
             child: PlanyButton(
-              color: widget.viewModel.currentStep == 3
+              color: currentStep == 3
                   ? AppTheme.accentColor
                   : AppTheme.primaryColor,
-              text: widget.viewModel.currentStep == 3
-                  ? 'Publier mon plan'
-                  : 'Continuer',
-              isLoading: widget.viewModel.currentStep == 3 && isPublishing,
+              text: currentStep == 3 ? 'Publier mon plan' : 'Continuer',
+              isLoading: currentStep == 3 && isPublishing,
               onPressed: () async {
-                if (widget.viewModel.currentStep == 3) {
-                  setState(() => isPublishing = true);
-                }
-
-                final success = await widget.viewModel.handleNextStep(
-                  context,
-                  _pageController,
-                );
-
-                if (!mounted) return;
-
-                setState(() => isPublishing = false);
-
-                if (success) {
-                  widget.viewModel.showSuccessDialog(context);
-                }
+                await _handleNextStep(context, ref, currentStep);
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handlePreviousStep(WidgetRef ref) {
+    final currentStep = ref.read(createPlanCurrentStepProvider);
+    if (currentStep > 1) {
+      ref.read(createPlanCurrentStepProvider.notifier).state = currentStep - 1;
+    }
+  }
+
+  Future<void> _handleNextStep(
+      BuildContext context, WidgetRef ref, int currentStep) async {
+    if (currentStep == 3) {
+      ref.read(createPlanIsPublishingProvider.notifier).state = true;
+
+      try {
+        // Simuler la publication
+        await Future.delayed(const Duration(seconds: 2));
+
+        if (context.mounted) {
+          _showSuccessDialog(context);
+        }
+      } finally {
+        ref.read(createPlanIsPublishingProvider.notifier).state = false;
+      }
+    } else {
+      ref.read(createPlanCurrentStepProvider.notifier).state = currentStep + 1;
+    }
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Succès'),
+        content: const Text('Votre plan a été publié avec succès !'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
           ),
         ],
       ),

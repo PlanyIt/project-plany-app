@@ -4,11 +4,10 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logging/logging.dart';
-import 'package:provider/provider.dart';
 
-import 'config/dependencies.dart';
 import 'main.dart';
 
 /// Staging config entry point.
@@ -27,8 +26,5 @@ Future<void> main() async {
   }
   Logger.root.level = Level.ALL;
 
-  // Désactive la vérification Provider pour les types Listenable
-  Provider.debugCheckInvalidValueType = null;
-
-  runApp(MultiProvider(providers: unifiedProviders, child: const MainApp()));
+  runApp(const ProviderScope(child: MainApp()));
 }

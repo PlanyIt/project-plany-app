@@ -119,6 +119,45 @@ class ListState<T> {
     );
   }
 
+  /// Pattern matching method for UI
+  R when<R>({
+    required R Function() initial,
+    required R Function() loading,
+    required R Function(List<T> items) success,
+    required R Function() empty,
+    required R Function(String error) error,
+  }) {
+    if (isInitial) {
+      return initial();
+    } else if (isLoading) {
+      return loading();
+    } else if (isError) {
+      return error(this.error!);
+    } else if (hasData) {
+      return success(items);
+    } else {
+      return empty();
+    }
+  }
+
+  /// Simplified when method for common cases
+  R maybeWhen<R>({
+    R Function()? initial,
+    R Function()? loading,
+    R Function(List<T> items)? success,
+    R Function()? empty,
+    R Function(String error)? error,
+    required R Function() orElse,
+  }) {
+    return when(
+      initial: initial ?? orElse,
+      loading: loading ?? orElse,
+      success: success ?? (items) => orElse(),
+      empty: empty ?? orElse,
+      error: error ?? (err) => orElse(),
+    );
+  }
+
   /// Convenience getters
   bool get isLoading => state == ListViewState.loading;
   bool get isLoadingMore => state == ListViewState.loadingMore;

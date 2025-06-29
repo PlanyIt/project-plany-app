@@ -1,156 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/ui/create_plan/view_models/create_plan_viewmodel.dart';
 import 'package:front/theme/app_theme.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/button/select_button.dart';
 import 'package:front/widgets/modal/grid_selector_modal.dart';
 
-class StepOneContent extends StatefulWidget {
-  const StepOneContent({super.key, required this.viewModel});
+// Providers pour l'état du step one
+final stepOneTitleProvider = StateProvider<String>((ref) => '');
+final stepOneDescriptionProvider = StateProvider<String>((ref) => '');
+final stepOneSelectedCategoryProvider = StateProvider<Category?>((ref) => null);
+final stepOneCategoriesProvider = StateProvider<List<Category>>((ref) => []);
 
-  final CreatePlanViewModel viewModel;
-
-  @override
-  State<StepOneContent> createState() => _StepOneContentState();
-}
-
-class _StepOneContentState extends State<StepOneContent> {
-  Widget buildCategorySelector(BuildContext context) {
-    if (widget.viewModel.selectedCategory == null) {
-      return Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: SelectButton(
-          text: "Choisir une catégorie",
-          onPressed: () => _showCategoryBottomSheet(context),
-          leadingIcon: Icons.category_outlined,
-          trailingIcon: Icons.arrow_forward_ios,
-        ),
-      );
-    } else {
-      return InkWell(
-        onTap: () => _showCategoryBottomSheet(context),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  getIconData(widget.viewModel.selectedCategory!.icon),
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Catégorie sélectionnée',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    Text(
-                      widget.viewModel.selectedCategory!.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.edit_outlined,
-                color: Theme.of(context).primaryColor,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-  }
-
-  void _showCategoryBottomSheet(BuildContext context) {
-    GridSelectorModal.show<Category>(
-      context: context,
-      items: widget.viewModel.categories,
-      selectedItem: widget.viewModel.selectedCategory,
-      title: 'Choisir une catégorie',
-      onItemSelected: (category) {
-        widget.viewModel.setCategory(category);
-      },
-      itemBuilder: (context, cat, isSelected) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-                    : Colors.grey[100],
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey[300]!,
-                  width: 2,
-                ),
-              ),
-              child: Icon(
-                getIconData(cat.icon),
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.black87,
-                size: 30,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              cat.name,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        );
-      },
-    );
-  }
+class StepOneContent extends ConsumerWidget {
+  const StepOneContent({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final title = ref.watch(stepOneTitleProvider);
+    final description = ref.watch(stepOneDescriptionProvider);
+    final selectedCategory = ref.watch(stepOneSelectedCategoryProvider);
+    final categories = ref.watch(stepOneCategoriesProvider);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.paddingL),
       physics: const BouncingScrollPhysics(),
@@ -163,7 +34,9 @@ class _StepOneContentState extends State<StepOneContent> {
             context: context,
             title: 'Titre du plan',
             hint: 'Ex: Weekend à Paris, Randonnée en montagne...',
-            controller: widget.viewModel.titlePlanController,
+            value: title,
+            onChanged: (value) =>
+                ref.read(stepOneTitleProvider.notifier).state = value,
             icon: Icons.title,
             maxLines: 1,
           ),
@@ -173,14 +46,16 @@ class _StepOneContentState extends State<StepOneContent> {
             title: 'Description',
             hint:
                 'Décrivez votre plan en détail pour donner envie aux autres utilisateurs de le suivre...',
-            controller: widget.viewModel.descriptionPlanController,
+            value: description,
+            onChanged: (value) =>
+                ref.read(stepOneDescriptionProvider.notifier).state = value,
             icon: Icons.description,
             maxLines: 4,
           ),
           const SizedBox(height: 24),
           _buildSectionTitle(context, 'Catégorie'),
           const SizedBox(height: 16),
-          buildCategorySelector(context),
+          _buildCategorySelector(context, ref, selectedCategory, categories),
           const SizedBox(height: 100),
         ],
       ),
@@ -256,7 +131,8 @@ class _StepOneContentState extends State<StepOneContent> {
     required BuildContext context,
     required String title,
     required String hint,
-    required TextEditingController controller,
+    required String value,
+    required ValueChanged<String> onChanged,
     required IconData icon,
     required int maxLines,
   }) {
@@ -279,7 +155,10 @@ class _StepOneContentState extends State<StepOneContent> {
             ],
           ),
           child: TextField(
-            controller: controller,
+            controller: TextEditingController(text: value)
+              ..selection = TextSelection.fromPosition(
+                  TextPosition(offset: value.length)),
+            onChanged: onChanged,
             maxLines: maxLines,
             decoration: InputDecoration(
               hintText: hint,
@@ -302,6 +181,140 @@ class _StepOneContentState extends State<StepOneContent> {
         fontWeight: FontWeight.bold,
         color: Colors.black87,
       ),
+    );
+  }
+
+  Widget _buildCategorySelector(BuildContext context, WidgetRef ref,
+      Category? selectedCategory, List<Category> categories) {
+    if (selectedCategory == null) {
+      return Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: SelectButton(
+          text: "Choisir une catégorie",
+          onPressed: () => _showCategoryBottomSheet(context, ref),
+          leadingIcon: Icons.category_outlined,
+          trailingIcon: Icons.arrow_forward_ios,
+        ),
+      );
+    } else {
+      return InkWell(
+        onTap: () => _showCategoryBottomSheet(context, ref),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  getIconData(selectedCategory.icon),
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Catégorie sélectionnée',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    Text(
+                      selectedCategory.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.edit_outlined,
+                color: Theme.of(context).primaryColor,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showCategoryBottomSheet(BuildContext context, WidgetRef ref) {
+    GridSelectorModal.show<Category>(
+      context: context,
+      items: ref.read(stepOneCategoriesProvider),
+      selectedItem: ref.read(stepOneSelectedCategoryProvider),
+      title: 'Choisir une catégorie',
+      onItemSelected: (category) {
+        ref.read(stepOneSelectedCategoryProvider.notifier).state = category;
+      },
+      itemBuilder: (context, cat, isSelected) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                    : Colors.grey[100],
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey[300]!,
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                getIconData(cat.icon),
+                color: isSelected
+                    ? Theme.of(context).primaryColor
+                    : Colors.black87,
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              cat.name,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? Theme.of(context).primaryColor
+                    : Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        );
+      },
     );
   }
 }

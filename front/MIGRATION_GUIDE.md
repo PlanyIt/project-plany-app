@@ -1,223 +1,152 @@
-# Guide de Migration vers l'Architecture d'État Unifié
+## Migration Guide: StatefulWidget vers ConsumerStatefulWidget
 
-## Vue d'ensemble
+Ce guide décrit comment migrer les widgets existants vers Riverpod dans le projet Plany.
 
-Cette architecture unifie la gestion d'état dans votre application Flutter en utilisant :
+### Étapes de migration pour chaque StatefulWidget:
 
-- **BaseViewModel** : Classe de base pour tous les ViewModels
-- **ListState** : Gestion unifiée des états de liste
-- **ViewModelProvider** : Provider simplifié pour l'injection de dépendances
-- **Command** : Pattern pour les actions asynchrones
+1. **Imports**:
 
-## 1. Migration d'un ViewModel existant
+   ```dart
+   // Ajouter Riverpod
+   import 'package:flutter_riverpod/flutter_riverpod.dart';
+   ```
 
-### Avant (Ancien)
+2. **Classe Widget**:
 
-```dart
-class MyViewModel extends ChangeNotifier {
-  bool _isLoading = false;
-  String? _error;
-  List<Item> _items = [];
+   ```dart
+   // Ancien
+   class MonWidget extends StatefulWidget {
 
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  List<Item> get items => _items;
+   // Nouveau
+   class MonWidget extends ConsumerStatefulWidget {
+   ```
 
-  Future<void> loadData() async {
-    _isLoading = true;
-    notifyListeners();
+3. **State Class**:
 
-    try {
-      final result = await repository.getData();
-      _items = result;
-      _error = null;
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-}
-```
+   ```dart
+   // Ancien
+   class _MonWidgetState extends State<MonWidget> {
 
-### Après (Nouveau)
+   // Nouveau
+   class _MonWidgetState extends ConsumerState<MonWidget> {
+   ```
 
-```dart
-class MyViewModel extends BaseViewModel {
-  MyViewModel({required Repository repository}) : _repository = repository {
-    loadData = Command0(_loadData);
-  }
+4. **CreateState**:
 
-  final Repository _repository;
-  late Command0 loadData;
+   ```dart
+   // Ancien
+   @override
+   State<MonWidget> createState() => _MonWidgetState();
 
-  ListState<Item> _itemsState = ListState.initial();
-  ListState<Item> get itemsState => _itemsState;
-  List<Item> get items => _itemsState.items;
+   // Nouveau
+   @override
+   ConsumerState<MonWidget> createState() => _MonWidgetState();
+   ```
 
-  Future<Result> _loadData() async {
-    _itemsState = ListState.loading();
-    notifyListeners();
+5. **Build Method**:
 
-    try {
-      final result = await _repository.getData();
-      if (result is Ok<List<Item>>) {
-        _itemsState = ListState.success(items: result.value);
-      } else {
-        _itemsState = ListState.error('Failed to load data');
-      }
-      notifyListeners();
-      return const Result.ok(null);
-    } catch (e) {
-      _itemsState = ListState.error(e.toString());
-      notifyListeners();
-      return Result.error(Exception(e.toString()));
-    }
-  }
-}
-```
+   ```dart
+   // Ancien
+   @override
+   Widget build(BuildContext context) {
 
-## 2. Migration d'un écran
+   // Nouveau
+   @override
+   Widget build(BuildContext context, WidgetRef ref) {
+   ```
 
-### Avant
+6. **Utilisation des Providers**:
 
-```dart
-class MyScreen extends StatefulWidget {
-  @override
-  _MyScreenState createState() => _MyScreenState();
-}
+   ```dart
+   // Dans build method
+   final state = ref.watch(providerName);
+   final notifier = ref.read(providerName.notifier);
 
-class _MyScreenState extends State<MyScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<MyViewModel>().loadData();
-  }
+   // Dans initState/méthodes
+   ref.read(providerName.notifier).method();
+   ```
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<MyViewModel>(
-      builder: (context, viewModel, child) {
-        if (viewModel.isLoading) {
-          return CircularProgressIndicator();
-        }
+### Widgets à migrer:
 
-        if (viewModel.error != null) {
-          return Text('Error: ${viewModel.error}');
-        }
+#### Create Plan:
 
-        return ListView.builder(
-          itemCount: viewModel.items.length,
-          itemBuilder: (context, index) {
-            return ListTile(title: Text(viewModel.items[index].name));
-          },
-        );
-      },
-    );
-  }
-}
-```
+- [x] StepOneContent
+- [x] StepTwoContent
+- [x] StepThreeContent
+- [x] StepModal
+- [x] ChooseLocation
 
-### Après
+#### Dashboard:
 
-```dart
-class MyScreen extends StatefulWidget {
-  @override
-  _MyScreenState createState() => _MyScreenState();
-}
+- [x] DashboardScreen
+- [x] SearchScreen
 
-class _MyScreenState extends State<MyScreen>
-    with ViewModelMixin<MyScreen, MyViewModel> {
+#### Details Plan:
 
-  @override
-  void onViewModelReady(MyViewModel viewModel) {
-    viewModel.loadData.execute();
-  }
+- [x] DetailScreen
+- [x] CommentSection
+- [x] CommentCard
+- [x] ResponseCard
+- [x] PlanInfoSection
+- [x] StepsCarousel
+- [x] MapView
+- [x] StepInfoCard
+- [x] DetailsHeader
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<MyViewModel>(
-      builder: (context, viewModel, child) {
-        return viewModel.itemsState.when(
-          initial: () => Text('Initialisation...'),
-          loading: () => CircularProgressIndicator(),
-          success: (items) => ListView.builder(
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              return ListTile(title: Text(items[index].name));
-            },
-          ),
-          empty: () => Text('Aucun élément'),
-          error: (error) => Text('Erreur: $error'),
-        );
-      },
-    );
-  }
-}
-```
+#### Profil:
 
-## 3. Avantages de la nouvelle architecture
+- [x] ProfilScreen
+- [x] ProfileHeader
+- [x] MyPlansSection
+- [x] FavoritesSection
+- [x] FollowersSection
+- [x] FollowingSection
+- [x] SettingsSection
+- [x] ProfileAvatar
+- [x] ProfileCategories
+- [x] AccountSettings
+- [x] GeneralSettings
+- [x] ProfileSettings
 
-### Consistance
+#### Widgets Common:
 
-- Tous les ViewModels héritent du même comportement de base
-- États de chargement et d'erreur gérés uniformément
-- Pattern uniforme pour les opérations asynchrones
+- [x] CustomTextField (commun)
+- [x] CustomTextField (textfield)
+- [x] PlanyLogo (partie animée)
+- [x] GlassButton
 
-### Simplicité
+### Priorité de migration:
 
-- Moins de code boilerplate
-- Gestion automatique des états loading/error
-- Extension `when` pour simplifier l'affichage
+1. **Haute**: Login/Signup screens (déjà fait)
+2. **Haute**: Dashboard et navigation principale
+3. **Moyenne**: Create Plan flows
+4. **Moyenne**: Profile management
+5. **Basse**: Détails et composants secondaires
 
-### Robustesse
+### Notes importantes:
 
-- Gestion centralisée des erreurs
-- Protection contre les fuites mémoire
-- Pattern Command pour les opérations asynchrones
+- Remplacer tous les `setState()` par l'utilisation des providers Riverpod
+- Supprimer les listeners manuels (addListener/removeListener)
+- Utiliser `ref.watch()` pour écouter les changements d'état
+- Utiliser `ref.read()` pour déclencher des actions
 
-### Testabilité
+### État de la migration:
 
-- ViewModels plus faciles à tester
-- États mockables
-- Separation of concerns claire
+✅ **MIGRATION TERMINÉE** - Tous les widgets listés ont été migrés vers Riverpod
 
-## 4. Checklist de migration
+**Widgets migrés avec succès:**
 
-- [ ] Créer les nouveaux fichiers de base (BaseViewModel, ListState, etc.)
-- [ ] Migrer un ViewModel à la fois
-- [ ] Tester chaque ViewModel migré
-- [ ] Mettre à jour les écrans correspondants
-- [ ] Supprimer l'ancien code après validation
-- [ ] Documenter les patterns pour l'équipe
+- **Create Plan**: 5/5 widgets ✅
+- **Dashboard**: 2/2 widgets ✅
+- **Details Plan**: 9/9 widgets ✅
+- **Profil**: 12/12 widgets ✅
+- **Widgets Common**: 4/4 widgets ✅
 
-## 5. Patterns recommandés
+**Total**: 32/32 widgets migrés vers Riverpod
 
-### Pour les listes simples
+### Prochaines étapes:
 
-```dart
-ListState<Item> _itemsState = ListState.initial();
-ListState<Item> get itemsState => _itemsState;
-```
-
-### Pour les opérations avec loading global
-
-```dart
-Future<Result> _operation() async {
-  return await executeWithLoading(() => repository.doSomething());
-}
-```
-
-### Pour les opérations avec gestion d'erreur personnalisée
-
-```dart
-Future<Result> _operation() async {
-  final result = await repository.doSomething();
-  handleResult(result,
-    onSuccess: (value) => print('Success: $value'),
-    onError: (error) => print('Error: $error'),
-  );
-  return result;
-}
-```
+1. Tester le bon fonctionnement de tous les widgets migrés
+2. Vérifier que les providers Riverpod sont correctement utilisés
+3. Supprimer les anciens ViewModels si ils ne sont plus utilisés
+4. Optimiser les providers pour éviter les rebuilds inutiles

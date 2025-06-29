@@ -1,31 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
 import 'package:front/ui/profil/widgets/common/section_header.dart';
 import 'package:front/ui/profil/widgets/settings/account_settings.dart';
 import 'package:front/ui/profil/widgets/settings/components/settings_card.dart';
 import 'package:front/ui/profil/widgets/settings/general_settings.dart';
 import 'package:front/ui/profil/widgets/settings/profile_settings.dart';
 
-class SettingsSection extends StatefulWidget {
+// Providers pour l'état des paramètres
+final settingsLoadingProvider = StateProvider<bool>((ref) => false);
+
+class SettingsSection extends ConsumerStatefulWidget {
   final User userProfile;
-  final ProfilViewModel viewModel;
   final Function onProfileUpdated;
 
   const SettingsSection({
     super.key,
     required this.userProfile,
-    required this.viewModel,
     required this.onProfileUpdated,
   });
-
   @override
-  SettingsSectionState createState() => SettingsSectionState();
+  ConsumerState<SettingsSection> createState() => SettingsSectionState();
 }
 
-class SettingsSectionState extends State<SettingsSection> {
-  final bool _isLoading = false;
-
+class SettingsSectionState extends ConsumerState<SettingsSection> {
   @override
   void initState() {
     super.initState();
@@ -77,6 +75,8 @@ class SettingsSectionState extends State<SettingsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(settingsLoadingProvider);
+
     return Stack(
       children: [
         SingleChildScrollView(
@@ -91,9 +91,7 @@ class SettingsSectionState extends State<SettingsSection> {
                   icon: Icons.settings,
                   gradientColors: const [Color(0xFF3425B5), Color(0xFF5C49D6)],
                 ),
-              ),
-
-              // Section Profil
+              ), // Section Profil
               const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -103,7 +101,6 @@ class SettingsSectionState extends State<SettingsSection> {
                   children: [
                     ProfileSettings(
                       initialUserProfile: widget.userProfile,
-                      viewModel: widget.viewModel,
                       onProfileUpdated: widget.onProfileUpdated,
                       showInfoCard: _showInfoCard,
                       showErrorCard: _showErrorCard,
@@ -122,7 +119,6 @@ class SettingsSectionState extends State<SettingsSection> {
                   children: [
                     AccountSettings(
                       userProfile: widget.userProfile,
-                      viewModel: widget.viewModel,
                       onProfileUpdated: widget.onProfileUpdated,
                       showInfoCard: _showInfoCard,
                       showErrorCard: _showErrorCard,
@@ -142,7 +138,6 @@ class SettingsSectionState extends State<SettingsSection> {
                   children: [
                     GeneralSettings(
                       userProfile: widget.userProfile,
-                      viewModel: widget.viewModel,
                       showInfoCard: _showInfoCard,
                       showErrorCard: _showErrorCard,
                     ),
@@ -156,7 +151,7 @@ class SettingsSectionState extends State<SettingsSection> {
         ),
 
         // Indicateur de chargement
-        if (_isLoading)
+        if (isLoading)
           Container(
             color: Colors.black.withValues(alpha: 0.3),
             child: const Center(

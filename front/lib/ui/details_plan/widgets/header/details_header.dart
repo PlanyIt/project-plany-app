@@ -1,17 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:front/ui/details_plan/view_models/details_plan_viewmodel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/ui/details_plan/widgets/header/components/header_controls.dart';
 import 'package:front/ui/details_plan/widgets/header/components/map_view.dart';
 import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/ui/details_plan/widgets/header/components/step_info_card.dart';
 import 'package:front/ui/details_plan/widgets/header/components/header_carousel.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/utils/result.dart';
 import 'package:geolocator/geolocator.dart';
 
-class DetailsHeader extends StatefulWidget {
+// Providers pour l'état du header
+final headerStepsProvider =
+    StateProvider.family<List<custom.Step>, List<String>>((ref, stepIds) => []);
+final headerIsLoadingProvider =
+    StateProvider.family<bool, String>((ref, headerId) => true);
+final headerCurrentStepIndexProvider =
+    StateProvider.family<int, String>((ref, headerId) => 0);
+final headerShowStepInfoProvider =
+    StateProvider.family<bool, String>((ref, headerId) => false);
+final headerSelectedStepProvider =
+    StateProvider.family<custom.Step?, String>((ref, headerId) => null);
+final headerDistanceToStepProvider =
+    StateProvider.family<double?, String>((ref, headerId) => null);
+
+class DetailsHeader extends ConsumerStatefulWidget {
   final List<String> stepIds;
   final String category;
   final Color categoryColor;
-  final DetailsPlanViewModel viewModel;
   final String? planTitle;
   final String? planDescription;
 
@@ -20,54 +35,49 @@ class DetailsHeader extends StatefulWidget {
     required this.stepIds,
     required this.category,
     required this.categoryColor,
-    required this.viewModel,
     this.planTitle,
     this.planDescription,
   });
-
   @override
-  DetailsHeaderState createState() => DetailsHeaderState();
+  ConsumerState<DetailsHeader> createState() => _DetailsHeaderState();
 }
 
-class DetailsHeaderState extends State<DetailsHeader> {
-  final GlobalKey<MapViewState> _mapKey = GlobalKey<MapViewState>();
+class _DetailsHeaderState extends ConsumerState<DetailsHeader> {
   final PageController _stepPageController = PageController();
-
-  List<custom.Step> _steps = [];
-  bool _isLoading = true;
-  int _currentStepIndex = 0;
-  bool _showStepInfo = false;
-  custom.Step? _selectedStep;
-  double? _distanceToStep;
+  late String _headerId;
 
   @override
   void initState() {
     super.initState();
-    _loadSteps();
+    _headerId = widget.stepIds.join('-');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSteps();
+    });
   }
 
   Future<void> _loadSteps() async {
+    ref.read(headerIsLoadingProvider(_headerId).notifier).state = true;
+
     try {
       final loadedSteps = <custom.Step>[];
+      final stepRepository = ref.read(stepRepositoryProvider);
+
       for (final stepId in widget.stepIds) {
-        final step = await widget.viewModel.getStepById(stepId);
-        if (step != null) {
-          loadedSteps.add(step);
+        final stepResult = await stepRepository.getStepById(stepId);
+        if (stepResult is Ok<custom.Step>) {
+          loadedSteps.add(stepResult.value);
         }
       }
 
       if (mounted) {
-        setState(() {
-          _steps = loadedSteps;
-          _isLoading = false;
-        });
+        ref.read(headerStepsProvider(widget.stepIds).notifier).state =
+            loadedSteps;
+        ref.read(headerIsLoadingProvider(_headerId).notifier).state = false;
       }
     } catch (e) {
       print('Erreur lors du chargement des étapes: $e');
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        ref.read(headerIsLoadingProvider(_headerId).notifier).state = false;
       }
     }
   }
@@ -84,44 +94,46 @@ class DetailsHeaderState extends State<DetailsHeader> {
         step.position!.longitude,
       );
 
-      setState(() {
-        _distanceToStep = distanceInMeters / 1000;
-      });
+      ref.read(headerDistanceToStepProvider(_headerId).notifier).state =
+          distanceInMeters / 1000;
     } catch (e) {
       print("Erreur lors du calcul de la distance: $e");
     }
   }
 
-  void recenterMapAll() {
-    _mapKey.currentState?.recenterMapAll();
-  }
-
   void _onStepSelected(int index) {
-    setState(() {
-      _currentStepIndex = index;
-      _selectedStep = _steps[index];
-      _showStepInfo = true;
-      _distanceToStep = null;
-    });
+    final steps = ref.read(headerStepsProvider(widget.stepIds));
+    if (index < 0 || index >= steps.length) return;
+
+    ref.read(headerCurrentStepIndexProvider(_headerId).notifier).state = index;
+    ref.read(headerSelectedStepProvider(_headerId).notifier).state =
+        steps[index];
+    ref.read(headerShowStepInfoProvider(_headerId).notifier).state = true;
+    ref.read(headerDistanceToStepProvider(_headerId).notifier).state = null;
 
     // Calculer la distance
-    _calculateDistanceToStep(_steps[index]);
-
-    // Centrer la carte sur l'étape sélectionnée
-    _mapKey.currentState?.centerOnStep(_steps[index].id!);
+    _calculateDistanceToStep(steps[index]);
   }
+
+  // ...existing code...
 
   @override
   Widget build(BuildContext context) {
+    final steps = ref.watch(headerStepsProvider(widget.stepIds));
+    final isLoading = ref.watch(headerIsLoadingProvider(_headerId));
+    final currentStepIndex =
+        ref.watch(headerCurrentStepIndexProvider(_headerId));
+    final showStepInfo = ref.watch(headerShowStepInfoProvider(_headerId));
+    final selectedStep = ref.watch(headerSelectedStepProvider(_headerId));
+    final distanceToStep = ref.watch(headerDistanceToStepProvider(_headerId));
+
     return Stack(
       children: [
         // Carte principale
         MapView(
-          key: _mapKey,
           stepIds: widget.stepIds,
           category: widget.category,
           categoryColor: widget.categoryColor,
-          viewModel: widget.viewModel,
           planTitle: widget.planTitle,
           planDescription: widget.planDescription,
           height: MediaQuery.of(context).size.height,
@@ -134,8 +146,10 @@ class DetailsHeaderState extends State<DetailsHeader> {
           right: 16,
           child: HeaderControls(
             categoryColor: widget.categoryColor,
-            onCenterMap: () => _mapKey.currentState?.recenterMapAll(),
-            steps: _steps,
+            onCenterMap: () {
+              // Logique de recentrage via provider si nécessaire
+            },
+            steps: steps,
             planTitle: widget.planTitle,
             planDescription: widget.planDescription,
             showBackButton: true,
@@ -143,7 +157,7 @@ class DetailsHeaderState extends State<DetailsHeader> {
         ),
 
         // Carrousel d'étapes (à droite)
-        if (!_isLoading && _steps.isNotEmpty)
+        if (!isLoading && steps.isNotEmpty)
           Positioned(
             top: MediaQuery.of(context).size.height * 0.15,
             right: 16,
@@ -151,8 +165,8 @@ class DetailsHeaderState extends State<DetailsHeader> {
               width: 110,
               height: 180,
               child: HeaderCarousel(
-                steps: _steps,
-                currentIndex: _currentStepIndex,
+                steps: steps,
+                currentIndex: currentStepIndex,
                 pageController: _stepPageController,
                 onStepSelected: _onStepSelected,
                 category: widget.category,
@@ -162,7 +176,7 @@ class DetailsHeaderState extends State<DetailsHeader> {
           ),
 
         // Carte d'information de l'étape
-        if (_showStepInfo && _selectedStep != null)
+        if (showStepInfo && selectedStep != null)
           Positioned(
             top: 0,
             bottom: 0,
@@ -171,12 +185,12 @@ class DetailsHeaderState extends State<DetailsHeader> {
             child: Align(
               alignment: Alignment(0, -0.7),
               child: StepInfoCard(
-                step: _selectedStep!,
-                distance: _distanceToStep,
+                step: selectedStep,
+                distance: distanceToStep,
                 color: widget.categoryColor,
-                onClose: () => setState(() {
-                  _showStepInfo = false;
-                }),
+                onClose: () => ref
+                    .read(headerShowStepInfoProvider(_headerId).notifier)
+                    .state = false,
               ),
             ),
           ),

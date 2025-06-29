@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/theme/app_theme.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'routing/router.dart';
 import 'ui/core/localization/applocalization.dart';
+import 'providers/providers.dart';
 
-class MainApp extends StatelessWidget {
+void main() {
+  runApp(const ProviderScope(child: MainApp()));
+}
+
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -24,7 +28,7 @@ class MainApp extends StatelessWidget {
       locale: const Locale('fr', 'FR'),
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.system,
-      routerConfig: router(context.read()),
+      routerConfig: router(ref.read(authRepositoryProvider)),
     );
   }
 }

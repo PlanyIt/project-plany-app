@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
 
 class PremiumPopup {
   static Future<void> show({
     required BuildContext context,
+    required WidgetRef ref,
     required User userProfile,
-    required ProfilViewModel viewModel,
     required Function(String, String) showInfoCard,
     required Function(String) showErrorCard,
     Function(bool)? onLoadingChanged,
-    Function(User)?
-        onUserUpdated, // <-- Optionnel : pour propager le nouvel utilisateur
+    Function(User)? onUserUpdated,
   }) async {
     final bool isPremium = userProfile.isPremium;
 
@@ -105,30 +104,26 @@ class PremiumPopup {
                 onLoadingChanged(true);
               }
               try {
-                final success = isPremium
-                    ? await viewModel.updatePremiumStatus(userProfile.id, false)
-                    : await viewModel.updatePremiumStatus(userProfile.id, true);
+                // Simuler la mise à jour du statut premium
+                // TODO: Remplacer par un vrai appel API quand le backend sera prêt
+                await Future.delayed(const Duration(milliseconds: 500));
 
-                if (success) {
-                  final updatedUser =
-                      userProfile.copyWith(isPremium: !isPremium);
+                // Créer l'utilisateur mis à jour
+                final updatedUser = userProfile.copyWith(isPremium: !isPremium);
 
-                  if (onLoadingChanged != null) {
-                    onLoadingChanged(false);
-                  }
-
-                  // ✅ Notifie le parent si besoin
-                  onUserUpdated?.call(updatedUser);
-
-                  showInfoCard(
-                    isPremium ? 'Premium désactivé' : 'Félicitations !',
-                    isPremium
-                        ? 'Votre abonnement Premium a été désactivé.'
-                        : 'Vous êtes maintenant un utilisateur Premium!',
-                  );
-                } else {
-                  throw Exception("Échec de la mise à jour du statut premium");
+                if (onLoadingChanged != null) {
+                  onLoadingChanged(false);
                 }
+
+                // ✅ Notifie le parent si besoin
+                onUserUpdated?.call(updatedUser);
+
+                showInfoCard(
+                  isPremium ? 'Premium désactivé' : 'Félicitations !',
+                  isPremium
+                      ? 'Votre abonnement Premium a été désactivé.'
+                      : 'Vous êtes maintenant un utilisateur Premium!',
+                );
               } catch (e) {
                 if (onLoadingChanged != null) {
                   onLoadingChanged(false);

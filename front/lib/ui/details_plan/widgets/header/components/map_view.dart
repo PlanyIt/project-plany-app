@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:front/domain/models/step/step.dart' as custom;
-import 'package:front/ui/details_plan/view_models/details_plan_viewmodel.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/utils/result.dart';
 
-class MapView extends StatefulWidget {
+// Providers pour l'état de la carte
+final mapStepsProvider =
+    StateProvider.family<List<custom.Step>, List<String>>((ref, stepIds) => []);
+final mapIsLoadingProvider =
+    StateProvider.family<bool, String>((ref, mapId) => true);
+final mapCurrentStepIndexProvider =
+    StateProvider.family<int, String>((ref, mapId) => 0);
+final mapHasCenteredProvider =
+    StateProvider.family<bool, String>((ref, mapId) => false);
+
+class MapView extends ConsumerStatefulWidget {
   final List<String> stepIds;
   final String category;
   final Color categoryColor;
-  final DetailsPlanViewModel viewModel;
   final String? planTitle;
   final String? planDescription;
   final double height;
@@ -19,29 +30,27 @@ class MapView extends StatefulWidget {
     required this.stepIds,
     required this.category,
     required this.categoryColor,
-    required this.viewModel,
     this.planTitle,
     this.planDescription,
     this.height = 280,
     this.onStepSelected,
   }) : super(key: key);
-
   @override
-  MapViewState createState() => MapViewState();
+  ConsumerState<MapView> createState() => _MapViewState();
 }
 
-class MapViewState extends State<MapView> {
-  List<custom.Step> _steps = [];
-  bool _isLoading = true;
+class _MapViewState extends ConsumerState<MapView> {
   final MapController _mapController = MapController();
-  bool _hasCenteredMap = false;
   final PageController _pageController = PageController();
-  int _currentStepIndex = 0;
+  late String _mapId;
 
   @override
   void initState() {
     super.initState();
-    _loadSteps();
+    _mapId = widget.stepIds.join('-');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSteps();
+    });
   }
 
   @override
@@ -51,12 +60,16 @@ class MapViewState extends State<MapView> {
   }
 
   Future<void> _loadSteps() async {
+    ref.read(mapIsLoadingProvider(_mapId).notifier).state = true;
+
     try {
       List<custom.Step> loadedSteps = [];
+      final stepRepository = ref.read(stepRepositoryProvider);
 
       for (String id in widget.stepIds) {
-        final step = await widget.viewModel.getStepById(id);
-        if (step != null) {
+        final stepResult = await stepRepository.getStepById(id);
+        if (stepResult is Ok<custom.Step>) {
+          final step = stepResult.value;
           if (step.position != null) {
             loadedSteps.add(step);
           } else {
@@ -68,10 +81,8 @@ class MapViewState extends State<MapView> {
       }
 
       if (mounted) {
-        setState(() {
-          _steps = loadedSteps;
-          _isLoading = false;
-        });
+        ref.read(mapStepsProvider(widget.stepIds).notifier).state = loadedSteps;
+        ref.read(mapIsLoadingProvider(_mapId).notifier).state = false;
 
         if (loadedSteps.isEmpty) {
           print("Aucune étape avec position valide n'a été chargée");
@@ -79,22 +90,27 @@ class MapViewState extends State<MapView> {
       }
     } catch (e) {
       print("Erreur chargement étapes: $e");
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        ref.read(mapIsLoadingProvider(_mapId).notifier).state = false;
+      }
     }
   }
 
   void _fitBounds() {
-    if (_steps.isEmpty || _hasCenteredMap) return;
+    final steps = ref.read(mapStepsProvider(widget.stepIds));
+    final hasCentered = ref.read(mapHasCenteredProvider(_mapId));
 
-    _hasCenteredMap = true;
+    if (steps.isEmpty || hasCentered) return;
+
+    ref.read(mapHasCenteredProvider(_mapId).notifier).state = true;
 
     try {
-      if (_steps.length == 1) {
-        _mapController.move(_steps[0].position!, 12.0);
+      if (steps.length == 1) {
+        _mapController.move(steps[0].position!, 12.0);
         return;
       }
 
-      final points = _steps
+      final points = steps
           .where((step) => step.position != null)
           .map((step) => step.position!)
           .toList();
@@ -113,29 +129,29 @@ class MapViewState extends State<MapView> {
     } catch (e) {
       print("Erreur d'ajustement de la carte: $e");
       // Tentative de fallback
-      if (_steps.isNotEmpty) {
-        _mapController.move(_steps[0].position!, 13.0);
+      if (steps.isNotEmpty) {
+        _mapController.move(steps[0].position!, 13.0);
       }
     }
   }
 
   void _zoomToStep(int index) {
-    if (index < 0 || index >= _steps.length || _steps[index].position == null)
+    final steps = ref.read(mapStepsProvider(widget.stepIds));
+    if (index < 0 || index >= steps.length || steps[index].position == null)
       return;
 
-    final step = _steps[index];
+    final step = steps[index];
     _mapController.move(
         LatLng(step.position!.latitude, step.position!.longitude), 18.0);
 
-    setState(() {
-      _currentStepIndex = index;
-    });
+    ref.read(mapCurrentStepIndexProvider(_mapId).notifier).state = index;
   }
 
   void recenterMap() {
-    if (_steps.isNotEmpty && _steps[0].position != null) {
+    final steps = ref.read(mapStepsProvider(widget.stepIds));
+    if (steps.isNotEmpty && steps[0].position != null) {
       _mapController.move(
-        LatLng(_steps[0].position!.latitude, _steps[0].position!.longitude),
+        LatLng(steps[0].position!.latitude, steps[0].position!.longitude),
         15.0,
       );
     }
@@ -143,22 +159,23 @@ class MapViewState extends State<MapView> {
 
   // méthode recenterMap pour centrer sur tous les marqueurs
   void recenterMapAll() {
-    if (_steps.isEmpty) return;
+    final steps = ref.read(mapStepsProvider(widget.stepIds));
+    if (steps.isEmpty) return;
 
     final bounds = LatLngBounds(
       LatLng(
-        _steps
+        steps
             .map((m) => m.position!.latitude)
             .reduce((min, pos) => pos < min ? pos : min),
-        _steps
+        steps
             .map((m) => m.position!.longitude)
             .reduce((min, pos) => pos < min ? pos : min),
       ),
       LatLng(
-        _steps
+        steps
             .map((m) => m.position!.latitude)
             .reduce((max, pos) => pos > max ? pos : max),
-        _steps
+        steps
             .map((m) => m.position!.longitude)
             .reduce((max, pos) => pos > max ? pos : max),
       ),
@@ -174,16 +191,15 @@ class MapViewState extends State<MapView> {
   }
 
   void centerOnStep(String stepId) {
-    final index = _steps.indexWhere((step) => step.id == stepId);
+    final steps = ref.read(mapStepsProvider(widget.stepIds));
+    final index = steps.indexWhere((step) => step.id == stepId);
     if (index != -1) {
-      setState(() {
-        _currentStepIndex = index;
-      });
+      ref.read(mapCurrentStepIndexProvider(_mapId).notifier).state = index;
       _zoomToStep(index);
     }
   }
 
-  List<custom.Step> get steps => _steps;
+  List<custom.Step> get steps => ref.read(mapStepsProvider(widget.stepIds));
   Color get categoryColor {
     // Utiliser la couleur fournie
     return widget.categoryColor;
@@ -191,9 +207,13 @@ class MapViewState extends State<MapView> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(mapIsLoadingProvider(_mapId));
+    final steps = ref.watch(mapStepsProvider(widget.stepIds));
+    final currentStepIndex = ref.watch(mapCurrentStepIndexProvider(_mapId));
+
     return Container(
       height: widget.height,
-      child: _isLoading
+      child: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Stack(
               children: [
@@ -205,7 +225,7 @@ class MapViewState extends State<MapView> {
                     initialCenter: _getInitialCenter(),
                     onMapReady: () {
                       Future.delayed(const Duration(milliseconds: 500), () {
-                        if (_steps.isNotEmpty) {
+                        if (steps.isNotEmpty) {
                           _fitBounds();
                         } else {
                           _centerOnUserOrDefault();
@@ -223,12 +243,12 @@ class MapViewState extends State<MapView> {
                     ),
 
                     // Marqueurs des étapes (seulement si il y en a)
-                    if (_steps.isNotEmpty)
+                    if (steps.isNotEmpty)
                       MarkerLayer(
-                        markers: _steps.asMap().entries.map((entry) {
+                        markers: steps.asMap().entries.map((entry) {
                           final index = entry.key;
                           final step = entry.value;
-                          final isSelected = index == _currentStepIndex;
+                          final isSelected = index == currentStepIndex;
 
                           return Marker(
                             width: 40,
@@ -236,9 +256,10 @@ class MapViewState extends State<MapView> {
                             point: step.position!,
                             child: GestureDetector(
                               onTap: () {
-                                setState(() {
-                                  _currentStepIndex = index;
-                                });
+                                ref
+                                    .read(mapCurrentStepIndexProvider(_mapId)
+                                        .notifier)
+                                    .state = index;
                                 _zoomToStep(index);
 
                                 if (widget.onStepSelected != null) {
@@ -251,29 +272,28 @@ class MapViewState extends State<MapView> {
                                   Icons.location_on,
                                   size: isSelected ? 45 : 35,
                                   color: isSelected
-                                      ? categoryColor
-                                      : categoryColor.withValues(alpha: 0.7),
+                                      ? widget.categoryColor
+                                      : widget.categoryColor
+                                          .withValues(alpha: 0.7),
                                 ),
                               ),
                             ),
                           );
                         }).toList(),
-                      ),
-
-                    // Marqueur de l'utilisateur (si pas d'étapes avec position)
-                    if (_steps.isEmpty && _hasUserLocation())
+                      ), // Marqueur de l'utilisateur (si pas d'étapes avec position)
+                    if (steps.isEmpty && _hasUserLocation())
                       MarkerLayer(
                         markers: [
                           Marker(
                             width: 40,
                             height: 40,
                             point: LatLng(
-                              widget.viewModel.mapCenterPosition['latitude']!,
-                              widget.viewModel.mapCenterPosition['longitude']!,
+                              _getDefaultPosition()['latitude']!,
+                              _getDefaultPosition()['longitude']!,
                             ),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: categoryColor,
+                                color: widget.categoryColor,
                                 shape: BoxShape.circle,
                                 border:
                                     Border.all(color: Colors.white, width: 3),
@@ -296,12 +316,12 @@ class MapViewState extends State<MapView> {
                       ),
 
                     // Route (seulement si il y a plusieurs étapes)
-                    if (_steps.length >= 2)
+                    if (steps.length >= 2)
                       PolylineLayer(
                         polylines: [
                           Polyline(
-                            points: _steps.map((s) => s.position!).toList(),
-                            color: categoryColor,
+                            points: steps.map((s) => s.position!).toList(),
+                            color: widget.categoryColor,
                             strokeWidth: 4,
                           ),
                         ],
@@ -326,8 +346,9 @@ class MapViewState extends State<MapView> {
                       ],
                     ),
                     onPressed: () {
-                      _hasCenteredMap = false;
-                      if (_steps.isNotEmpty) {
+                      ref.read(mapHasCenteredProvider(_mapId).notifier).state =
+                          false;
+                      if (steps.isNotEmpty) {
                         _fitBounds();
                       } else {
                         _centerOnUserOrDefault();
@@ -339,7 +360,7 @@ class MapViewState extends State<MapView> {
                 ),
 
                 // Overlay d'information (si pas d'étapes avec position)
-                if (_steps.isEmpty)
+                if (steps.isEmpty)
                   Positioned(
                     top: 16,
                     left: 16,
@@ -361,7 +382,7 @@ class MapViewState extends State<MapView> {
                         children: [
                           Icon(
                             Icons.info_outline,
-                            color: categoryColor,
+                            color: widget.categoryColor,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -388,33 +409,36 @@ class MapViewState extends State<MapView> {
 
   // Méthode pour obtenir le centre initial de la carte
   LatLng _getInitialCenter() {
-    if (_steps.isNotEmpty && _steps[0].position != null) {
-      return _steps[0].position!;
+    final steps = ref.read(mapStepsProvider(widget.stepIds));
+    if (steps.isNotEmpty && steps[0].position != null) {
+      return steps[0].position!;
     }
 
-    final centerPos = widget.viewModel.mapCenterPosition;
-    return LatLng(
-      centerPos['latitude']!,
-      centerPos['longitude']!,
-    );
+    // Position par défaut (Paris)
+    return const LatLng(48.8566, 2.3522);
+  }
+
+  // Méthode pour obtenir la position par défaut
+  Map<String, double> _getDefaultPosition() {
+    return {
+      'latitude': 48.8566,
+      'longitude': 2.3522,
+    };
   }
 
   // Méthode pour vérifier si on a la position de l'utilisateur
   bool _hasUserLocation() {
-    final centerPos = widget.viewModel.mapCenterPosition;
-    // Vérifier si ce n'est pas la position par défaut de Paris
-    return !(centerPos['latitude'] == 48.8566 &&
-        centerPos['longitude'] == 2.3522);
+    // Pour l'instant, on considère qu'on n'a pas la position utilisateur
+    // Cette méthode peut être améliorée avec un provider de géolocalisation
+    return false;
   }
 
   // Méthode pour centrer sur l'utilisateur ou position par défaut
   void _centerOnUserOrDefault() {
-    final centerPos = widget.viewModel.mapCenterPosition;
+    final defaultPos = _getDefaultPosition();
     _mapController.move(
-      LatLng(centerPos['latitude']!, centerPos['longitude']!),
-      _hasUserLocation()
-          ? 15.0
-          : 10.0, // Zoom plus proche si c'est l'utilisateur
+      LatLng(defaultPos['latitude']!, defaultPos['longitude']!),
+      10.0, // Zoom par défaut
     );
   }
 }

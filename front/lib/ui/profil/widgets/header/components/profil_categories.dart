@@ -1,24 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
+import 'package:front/providers/providers.dart';
 import 'package:front/utils/icon_utils.dart';
+import 'package:front/utils/result.dart';
 
-class ProfileCategories extends StatefulWidget {
+// Providers pour l'état des catégories du profil
+final profileCategoriesProvider =
+    StateProvider.family<List<Category>, String>((ref, userId) => []);
+final profileCategoriesLoadingProvider =
+    StateProvider.family<bool, String>((ref, userId) => false);
+
+class ProfileCategories extends ConsumerStatefulWidget {
   final String userId;
-  final ProfilViewModel viewModel;
 
   const ProfileCategories({
     super.key,
     required this.userId,
-    required this.viewModel,
   });
-
   @override
-  State<ProfileCategories> createState() => _ProfileCategoriesState();
+  ConsumerState<ProfileCategories> createState() => _ProfilCategoriesState();
 }
 
-class _ProfileCategoriesState extends State<ProfileCategories> {
+class _ProfilCategoriesState extends ConsumerState<ProfileCategories> {
   Future<List<Category>>? _userCategoriesFuture;
 
   @override
@@ -34,31 +39,57 @@ class _ProfileCategoriesState extends State<ProfileCategories> {
   }
 
   Future<List<Category>> _loadUserCategories() async {
+    ref.read(profileCategoriesLoadingProvider(widget.userId).notifier).state =
+        true;
+
     try {
-      final userPlans = await widget.viewModel.getUserPlans(widget.userId);
-      if (userPlans.isEmpty) {
-        print('Aucun plan trouvé pour l\'utilisateur');
-        return [];
+      final planRepository = ref.read(planRepositoryProvider);
+      final categoryRepository = ref.read(categoryRepositoryProvider);
+
+      // Charger les plans de l'utilisateur
+      final plansResult = await planRepository.getPlansByUserId(widget.userId);
+
+      if (plansResult is Ok<List<Plan>>) {
+        final plans = plansResult.value;
+
+        if (plans.isEmpty) {
+          print('Aucun plan trouvé pour l\'utilisateur');
+          return [];
+        }
+
+        // Extraire les IDs de catégories uniques
+        final categoryIds = plans.map((plan) => plan.category).toSet().toList();
+
+        if (categoryIds.isEmpty) {
+          return [];
+        }
+
+        // Charger toutes les catégories
+        final categoriesResult = await categoryRepository.getCategoriesList();
+
+        if (categoriesResult is Ok<List<Category>>) {
+          final allCategories = categoriesResult.value;
+
+          // Filtrer les catégories utilisées par l'utilisateur
+          final userCategories = allCategories
+              .where((category) => categoryIds.contains(category.id))
+              .toList();
+
+          // Mettre à jour le provider
+          ref.read(profileCategoriesProvider(widget.userId).notifier).state =
+              userCategories;
+
+          return userCategories;
+        }
       }
 
-      // Convertir en List<Plan> si ce ne sont pas déjà des plans
-      final plans = userPlans.whereType<Plan>().toList();
-      final categoryIds = plans.map((plan) => plan.category).toSet().toList();
-
-      if (categoryIds.isEmpty) {
-        return [];
-      }
-
-      final allCategories = await widget.viewModel.getCategories();
-
-      final userCategories = allCategories
-          .where((category) => categoryIds.contains(category.id))
-          .toList();
-
-      return userCategories;
+      return [];
     } catch (e) {
       print('Erreur lors du chargement des catégories: $e');
       return [];
+    } finally {
+      ref.read(profileCategoriesLoadingProvider(widget.userId).notifier).state =
+          false;
     }
   }
 

@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
-import 'package:front/ui/profil/widgets/header/components/profile_user_info.dart';
+import 'package:front/ui/profil/widgets/header/components/profil_user_info.dart';
 import 'package:front/ui/profil/widgets/content/premium_popup.dart';
-import 'components/profile_avatar.dart';
-import 'components/profile_stats.dart';
-import 'components/profile_categories.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/utils/result.dart';
+import 'components/profil_avatar.dart';
+import 'components/profil_stats.dart';
+import 'components/profil_categories.dart';
 
-class ProfileHeader extends StatefulWidget {
+class ProfilHeader extends ConsumerStatefulWidget {
   final User userProfile;
-  final ProfilViewModel viewModel;
   final Function(String) onNavigationSelected;
   final bool isCurrentUser;
   final Function()? onFollowChanged;
   final ScrollController scrollController;
 
-  const ProfileHeader({
+  const ProfilHeader({
     super.key,
     required this.userProfile,
-    required this.viewModel,
     required this.onNavigationSelected,
     required this.isCurrentUser,
     this.onFollowChanged,
@@ -26,18 +26,16 @@ class ProfileHeader extends StatefulWidget {
   });
 
   @override
-  ProfileHeaderState createState() => ProfileHeaderState();
+  ConsumerState<ProfilHeader> createState() => _ProfileHeaderState();
 }
 
-class ProfileHeaderState extends State<ProfileHeader> {
+class _ProfileHeaderState extends ConsumerState<ProfilHeader> {
   bool _isFollowing = false;
   bool _loadingFollow = false;
 
   @override
   void initState() {
     super.initState();
-    // Écouter les changements du view model pour la mise à jour automatique
-    widget.viewModel.addListener(_onViewModelChanged);
 
     if (!widget.isCurrentUser) {
       _checkFollowStatus();
@@ -46,22 +44,16 @@ class ProfileHeaderState extends State<ProfileHeader> {
 
   @override
   void dispose() {
-    widget.viewModel.removeListener(_onViewModelChanged);
     super.dispose();
-  }
-
-  void _onViewModelChanged() {
-    // Forcer la mise à jour du widget quand le view model change
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   Future<void> _checkFollowStatus() async {
     if (!widget.isCurrentUser) {
       try {
-        _isFollowing =
-            await widget.viewModel.isFollowing(widget.userProfile.id);
+        // TODO: Implémenter la vérification du statut de suivi avec les providers
+        // final userRepository = ref.read(userRepositoryProvider);
+        // _isFollowing = await userRepository.isFollowing(widget.userProfile.id);
+        _isFollowing = false; // Valeur temporaire
         setState(() {});
       } catch (e) {
         print('Erreur lors de la vérification du statut de suivi: $e');
@@ -116,8 +108,8 @@ class ProfileHeaderState extends State<ProfileHeader> {
   void _showPremiumPopup() {
     PremiumPopup.show(
       context: context,
+      ref: ref,
       userProfile: widget.userProfile,
-      viewModel: widget.viewModel,
       showInfoCard: _showInfoCard,
       showErrorCard: _showErrorCard,
     );
@@ -132,14 +124,17 @@ class ProfileHeaderState extends State<ProfileHeader> {
 
     try {
       bool success = false;
+      final userRepository = ref.read(userRepositoryProvider);
       if (_isFollowing) {
-        success = await widget.viewModel.unfollowUser(widget.userProfile.id);
+        final result = await userRepository.unfollowUser(widget.userProfile.id);
+        success = result is Ok;
         if (success) {
           _showInfoCard('Désabonnement',
               'Vous ne suivez plus ${widget.userProfile.username}');
         }
       } else {
-        success = await widget.viewModel.followUser(widget.userProfile.id);
+        final result = await userRepository.followUser(widget.userProfile.id);
+        success = result is Ok;
         if (success) {
           _showInfoCard('Abonnement',
               'Vous suivez maintenant ${widget.userProfile.username}');
@@ -147,7 +142,9 @@ class ProfileHeaderState extends State<ProfileHeader> {
       }
 
       if (success) {
-        await _checkFollowStatus();
+        setState(() {
+          _isFollowing = !_isFollowing;
+        });
         widget.onFollowChanged?.call();
       }
     } catch (e) {
@@ -197,10 +194,8 @@ class ProfileHeaderState extends State<ProfileHeader> {
   @override
   Widget build(BuildContext context) {
     final primaryColor = const Color(0xFF3425B5);
-    // Utiliser l'utilisateur du view model s'il est disponible, sinon utiliser celui passé en paramètre
-    final currentUser = widget.isCurrentUser && widget.viewModel.user != null
-        ? widget.viewModel.user!
-        : widget.userProfile;
+    // Utiliser directement l'utilisateur passé en paramètre
+    final currentUser = widget.userProfile;
 
     return Container(
       width: double.infinity,
@@ -275,14 +270,13 @@ class ProfileHeaderState extends State<ProfileHeader> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ProfileAvatar(
+                  ProfilAvatar(
                     userProfile: currentUser,
-                    viewModel: widget.viewModel,
                     isCurrentUser: widget.isCurrentUser,
                   ),
                   const SizedBox(width: 20),
                   Expanded(
-                    child: ProfileUserInfo(
+                    child: ProfilUserInfo(
                       userProfile: currentUser,
                       isCurrentUser: widget.isCurrentUser,
                       isFollowing: _isFollowing,
@@ -355,7 +349,6 @@ class ProfileHeaderState extends State<ProfileHeader> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ProfileCategories(
                 userId: currentUser.id,
-                viewModel: widget.viewModel,
               ),
             ),
 
@@ -363,7 +356,7 @@ class ProfileHeaderState extends State<ProfileHeader> {
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: ProfileStats(
+              child: ProfilStats(
                 userProfile: currentUser,
                 isCurrentUser: widget.isCurrentUser,
                 onNavigationSelected: _handleNavigation,

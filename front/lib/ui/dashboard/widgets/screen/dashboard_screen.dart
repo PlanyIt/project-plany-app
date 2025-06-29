@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart' as app_category;
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/ui/dashboard/widgets/card/category_cards.dart';
 import 'package:front/ui/dashboard/widgets/list/horizontal_plan_list.dart';
 import 'package:front/ui/dashboard/widgets/screen/search_screen.dart';
 import 'package:front/ui/core/ui/bottom_bar/bottom_bar.dart';
-import 'package:front/ui/dashboard/view_models/dashboard_viewmodel.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:front/ui/dashboard/widgets/placeholder/empty_state_widget.dart';
 import 'package:front/ui/dashboard/widgets/search_bar/search_bar.dart';
@@ -13,55 +13,48 @@ import 'package:front/ui/dashboard/widgets/header/section_header.dart';
 import 'package:front/ui/dashboard/widgets/drawer/profile_drawer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:front/utils/result.dart';
+import 'package:front/providers/providers.dart';
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key, required this.viewModel});
-  final DashboardViewModel viewModel;
+class DashboardScreen extends ConsumerStatefulWidget {
+  const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  DashboardViewModel get viewModel => widget.viewModel;
   @override
   void initState() {
     super.initState();
-
-    // Éviter d'appeler load pendant le build en utilisant addPostFrameCallback
+    // Charger les données au démarrage
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!viewModel.hasLoadedData) {
-        viewModel.load.execute();
-      }
+      ref.read(dashboardProvider.notifier).loadInitialData();
     });
+  }
 
-    viewModel.addListener(() {
-      if (mounted) setState(() {});
-    });
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void _navigateToSearch(
       {String? query,
       app_category.Category? category,
       bool fromSearchBar = false}) {
-    // Mettre à jour les filtres de recherche dans le viewModel
-    if (query != null) viewModel.searchQuery = query;
-    if (category != null) viewModel.selectedCategory = category;
+    final notifier = ref.read(dashboardProvider.notifier);
 
-    // Déclencher une recherche avec les nouveaux filtres
-    viewModel.load.execute();
+    // Mettre à jour les filtres de recherche
+    if (query != null) notifier.updateSearchQuery(query);
+    if (category != null) notifier.selectCategory(category);
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => SearchScreen(
-          viewModel: viewModel,
           initialQuery: query,
           initialCategory: category,
-          autoFocus:
-              fromSearchBar, // Uniquement autofocus si on vient de la barre de recherche
+          autoFocus: fromSearchBar,
         ),
       ),
     );
@@ -69,15 +62,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = !viewModel.hasLoadedData && viewModel.load.running;
+    final dashboardState = ref.watch(dashboardProvider);
+    final isLoading = dashboardState.isLoading;
 
     return Scaffold(
       key: _scaffoldKey,
       bottomNavigationBar: const BottomBar(currentIndex: 0),
       endDrawer: ProfileDrawer(
-        user: viewModel.user,
+        user: dashboardState.user,
         onClose: () => _scaffoldKey.currentState?.closeEndDrawer(),
-        onLogout: () async => await viewModel.logout.execute(),
+        onLogout: () async {
+          // TODO: Implement logout with session manager
+          // await ref.read(sessionManagerProvider).logout();
+        },
       ),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -130,14 +127,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           color: Theme.of(context).primaryColor,
-          onRefresh: () => viewModel.load.execute(),
+          onRefresh: () async {
+            await ref.read(dashboardProvider.notifier).loadInitialData();
+          },
           child: CustomScrollView(
             slivers: [
               _buildSearchBar(),
               _buildSectionHeader('Catégories'),
               SliverToBoxAdapter(
                 child: CategoryCards(
-                  categories: viewModel.categories,
+                  categories: dashboardState.categories,
                   isLoading: isLoading,
                   onCategoryTap: (cat) =>
                       _navigateToSearch(category: cat, fromSearchBar: false),
@@ -145,13 +144,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               _buildSectionHeader('Tendances', seeAll: true),
               _buildPlanListSection(
-                plans: _getFilteredTrendingPlans(viewModel.plans),
+                plans: _getFilteredTrendingPlans(dashboardState.plans),
                 isLoading: isLoading,
                 emptyMessage: 'Aucun plan tendance disponible',
               ),
               _buildSectionHeader('À découvrir', seeAll: true),
               _buildPlanListSection(
-                plans: _getRandomPlans(viewModel.plans),
+                plans: _getRandomPlans(dashboardState.plans),
                 isLoading: isLoading,
                 emptyMessage: 'Aucun plan à découvrir disponible',
                 emptySubMessage:
@@ -233,16 +232,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return SliverToBoxAdapter(
       child: HorizontalPlanList(
         plans: plans,
-        planSteps: viewModel.planSteps,
+        planSteps: const {}, // Remplacer par un provider si nécessaire
         isLoading: false,
-        getCategoryById: viewModel.getCategoryById,
+        getCategoryById: (id) async {
+          final categoryRepository = ref.read(categoryRepositoryProvider);
+          return await categoryRepository.getCategoryById(id);
+        },
         onPlanTap: (plan) => GoRouter.of(context).pushNamed(
           'detailsPlan',
           queryParameters: {'planId': plan.id},
         ),
         emptyMessage: '',
-        userLatitude: viewModel.userLatitude,
-        userLongitude: viewModel.userLongitude,
+        userLatitude:
+            null, // Remplacer par un provider de localisation si nécessaire
+        userLongitude:
+            null, // Remplacer par un provider de localisation si nécessaire
       ),
     );
   }

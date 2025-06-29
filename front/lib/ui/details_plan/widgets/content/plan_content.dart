@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/ui/details_plan/view_models/details_plan_viewmodel.dart';
 import 'package:front/ui/details_plan/widgets/content/info_plan/plan_info_section.dart';
 import 'package:front/ui/details_plan/widgets/content/steps_carousel/steps_carousel.dart';
 import 'package:front/ui/details_plan/widgets/content/comments/comment_section.dart';
@@ -11,7 +10,6 @@ class PlanContent extends StatelessWidget {
   final Plan plan;
   final Color categoryColor;
   final ScrollController scrollController;
-  final DetailsPlanViewModel viewModel;
   final Category? category;
   final List<plan_steps.Step>? steps;
 
@@ -20,7 +18,6 @@ class PlanContent extends StatelessWidget {
     required this.plan,
     required this.categoryColor,
     required this.scrollController,
-    required this.viewModel,
     this.category,
     this.steps,
   });
@@ -66,7 +63,6 @@ class PlanContent extends StatelessWidget {
                 PlanInfoSection(
                   plan: plan,
                   categoryColor: categoryColor,
-                  viewModel: viewModel,
                   categoryName: category?.name,
                   categoryIcon: category?.icon,
                   steps: steps,
@@ -82,14 +78,12 @@ class PlanContent extends StatelessWidget {
                     steps: steps,
                     categoryColor: categoryColor,
                   ),
-                ),
+                ), // Séparateur
+                _buildElegantDivider(icon: Icons.chat_bubble_outline),
 
-                // Séparateur
-                _buildElegantDivider(
-                    icon: Icons.chat_bubble_outline), //Commentaires
+                //Commentaires
                 CommentSection(
                   planId: plan.id!,
-                  viewModel: viewModel,
                   isEmbedded: true,
                   categoryColor: categoryColor,
                 ),

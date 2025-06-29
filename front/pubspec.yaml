@@ -43,7 +43,8 @@ dependencies:
   latlong2: ^0.9.0
   location: ^8.0.0
   shared_preferences: ^2.5.3
-  provider: ^6.1.5
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
   timeline_tile: ^2.0.0
   shimmer: ^3.0.0
   fluttertoast: ^8.2.12
@@ -74,11 +75,11 @@ dev_dependencies:
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  # rules and activating additional ones.  flutter_lints: ^5.0.0
   freezed: ^2.4.6
   build_runner: ^2.4.6
   json_serializable: ^6.7.1
+  riverpod_generator: ^2.3.9
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,27 +1,25 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
+import 'package:front/providers/providers.dart';
 import 'package:image_picker/image_picker.dart';
 
-class ProfileAvatar extends StatefulWidget {
+class ProfilAvatar extends ConsumerStatefulWidget {
   final User userProfile;
-  final ProfilViewModel viewModel;
   final bool isCurrentUser;
 
-  const ProfileAvatar({
+  const ProfilAvatar({
     super.key,
     required this.userProfile,
-    required this.viewModel,
     required this.isCurrentUser,
   });
-
   @override
-  State<ProfileAvatar> createState() => _ProfileAvatarState();
+  ConsumerState<ProfilAvatar> createState() => _ProfileAvatarState();
 }
 
-class _ProfileAvatarState extends State<ProfileAvatar> {
+class _ProfileAvatarState extends ConsumerState<ProfilAvatar> {
   bool _uploading = false;
 
   Future<void> _pickAndUploadImage() async {
@@ -53,13 +51,17 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
       if (!await imageFile.exists()) {
         throw Exception('Le fichier image n\'existe pas');
       }
-
       if (widget.userProfile.id.isEmpty) {
         throw Exception('ID utilisateur invalide');
       }
 
-      await widget.viewModel
-          .updateProfilePhoto(widget.userProfile.id, imageFile);
+      // Utiliser le provider pour mettre à jour la photo de profil
+      final profileNotifier = ref.read(profileProvider.notifier);
+      final success = await profileNotifier.updateProfilePhoto(imageFile);
+
+      if (!success) {
+        throw Exception('Échec de la mise à jour de la photo de profil');
+      }
 
       if (!mounted) {
         print(

@@ -1,79 +1,107 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
 import 'package:front/routing/routes.dart';
-import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
 import 'package:front/ui/profil/widgets/common/section_header.dart';
 import 'package:front/ui/profil/widgets/content/user_list.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/utils/result.dart';
 
-class FollowingSection extends StatefulWidget {
+// Providers pour l'état des following
+final followingProvider =
+    StateProvider.family<List<User>, String>((ref, userId) => []);
+final followingLoadingProvider =
+    StateProvider.family<bool, String>((ref, userId) => false);
+final followingStatusProvider = StateProvider<Map<String, bool>>((ref) => {});
+final followingLoadingUserIdsProvider = StateProvider<Set<String>>((ref) => {});
+
+class FollowingSection extends ConsumerStatefulWidget {
   final String userId;
-  final ProfilViewModel viewModel;
   final Function()? onFollowChanged;
 
   const FollowingSection({
     super.key,
     required this.userId,
-    required this.viewModel,
     this.onFollowChanged,
   });
-
   @override
-  FollowingSectionState createState() => FollowingSectionState();
+  ConsumerState<FollowingSection> createState() => FollowingSectionState();
 }
 
-class FollowingSectionState extends State<FollowingSection> {
-  late Future<List<User>> _followingFuture;
-  Map<String, bool> followingStatus = {};
-  bool _isLoading = false;
-  List<User> _followingList = [];
-  Set<String> loadingUserIds = {};
-
+class FollowingSectionState extends ConsumerState<FollowingSection> {
   @override
   void initState() {
     super.initState();
-    _loadFollowingData();
-  }
-
-  Future<void> _loadFollowingData() async {
-    setState(() {
-      _followingFuture = _loadFollowing();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFollowing();
     });
   }
 
-  Future<List<User>> _loadFollowing() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadFollowing() async {
+    ref.read(followingLoadingProvider(widget.userId).notifier).state = true;
+
     try {
-      final following = await widget.viewModel.getUserFollowing(widget.userId);
-      setState(() {
-        _followingList = following;
+      final userRepository = ref.read(userRepositoryProvider);
+      final followingResult =
+          await userRepository.getUserFollowing(widget.userId);
+
+      if (followingResult is Ok<List<User>>) {
+        final following = followingResult.value;
+        ref.read(followingProvider(widget.userId).notifier).state = following;
+
+        // Marquer tous les utilisateurs suivis comme "following"
+        Map<String, bool> status = {};
         for (var user in following) {
-          followingStatus[user.id] = true;
+          status[user.id] = true;
         }
-      });
-      return following;
+
+        if (mounted) {
+          ref.read(followingStatusProvider.notifier).state = {
+            ...ref.read(followingStatusProvider),
+            ...status,
+          };
+        }
+      } else {
+        print(
+            'Erreur lors du chargement des abonnements: ${followingResult.toString()}');
+      }
     } catch (e) {
       print('Erreur lors du chargement des abonnements: $e');
-      return [];
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        ref.read(followingLoadingProvider(widget.userId).notifier).state =
+            false;
+      }
     }
   }
 
   Future<void> _unfollowUser(User user) async {
     try {
-      setState(() {
-        loadingUserIds.add(user.id);
-      });
+      final loadingUsers = ref.read(followingLoadingUserIdsProvider);
+      ref.read(followingLoadingUserIdsProvider.notifier).state = {
+        ...loadingUsers,
+        user.id
+      };
 
-      final success = await widget.viewModel.unfollowUser(user.id);
-      if (success && mounted) {
-        setState(() {
-          _followingList.removeWhere((u) => u.id == user.id);
-          followingStatus[user.id] = false;
-        });
+      final userRepository = ref.read(userRepositoryProvider);
+      final result = await userRepository.unfollowUser(user.id);
+
+      if (result is Ok && mounted) {
+        // Retirer l'utilisateur de la liste des suivis
+        final currentFollowing = ref.read(followingProvider(widget.userId));
+        ref.read(followingProvider(widget.userId).notifier).state =
+            currentFollowing.where((u) => u.id != user.id).toList();
+
+        // Mettre à jour le statut
+        final currentStatus = ref.read(followingStatusProvider);
+        ref.read(followingStatusProvider.notifier).state = {
+          ...currentStatus,
+          user.id: false,
+        };
 
         // Notifier le parent pour mettre à jour les compteurs
         widget.onFollowChanged?.call();
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Vous ne suivez plus ${user.username}'),
@@ -83,11 +111,17 @@ class FollowingSectionState extends State<FollowingSection> {
       }
     } catch (e) {
       print('Erreur lors du désabonnement: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
-        setState(() {
-          loadingUserIds.remove(user.id);
-        });
+        final loadingUsers = ref.read(followingLoadingUserIdsProvider);
+        ref.read(followingLoadingUserIdsProvider.notifier).state =
+            loadingUsers.where((id) => id != user.id).toSet();
       }
     }
   }
@@ -104,73 +138,67 @@ class FollowingSectionState extends State<FollowingSection> {
 
   @override
   Widget build(BuildContext context) {
+    final following = ref.watch(followingProvider(widget.userId));
+    final isLoading = ref.watch(followingLoadingProvider(widget.userId));
+    final followingStatus = ref.watch(followingStatusProvider);
+    final loadingUserIds = ref.watch(followingLoadingUserIdsProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: _buildHeader(_followingList),
+          child: _buildHeader(following),
         ),
-        FutureBuilder<List<User>>(
-          future: _followingFuture,
-          builder: (context, snapshot) {
-            if (_isLoading) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Center(child: Text('Erreur: ${snapshot.error}'));
-            }
-            if (_followingList.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.groups_outlined,
-                          size: 48, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Aucun abonnement pour le moment',
-                        style: TextStyle(color: Colors.grey[700]),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        if (isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24.0),
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (following.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _followingList.map((user) {
-                  return UserListItem(
-                    user: user,
-                    onTap: () {
-                      // Navigation vers le profil de l'utilisateur
-                      Navigator.of(context)
-                          .pushNamed(Routes.profil, arguments: user.id);
-                    },
-                    showFollowButton: true,
-                    isFollowing: followingStatus[user.id] ?? false,
-                    isLoading: loadingUserIds.contains(user.id),
-                    onFollowChanged: (isFollowing) {
-                      if (!isFollowing) {
-                        _unfollowUser(user);
-                      }
-                    },
-                  );
-                }).toList(),
+                children: [
+                  Icon(Icons.groups_outlined,
+                      size: 48, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Aucun abonnement pour le moment',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: following.map((user) {
+                return UserListItem(
+                  user: user,
+                  onTap: () {
+                    // Navigation vers le profil de l'utilisateur
+                    Navigator.of(context)
+                        .pushNamed(Routes.profil, arguments: user.id);
+                  },
+                  showFollowButton: true,
+                  isFollowing: followingStatus[user.id] ?? false,
+                  isLoading: loadingUserIds.contains(user.id),
+                  onFollowChanged: (isFollowing) {
+                    if (!isFollowing) {
+                      _unfollowUser(user);
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+          ),
       ],
     );
   }

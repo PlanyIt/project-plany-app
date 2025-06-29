@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/ui/core/ui/bottom_bar/bottom_bar.dart';
-import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
 import 'package:front/ui/profil/widgets/content/favorites_section.dart';
 import 'package:front/ui/profil/widgets/content/followers_section.dart';
 import 'package:front/ui/profil/widgets/content/following_section.dart'
     show FollowingSection;
 import 'package:front/ui/profil/widgets/content/my_plans_section.dart';
 import 'package:front/ui/profil/widgets/content/settings_section.dart';
-import 'package:front/ui/profil/widgets/header/profile_header.dart';
+import 'package:front/domain/models/user/user.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/ui/profil/widgets/header/profil_header.dart';
+import 'package:front/utils/result.dart';
 
-class ProfilScreen extends StatefulWidget {
+// Providers pour l'état du profil
+final profilUserProvider =
+    StateProvider.family<User?, String>((ref, userId) => null);
+final profilLoadingProvider =
+    StateProvider.family<bool, String>((ref, userId) => false);
+final profilSelectedSectionProvider = StateProvider<String>((ref) => 'plans');
+
+class ProfilScreen extends ConsumerStatefulWidget {
   final String? userId;
   final bool isCurrentUser;
 
@@ -17,26 +27,22 @@ class ProfilScreen extends StatefulWidget {
     super.key,
     this.userId,
     this.isCurrentUser = true,
-    required this.viewModel,
   });
-
-  final ProfilViewModel viewModel;
-
   @override
-  ProfilScreenState createState() => ProfilScreenState();
+  ConsumerState<ProfilScreen> createState() => _ProfilScreenState();
 }
 
-class ProfilScreenState extends State<ProfilScreen> {
-  String _selectedSection = '';
+class _ProfilScreenState extends ConsumerState<ProfilScreen> {
   final ScrollController _scrollController = ScrollController();
+  late String _targetUserId;
 
   @override
   void initState() {
     super.initState();
-    _selectedSection = 'plans';
+    _targetUserId = widget.userId ?? 'current_user';
 
-    widget.viewModel.load.addListener(() {
-      setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserProfile();
     });
   }
 
@@ -46,9 +52,35 @@ class ProfilScreenState extends State<ProfilScreen> {
     super.dispose();
   }
 
+  Future<void> _loadUserProfile() async {
+    ref.read(profilLoadingProvider(_targetUserId).notifier).state = true;
+
+    try {
+      final userRepository = ref.read(userRepositoryProvider);
+      final userResult = widget.isCurrentUser
+          ? await userRepository.getCurrentUser()
+          : await userRepository.getUserProfile(_targetUserId);
+
+      if (userResult is Ok<User>) {
+        ref.read(profilUserProvider(_targetUserId).notifier).state =
+            userResult.value;
+      } else {
+        print('Erreur lors du chargement du profil utilisateur');
+      }
+    } catch (e) {
+      print('Erreur lors du chargement du profil: $e');
+    } finally {
+      ref.read(profilLoadingProvider(_targetUserId).notifier).state = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (widget.viewModel.isLoading) {
+    final user = ref.watch(profilUserProvider(_targetUserId));
+    final isLoading = ref.watch(profilLoadingProvider(_targetUserId));
+    final selectedSection = ref.watch(profilSelectedSectionProvider);
+
+    if (isLoading) {
       return Scaffold(
         body: Center(
           child: CircularProgressIndicator(
@@ -58,7 +90,7 @@ class ProfilScreenState extends State<ProfilScreen> {
       );
     }
 
-    if (widget.viewModel.user == null) {
+    if (user == null) {
       return Scaffold(
         body: Center(
           child: Column(
@@ -88,7 +120,7 @@ class ProfilScreenState extends State<ProfilScreen> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: widget.viewModel.load.execute,
+                onPressed: _loadUserProfile,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3425B5),
                   foregroundColor: Colors.white,
@@ -105,23 +137,22 @@ class ProfilScreenState extends State<ProfilScreen> {
         ),
       );
     }
-
     return Scaffold(
-      bottomNavigationBar: BottomBar(currentIndex: 2),
+      bottomNavigationBar:
+          widget.isCurrentUser ? const BottomBar(currentIndex: 2) : null,
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           controller: _scrollController,
           child: Column(
             children: [
-              ProfileHeader(
-                userProfile: widget.viewModel.user!,
-                viewModel: widget.viewModel,
+              ProfilHeader(
+                userProfile: user,
                 onNavigationSelected: _handleNavigation,
                 isCurrentUser: widget.isCurrentUser,
                 scrollController: _scrollController,
               ),
-              _getSelectedSection(),
+              _getSelectedSection(user, selectedSection),
             ],
           ),
         ),
@@ -130,9 +161,7 @@ class ProfilScreenState extends State<ProfilScreen> {
   }
 
   void _handleNavigation(String section) {
-    setState(() {
-      _selectedSection = section;
-    });
+    ref.read(profilSelectedSectionProvider.notifier).state = section;
 
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
@@ -145,44 +174,38 @@ class ProfilScreenState extends State<ProfilScreen> {
     });
   }
 
-  Widget _getSelectedSection() {
-    switch (_selectedSection) {
+  Widget _getSelectedSection(User user, String selectedSection) {
+    switch (selectedSection) {
       case 'plans':
         return MyPlansSection(
-          userId: widget.viewModel.user!.id,
-          viewModel: widget.viewModel,
+          userId: user.id,
         );
       case 'favorites':
         return widget.isCurrentUser
             ? FavoritesSection(
-                userId: widget.viewModel.user!.id,
-                viewModel: widget.viewModel,
+                userId: user.id,
               )
             : const Center(child: Text('Section non disponible'));
       case 'subscriptions':
         return widget.isCurrentUser
             ? FollowingSection(
-                userId: widget.viewModel.user!.id,
-                viewModel: widget.viewModel,
+                userId: user.id,
               )
             : const Center(child: Text('Section non disponible'));
       case 'followers':
         return FollowersSection(
-          userId: widget.viewModel.user!.id,
-          viewModel: widget.viewModel,
+          userId: user.id,
         );
       case 'settings':
-        return widget.viewModel.user != null
+        return widget.isCurrentUser
             ? SettingsSection(
-                userProfile: widget.viewModel.user!,
-                viewModel: widget.viewModel,
-                onProfileUpdated: widget.viewModel.load.execute,
+                userProfile: user,
+                onProfileUpdated: _loadUserProfile,
               )
             : const Center(child: Text('Section non disponible'));
       default:
         return MyPlansSection(
-          userId: widget.viewModel.user!.id,
-          viewModel: widget.viewModel,
+          userId: user.id,
         );
     }
   }

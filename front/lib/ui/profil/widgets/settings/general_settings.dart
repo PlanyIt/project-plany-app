@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/ui/profil/view_models/profil_viewmodel.dart';
 import 'package:front/data/services/preferences_service.dart';
+import 'package:front/providers/providers.dart';
 
-class GeneralSettings extends StatefulWidget {
+class GeneralSettings extends ConsumerStatefulWidget {
   final User userProfile;
-  final ProfilViewModel viewModel;
   final Function(String, String) showInfoCard;
   final Function(String) showErrorCard;
 
   const GeneralSettings({
     super.key,
     required this.userProfile,
-    required this.viewModel,
     required this.showInfoCard,
     required this.showErrorCard,
   });
-
   @override
-  GeneralSettingsState createState() => GeneralSettingsState();
+  ConsumerState<GeneralSettings> createState() => GeneralSettingsState();
 }
 
-class GeneralSettingsState extends State<GeneralSettings> {
+class GeneralSettingsState extends ConsumerState<GeneralSettings> {
   bool _darkMode = false;
   bool _notifications = true;
   late PreferencesService _preferencesService;
@@ -131,9 +129,12 @@ class GeneralSettingsState extends State<GeneralSettings> {
 
   Future<void> _logout() async {
     try {
-      await widget.viewModel.logout();
+      // TODO: Implémenter la déconnexion avec les providers
+      // await ref.read(authRepositoryProvider).logout();
+      widget.showInfoCard('Développement en cours',
+          'La déconnexion sera disponible prochainement.');
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
+        // Navigator.pushReplacementNamed(context, '/login');
       }
     } catch (e) {
       widget.showErrorCard('Erreur lors de la déconnexion: $e');

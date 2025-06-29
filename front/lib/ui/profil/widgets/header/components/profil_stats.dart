@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:front/domain/models/user/user.dart';
 
-class ProfileStats extends StatelessWidget {
+class ProfilStats extends StatelessWidget {
   final User userProfile;
   final bool isCurrentUser;
   final Function(String) onNavigationSelected;
 
-  const ProfileStats({
+  const ProfilStats({
     super.key,
     required this.userProfile,
     required this.isCurrentUser,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/user/user.dart';
 
-class ProfileUserInfo extends StatelessWidget {
+class ProfilUserInfo extends StatelessWidget {
   final User userProfile;
   final bool isCurrentUser;
   final bool isFollowing;
@@ -9,7 +9,7 @@ class ProfileUserInfo extends StatelessWidget {
   final VoidCallback onPremiumTap;
   final VoidCallback onFollowTap;
 
-  const ProfileUserInfo({
+  const ProfilUserInfo({
     super.key,
     required this.userProfile,
     required this.isCurrentUser,

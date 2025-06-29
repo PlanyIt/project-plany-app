@@ -1,23 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/routing/routes.dart';
 import 'package:front/theme/app_theme.dart';
-import 'package:front/ui/auth/signup/view_models/signup_viewmodel.dart';
-import 'package:front/ui/core/localization/applocalization.dart';
 import 'package:go_router/go_router.dart';
 import 'package:front/widgets/common/custom_text_field.dart';
 import 'package:front/widgets/common/plany_logo.dart';
 import 'package:front/ui/core/ui/button/plany_button.dart';
+import 'package:front/providers/providers.dart';
+import 'package:front/providers/auth/signup_provider.dart';
 
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key, required this.viewModel});
-
-  final SignupViewModel viewModel;
+class SignupScreen extends ConsumerWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Listen to state changes for navigation
+    ref.listen<SignupState>(signupProvider, (previous, next) {
+      if (next.isAuthenticated) {
+        context.go(Routes.dashboard);
+      }
+      if (next.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error!)),
+        );
+      }
+    });
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.paddingL),
+          child: _SignupForm(),
+        ),
+      ),
+    );
+  }
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupForm extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_SignupForm> createState() => _SignupFormState();
+}
+
+class _SignupFormState extends ConsumerState<_SignupForm> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _username = TextEditingController();
   final TextEditingController _description = TextEditingController();
@@ -25,97 +50,12 @@ class _SignupScreenState extends State<SignupScreen> {
   bool obscurePassword = true;
 
   @override
-  void initState() {
-    super.initState();
-    widget.viewModel.register.addListener(_onResult);
-  }
-
-  @override
-  void didUpdateWidget(covariant SignupScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    oldWidget.viewModel.register.removeListener(_onResult);
-    widget.viewModel.register.addListener(_onResult);
-  }
-
-  @override
   void dispose() {
-    widget.viewModel.register.removeListener(_onResult);
+    _email.dispose();
+    _username.dispose();
+    _description.dispose();
+    _password.dispose();
     super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.only(
-            left: AppTheme.paddingL,
-            right: AppTheme.paddingL,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              _buildLogo(),
-              const SizedBox(height: 40),
-              _buildWelcomeText(context),
-              const SizedBox(height: 40),
-              CustomTextField(
-                controller: _email,
-                labelText: 'Email',
-                hintText: 'Entrez votre email',
-                prefixIcon: Icons.email_outlined,
-              ),
-              const SizedBox(height: 20),
-              CustomTextField(
-                controller: _username,
-                labelText: 'Nom d\'utilisateur',
-                hintText: 'Entrez votre nom d\'utilisateur',
-                prefixIcon: Icons.person_outline,
-              ),
-              const SizedBox(height: 20),
-              CustomTextField(
-                controller: _description,
-                labelText: 'Description',
-                hintText: 'Entrez une description',
-                prefixIcon: Icons.description_outlined,
-              ),
-              const SizedBox(height: 20),
-              CustomTextField(
-                controller: _password,
-                labelText: 'Mot de passe',
-                hintText: 'Entrez votre mot de passe',
-                prefixIcon: Icons.lock_outline,
-                obscureText: obscurePassword,
-                suffixIcon:
-                    obscurePassword ? Icons.visibility_off : Icons.visibility,
-                onSuffixIconPressed: togglePasswordVisibility,
-              ),
-              const SizedBox(height: 30),
-              PlanyButton(
-                text: AppLocalization.of(context).register,
-                isLoading: widget.viewModel.register.running,
-                onPressed: () {
-                  widget.viewModel.register.execute(
-                    (
-                      _email.value.text,
-                      _username.value.text,
-                      _description.value.text,
-                      _password.value.text
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildLoginLink(context),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   void togglePasswordVisibility() {
@@ -124,86 +64,70 @@ class _SignupScreenState extends State<SignupScreen> {
     });
   }
 
-  void _onResult() {
-    if (widget.viewModel.register.completed) {
-      widget.viewModel.register.clearResult();
-      context.go(Routes.home);
-    }
+  @override
+  Widget build(BuildContext context) {
+    final signupState = ref.watch(signupProvider);
+    final signupNotifier = ref.read(signupProvider.notifier);
 
-    if (widget.viewModel.register.error) {
-      widget.viewModel.register.clearResult();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalization.of(context).errorWhileLogin),
-          action: SnackBarAction(
-            label: AppLocalization.of(context).tryAgain,
-            onPressed: () => widget.viewModel.register.execute((
-              _email.value.text,
-              _username.value.text,
-              _description.value.text,
-              _password.value.text,
-            )),
-          ),
-        ),
-      );
-    }
-  }
-}
-
-Widget _buildLogo() {
-  return Center(
-    child: PlanyLogo(fontSize: 50),
-  );
-}
-
-Widget _buildWelcomeText(BuildContext context) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        AppLocalization.of(context).register,
-        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        'Créez un compte pour commencer',
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.7),
-            ),
-      ),
-    ],
-  );
-}
-
-Widget _buildLoginLink(BuildContext context) {
-  return Center(
-    child: Row(
+    return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Déjà un compte ? ',
-          style: TextStyle(
-            color:
-                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
+        const PlanyLogo(),
+        const SizedBox(height: 40),
+        CustomTextField(
+          controller: _email,
+          labelText: 'Email',
+          hintText: 'Entrez votre email',
+          prefixIcon: Icons.email,
         ),
+        const SizedBox(height: 16),
+        CustomTextField(
+          controller: _username,
+          labelText: 'Nom d\'utilisateur',
+          hintText: 'Entrez votre nom d\'utilisateur',
+          prefixIcon: Icons.person,
+        ),
+        const SizedBox(height: 16),
+        CustomTextField(
+          controller: _description,
+          labelText: 'Description',
+          hintText: 'Parlez-nous de vous',
+          prefixIcon: Icons.description,
+        ),
+        const SizedBox(height: 16),
+        CustomTextField(
+          controller: _password,
+          labelText: 'Mot de passe',
+          hintText: 'Entrez votre mot de passe',
+          prefixIcon: Icons.lock,
+          suffixIcon: obscurePassword ? Icons.visibility : Icons.visibility_off,
+          obscureText: obscurePassword,
+          onSuffixIconPressed: togglePasswordVisibility,
+        ),
+        const SizedBox(height: 24),
+        PlanyButton(
+          text: 'S\'inscrire',
+          isLoading: signupState.isLoading,
+          onPressed: () async {
+            if (_email.text.isNotEmpty &&
+                _username.text.isNotEmpty &&
+                _description.text.isNotEmpty &&
+                _password.text.isNotEmpty) {
+              await signupNotifier.register(
+                email: _email.text,
+                username: _username.text,
+                description: _description.text,
+                password: _password.text,
+              );
+            }
+          },
+        ),
+        const SizedBox(height: 16),
         TextButton(
           onPressed: () => context.push(Routes.login),
-          child: Text(
-            'Se connecter',
-            style: TextStyle(
-              color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: const Text('Déjà un compte ? Se connecter'),
         ),
       ],
-    ),
-  );
+    );
+  }
 }

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:front/ui/create_plan/view_models/create_plan_viewmodel.dart';
-import 'package:front/ui/create_plan/widgets/step_modal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/theme/app_theme.dart';
 import 'package:front/ui/create_plan/widgets/step_card_timeline.dart';
+import 'package:front/domain/models/step/step.dart' as plan_steps;
 
-class StepTwoContent extends StatefulWidget {
-  const StepTwoContent({super.key, required this.viewModel});
-
-  final CreatePlanViewModel viewModel;
+class StepTwoContent extends ConsumerStatefulWidget {
+  const StepTwoContent({super.key});
 
   @override
-  State<StepTwoContent> createState() => _StepTwoContentState();
+  ConsumerState<StepTwoContent> createState() => _StepTwoContentState();
 }
 
-class _StepTwoContentState extends State<StepTwoContent> {
+class _StepTwoContentState extends ConsumerState<StepTwoContent> {
   @override
   Widget build(BuildContext context) {
+    // Temporary implementation until providers are properly set up
     final themeColor = Theme.of(context).primaryColor;
+    final steps = <plan_steps.Step>[]; // Empty list for now
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.paddingL),
@@ -26,19 +26,10 @@ class _StepTwoContentState extends State<StepTwoContent> {
         children: [
           _buildInfoCard(),
           const SizedBox(height: 24),
-          const Text(
-            'Étapes du plan',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          widget.viewModel.stepCards.isEmpty
+          steps.isEmpty
               ? _buildEmptyCard()
-              : _buildStepsList(themeColor),
-          const SizedBox(height: 24),
+              : _buildStepsList(themeColor, steps),
+          const SizedBox(height: 16),
           _buildAddStepButton(),
           const SizedBox(height: 100),
         ],
@@ -59,49 +50,31 @@ class _StepTwoContentState extends State<StepTwoContent> {
             offset: const Offset(0, 4),
           ),
         ],
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.secondaryColor,
-            const Color(0xFF8278FF),
-          ],
-        ),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.directions_walk,
-              color: Colors.white,
-              size: 28,
-            ),
+          Icon(
+            Icons.timeline_rounded,
+            color: Theme.of(context).primaryColor,
+            size: 28,
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Composez votre parcours',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  'Créer les étapes',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Ajoutez des étapes à votre plan. Vous pourrez les réorganiser facilement en les faisant glisser.',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                  'Définissez chaque étape de votre plan avec ses détails.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
                 ),
               ],
             ),
@@ -115,49 +88,32 @@ class _StepTwoContentState extends State<StepTwoContent> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey[50],
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[300]!),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.add_road,
-              size: 40,
-              color: AppTheme.primaryColor,
-            ),
+          Icon(
+            Icons.add_road_rounded,
+            size: 48,
+            color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Aucune étape ajoutée',
+          Text(
+            'Aucune étape créée',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Créez votre plan en ajoutant des étapes',
+          Text(
+            'Commencez par ajouter la première étape de votre plan',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.black54,
+              color: Colors.grey[500],
             ),
           ),
         ],
@@ -165,7 +121,7 @@ class _StepTwoContentState extends State<StepTwoContent> {
     );
   }
 
-  Widget _buildStepsList(Color themeColor) {
+  Widget _buildStepsList(Color themeColor, List<plan_steps.Step> steps) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -178,59 +134,36 @@ class _StepTwoContentState extends State<StepTwoContent> {
           ),
         ],
       ),
-      child: ReorderableListView.builder(
+      child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: widget.viewModel.stepCards.length,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        onReorder: (oldIndex, newIndex) {
-          widget.viewModel.reorderStepCards(oldIndex, newIndex);
-        },
+        padding: const EdgeInsets.all(16),
+        itemCount: steps.length,
         itemBuilder: (context, index) {
-          final step = widget.viewModel.stepCards[index];
+          final step = steps[index];
           final isFirst = index == 0;
-          final isLast = index == widget.viewModel.stepCards.length - 1;
+          final isLast = index == steps.length - 1;
 
-          return Padding(
-            key: Key('step_card_$index'),
-            padding: const EdgeInsets.only(bottom: 8),
-            child: StepCardTimeline(
-              index: index,
-              isFirst: isFirst,
-              isLast: isLast,
-              title: step.title,
-              description: step.description,
-              imagePath: step.imageUrl,
-              duration: step.duration,
-              durationUnit: step.durationUnit,
-              cost: step.cost,
-              locationName: step.locationName,
-              onDelete: () {
-                widget.viewModel.removeStepCard(index);
-                setState(() {});
-              },
-              onEdit: () async {
-                widget.viewModel.startEditingStep(index);
-
-                await showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (BuildContext context) {
-                    return StepModal(
-                      viewModel: widget.viewModel,
-                    );
-                  },
-                );
-
-                if (widget.viewModel.isEditingStep) {
-                  widget.viewModel.cancelEditingStep();
-                }
-
-                setState(() {});
-              },
-              themeColor: themeColor,
-            ),
+          return StepCardTimeline(
+            key: Key('step_${step.id}'),
+            index: index,
+            isFirst: isFirst,
+            isLast: isLast,
+            title: step.title,
+            description: step.description,
+            imagePath: step.image,
+            duration: step.duration,
+            cost: step.cost,
+            locationName: step.position != null
+                ? '${step.position!.latitude}, ${step.position!.longitude}'
+                : null,
+            themeColor: themeColor,
+            onDelete: () {
+              // Handle delete
+            },
+            onEdit: () {
+              _showStepModal(step, index);
+            },
           );
         },
       ),
@@ -240,53 +173,75 @@ class _StepTwoContentState extends State<StepTwoContent> {
   Widget _buildAddStepButton() {
     return InkWell(
       onTap: () async {
-        await showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (BuildContext context) {
-            return StepModal(
-              viewModel: widget.viewModel,
-            );
-          },
-        );
+        await _showStepModal(null, null);
         setState(() {});
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border:
-              Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.5)),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              blurRadius: 8,
-              spreadRadius: 0,
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
+          border: Border.all(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+            width: 2,
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.add_circle_outline,
-              color: AppTheme.primaryColor,
-              size: 20,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.add,
+                color: Theme.of(context).primaryColor,
+                size: 24,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
               'Ajouter une étape',
               style: TextStyle(
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.w600,
                 fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).primaryColor,
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showStepModal(dynamic step, int? index) async {
+    // Show modal for creating/editing a step
+    // This would need to be implemented with the new provider structure
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: const Center(
+            child: Text('Step Modal - To be migrated'),
+          ),
         ),
       ),
     );

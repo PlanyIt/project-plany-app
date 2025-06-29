@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CustomTextField extends StatefulWidget {
+class CustomTextField extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final String labelText;
   final int maxLines;
@@ -23,10 +24,10 @@ class CustomTextField extends StatefulWidget {
   });
 
   @override
-  State<CustomTextField> createState() => _CustomTextFieldState();
+  ConsumerState<CustomTextField> createState() => _CustomTextFieldState();
 }
 
-class _CustomTextFieldState extends State<CustomTextField> {
+class _CustomTextFieldState extends ConsumerState<CustomTextField> {
   late FocusNode _focusNode;
 
   @override

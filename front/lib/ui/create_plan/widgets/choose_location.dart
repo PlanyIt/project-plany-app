@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
@@ -9,7 +10,7 @@ import 'dart:convert';
 import 'package:front/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 
-class ChooseLocation extends StatefulWidget {
+class ChooseLocation extends ConsumerStatefulWidget {
   final Function(LatLng, String) onLocationSelected;
   final LatLng? initialLocation;
 
@@ -18,12 +19,11 @@ class ChooseLocation extends StatefulWidget {
     required this.onLocationSelected,
     this.initialLocation,
   });
-
   @override
-  State<ChooseLocation> createState() => ChooseLocationState();
+  ConsumerState<ChooseLocation> createState() => _ChooseLocationState();
 }
 
-class ChooseLocationState extends State<ChooseLocation>
+class _ChooseLocationState extends ConsumerState<ChooseLocation>
     with TickerProviderStateMixin {
   LatLng? currentLocation;
   final MapController mapController = MapController();
