@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware';
-import * as helmet from 'helmet';
+import helmet from 'helmet';
 import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
@@ -21,7 +21,7 @@ async function bootstrap() {
   }
 
   // Sécurité
-  app.use(helmet.default());
+  app.use(helmet());
 
   // Rate limiting global
   const rateLimitMiddleware = new RateLimitMiddleware();
@@ -39,9 +39,26 @@ async function bootstrap() {
   );
 
   // Configuration CORS
+  const corsOrigin = configService.get<string>('CORS_ORIGIN');
+  const corsCredentials =
+    configService.get<string>('CORS_CREDENTIALS') === 'true';
+  const corsMethods = configService.get<string>('CORS_METHODS')?.split(',') || [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'PATCH',
+    'OPTIONS',
+  ];
+  const corsHeaders = configService
+    .get<string>('CORS_ALLOWED_HEADERS')
+    ?.split(',') || ['Content-Type', 'Authorization'];
+
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN') || '*',
-    credentials: true,
+    origin: corsOrigin || ['http://localhost:3000', 'http://localhost:5173'],
+    credentials: corsCredentials,
+    methods: corsMethods,
+    allowedHeaders: corsHeaders,
   });
 
   const port = configService.get<number>('PORT') || 3000;
