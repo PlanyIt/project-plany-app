@@ -6,28 +6,19 @@ import {
   Param,
   Delete,
   Put,
-  Patch,
   UseGuards,
   Req,
   HttpException,
   HttpStatus,
-  Inject,
-  forwardRef,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { PlanService } from './plan.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanDto } from './dto/plan.dto';
-import { UserService } from '../user/user.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('api/plans')
 export class PlanController {
-  constructor(
-    private readonly planService: PlanService,
-    @Inject(forwardRef(() => UserService))
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly planService: PlanService) {}
 
   @Get()
   findAll() {
@@ -89,18 +80,5 @@ export class PlanController {
   @Get('user/:userId/favorites')
   async findFavoritesByUserId(@Param('userId') userId: string) {
     return this.planService.findFavoritesByUserId(userId);
-  }
-
-  @Patch(':id/profile')
-  async updateUserProfile(
-    @Param('id') id: string,
-    @Body() updateUserDto: any,
-    @Req() req: any,
-  ) {
-    // Vérifier que l'utilisateur ne modifie que son propre profil
-    if (req.user._id.toString() !== id) {
-      throw new UnauthorizedException('Vous ne pouvez pas modifier ce profil');
-    }
-    return this.userService.updateById(id, updateUserDto);
   }
 }

@@ -7,8 +7,6 @@ import {
   Delete,
   InternalServerErrorException,
   UseGuards,
-  Inject,
-  forwardRef,
   NotFoundException,
   Request,
   UnauthorizedException,
@@ -17,17 +15,12 @@ import {
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PlanService } from 'src/plan/plan.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('api/users')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    @Inject(forwardRef(() => PlanService))
-    private readonly planService: PlanService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @Get()
   findAll() {
@@ -184,7 +177,7 @@ export class UserController {
   @Get(':id/plans')
   async getUserPlans(@Param('id') userId: string) {
     try {
-      const plans = await this.planService.findAllByUserId(userId);
+      const plans = await this.userService.getUserPlans(userId);
       return plans;
     } catch (error) {
       console.error(`Error getting plans: ${error.message}`);
@@ -195,7 +188,7 @@ export class UserController {
   @Get(':id/favorites')
   async getUserFavorites(@Param('id') userId: string) {
     try {
-      const favorites = await this.planService.findFavoritesByUserId(userId);
+      const favorites = await this.userService.getUserFavorites(userId);
       return favorites;
     } catch (error) {
       console.error(`Error getting favorites: ${error.message}`);
