@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:front/shared/theme/app_theme.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
 import 'package:front/ui/core/ui/card/compact_plan_card.dart';
 
 class StepThreeContent extends ConsumerStatefulWidget {

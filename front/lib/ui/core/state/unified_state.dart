@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 
 /// Unified state management for UI data loading
 class UnifiedState<T> {

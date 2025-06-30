@@ -7,7 +7,7 @@ import 'package:front/data/services/api/model/register_request/register_request_
 import 'package:front/data/services/api/model/register_response/register_response_api_model.dart';
 import 'package:front/data/services/api/model/refresh_token_request/refresh_token_request_api_model.dart';
 import 'package:front/data/services/api/model/refresh_token_response/refresh_token_response_api_model.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 
 class AuthApiClient {
   AuthApiClient({String? host, int? port, HttpClient Function()? clientFactory})

@@ -1,7 +1,7 @@
 import 'package:front/data/services/api/api_client.dart';
 import 'package:front/domain/models/comment/comment.dart';
-import 'package:front/core/utils/result.dart';
-import 'package:front/core/utils/exceptions.dart';
+import 'package:front/utils/result.dart';
+import 'package:front/utils/exceptions.dart';
 import 'package:logging/logging.dart';
 import 'comment_repository.dart';
 

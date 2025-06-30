@@ -1,5 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 import 'package:logging/logging.dart';
 
 class AuthStorageService {

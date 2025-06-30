@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:front/domain/models/comment/comment.dart';
 import 'package:front/providers/providers.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 import 'dart:io';
 
 // Providers pour l'état des commentaires

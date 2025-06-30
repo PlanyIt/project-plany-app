@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/shared/theme/app_theme.dart';
-import 'package:front/core/utils/icon_utils.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
+import 'package:front/utils/icon_utils.dart';
 
 class CompactPlanCard extends ConsumerWidget {
   final List<String>? imageUrls;

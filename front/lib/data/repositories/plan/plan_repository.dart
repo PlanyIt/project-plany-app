@@ -1,5 +1,5 @@
 import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 
 abstract class PlanRepository {
   /// Returns the list of [Plan].

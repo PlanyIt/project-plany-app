@@ -13,7 +13,7 @@ import 'package:front/ui/dashboard/widgets/search_bar/search_bar.dart';
 import 'package:front/ui/dashboard/widgets/header/section_header.dart';
 import 'package:front/ui/dashboard/widgets/drawer/profile_drawer.dart';
 import 'package:go_router/go_router.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 import 'package:front/providers/providers.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {

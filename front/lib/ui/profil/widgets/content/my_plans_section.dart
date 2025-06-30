@@ -4,10 +4,10 @@ import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/step/step.dart' as plan_steps;
 import 'package:front/ui/profil/widgets/common/section_header.dart';
-import 'package:front/core/utils/helpers.dart';
+import 'package:front/utils/helpers.dart';
 import 'package:front/ui/core/ui/card/compact_plan_card.dart';
 import 'package:front/providers/providers.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 
 // Providers pour l'état des plans de l'utilisateur
 final myPlansProvider =

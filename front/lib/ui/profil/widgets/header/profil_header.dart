@@ -4,7 +4,7 @@ import 'package:front/domain/models/user/user.dart';
 import 'package:front/ui/profil/widgets/header/components/profil_user_info.dart';
 import 'package:front/ui/profil/widgets/content/premium_popup.dart';
 import 'package:front/providers/providers.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 import 'components/profil_avatar.dart';
 import 'components/profil_stats.dart';
 import 'components/profil_categories.dart';

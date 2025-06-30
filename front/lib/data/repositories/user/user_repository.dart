@@ -1,6 +1,6 @@
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 
 /// Data source for user related data
 abstract class UserRepository {

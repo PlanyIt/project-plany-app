@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/navigation/routes.dart';
+import 'package:front/routing/routes.dart';
 import 'package:go_router/go_router.dart';
 
 class BottomBar extends StatelessWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/core/utils/icon_utils.dart';
+import 'package:front/utils/icon_utils.dart';
 import 'package:shimmer/shimmer.dart';
 
 class CategoryCards extends StatelessWidget {

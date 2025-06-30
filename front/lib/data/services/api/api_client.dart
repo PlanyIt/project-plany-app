@@ -5,7 +5,7 @@ import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/step/step.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 import 'package:logging/logging.dart';
 
 typedef AuthHeaderProvider = String? Function();

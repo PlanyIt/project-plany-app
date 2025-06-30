@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:front/core/utils/exceptions.dart';
+import 'package:front/utils/exceptions.dart';
 import 'package:logging/logging.dart';
 
 /// Helper class to handle HTTP errors and convert them to appropriate exceptions

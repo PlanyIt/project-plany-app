@@ -1,8 +1,8 @@
 import 'package:front/data/repositories/plan/plan_repository.dart';
 import 'package:front/data/services/api/api_client.dart';
 import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/core/utils/result.dart';
-import 'package:front/core/utils/exceptions.dart';
+import 'package:front/utils/result.dart';
+import 'package:front/utils/exceptions.dart';
 import 'package:logging/logging.dart';
 
 /// Remote data source for [Plan].

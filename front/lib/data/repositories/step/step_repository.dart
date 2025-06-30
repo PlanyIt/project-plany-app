@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:front/domain/models/step/step.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 
 abstract class StepRepository {
   /// Returns the list of [Step] for a given [id].

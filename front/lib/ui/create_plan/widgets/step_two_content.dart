@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:front/shared/theme/app_theme.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
 import 'package:front/ui/create_plan/widgets/step_card_timeline.dart';
 import 'package:front/domain/models/step/step.dart' as plan_steps;
 

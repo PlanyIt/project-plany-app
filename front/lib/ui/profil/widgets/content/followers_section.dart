@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/navigation/routes.dart';
+import 'package:front/routing/routes.dart';
 import 'package:front/ui/profil/widgets/common/section_header.dart';
 import 'package:front/ui/profil/widgets/content/user_list.dart';
 import 'package:front/providers/providers.dart';
-import 'package:front/core/utils/result.dart';
+import 'package:front/utils/result.dart';
 
 // Providers pour l'état des followers
 final followersProvider =

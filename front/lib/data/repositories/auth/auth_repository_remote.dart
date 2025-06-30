@@ -6,8 +6,8 @@ import 'package:front/data/services/api/model/register_request/register_request_
 import 'package:front/data/services/api/model/register_response/register_response_api_model.dart';
 import 'package:front/data/services/api/model/refresh_token_request/refresh_token_request_api_model.dart';
 import 'package:front/data/services/auth_storage_service.dart';
-import 'package:front/core/utils/result.dart';
-import 'package:front/core/utils/exceptions.dart';
+import 'package:front/utils/result.dart';
+import 'package:front/utils/exceptions.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:logging/logging.dart';
 

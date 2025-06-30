@@ -5,7 +5,7 @@ import 'package:front/domain/models/user/user.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
 import 'package:front/data/repositories/user/user_repository.dart';
-import 'package:front/core/utils/result.dart' as result_utils;
+import 'package:front/utils/result.dart' as result_utils;
 import 'package:front/providers/providers.dart';
 import 'package:front/providers/ui/unified_state_management.dart';
 

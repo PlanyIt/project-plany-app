@@ -1,7 +1,7 @@
 // filepath: c:\Users\gaell\Documents\Dev\plany\front\lib\providers\ui\unified_state_management.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:front/core/utils/error_handler.dart';
-import 'package:front/core/utils/result.dart' as result_utils;
+import 'package:front/utils/error_handler.dart';
+import 'package:front/utils/result.dart' as result_utils;
 import 'package:logging/logging.dart';
 
 // ============================================================================
