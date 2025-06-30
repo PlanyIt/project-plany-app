@@ -1,8 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import {
   NotFoundResourceException,
   ValidationException,
@@ -14,7 +11,6 @@ import { User, UserDocument } from './schemas/user.schema';
 import { Model, Connection, isValidObjectId } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from '../plan/schemas/plan.schema';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -84,10 +80,8 @@ export class UserService {
       );
     }
 
-    // Si le mot de passe est mis à jour, on le hache
-    if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 12);
-    }
+    // Si le mot de passe est mis à jour, notez que le hashage devra être fait par le service appelant
+    // car ce service ne devrait pas gérer directement le hashage des mots de passe
 
     const updatedUser = await this.userModel
       .findByIdAndUpdate(id, { $set: updateUserDto }, { new: true })
@@ -312,5 +306,15 @@ export class UserService {
     refreshToken: string | null,
   ): Promise<void> {
     await this.userModel.updateOne({ _id: userId }, { refreshToken }).exec();
+  }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      password: hashedPassword,
+    });
+  }
+
+  async count(): Promise<number> {
+    return this.userModel.countDocuments().exec();
   }
 }

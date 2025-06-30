@@ -168,4 +168,8 @@ export class CommentService {
       })
       .exec();
   }
+
+  async count(): Promise<number> {
+    return this.commentModel.countDocuments().exec();
+  }
 }

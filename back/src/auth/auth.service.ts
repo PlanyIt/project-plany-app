@@ -11,6 +11,7 @@ import {
   InvalidCredentialsException,
   ConflictException,
 } from '../common/exceptions';
+import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class AuthService {
@@ -20,15 +21,19 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly passwordService: PasswordService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly metricsService: MetricsService,
   ) {}
 
   async login(loginRequestDto: LoginRequestDto): Promise<LoginResponseDto> {
     const { email, password } = loginRequestDto;
 
+    this.metricsService.incrementLoginAttempts();
+
     // Trouver l'utilisateur par email
     const user = await this.userService.findByEmail(email);
 
     if (!user) {
+      this.metricsService.incrementLoginFailed();
       throw new InvalidCredentialsException('Identifiants invalides');
     }
 
@@ -39,27 +44,31 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
+      this.metricsService.incrementLoginFailed();
       throw new InvalidCredentialsException('Identifiants invalides');
     }
 
     // Générer les tokens
+    const userId = (user._id as any).toString();
     const payload = {
-      sub: (user._id as any).toString(),
+      sub: userId,
       username: user.username,
+      role: user.role, // Include user role in JWT payload
     };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
     });
-    const refreshToken = await this.refreshTokenService.generateRefreshToken(
-      (user._id as any).toString(),
-    );
+    const refreshToken =
+      await this.refreshTokenService.generateRefreshToken(userId);
+
+    this.metricsService.incrementLoginSuccess();
 
     return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      user_id: (user._id as any).toString(),
+      accessToken,
+      refreshToken,
+      user_id: userId,
       user: {
-        id: (user._id as any).toString(),
+        id: userId,
         username: user.username,
         email: user.email,
       },
@@ -91,23 +100,24 @@ export class AuthService {
     });
 
     // Générer les tokens
+    const userId = (user._id as any).toString();
     const payload = {
-      sub: (user._id as any).toString(),
+      sub: userId,
       username: user.username,
+      role: user.role, // Include user role in JWT payload
     };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
     });
-    const refreshToken = await this.refreshTokenService.generateRefreshToken(
-      (user._id as any).toString(),
-    );
+    const refreshToken =
+      await this.refreshTokenService.generateRefreshToken(userId);
 
     return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      user_id: (user._id as any).toString(),
+      accessToken,
+      refreshToken,
+      user_id: userId,
       user: {
-        id: (user._id as any).toString(),
+        id: userId,
         username: user.username,
         email: user.email,
       },

@@ -135,4 +135,12 @@ export class PlanService {
 
     return result;
   }
+
+  async count(): Promise<number> {
+    return this.planModel.countDocuments().exec();
+  }
+
+  async countByCategory(categoryId: string): Promise<number> {
+    return this.planModel.countDocuments({ category: categoryId }).exec();
+  }
 }

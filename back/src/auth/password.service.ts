@@ -1,40 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class PasswordService {
-  private readonly saltRounds = 10;
-
   /**
-   * Hache un mot de passe en utilisant bcrypt
+   * Hache un mot de passe en utilisant Argon2id (recommandé 2025)
    */
   async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, this.saltRounds);
+    return argon2.hash(password, {
+      type: argon2.argon2id,
+      memoryCost: 2 ** 16, // 64 MB
+      timeCost: 3,
+      parallelism: 1,
+    });
   }
 
   /**
-   * Vérifie si un mot de passe correspond à un hash
+   * Vérifie si un mot de passe correspond à un hash Argon2
    */
-  async comparePassword(
-    password: string,
-    hashedPassword: string,
-  ): Promise<boolean> {
-    return bcrypt.compare(password, hashedPassword);
-  }
-
   async verifyPassword(
     password: string,
     hashedPassword: string,
   ): Promise<boolean> {
-    return bcrypt.compare(password, hashedPassword);
-  }
-
-  async verifyLegacyPassword(
-    password: string,
-    hashedPassword: string,
-  ): Promise<boolean> {
-    // Pour les anciens mots de passe qui peuvent utiliser un autre algorithme
-    // ou pour la rétrocompatibilité
-    return bcrypt.compare(password, hashedPassword);
+    try {
+      return await argon2.verify(hashedPassword, password);
+    } catch {
+      return false;
+    }
   }
 }

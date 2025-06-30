@@ -1,6 +1,4 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -9,10 +7,17 @@ import { AuthModule } from './auth/auth.module';
 import { CommentModule } from './comment/comment.module';
 import { StepModule } from './step/step.module';
 import { CategoryModule } from './category/category.module';
-import { APP_GUARD } from '@nestjs/core';
+import { HealthModule } from './health/health.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { LoggingModule } from './common/logging/logging.module';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { ThrottleGuard } from './common/guards/throttle.guard';
-import * as path from 'path';
-import * as fs from 'fs';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { CacheModule } from '@nestjs/cache-manager';
+import { LoggerModule } from 'nestjs-pino';
+import { AuditModule } from './audit/audit.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { MetricsMiddleware } from './common/middleware/metrics.middleware';
 
 @Module({
   imports: [
@@ -26,33 +31,45 @@ import * as fs from 'fs';
         const missingVars = requiredVars.filter((varName) => !config[varName]);
 
         if (missingVars.length > 0) {
-          console.error(
+          throw new Error(
             `Missing required environment variables: ${missingVars.join(', ')}`,
           );
-
-          // Vérifier si le fichier .env existe
-          const envPath = path.resolve(process.cwd(), '.env');
-          if (!fs.existsSync(envPath)) {
-            console.error(`The .env file doesn't exist at ${envPath}`);
-          } else {
-            console.log(`The .env file exists at ${envPath}`);
-          }
         }
 
         return config;
       },
     }),
+    // Configuration Cache en mémoire
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 600, // 10 minutes
+    }),
+    // Configuration du logging structuré
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            singleLine: true,
+          },
+        },
+      },
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const uri = configService.get<string>('MONGO_URI');
-        if (!uri) {
-          throw new Error('MONGO_URI is not defined in environment variables');
-        }
-        return { uri };
-      },
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URI'),
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      }),
     }),
+    ScheduleModule.forRoot(),
+    LoggingModule,
+    HealthModule,
+    MetricsModule,
+    AuditModule,
     UserModule,
     PlanModule,
     AuthModule,
@@ -60,13 +77,19 @@ import * as fs from 'fs';
     StepModule,
     CategoryModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useClass: ThrottleGuard,
     },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(MetricsMiddleware).forRoutes('*');
+  }
+}
