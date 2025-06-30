@@ -1,5 +1,5 @@
 import 'package:front/domain/models/comment/comment.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 
 abstract class CommentRepository {
   Future<Result<List<Comment>>> getCommentsByPlanId(String planId,

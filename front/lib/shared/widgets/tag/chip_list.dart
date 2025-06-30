@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/widgets/tag/cutom_chip.dart';
+import 'package:front/shared/widgets/tag/cutom_chip.dart';
 
 class ChipList<T> extends StatelessWidget {
   final List<T> items;

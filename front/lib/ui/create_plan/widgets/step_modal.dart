@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/ui/create_plan/widgets/choose_location.dart';
-import 'package:front/theme/app_theme.dart';
-import 'package:front/widgets/card/image_picker_card.dart';
+import 'package:front/shared/theme/app_theme.dart';
+import 'package:front/shared/widgets/card/image_picker_card.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:front/providers/plan/plan_ui_providers.dart';
 

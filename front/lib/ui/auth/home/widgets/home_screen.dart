@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:front/routing/routes.dart';
-import 'package:front/widgets/common/plany_logo.dart';
+import 'package:front/navigation/routes.dart';
+import 'package:front/shared/widgets/common/plany_logo.dart';
 import 'package:front/ui/core/ui/button/plany_button.dart';
 import 'package:go_router/go_router.dart';
 

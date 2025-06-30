@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/step/step.dart' as step_model;
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 import 'package:front/ui/core/ui/card/compact_plan_card.dart';
 import 'package:shimmer/shimmer.dart';
 import 'dart:math' as math;

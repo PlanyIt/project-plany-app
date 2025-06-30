@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
 import 'package:front/ui/profil/widgets/content/premium_popup.dart';
-import 'package:front/widgets/section/section_text_field.dart';
+import 'package:front/shared/widgets/section/section_text_field.dart';
 import 'package:front/providers/providers.dart';
 
 class AccountSettings extends ConsumerStatefulWidget {

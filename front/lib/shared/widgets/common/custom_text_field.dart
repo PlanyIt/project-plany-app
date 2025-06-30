@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/shared/theme/app_theme.dart';
 import 'package:front/providers/ui/ui_providers.dart';
 
 class CustomTextField extends ConsumerStatefulWidget {

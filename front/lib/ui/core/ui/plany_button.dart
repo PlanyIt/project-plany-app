@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/shared/theme/app_theme.dart';
 
 class PlanyButton extends StatelessWidget {
   final String text;

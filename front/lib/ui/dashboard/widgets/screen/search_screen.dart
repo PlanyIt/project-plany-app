@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/providers/dashboard/dashboard_provider.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 
-import 'package:front/widgets/tag/cutom_chip.dart';
+import 'package:front/shared/widgets/tag/cutom_chip.dart';
 import 'package:front/ui/dashboard/widgets/search_bar/search_bar.dart';
 import 'package:front/ui/core/ui/card/compact_plan_card.dart';
 import 'package:front/providers/providers.dart';

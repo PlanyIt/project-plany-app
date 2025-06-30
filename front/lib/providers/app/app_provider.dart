@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/data/repositories/auth/auth_repository.dart';
-import 'package:front/application/session_manager.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/session/session_manager.dart';
+import 'package:front/core/utils/result.dart';
 import 'package:front/providers/providers.dart';
 import 'package:front/providers/ui/unified_state_management.dart';
 

@@ -1,5 +1,5 @@
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 
 abstract class CategoryRepository {
   /// Returns the list of [Category].

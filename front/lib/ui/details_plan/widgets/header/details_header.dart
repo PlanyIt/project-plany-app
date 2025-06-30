@@ -6,7 +6,7 @@ import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/ui/details_plan/widgets/header/components/step_info_card.dart';
 import 'package:front/ui/details_plan/widgets/header/components/header_carousel.dart';
 import 'package:front/providers/providers.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 import 'package:geolocator/geolocator.dart';
 
 // Providers pour l'état du header

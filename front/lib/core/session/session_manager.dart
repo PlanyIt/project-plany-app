@@ -4,7 +4,7 @@ import 'package:front/data/repositories/comment/comment_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository_remote.dart';
 import 'package:front/data/repositories/step/step_repository_remote.dart';
 import 'package:front/data/repositories/user/user_repository_remote.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 
 /// Gère les actions transversales comme login/logout,
 /// et vide les caches si nécessaire.

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/providers/providers.dart';
-import 'package:front/utils/icon_utils.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/icon_utils.dart';
+import 'package:front/core/utils/result.dart';
 
 // Providers pour l'état des catégories du profil
 final profileCategoriesProvider =

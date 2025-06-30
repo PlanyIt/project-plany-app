@@ -7,7 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/shared/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 
 class ChooseLocation extends ConsumerStatefulWidget {

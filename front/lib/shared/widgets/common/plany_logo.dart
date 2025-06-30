@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/shared/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class PlanyLogo extends StatelessWidget {

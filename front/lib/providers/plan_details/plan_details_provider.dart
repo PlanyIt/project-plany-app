@@ -9,7 +9,7 @@ import 'package:front/data/repositories/step/step_repository.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/user/user_repository.dart';
 import 'package:front/data/repositories/comment/comment_repository.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 import 'package:front/providers/providers.dart';
 import 'package:front/providers/ui/unified_state_management.dart';
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:front/widgets/common/plany_logo.dart';
+import 'package:front/shared/widgets/common/plany_logo.dart';
 import 'package:front/ui/core/ui/button/plany_button.dart';
-import 'package:front/theme/app_theme.dart';
-import 'package:front/widgets/common/custom_text_field.dart';
+import 'package:front/shared/theme/app_theme.dart';
+import 'package:front/shared/widgets/common/custom_text_field.dart';
 import 'package:front/providers/providers.dart';
 
 class ResetPasswordScreen extends ConsumerWidget {

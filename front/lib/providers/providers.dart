@@ -15,7 +15,7 @@ import 'package:front/data/services/api/api_client.dart';
 import 'package:front/data/services/api/auth_api_client.dart';
 import 'package:front/data/services/auth_storage_service.dart';
 import 'package:front/data/services/imgur_service.dart';
-import 'package:front/application/session_manager.dart';
+import 'package:front/core/session/session_manager.dart';
 
 // =========================================================================
 // SERVICES CORE

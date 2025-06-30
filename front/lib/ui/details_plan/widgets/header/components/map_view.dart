@@ -4,7 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/providers/providers.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 
 // Providers pour l'état de la carte
 final mapStepsProvider =

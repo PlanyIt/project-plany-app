@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/user/user.dart';
 import 'package:front/ui/profil/widgets/settings/components/settings_row.dart';
-import 'package:front/widgets/section/section_text_field.dart';
+import 'package:front/shared/widgets/section/section_text_field.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';

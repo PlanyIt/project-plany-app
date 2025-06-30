@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/data/repositories/auth/auth_repository.dart';
-import 'package:front/routing/routes.dart';
+import 'package:front/navigation/routes.dart';
 import 'package:front/ui/auth/login/widgets/login_screen.dart';
 import 'package:front/ui/auth/signup/widgets/signup_screen.dart';
 import 'package:front/ui/auth/home/widgets/home_screen.dart';

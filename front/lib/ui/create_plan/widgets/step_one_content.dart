@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/theme/app_theme.dart';
-import 'package:front/utils/icon_utils.dart';
-import 'package:front/widgets/button/select_button.dart';
-import 'package:front/widgets/modal/grid_selector_modal.dart';
+import 'package:front/shared/theme/app_theme.dart';
+import 'package:front/core/utils/icon_utils.dart';
+import 'package:front/shared/widgets/button/select_button.dart';
+import 'package:front/shared/widgets/modal/grid_selector_modal.dart';
 import 'package:front/providers/plan/plan_ui_providers.dart';
 
 class StepOneContent extends ConsumerWidget {

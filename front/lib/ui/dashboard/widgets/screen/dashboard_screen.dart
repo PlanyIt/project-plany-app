@@ -7,13 +7,13 @@ import 'package:front/ui/dashboard/widgets/card/category_cards.dart';
 import 'package:front/ui/dashboard/widgets/list/horizontal_plan_list.dart';
 import 'package:front/ui/dashboard/widgets/screen/search_screen.dart';
 import 'package:front/ui/core/ui/bottom_bar/bottom_bar.dart';
-import 'package:front/widgets/common/plany_logo.dart';
+import 'package:front/shared/widgets/common/plany_logo.dart';
 import 'package:front/ui/dashboard/widgets/placeholder/empty_state_widget.dart';
 import 'package:front/ui/dashboard/widgets/search_bar/search_bar.dart';
 import 'package:front/ui/dashboard/widgets/header/section_header.dart';
 import 'package:front/ui/dashboard/widgets/drawer/profile_drawer.dart';
 import 'package:go_router/go_router.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 import 'package:front/providers/providers.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {

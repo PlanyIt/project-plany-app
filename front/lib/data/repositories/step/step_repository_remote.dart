@@ -4,7 +4,7 @@ import 'package:front/data/repositories/step/step_repository.dart';
 import 'package:front/data/services/api/api_client.dart';
 import 'package:front/data/services/imgur_service.dart';
 import 'package:front/domain/models/step/step.dart';
-import 'package:front/utils/result.dart';
+import 'package:front/core/utils/result.dart';
 
 class StepRepositoryRemote implements StepRepository {
   StepRepositoryRemote({

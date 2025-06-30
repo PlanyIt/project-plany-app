@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/user/user.dart';
-import 'package:front/routing/routes.dart';
+import 'package:front/navigation/routes.dart';
 import 'package:front/ui/profil/widgets/profil_screen.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/shared/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfileDrawer extends StatelessWidget {
