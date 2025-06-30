@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
+import 'package:front/ui/core/ui/widgets/button/select_button.dart';
 import 'package:front/ui/create_plan/view_models/create_plan_viewmodel.dart';
-import 'package:front/theme/app_theme.dart';
 import 'package:front/utils/icon_utils.dart';
-import 'package:front/widgets/button/select_button.dart';
-import 'package:front/widgets/modal/grid_selector_modal.dart';
+import 'package:front/ui/core/ui/widgets/modal/grid_selector_modal.dart';
 
 class StepOneContent extends StatefulWidget {
   const StepOneContent({super.key, required this.viewModel});

@@ -6,11 +6,12 @@ import 'package:front/ui/dashboard/widgets/list/horizontal_plan_list.dart';
 import 'package:front/ui/dashboard/widgets/screen/search_screen.dart';
 import 'package:front/ui/core/ui/bottom_bar/bottom_bar.dart';
 import 'package:front/ui/dashboard/view_models/dashboard_viewmodel.dart';
-import 'package:front/widgets/common/plany_logo.dart';
+import 'package:front/ui/core/ui/logo/plany_logo.dart';
 import 'package:front/ui/dashboard/widgets/placeholder/empty_state_widget.dart';
 import 'package:front/ui/dashboard/widgets/search_bar/search_bar.dart';
 import 'package:front/ui/dashboard/widgets/header/section_header.dart';
 import 'package:front/ui/dashboard/widgets/drawer/profile_drawer.dart';
+import 'package:front/utils/helpers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:front/utils/result.dart';
 
@@ -44,11 +45,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       {String? query,
       app_category.Category? category,
       bool fromSearchBar = false}) {
-    // Mettre à jour les filtres de recherche dans le viewModel
     if (query != null) viewModel.searchQuery = query;
     if (category != null) viewModel.selectedCategory = category;
 
-    // Déclencher une recherche avec les nouveaux filtres
     viewModel.load.execute();
 
     Navigator.push(
@@ -58,8 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           viewModel: viewModel,
           initialQuery: query,
           initialCategory: category,
-          autoFocus:
-              fromSearchBar, // Uniquement autofocus si on vient de la barre de recherche
+          autoFocus: fromSearchBar,
         ),
       ),
     );
@@ -170,9 +168,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
         child: InkWell(
-          onTap: () => _navigateToSearch(
-              fromSearchBar:
-                  true), // Activer l'autofocus quand on tape sur la barre de recherche
+          onTap: () => _navigateToSearch(fromSearchBar: true),
           child: AbsorbPointer(
             child: DashboardSearchBar(
               hintText: 'Rechercher des plans...',
@@ -239,8 +235,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           queryParameters: {'planId': plan.id},
         ),
         emptyMessage: '',
-        userLatitude: viewModel.userLatitude,
-        userLongitude: viewModel.userLongitude,
       ),
     );
   }

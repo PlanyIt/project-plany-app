@@ -1,18 +1,35 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type UserDocument = User & Document;
+
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+}
 
 @Schema({ timestamps: true })
 export class User {
   @Prop({ required: true, unique: true })
-  username: string;
-
-  @Prop({ required: true, unique: true })
   email: string;
 
   @Prop({ required: true })
+  username: string;
+
+  @Prop({ required: true })
   password: string;
+
+  @Prop({ enum: UserRole, default: UserRole.USER })
+  role: UserRole;
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop()
+  lastLoginAt: Date;
+
+  @Prop()
+  refreshToken: string;
 
   @Prop()
   description: string;
@@ -23,26 +40,17 @@ export class User {
   @Prop()
   photoUrl: string;
 
-  @Prop({ type: Date })
+  @Prop()
   birthDate: Date;
 
   @Prop()
   gender: string;
 
-  @Prop({ default: 'user' })
-  role: string;
+  @Prop([{ type: Types.ObjectId, ref: 'User' }])
+  followers: Types.ObjectId[];
 
-  @Prop({ default: true })
-  isActive: boolean;
-
-  @Prop({ type: [String], default: [] })
-  followers: string[];
-
-  @Prop({ type: [String], default: [] })
-  following: string[];
-
-  @Prop({ required: false })
-  refreshToken?: string;
+  @Prop([{ type: Types.ObjectId, ref: 'User' }])
+  following: Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

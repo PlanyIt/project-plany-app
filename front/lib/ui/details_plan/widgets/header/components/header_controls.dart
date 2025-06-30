@@ -4,6 +4,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/data/services/navigation_service.dart';
+import 'package:front/utils/helpers.dart';
 
 class HeaderControls extends StatelessWidget {
   final Color categoryColor;
@@ -66,7 +67,10 @@ class HeaderControls extends StatelessWidget {
       return;
     }
 
-    final validSteps = steps.where((step) => step.position != null).toList();
+    final validSteps = steps
+        .where(
+            (step) => latLngFromDoubles(step.latitude, step.longitude) != null)
+        .toList();
 
     if (validSteps.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

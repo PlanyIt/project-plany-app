@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:front/utils/helpers.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/ui/details_plan/view_models/details_plan_viewmodel.dart';
@@ -15,7 +16,7 @@ class MapView extends StatefulWidget {
   final Function(int)? onStepSelected;
 
   const MapView({
-    Key? key,
+    super.key,
     required this.stepIds,
     required this.category,
     required this.categoryColor,
@@ -24,7 +25,7 @@ class MapView extends StatefulWidget {
     this.planDescription,
     this.height = 280,
     this.onStepSelected,
-  }) : super(key: key);
+  });
 
   @override
   MapViewState createState() => MapViewState();
@@ -57,7 +58,7 @@ class MapViewState extends State<MapView> {
       for (String id in widget.stepIds) {
         final step = await widget.viewModel.getStepById(id);
         if (step != null) {
-          if (step.position != null) {
+          if (latLngFromDoubles(step.latitude, step.longitude) != null) {
             loadedSteps.add(step);
           } else {
             print("Position nulle pour étape ${step.id}");
@@ -90,13 +91,15 @@ class MapViewState extends State<MapView> {
 
     try {
       if (_steps.length == 1) {
-        _mapController.move(_steps[0].position!, 12.0);
+        _mapController.move(
+            latLngFromDoubles(_steps[0].latitude, _steps[0].longitude)!, 12.0);
         return;
       }
 
       final points = _steps
-          .where((step) => step.position != null)
-          .map((step) => step.position!)
+          .where((step) =>
+              latLngFromDoubles(step.latitude, step.longitude) != null)
+          .map((step) => latLngFromDoubles(step.latitude, step.longitude)!)
           .toList();
 
       if (points.isEmpty) return;
@@ -114,18 +117,27 @@ class MapViewState extends State<MapView> {
       print("Erreur d'ajustement de la carte: $e");
       // Tentative de fallback
       if (_steps.isNotEmpty) {
-        _mapController.move(_steps[0].position!, 13.0);
+        _mapController.move(
+          LatLng(
+            _steps[0].latitude ?? 0,
+            _steps[0].longitude ?? 0,
+          ),
+          13.0,
+        );
       }
     }
   }
 
   void _zoomToStep(int index) {
-    if (index < 0 || index >= _steps.length || _steps[index].position == null)
+    if (index < 0 ||
+        index >= _steps.length ||
+        LatLng(_steps[index].latitude ?? 0, _steps[index].longitude ?? 0) ==
+            LatLng(0, 0)) {
       return;
+    }
 
     final step = _steps[index];
-    _mapController.move(
-        LatLng(step.position!.latitude, step.position!.longitude), 18.0);
+    _mapController.move(LatLng(step.latitude ?? 0, step.longitude ?? 0), 18.0);
 
     setState(() {
       _currentStepIndex = index;
@@ -133,35 +145,42 @@ class MapViewState extends State<MapView> {
   }
 
   void recenterMap() {
-    if (_steps.isNotEmpty && _steps[0].position != null) {
+    if (_steps.isEmpty) return;
+
+    // Si on a déjà centré la carte, on ne fait rien
+    if (_hasCenteredMap) return;
+
+    _hasCenteredMap = true;
+
+    // Si une seule étape, on centre dessus
+    if (_steps.length == 1) {
       _mapController.move(
-        LatLng(_steps[0].position!.latitude, _steps[0].position!.longitude),
-        15.0,
+        LatLng(_steps[0].latitude ?? 0, _steps[0].longitude ?? 0),
+        12.0,
       );
+      return;
     }
+
+    // Sinon, on ajuste les limites pour toutes les étapes
+    final bounds = LatLngBounds.fromPoints(
+      _steps.map((s) => LatLng(s.latitude ?? 0, s.longitude ?? 0)).toList(),
+    );
+
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.all(80),
+        maxZoom: 14.0,
+      ),
+    );
   }
 
   // méthode recenterMap pour centrer sur tous les marqueurs
   void recenterMapAll() {
     if (_steps.isEmpty) return;
 
-    final bounds = LatLngBounds(
-      LatLng(
-        _steps
-            .map((m) => m.position!.latitude)
-            .reduce((min, pos) => pos < min ? pos : min),
-        _steps
-            .map((m) => m.position!.longitude)
-            .reduce((min, pos) => pos < min ? pos : min),
-      ),
-      LatLng(
-        _steps
-            .map((m) => m.position!.latitude)
-            .reduce((max, pos) => pos > max ? pos : max),
-        _steps
-            .map((m) => m.position!.longitude)
-            .reduce((max, pos) => pos > max ? pos : max),
-      ),
+    final bounds = LatLngBounds.fromPoints(
+      _steps.map((s) => LatLng(s.latitude ?? 0, s.longitude ?? 0)).toList(),
     );
 
     _mapController.fitCamera(
@@ -233,7 +252,10 @@ class MapViewState extends State<MapView> {
                           return Marker(
                             width: 40,
                             height: 40,
-                            point: step.position!,
+                            point: LatLng(
+                              step.latitude ?? 0,
+                              step.longitude ?? 0,
+                            ),
                             child: GestureDetector(
                               onTap: () {
                                 setState(() {
@@ -300,7 +322,12 @@ class MapViewState extends State<MapView> {
                       PolylineLayer(
                         polylines: [
                           Polyline(
-                            points: _steps.map((s) => s.position!).toList(),
+                            points: _steps
+                                .map((s) => LatLng(
+                                      s.latitude ?? 0,
+                                      s.longitude ?? 0,
+                                    ))
+                                .toList(),
                             color: categoryColor,
                             strokeWidth: 4,
                           ),
@@ -388,8 +415,16 @@ class MapViewState extends State<MapView> {
 
   // Méthode pour obtenir le centre initial de la carte
   LatLng _getInitialCenter() {
-    if (_steps.isNotEmpty && _steps[0].position != null) {
-      return _steps[0].position!;
+    if (_steps.isNotEmpty &&
+        latLngFromDoubles(
+              _steps[0].latitude,
+              _steps[0].longitude,
+            ) !=
+            null) {
+      return latLngFromDoubles(
+        _steps[0].latitude,
+        _steps[0].longitude,
+      )!;
     }
 
     final centerPos = widget.viewModel.mapCenterPosition;

@@ -40,4 +40,8 @@ export class CategoryService {
   async findByName(name: string): Promise<CategoryDocument | null> {
     return this.categoryModel.findOne({ name }).exec();
   }
+
+  async count(): Promise<number> {
+    return this.categoryModel.countDocuments().exec();
+  }
 }

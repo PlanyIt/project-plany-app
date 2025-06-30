@@ -4,7 +4,7 @@ import 'package:front/ui/core/ui/plany_button.dart';
 import 'package:front/ui/create_plan/widgets/step_three_content.dart';
 import 'package:front/ui/create_plan/widgets/step_one_content.dart';
 import 'package:front/ui/create_plan/widgets/step_two_content.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
 import 'package:front/ui/create_plan/view_models/create_plan_viewmodel.dart';
 
 class CreatePlanScreen extends StatefulWidget {
@@ -119,12 +119,13 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
                   decoration: BoxDecoration(
                     color: isActive
                         ? AppTheme.primaryColor
-                        : Colors.grey.withOpacity(0.2),
+                        : Colors.grey.withValues(alpha: .2),
                     shape: BoxShape.circle,
                     boxShadow: isCurrent
                         ? [
                             BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.4),
+                              color:
+                                  AppTheme.primaryColor.withValues(alpha: .4),
                               blurRadius: 12,
                               spreadRadius: 2,
                             ),
@@ -149,10 +150,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
                         colors: [
                           isActive
                               ? AppTheme.primaryColor
-                              : Colors.grey.withOpacity(0.2),
+                              : Colors.grey.withValues(alpha: .2),
                           index + 1 < widget.viewModel.currentStep
                               ? AppTheme.primaryColor
-                              : Colors.grey.withOpacity(0.2),
+                              : Colors.grey.withValues(alpha: .2),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(2),
@@ -224,7 +225,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: .05),
             offset: const Offset(0, -4),
             blurRadius: 10,
           ),

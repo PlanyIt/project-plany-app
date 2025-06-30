@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
@@ -7,6 +7,11 @@ import { LoginResponseDto } from './dto/login/login-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenService } from './refresh-token.service';
 import { PasswordService } from './password.service';
+import {
+  InvalidCredentialsException,
+  ConflictException,
+} from '../common/exceptions';
+import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class AuthService {
@@ -16,16 +21,20 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly passwordService: PasswordService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly metricsService: MetricsService,
   ) {}
 
   async login(loginRequestDto: LoginRequestDto): Promise<LoginResponseDto> {
     const { email, password } = loginRequestDto;
 
+    this.metricsService.incrementLoginAttempts();
+
     // Trouver l'utilisateur par email
     const user = await this.userService.findByEmail(email);
 
     if (!user) {
-      throw new UnauthorizedException('Identifiants invalides');
+      this.metricsService.incrementLoginFailed();
+      throw new InvalidCredentialsException('Identifiants invalides');
     }
 
     // Vérifier le mot de passe
@@ -35,27 +44,31 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Identifiants invalides');
+      this.metricsService.incrementLoginFailed();
+      throw new InvalidCredentialsException('Identifiants invalides');
     }
 
     // Générer les tokens
+    const userId = (user._id as any).toString();
     const payload = {
-      sub: (user._id as any).toString(),
+      sub: userId,
       username: user.username,
+      role: user.role, // Include user role in JWT payload
     };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
     });
-    const refreshToken = await this.refreshTokenService.generateRefreshToken(
-      (user._id as any).toString(),
-    );
+    const refreshToken =
+      await this.refreshTokenService.generateRefreshToken(userId);
+
+    this.metricsService.incrementLoginSuccess();
 
     return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      user_id: (user._id as any).toString(),
+      accessToken,
+      refreshToken,
+      user_id: userId,
       user: {
-        id: (user._id as any).toString(),
+        id: userId,
         username: user.username,
         email: user.email,
       },
@@ -68,12 +81,12 @@ export class AuthService {
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await this.userService.findByEmail(email);
     if (existingUser) {
-      throw new UnauthorizedException('Cet email est déjà utilisé');
+      throw new ConflictException('Cet email est déjà utilisé');
     }
 
     const existingUsername = await this.userService.findByUsername(username);
     if (existingUsername) {
-      throw new UnauthorizedException("Ce nom d'utilisateur est déjà utilisé");
+      throw new ConflictException("Ce nom d'utilisateur est déjà utilisé");
     }
 
     // Hasher le mot de passe
@@ -87,23 +100,24 @@ export class AuthService {
     });
 
     // Générer les tokens
+    const userId = (user._id as any).toString();
     const payload = {
-      sub: (user._id as any).toString(),
+      sub: userId,
       username: user.username,
+      role: user.role, // Include user role in JWT payload
     };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
     });
-    const refreshToken = await this.refreshTokenService.generateRefreshToken(
-      (user._id as any).toString(),
-    );
+    const refreshToken =
+      await this.refreshTokenService.generateRefreshToken(userId);
 
     return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      user_id: (user._id as any).toString(),
+      accessToken,
+      refreshToken,
+      user_id: userId,
       user: {
-        id: (user._id as any).toString(),
+        id: userId,
         username: user.username,
         email: user.email,
       },

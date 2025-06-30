@@ -1,8 +1,9 @@
+import { Injectable } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+  NotFoundResourceException,
+  ValidationException,
+} from '../common/exceptions';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -10,7 +11,6 @@ import { User, UserDocument } from './schemas/user.schema';
 import { Model, Connection, isValidObjectId } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from '../plan/schemas/plan.schema';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -30,7 +30,7 @@ export class UserService {
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     // Vérifier si le mot de passe est sécurisé
     if (!this.isPasswordSecure(createUserDto.password)) {
-      throw new BadRequestException(
+      throw new ValidationException(
         'Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule et un chiffre',
       );
     }
@@ -80,17 +80,15 @@ export class UserService {
       );
     }
 
-    // Si le mot de passe est mis à jour, on le hache
-    if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 12);
-    }
+    // Si le mot de passe est mis à jour, notez que le hashage devra être fait par le service appelant
+    // car ce service ne devrait pas gérer directement le hashage des mots de passe
 
     const updatedUser = await this.userModel
       .findByIdAndUpdate(id, { $set: updateUserDto }, { new: true })
       .exec();
 
     if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundResourceException('User', id);
     }
 
     return updatedUser;
@@ -308,5 +306,15 @@ export class UserService {
     refreshToken: string | null,
   ): Promise<void> {
     await this.userModel.updateOne({ _id: userId }, { refreshToken }).exec();
+  }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      password: hashedPassword,
+    });
+  }
+
+  async count(): Promise<number> {
+    return this.userModel.countDocuments().exec();
   }
 }

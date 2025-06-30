@@ -1,6 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:front/domain/models/step/latlng_converter.dart';
-import 'package:latlong2/latlong.dart';
 
 part 'step.freezed.dart';
 part 'step.g.dart';
@@ -11,7 +9,8 @@ class Step with _$Step {
     @JsonKey(name: '_id') String? id,
     required String title,
     required String description,
-    @LatLngConverter() LatLng? position,
+    double? latitude,
+    double? longitude,
     required int order,
     required String image,
     String? duration,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/widgets/card/step_card.dart';
+import 'package:front/ui/core/ui/widgets/card/step_card.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
 class StepCardTimeline extends StatelessWidget {

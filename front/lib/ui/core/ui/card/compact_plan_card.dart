@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
+import 'package:front/utils/helpers.dart';
 import 'package:front/utils/icon_utils.dart';
 
 class CompactPlanCard extends StatelessWidget {
@@ -15,6 +16,7 @@ class CompactPlanCard extends StatelessWidget {
   final BorderRadius? borderRadius;
   final double? totalCost;
   final int? totalDuration;
+  final String? distance;
 
   const CompactPlanCard({
     super.key,
@@ -28,6 +30,7 @@ class CompactPlanCard extends StatelessWidget {
     this.borderRadius,
     this.totalCost,
     this.totalDuration,
+    this.distance,
   });
 
   @override
@@ -160,7 +163,7 @@ class CompactPlanCard extends StatelessWidget {
               Icon(Icons.access_time, size: 14, color: Colors.grey.shade600),
               const SizedBox(width: 4),
               Text(
-                _formatDuration(totalDuration!),
+                formatDuration(totalDuration!),
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,
@@ -168,25 +171,28 @@ class CompactPlanCard extends StatelessWidget {
                 ),
               ),
             ],
+            if (distance != null) ...[
+              const SizedBox(width: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.place, size: 14, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(
+                    "$distance",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ],
     );
-  }
-
-  // Helper method to format duration in minutes to a readable format
-  String _formatDuration(int minutes) {
-    if (minutes < 60) {
-      return '$minutes min';
-    } else {
-      final hours = (minutes / 60).floor();
-      final remainingMinutes = minutes % 60;
-      if (remainingMinutes == 0) {
-        return '${hours}h';
-      } else {
-        return '${hours}h ${remainingMinutes}min';
-      }
-    }
   }
 
   Widget _buildCategoryBadge(BuildContext context) {

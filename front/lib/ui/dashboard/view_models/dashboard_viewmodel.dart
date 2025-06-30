@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:logging/logging.dart';
 import 'package:front/application/session_manager.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
@@ -8,10 +11,11 @@ import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/step/step.dart' as step_model;
 import 'package:front/domain/models/user/user.dart';
+import 'package:front/ui/dashboard/widgets/screen/search_screen.dart';
 import 'package:front/utils/command.dart';
 import 'package:front/utils/result.dart';
-import 'package:logging/logging.dart';
-import 'dart:math' as math;
+import 'package:geolocator/geolocator.dart';
+import 'package:front/utils/helpers.dart';
 
 class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel({
@@ -29,271 +33,339 @@ class DashboardViewModel extends ChangeNotifier {
     logout = Command0(_logout);
   }
 
+  // Services & Repos
   final CategoryRepository _categoryRepository;
   final PlanRepository _planRepository;
   final UserRepository _userRepository;
   final StepRepository _stepRepository;
   final SessionManager _sessionManager;
-  final _log = Logger('DashboardViewModel');
+  final Logger _log = Logger('DashboardViewModel');
 
-  final Map<String, String> _stepImageCache = {};
+  // UI State
+  final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
+  final ValueNotifier<String?> locationError = ValueNotifier<String?>(null);
+
+  // Data
+  final List<Category> _categories = [];
+  final List<Plan> _plans = [];
   final Map<String, List<step_model.Step>> _planSteps = {};
-
-  List<Category> _categories = [];
-  List<Plan> _plans = [];
+  final Map<String, String> _stepImageCache = {};
   User? _user;
+
+  // Filters & sort
   String searchQuery = '';
   Category? selectedCategory;
   String? sortBy;
   bool sortAscending = true;
-  double? locationRadius; // in kilometers
+  double? locationRadius;
   double? userLatitude;
   double? userLongitude;
 
-  late Command0 load;
-  late Command0 logout;
+  // Search screen state
+  String? _searchScreenSortBy;
+  bool _searchScreenSortAsc = true;
+  double _searchScreenLocationRadius = 10.0;
+  bool _searchScreenUseLocation = false;
 
-  bool _isLoading = true;
-  bool get isLoading => _isLoading;
+  // Commands
+  late final Command0 load;
+  late final Command0 logout;
 
+  // Public getters
   List<Category> get categories => _categories;
   List<Plan> get plans => _plans;
   Map<String, List<step_model.Step>> get planSteps => _planSteps;
   User? get user => _user;
+  bool get hasLoadedData => _categories.isNotEmpty && _plans.isNotEmpty;
+  List<Plan> get trendingPlans => _plans.take(5).toList();
+  List<Plan> get discoveryPlans {
+    final copy = List<Plan>.from(_plans)..shuffle();
+    return copy;
+  }
 
-  bool get hasLoadedData =>
-      _categories.isNotEmpty && _plans.isNotEmpty && _planSteps.isNotEmpty;
+  String? get searchScreenSortBy => _searchScreenSortBy;
+  bool get searchScreenSortAsc => _searchScreenSortAsc;
+  double get searchScreenLocationRadius => _searchScreenLocationRadius;
+  bool get searchScreenUseLocation => _searchScreenUseLocation;
+  bool get hasActiveFilters =>
+      selectedCategory != null ||
+      _searchScreenSortBy != null ||
+      _searchScreenUseLocation;
 
-  Future<Result> _load() async {
+  /// Consolidated loading workflow
+  Future<Result<void>> _load() async {
+    isLoading.value = true;
+    notifyListeners();
     try {
-      _log.info('Loading dashboard data...');
-      _isLoading = true;
-      notifyListeners();
+      _log.info('Loading dashboard data');
+      final catRes = await _loadCategories();
+      if (catRes is Error) return catRes;
 
-      final categoryResult = await _categoryRepository.getCategoriesList();
-      if (categoryResult case Ok(value: final cats)) {
-        _categories = cats;
-      } else {
-        return categoryResult;
-      }
+      final planRes = await _loadPlans();
+      if (planRes is Error) return planRes;
 
-      final planResult = await _planRepository.getPlanList();
-      if (planResult case Ok(value: final plans)) {
-        _plans = plans;
-      } else {
-        return planResult;
-      }
+      await _loadStepsForPlans();
 
-      _planSteps.clear();
-      _stepImageCache.clear();
-
-      for (final plan in _plans) {
-        final steps = <step_model.Step>[];
-        for (final stepId in plan.steps) {
-          final stepResult = await _stepRepository.getStepById(stepId);
-          if (stepResult case Ok(value: final step)) {
-            steps.add(step);
-            if (step.image.isNotEmpty) _stepImageCache[stepId] = step.image;
-          }
-        }
-        if (plan.id != null) _planSteps[plan.id!] = steps;
-      }
-
-      final userResult = await _userRepository.getCurrentUser();
-      if (userResult case Ok(value: final usr)) {
-        _user = usr;
-      }
+      final userRes = await _loadUser();
+      if (userRes is Error) return userRes;
 
       return Result.ok(null);
     } catch (e, st) {
-      _log.severe('Unexpected error in load()', e, st);
+      _log.severe('Error in load', e, st);
       return Result.error(Exception('Unexpected error: $e'));
     } finally {
-      _isLoading = false;
+      isLoading.value = false;
       notifyListeners();
     }
   }
 
-  Future<Result> _logout() async {
-    final result = await _sessionManager.logout();
-    if (result case Ok()) {
+  Future<Result<void>> _loadCategories() async {
+    final res = await _categoryRepository.getCategoriesList();
+    if (res is Ok<List<Category>>) {
+      _categories
+        ..clear()
+        ..addAll(res.value);
+      return Result.ok(null);
+    }
+    return res;
+  }
+
+  Future<Result<void>> _loadPlans() async {
+    final res = await _planRepository.getPlanList();
+    if (res is Ok<List<Plan>>) {
+      _plans
+        ..clear()
+        ..addAll(res.value);
+      return Result.ok(null);
+    }
+    return res;
+  }
+
+  Future<void> _loadStepsForPlans() async {
+    _planSteps.clear();
+    _stepImageCache.clear();
+    for (final plan in _plans) {
+      final steps = <step_model.Step>[];
+      for (final id in plan.steps) {
+        final res = await _stepRepository.getStepById(id);
+        if (res is Ok<step_model.Step>) {
+          steps.add(res.value);
+          if (res.value.image.isNotEmpty) {
+            _stepImageCache[id] = res.value.image;
+          }
+        }
+      }
+      _planSteps[plan.id!] = steps;
+    }
+  }
+
+  Future<Result<void>> _loadUser() async {
+    final res = await _userRepository.getCurrentUser();
+    if (res is Ok<User>) {
+      _user = res.value;
+      return Result.ok(null);
+    }
+    return res;
+  }
+
+  Future<Result<void>> _logout() async {
+    final res = await _sessionManager.logout();
+    if (res is Ok) {
       _user = null;
-      _plans.clear();
       _categories.clear();
+      _plans.clear();
       _planSteps.clear();
       _stepImageCache.clear();
     }
     notifyListeners();
-    return result;
+    return res;
   }
 
-  Future<void> searchPlans() async {
-    await load.execute();
-  }
-
+  /// Filtered & sorted plans
   List<Plan> getFilteredPlans() {
     final query = searchQuery.toLowerCase();
-    var filteredPlans = plans.where((plan) {
-      final matchText = plan.title.toLowerCase().contains(query) ||
+    var filtered = _plans.where((plan) {
+      final textMatch = plan.title.toLowerCase().contains(query) ||
           plan.description.toLowerCase().contains(query);
-      final matchCategory = selectedCategory == null ||
-          plan.category == selectedCategory!.id; // Location filtering
-      bool matchLocation = true;
+      final catMatch =
+          selectedCategory == null || plan.category == selectedCategory!.id;
+      bool locMatch = true;
       if (locationRadius != null &&
           userLatitude != null &&
           userLongitude != null) {
-        final steps = _planSteps[plan.id] ?? [];
-        matchLocation = steps.any((step) {
-          if (step.position != null) {
-            final distance = _calculateDistance(userLatitude!, userLongitude!,
-                step.position!.latitude, step.position!.longitude);
-            return distance <= locationRadius!;
-          }
-          return false;
-        });
+        locMatch = calculateDistanceToFirstStepValue(plan) != null &&
+            calculateDistanceToFirstStepValue(plan)! <= locationRadius!;
       }
-
-      return matchText && matchCategory && matchLocation;
+      return textMatch && catMatch && locMatch;
     }).toList();
 
-    // Apply sorting if specified
     if (sortBy != null) {
-      filteredPlans.sort((a, b) {
-        int comparison = 0;
-        switch (sortBy) {
-          case 'cost':
-            final costA = calculatePlanTotalCost(a);
-            final costB = calculatePlanTotalCost(b);
-            comparison = costA.compareTo(costB);
-            break;
-          case 'duration':
-            final durationA = calculatePlanTotalDuration(a);
-            final durationB = calculatePlanTotalDuration(b);
-            comparison = durationA.compareTo(durationB);
-            break;
-          case 'distance':
-            final distanceA =
-                calculateDistanceToFirstStep(a) ?? double.infinity;
-            final distanceB =
-                calculateDistanceToFirstStep(b) ?? double.infinity;
-            comparison = distanceA.compareTo(distanceB);
-            break;
-          default:
-            return 0;
+      filtered.sort((a, b) {
+        double getValue(Plan p) {
+          switch (sortBy) {
+            case 'cost':
+              return p.steps.fold(0.0,
+                  (sum, id) => sum + (_stepImageCache[id] == null ? 0.0 : 0.0));
+            case 'duration':
+              return calculatePlanTotalDuration(p).toDouble();
+            case 'distance':
+              return calculateDistanceToFirstStepValue(p) ?? double.infinity;
+            default:
+              return 0;
+          }
         }
 
-        return sortAscending ? comparison : -comparison;
+        final cmp = getValue(a).compareTo(getValue(b));
+        return sortAscending ? cmp : -cmp;
       });
     }
-
-    return filteredPlans;
+    return filtered;
   }
 
   double calculatePlanTotalCost(Plan plan) {
     final steps = _planSteps[plan.id] ?? [];
-    return steps.fold(0.0, (sum, step) => sum + (step.cost ?? 0.0));
+    return steps.fold(0.0, (sum, s) => sum + (s.cost ?? 0.0));
   }
 
   int calculatePlanTotalDuration(Plan plan) {
     final steps = _planSteps[plan.id] ?? [];
     int total = 0;
     final regex = RegExp(r'(\d+)\s*(minute|heure|jour|semaine)');
-
-    for (final step in steps) {
-      final match = regex.firstMatch(step.duration ?? '');
-      if (match != null) {
-        final value = int.tryParse(match.group(1)!);
-        final unit = match.group(2);
-        if (value != null && unit != null) {
-          switch (unit) {
-            case 'minute':
-              total += value;
-              break;
-            case 'heure':
-              total += value * 60;
-              break;
-            case 'jour':
-              total += value * 8 * 60;
-              break;
-            case 'semaine':
-              total += value * 5 * 8 * 60;
-              break;
-          }
+    for (final s in steps) {
+      final m = regex.firstMatch(s.duration ?? '');
+      if (m != null) {
+        final val = int.tryParse(m.group(1)!)!;
+        switch (m.group(2)) {
+          case 'minute':
+            total += val;
+            break;
+          case 'heure':
+            total += val * 60;
+            break;
+          case 'jour':
+            total += val * 8 * 60;
+            break;
+          case 'semaine':
+            total += val * 5 * 8 * 60;
+            break;
         }
       }
     }
-
     return total;
   }
 
-  String? getStepImageById(String stepId) => _stepImageCache[stepId];
-  // Calculate distance to first step of a plan (returns null if no position data)
-  double? calculateDistanceToFirstStep(Plan plan) {
+  /// Returns distance in meters
+  double? calculateDistanceToFirstStepValue(Plan plan) {
     if (userLatitude == null || userLongitude == null) return null;
-
     final steps = _planSteps[plan.id] ?? [];
     if (steps.isEmpty) return null;
-
-    final firstStep = steps.first;
-    if (firstStep.position == null) return null;
-
-    final distance = _calculateDistance(userLatitude!, userLongitude!,
-        firstStep.position!.latitude, firstStep.position!.longitude);
-
-    return distance;
+    final pos = LatLng(
+      steps.first.latitude ?? 0.0,
+      steps.first.longitude ?? 0.0,
+    );
+    return calculateDistanceBetween(
+        userLatitude!, userLongitude!, pos.latitude, pos.longitude);
   }
 
-  // Debug method to check if steps have position data
-  void debugStepPositions() {
-    print('=== DEBUG: Step Positions ===');
-    print('User location: lat=${userLatitude}, lon=${userLongitude}');
+  /// Navigation helpers
+  void openProfileDrawer(GlobalKey<ScaffoldState> key) {
+    key.currentState?.openEndDrawer();
+  }
 
-    for (final plan in _plans.take(3)) {
-      // Check first 3 plans
-      final steps = _planSteps[plan.id] ?? [];
-      print('Plan "${plan.title}":');
-      for (int i = 0; i < steps.length && i < 2; i++) {
-        // Check first 2 steps
-        final step = steps[i];
-        if (step.position != null) {
-          print(
-              '  Step $i: lat=${step.position!.latitude}, lon=${step.position!.longitude}');
-          if (userLatitude != null && userLongitude != null) {
-            final distance = _calculateDistance(userLatitude!, userLongitude!,
-                step.position!.latitude, step.position!.longitude);
-            print('  Distance: ${distance.toStringAsFixed(2)} km');
-          }
-        } else {
-          print('  Step $i: NO POSITION DATA');
-        }
+  void goToCategorySearch(BuildContext ctx, Category cat) {
+    selectedCategory = cat;
+    load.execute();
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (_) => SearchScreen(
+          viewModel: this,
+          initialQuery: searchQuery,
+          initialCategory: cat,
+        ),
+      ),
+    );
+  }
+
+  void goToPlanDetail(BuildContext ctx, String planId) {
+    GoRouter.of(ctx)
+        .pushNamed('detailsPlan', queryParameters: {'planId': planId});
+  }
+
+  void initSearchScreen({String? initialQuery, Category? initialCategory}) {
+    searchQuery = initialQuery ?? '';
+    selectedCategory = initialCategory;
+    _searchScreenSortBy = sortBy;
+    _searchScreenSortAsc = sortAscending;
+    _searchScreenLocationRadius = locationRadius ?? 10.0;
+    _searchScreenUseLocation = locationRadius != null;
+    notifyListeners();
+  }
+
+  void updateSearchQuery(String value) {
+    searchQuery = value;
+    notifyListeners();
+  }
+
+  void updateSort(String? sort, bool asc) {
+    _searchScreenSortBy = sort;
+    _searchScreenSortAsc = asc;
+    notifyListeners();
+  }
+
+  void updateLocationFilter(bool useLoc, double radius) {
+    _searchScreenUseLocation = useLoc;
+    _searchScreenLocationRadius = radius;
+    notifyListeners();
+  }
+
+  void applyFilters() {
+    sortBy = _searchScreenSortBy;
+    sortAscending = _searchScreenSortAsc;
+    locationRadius =
+        _searchScreenUseLocation ? _searchScreenLocationRadius : null;
+    load.execute();
+  }
+
+  void resetFilters() {
+    selectedCategory = null;
+    _searchScreenSortBy = null;
+    _searchScreenSortAsc = true;
+    _searchScreenUseLocation = false;
+    _searchScreenLocationRadius = 10.0;
+    sortBy = null;
+    sortAscending = true;
+    locationRadius = null;
+    notifyListeners();
+    load.execute();
+  }
+
+  Future<void> getCurrentLocation() async {
+    locationError.value = null;
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        throw Exception('Services de localisation désactivés');
       }
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        throw Exception('Permission de localisation refusée');
+      }
+      final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      userLatitude = pos.latitude;
+      userLongitude = pos.longitude;
+      notifyListeners();
+    } catch (e) {
+      locationError.value = e.toString();
+      _log.warning('Location error: $e');
     }
-    print('=== END DEBUG ===');
   }
 
   Future<Result<Category>> getCategoryById(String id) async {
-    return await _categoryRepository.getCategoryById(id);
-  }
-
-  double _calculateDistance(
-      double lat1, double lon1, double lat2, double lon2) {
-    const double earthRadius = 6371;
-
-    final double dLat = _degreesToRadians(lat2 - lat1);
-    final double dLon = _degreesToRadians(lon2 - lon1);
-
-    final double a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(_degreesToRadians(lat1)) *
-            math.cos(_degreesToRadians(lat2)) *
-            math.sin(dLon / 2) *
-            math.sin(dLon / 2);
-
-    final double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-
-    return earthRadius * c;
-  }
-
-  double _degreesToRadians(double degrees) {
-    return degrees * (math.pi / 180);
+    return _categoryRepository.getCategoryById(id);
   }
 }

@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:android_intent_plus/android_intent.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:front/domain/models/step/step.dart' as custom;
 
@@ -48,7 +49,7 @@ class NavigationService {
 
   static Future<void> navigateToStep(
       BuildContext context, custom.Step step) async {
-    if (step.position == null) {
+    if (step.latitude == null || step.longitude == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Impossible de naviguer: coordonnées manquantes")));
       return;
@@ -56,8 +57,8 @@ class NavigationService {
 
     await navigateTo(
       context,
-      latitude: step.position!.latitude,
-      longitude: step.position!.longitude,
+      latitude: step.latitude ?? 0.0,
+      longitude: step.longitude ?? 0.0,
       title: step.title,
     );
   }

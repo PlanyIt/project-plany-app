@@ -5,6 +5,7 @@ import 'package:front/ui/details_plan/widgets/header/components/map_view.dart';
 import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/ui/details_plan/widgets/header/components/step_info_card.dart';
 import 'package:front/ui/details_plan/widgets/header/components/header_carousel.dart';
+import 'package:front/utils/helpers.dart';
 import 'package:geolocator/geolocator.dart';
 
 class DetailsHeader extends StatefulWidget {
@@ -73,15 +74,15 @@ class DetailsHeaderState extends State<DetailsHeader> {
   }
 
   Future<void> _calculateDistanceToStep(custom.Step step) async {
-    if (step.position == null) return;
+    if (latLngFromDoubles(step.latitude, step.longitude) == null) return;
 
     try {
       final position = await Geolocator.getCurrentPosition();
       final distanceInMeters = Geolocator.distanceBetween(
         position.latitude,
         position.longitude,
-        step.position!.latitude,
-        step.position!.longitude,
+        latLngFromDoubles(step.latitude, step.longitude)!.latitude,
+        latLngFromDoubles(step.latitude, step.longitude)!.longitude,
       );
 
       setState(() {

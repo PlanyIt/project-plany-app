@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:front/utils/helpers.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:front/data/repositories/categorie/category_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository.dart';
@@ -671,8 +671,8 @@ class DetailsPlanViewModel extends ChangeNotifier {
     if (stepsWithPos.isNotEmpty) {
       final firstStep = stepsWithPos.first;
       return {
-        'latitude': firstStep.position!.latitude,
-        'longitude': firstStep.position!.longitude,
+        'latitude': firstStep.latitude ?? 0,
+        'longitude': firstStep.longitude ?? 0,
       };
     }
 
@@ -729,8 +729,9 @@ class DetailsPlanViewModel extends ChangeNotifier {
   }
 
   // Retourne les étapes avec position pour les marqueurs
-  List<step_model.Step> get stepsWithPosition =>
-      _steps.where((step) => step.position != null).toList();
+  List<step_model.Step> get stepsWithPosition => _steps
+      .where((step) => latLngFromDoubles(step.latitude, step.longitude) != null)
+      .toList();
 
   // Vérifie si on doit afficher la map (toujours true maintenant)
   bool get shouldShowMap => true;

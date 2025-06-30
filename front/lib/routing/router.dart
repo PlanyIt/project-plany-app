@@ -3,15 +3,16 @@ import 'package:front/data/repositories/auth/auth_repository.dart';
 import 'package:front/routing/routes.dart';
 import 'package:front/ui/auth/login/view_models/login_viewmodel.dart';
 import 'package:front/ui/auth/login/widgets/login_screen.dart';
-import 'package:front/ui/auth/signup/view_models/signup_viewmodel.dart';
-import 'package:front/ui/auth/signup/widgets/signup_screen.dart';
+import 'package:front/ui/auth/reset_password/widgets/reset_password_screen.dart';
+import 'package:front/ui/auth/register/view_models/register_viewmodel.dart';
+import 'package:front/ui/auth/register/widgets/register_screen.dart';
 import 'package:front/ui/create_plan/view_models/create_plan_viewmodel.dart';
 import 'package:front/ui/create_plan/widgets/step_one_content.dart';
 import 'package:front/ui/create_plan/widgets/step_three_content.dart';
 import 'package:front/ui/create_plan/widgets/step_two_content.dart';
 import 'package:front/ui/dashboard/view_models/dashboard_viewmodel.dart';
 import 'package:front/ui/dashboard/widgets/screen/dashboard_screen.dart';
-import 'package:front/ui/auth/home/widgets/home_screen.dart';
+import 'package:front/ui/auth/home/home_screen.dart';
 import 'package:front/ui/dashboard/widgets/screen/search_screen.dart';
 import 'package:front/ui/details_plan/view_models/details_plan_viewmodel.dart';
 import 'package:front/ui/details_plan/widgets/details_plan_screen.dart';
@@ -48,11 +49,17 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
             GoRoute(
               path: Routes.register,
               builder: (context, state) {
-                return SignupScreen(
-                  viewModel: SignupViewModel(
+                return RegisterScreen(
+                  viewModel: RegisterViewModel(
                     sessionManager: context.read(),
                   ),
                 );
+              },
+            ),
+            GoRoute(
+              path: Routes.forgotPassword,
+              builder: (context, state) {
+                return ResetPasswordScreen();
               },
             ),
           ],
@@ -75,7 +82,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
             GoRoute(
               path: Routes.search,
               builder: (context, state) {
-                final viewModel = DashboardViewModel(
+                final dashboardViewModel = DashboardViewModel(
                   categoryRepository: context.read(),
                   userRepository: context.read(),
                   planRepository: context.read(),
@@ -83,7 +90,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
                   sessionManager: context.read(),
                 );
                 return SearchScreen(
-                  viewModel: viewModel,
+                  viewModel: dashboardViewModel,
                 );
               },
             ),

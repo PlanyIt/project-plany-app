@@ -44,24 +44,15 @@ class StepRepositoryRemote implements StepRepository {
     try {
       final result = await _apiClient.createStep(step, userId);
 
-      print('📦 Résultat brut de createStep (depuis API client) : $result');
-
       if (result is Ok<Step>) {
         final created = result.value;
-        print('✅ Step créé avec l\'ID: ${created.id}');
-
-        // Tu peux ajouter un cache si besoin, mais tu n’as pas l'objet complet ici
         return Result.ok(created);
       } else if (result is Error<Step>) {
-        print('❌ Erreur retournée par API client: ${result.error}');
         return Result.error(result.error);
       } else {
-        print('❌ Type de résultat inattendu: $result');
         return Result.error(Exception('Unexpected result type from API'));
       }
-    } catch (e, stacktrace) {
-      print('🔥 Exception dans createStep: $e');
-      print(stacktrace);
+    } catch (e, _) {
       return Result.error(Exception('createStep failed: $e'));
     }
   }

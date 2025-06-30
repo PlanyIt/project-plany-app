@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/data/services/navigation_service.dart';
+import 'package:front/utils/helpers.dart';
 import 'package:geolocator/geolocator.dart';
 
 class StepInfoCard extends StatefulWidget {
@@ -18,10 +19,10 @@ class StepInfoCard extends StatefulWidget {
   });
 
   @override
-  _StepInfoCardState createState() => _StepInfoCardState();
+  StepInfoCardState createState() => StepInfoCardState();
 }
 
-class _StepInfoCardState extends State<StepInfoCard> {
+class StepInfoCardState extends State<StepInfoCard> {
   double? _distance;
   bool _isCalculatingDistance = false;
 
@@ -40,7 +41,10 @@ class _StepInfoCardState extends State<StepInfoCard> {
   }
 
   Future<void> _calculateDistanceToStep() async {
-    if (widget.step.position == null) return;
+    if (latLngFromDoubles(widget.step.latitude, widget.step.longitude) ==
+        null) {
+      return;
+    }
 
     setState(() {
       _isCalculatingDistance = true;
@@ -63,8 +67,8 @@ class _StepInfoCardState extends State<StepInfoCard> {
       final distanceInMeters = Geolocator.distanceBetween(
         position.latitude,
         position.longitude,
-        widget.step.position!.latitude,
-        widget.step.position!.longitude,
+        widget.step.latitude!,
+        widget.step.longitude!,
       );
 
       // Convertir en km

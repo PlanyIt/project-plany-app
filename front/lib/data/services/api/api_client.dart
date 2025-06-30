@@ -942,8 +942,8 @@ class ApiClient {
       final body = jsonEncode({
         'title': step.title,
         'description': step.description,
-        'longitude': step.position?.longitude,
-        'latitude': step.position?.latitude,
+        'longitude': step.longitude,
+        'latitude': step.latitude,
         'order': step.order,
         'image': step.image,
         'duration': step.duration,
@@ -1164,7 +1164,6 @@ class ApiClient {
         );
       }
     } on Exception catch (error) {
-      print('❌ Comments API exception: $error');
       return Result.error(error);
     } finally {
       client.close();

@@ -11,11 +11,12 @@ import 'package:front/domain/models/user/user.dart';
 import 'package:front/routing/routes.dart';
 import 'package:front/utils/command.dart';
 import 'package:front/utils/result.dart';
-import 'package:front/widgets/card/step_card.dart';
+import 'package:front/ui/core/ui/widgets/card/step_card.dart';
 import 'package:front/domain/models/step/step.dart' as step_model;
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:front/domain/use_cases/plan/create_plan_use_case.dart';
 
 class CreatePlanViewModel extends ChangeNotifier {
   CreatePlanViewModel({
@@ -25,15 +26,16 @@ class CreatePlanViewModel extends ChangeNotifier {
     required StepRepository stepRepository,
   })  : _categoryRepository = categoryRepository,
         _userRepository = userRepository,
-        _planRepository = planRepository,
-        _stepRepository = stepRepository {
+        _createPlanUseCase = CreatePlanUseCase(
+          planRepository: planRepository,
+          stepRepository: stepRepository,
+        ) {
     load = Command0(_load)..execute();
   }
 
   final CategoryRepository _categoryRepository;
-  final PlanRepository _planRepository;
   final UserRepository _userRepository;
-  final StepRepository _stepRepository;
+  final CreatePlanUseCase _createPlanUseCase;
 
   int _currentStep = 1;
   late Command0 load;
@@ -132,44 +134,30 @@ class CreatePlanViewModel extends ChangeNotifier {
         return false;
       }
 
-      final List<String> stepIds = [];
-
+      // Préparer les steps et images pour le use case
+      final List<step_model.Step> steps = [];
+      final List<File?> stepImages = [];
       for (int i = 0; i < _stepCards.length; i++) {
         final card = _stepCards[i];
         if (card.imageUrl.isEmpty) {
           _setError('L\'image est obligatoire pour l\'etape ${i + 1}');
           return false;
         }
-
-        final imageUrlResult =
-            await _stepRepository.uploadImage(File(card.imageUrl));
-        if (imageUrlResult is! Ok<String>) {
-          _setError('Upload image échouée à l\'etape ${i + 1}');
-          return false;
-        }
-
         final formattedDuration = (card.duration?.isNotEmpty ?? false)
             ? '${card.duration} ${card.durationUnit?.toLowerCase()}'
             : null;
-
-        final step = step_model.Step(
+        steps.add(step_model.Step(
           title: card.title,
           description: card.description,
           order: i + 1,
           userId: _userId,
           duration: formattedDuration,
           cost: card.cost,
-          position: card.location,
-          image: imageUrlResult.value,
-        );
-
-        final stepResult = await _stepRepository.createStep(step, _userId);
-        if (stepResult is Ok<step_model.Step>) {
-          stepIds.add(stepResult.value.id!);
-        } else {
-          _setError('Création de l\'etape ${i + 1} échouée');
-          return false;
-        }
+          latitude: card.location?.latitude ?? 0,
+          longitude: card.location?.longitude ?? 0,
+          image: card.imageUrl,
+        ));
+        stepImages.add(File(card.imageUrl));
       }
 
       final plan = Plan(
@@ -177,12 +165,18 @@ class CreatePlanViewModel extends ChangeNotifier {
         description: descriptionPlanController.text.trim(),
         category: _selectedCategory!.id,
         userId: _userId,
-        steps: stepIds,
+        steps: const [],
         isPublic: true,
       );
 
-      final planResult = await _planRepository.createPlan(plan);
-      if (planResult is! Ok<Plan>) {
+      final result = await _createPlanUseCase(
+        plan: plan,
+        steps: steps,
+        stepImages: stepImages,
+        userId: _userId,
+      );
+
+      if (result is! Ok<Plan>) {
         _setError('Erreur lors de la création du plan');
         return false;
       }

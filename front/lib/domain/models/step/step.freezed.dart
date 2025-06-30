@@ -24,8 +24,8 @@ mixin _$Step {
   String? get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
-  @LatLngConverter()
-  LatLng? get position => throw _privateConstructorUsedError;
+  double? get latitude => throw _privateConstructorUsedError;
+  double? get longitude => throw _privateConstructorUsedError;
   int get order => throw _privateConstructorUsedError;
   String get image => throw _privateConstructorUsedError;
   String? get duration => throw _privateConstructorUsedError;
@@ -51,7 +51,8 @@ abstract class $StepCopyWith<$Res> {
       {@JsonKey(name: '_id') String? id,
       String title,
       String description,
-      @LatLngConverter() LatLng? position,
+      double? latitude,
+      double? longitude,
       int order,
       String image,
       String? duration,
@@ -78,7 +79,8 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
     Object? id = freezed,
     Object? title = null,
     Object? description = null,
-    Object? position = freezed,
+    Object? latitude = freezed,
+    Object? longitude = freezed,
     Object? order = null,
     Object? image = null,
     Object? duration = freezed,
@@ -99,10 +101,14 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
-      position: freezed == position
-          ? _value.position
-          : position // ignore: cast_nullable_to_non_nullable
-              as LatLng?,
+      latitude: freezed == latitude
+          ? _value.latitude
+          : latitude // ignore: cast_nullable_to_non_nullable
+              as double?,
+      longitude: freezed == longitude
+          ? _value.longitude
+          : longitude // ignore: cast_nullable_to_non_nullable
+              as double?,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
@@ -142,7 +148,8 @@ abstract class _$$StepImplCopyWith<$Res> implements $StepCopyWith<$Res> {
       {@JsonKey(name: '_id') String? id,
       String title,
       String description,
-      @LatLngConverter() LatLng? position,
+      double? latitude,
+      double? longitude,
       int order,
       String image,
       String? duration,
@@ -166,7 +173,8 @@ class __$$StepImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? title = null,
     Object? description = null,
-    Object? position = freezed,
+    Object? latitude = freezed,
+    Object? longitude = freezed,
     Object? order = null,
     Object? image = null,
     Object? duration = freezed,
@@ -187,10 +195,14 @@ class __$$StepImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
-      position: freezed == position
-          ? _value.position
-          : position // ignore: cast_nullable_to_non_nullable
-              as LatLng?,
+      latitude: freezed == latitude
+          ? _value.latitude
+          : latitude // ignore: cast_nullable_to_non_nullable
+              as double?,
+      longitude: freezed == longitude
+          ? _value.longitude
+          : longitude // ignore: cast_nullable_to_non_nullable
+              as double?,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
@@ -226,7 +238,8 @@ class _$StepImpl implements _Step {
       {@JsonKey(name: '_id') this.id,
       required this.title,
       required this.description,
-      @LatLngConverter() this.position,
+      this.latitude,
+      this.longitude,
       required this.order,
       required this.image,
       this.duration,
@@ -245,8 +258,9 @@ class _$StepImpl implements _Step {
   @override
   final String description;
   @override
-  @LatLngConverter()
-  final LatLng? position;
+  final double? latitude;
+  @override
+  final double? longitude;
   @override
   final int order;
   @override
@@ -262,7 +276,7 @@ class _$StepImpl implements _Step {
 
   @override
   String toString() {
-    return 'Step(id: $id, title: $title, description: $description, position: $position, order: $order, image: $image, duration: $duration, cost: $cost, createdAt: $createdAt, userId: $userId)';
+    return 'Step(id: $id, title: $title, description: $description, latitude: $latitude, longitude: $longitude, order: $order, image: $image, duration: $duration, cost: $cost, createdAt: $createdAt, userId: $userId)';
   }
 
   @override
@@ -274,8 +288,10 @@ class _$StepImpl implements _Step {
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.position, position) ||
-                other.position == position) &&
+            (identical(other.latitude, latitude) ||
+                other.latitude == latitude) &&
+            (identical(other.longitude, longitude) ||
+                other.longitude == longitude) &&
             (identical(other.order, order) || other.order == order) &&
             (identical(other.image, image) || other.image == image) &&
             (identical(other.duration, duration) ||
@@ -288,8 +304,8 @@ class _$StepImpl implements _Step {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, title, description, position,
-      order, image, duration, cost, createdAt, userId);
+  int get hashCode => Object.hash(runtimeType, id, title, description, latitude,
+      longitude, order, image, duration, cost, createdAt, userId);
 
   /// Create a copy of Step
   /// with the given fields replaced by the non-null parameter values.
@@ -312,7 +328,8 @@ abstract class _Step implements Step {
       {@JsonKey(name: '_id') final String? id,
       required final String title,
       required final String description,
-      @LatLngConverter() final LatLng? position,
+      final double? latitude,
+      final double? longitude,
       required final int order,
       required final String image,
       final String? duration,
@@ -330,8 +347,9 @@ abstract class _Step implements Step {
   @override
   String get description;
   @override
-  @LatLngConverter()
-  LatLng? get position;
+  double? get latitude;
+  @override
+  double? get longitude;
   @override
   int get order;
   @override

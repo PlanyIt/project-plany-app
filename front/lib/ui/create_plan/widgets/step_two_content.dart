@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/ui/create_plan/view_models/create_plan_viewmodel.dart';
 import 'package:front/ui/create_plan/widgets/step_modal.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
 import 'package:front/ui/create_plan/widgets/step_card_timeline.dart';
 
 class StepTwoContent extends StatefulWidget {

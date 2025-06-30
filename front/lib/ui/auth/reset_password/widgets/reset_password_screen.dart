@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:front/widgets/common/plany_logo.dart';
+import 'package:front/ui/core/ui/logo/plany_logo.dart';
 import 'package:front/ui/core/ui/button/plany_button.dart';
-import 'package:front/theme/app_theme.dart';
-import 'package:front/widgets/common/custom_text_field.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
+import 'package:front/ui/core/ui/forms/custom_text_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});

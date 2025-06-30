@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
-import * as bcrypt from 'bcrypt';
+import { PasswordService } from './password.service';
 
 @Injectable()
 export class RefreshTokenService {
@@ -10,6 +10,7 @@ export class RefreshTokenService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
+    private readonly passwordService: PasswordService,
   ) {}
 
   async generateRefreshToken(userId: string): Promise<string> {
@@ -19,8 +20,9 @@ export class RefreshTokenService {
       expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || '7d',
     });
 
-    // Hash et stocker le refresh token
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    // Hash et stocker le refresh token avec Argon2
+    const hashedRefreshToken =
+      await this.passwordService.hashPassword(refreshToken);
     await this.userService.updateRefreshToken(userId, hashedRefreshToken);
 
     return refreshToken;
@@ -39,8 +41,8 @@ export class RefreshTokenService {
         throw new UnauthorizedException('Refresh token invalide');
       }
 
-      // Vérifier que le refresh token correspond
-      const refreshTokenMatches = await bcrypt.compare(
+      // Vérifier que le refresh token correspond avec Argon2
+      const refreshTokenMatches = await this.passwordService.verifyPassword(
         refreshToken,
         user.refreshToken,
       );

@@ -1,4 +1,6 @@
 import 'package:front/domain/models/step/step.dart' as step_model;
+import 'dart:math';
+import 'package:latlong2/latlong.dart';
 
 /// Calculates the total cost of steps from a list of Step objects.
 ///
@@ -11,7 +13,40 @@ double calculateTotalStepsCost(List<step_model.Step> steps) {
 }
 
 /// Calculates the total duration of steps from a list of Step objects.
-///
+/// Calculates the total duration in minutes from a list of Step objects.
+/// Handles "minute", "heure", "jour", and "semaine" units.
+/// 1 jour = 8 heures, 1 semaine = 5 jours (work week).
+int calculateTotalDuration(List<step_model.Step> steps) {
+  int total = 0;
+  final regex = RegExp(r'(\d+)\s*(minute|heure|jour|semaine)');
+
+  for (final step in steps) {
+    final match = regex.firstMatch(step.duration ?? '');
+    if (match != null) {
+      final value = int.tryParse(match.group(1)!);
+      final unit = match.group(2);
+      if (value != null && unit != null) {
+        switch (unit) {
+          case 'minute':
+            total += value;
+            break;
+          case 'heure':
+            total += value * 60;
+            break;
+          case 'jour':
+            total += value * 8 * 60;
+            break;
+          case 'semaine':
+            total += value * 5 * 8 * 60;
+            break;
+        }
+      }
+    }
+  }
+
+  return total;
+}
+
 /// Handles durations in the format "X minutes", "X heures", "X jours", etc.
 /// Returns a formatted string representing the total duration.
 String calculateTotalStepsDuration(List<step_model.Step> steps) {
@@ -138,4 +173,55 @@ int parseDurationStringToMinutes(String durationStr) {
   }
 
   return totalMinutes;
+}
+
+String formatDuration(int minutes) {
+  if (minutes < 60) {
+    return '$minutes min';
+  } else {
+    final hours = (minutes / 60).floor();
+    final remainingMinutes = minutes % 60;
+    if (remainingMinutes == 0) {
+      return '${hours}h';
+    } else {
+      return '${hours}h ${remainingMinutes}min';
+    }
+  }
+}
+
+String? formatDistance(double? meters) {
+  if (meters == null || meters < 0) return null;
+
+  if (meters < 1000) {
+    return '${meters.toStringAsFixed(0)} m';
+  } else {
+    final kilometers = meters / 1000;
+    return '${kilometers.toStringAsFixed(2)} km';
+  }
+}
+
+/// Calcule la distance en mètres entre deux points GPS (Haversine)
+double calculateDistanceBetween(
+  double lat1,
+  double lon1,
+  double lat2,
+  double lon2,
+) {
+  const double earthRadius = 6371000;
+  final double dLat = (lat2 - lat1) * (3.141592653589793 / 180);
+  final double dLon = (lon2 - lon1) * (3.141592653589793 / 180);
+
+  final double a = (sin(dLat / 2) * sin(dLat / 2)) +
+      cos(lat1 * (3.141592653589793 / 180)) *
+          cos(lat2 * (3.141592653589793 / 180)) *
+          (sin(dLon / 2) * sin(dLon / 2));
+  final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  return earthRadius * c;
+}
+
+/// Convertit deux doubles (latitude, longitude) en objet LatLng.
+/// Retourne null si l'un des deux est null.
+LatLng? latLngFromDoubles(double? latitude, double? longitude) {
+  if (latitude == null || longitude == null) return null;
+  return LatLng(latitude, longitude);
 }

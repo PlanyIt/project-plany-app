@@ -4,6 +4,8 @@ import 'package:front/data/repositories/comment/comment_repository.dart';
 import 'package:front/data/repositories/plan/plan_repository_remote.dart';
 import 'package:front/data/repositories/step/step_repository_remote.dart';
 import 'package:front/data/repositories/user/user_repository_remote.dart';
+import 'package:front/domain/use_cases/auth/login_use_case.dart';
+import 'package:front/domain/use_cases/auth/register_use_case.dart';
 import 'package:front/utils/result.dart';
 
 /// Gère les actions transversales comme login/logout,
@@ -21,7 +23,9 @@ class SessionManager {
         _categoryRepository = categoryRepository,
         _stepRepository = stepRepository,
         _userRepository = userRepository,
-        _commentRepository = commentRepository;
+        _commentRepository = commentRepository,
+        _loginUseCase = LoginUseCase(authRepository: authRepository),
+        _registerUseCase = RegisterUseCase(authRepository: authRepository);
 
   final AuthRepository _authRepository;
   final PlanRepositoryRemote _planRepository;
@@ -29,12 +33,14 @@ class SessionManager {
   final StepRepositoryRemote _stepRepository;
   final UserRepositoryRemote _userRepository;
   final CommentRepository _commentRepository;
+  final LoginUseCase _loginUseCase;
+  final RegisterUseCase _registerUseCase;
 
   Future<Result<void>> login({
     required String email,
     required String password,
   }) async {
-    final result = await _authRepository.login(
+    final result = await _loginUseCase.execute(
       email: email,
       password: password,
     );
@@ -62,7 +68,7 @@ class SessionManager {
     required String description,
     required String password,
   }) async {
-    final result = await _authRepository.register(
+    final result = await _registerUseCase.execute(
       email: email,
       username: username,
       description: description,
@@ -85,7 +91,5 @@ class SessionManager {
     _categoryRepository.clearCache();
     _stepRepository.clearCache();
     _userRepository.clearUserCache();
-    // Note: CommentRepository doesn't have a cache to clear currently
-    // but we keep the reference for future use
   }
 }

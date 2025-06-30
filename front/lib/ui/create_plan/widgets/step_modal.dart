@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:front/ui/create_plan/view_models/create_plan_viewmodel.dart';
 import 'package:front/ui/create_plan/widgets/choose_location.dart';
-import 'package:front/theme/app_theme.dart';
-import 'package:front/widgets/card/image_picker_card.dart';
+import 'package:front/ui/core/theme/app_theme.dart';
+import 'package:front/ui/core/ui/widgets/card/image_picker_card.dart';
 
 class StepModal extends StatefulWidget {
   const StepModal({super.key, required this.viewModel});
