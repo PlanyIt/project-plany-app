@@ -16,7 +16,7 @@ class ApiClient {
     int? port,
     HttpClient Function()? clientFactory,
     AuthRepository? authRepository,
-  })  : _host = host ?? '192.168.1.135',
+  })  : _host = host ?? 'localhost',
         _port = port ?? 3000,
         _clientFactory = clientFactory ?? HttpClient.new,
         _authRepository = authRepository;

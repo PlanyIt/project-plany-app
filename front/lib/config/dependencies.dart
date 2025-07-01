@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:front/application/session_manager.dart';
 import 'package:front/data/repositories/auth/auth_repository.dart';
 import 'package:front/data/repositories/auth/auth_repository_remote.dart';
@@ -24,8 +25,16 @@ List<SingleChildWidget> _sharedProviders = [];
 /// Configure dependencies for remote data.
 List<SingleChildWidget> get providersRemote {
   return [
-    Provider(create: (context) => AuthApiClient()),
-    Provider(create: (context) => ApiClient()),
+    Provider(
+        create: (context) => AuthApiClient(
+              host: dotenv.env['API_HOST'],
+              port: int.parse(dotenv.env['API_PORT'] ?? '3000'),
+            )),
+    Provider(
+        create: (context) => ApiClient(
+              host: dotenv.env['API_HOST'],
+              port: int.parse(dotenv.env['API_PORT'] ?? '3000'),
+            )),
     Provider(create: (context) => ImgurService()),
     Provider(create: (context) => AuthStorageService()),
 

@@ -30,7 +30,6 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _router = router(context.read());
     return MaterialApp.router(
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -44,7 +43,7 @@ class MainApp extends StatelessWidget {
       locale: const Locale('fr', 'FR'),
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.system,
-      routerConfig: _router,
+      routerConfig: router(context.read()),
     );
   }
 }
