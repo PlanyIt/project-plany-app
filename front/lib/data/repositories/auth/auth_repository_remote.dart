@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:logging/logging.dart';
 
@@ -21,6 +22,7 @@ class AuthRepositoryRemote extends AuthRepository {
         _authApiClient = authApiClient,
         _authStorageService = authStorageService {
     _apiClient.authHeaderProvider = _authHeaderProvider;
+    _apiClient.onUnauthorized = () => logout();
   }
 
   final AuthApiClient _authApiClient;
@@ -30,8 +32,41 @@ class AuthRepositoryRemote extends AuthRepository {
   bool? _isAuthenticated;
   String? _authToken;
   User? _currentUser;
+  DateTime? _tokenExpiration;
 
   final _log = Logger('AuthRepositoryRemote');
+
+  void _checkTokenExpiration() {
+    if (_tokenExpiration != null && DateTime.now().isAfter(_tokenExpiration!)) {
+      _log.info('Token expired, logging out user');
+      logout();
+    }
+  }
+
+  DateTime _parseTokenExpiration(String token) {
+    try {
+      // Décoder le JWT pour extraire l'expiration
+      final parts = token.split('.');
+      if (parts.length != 3)
+        return DateTime.now().add(const Duration(minutes: 2));
+
+      final payload = parts[1];
+      // Ajouter padding si nécessaire
+      final normalized = base64.normalize(payload);
+      final decoded = utf8.decode(base64.decode(normalized));
+      final json = jsonDecode(decoded) as Map<String, dynamic>;
+
+      final exp = json['exp'] as int?;
+      if (exp != null) {
+        return DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+      }
+    } catch (e) {
+      _log.warning('Failed to parse token expiration: $e');
+    }
+
+    // Fallback: supposer 2 minutes d'expiration
+    return DateTime.now().add(const Duration(minutes: 2));
+  }
 
   /// Charge token et user JSON depuis le storage.
   Future<void> _fetch() async {
@@ -82,6 +117,7 @@ class AuthRepositoryRemote extends AuthRepository {
           // Set auth status
           _isAuthenticated = true;
           _authToken = result.value.token;
+          _tokenExpiration = _parseTokenExpiration(result.value.token);
           _currentUser = User(
             id: result.value.currentUser.id,
             username: result.value.currentUser.username,
@@ -118,10 +154,11 @@ class AuthRepositoryRemote extends AuthRepository {
       );
       switch (result) {
         case Ok<AuthResponse>():
-          _log.info('User logged int');
+          _log.info('User logged in');
           // Set auth status
           _isAuthenticated = true;
           _authToken = result.value.token;
+          _tokenExpiration = _parseTokenExpiration(result.value.token);
           _currentUser = User(
             id: result.value.currentUser.id,
             username: result.value.currentUser.username,
@@ -161,6 +198,7 @@ class AuthRepositoryRemote extends AuthRepository {
       _authToken = null;
       _currentUser = null;
       _isAuthenticated = false;
+      _tokenExpiration = null;
       _log.info('Utilisateur déconnecté');
 
       return const Result.ok(null);
@@ -169,6 +207,16 @@ class AuthRepositoryRemote extends AuthRepository {
     }
   }
 
-  String? _authHeaderProvider() =>
-      _authToken != null ? 'Bearer $_authToken' : null;
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  String? _authHeaderProvider() {
+    if (_authToken == null) return null;
+
+    _checkTokenExpiration();
+
+    return _authToken != null ? 'Bearer $_authToken' : null;
+  }
 }

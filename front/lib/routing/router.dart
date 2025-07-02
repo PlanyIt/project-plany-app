@@ -54,16 +54,23 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           },
         ),
         GoRoute(
-          path: Routes.dashboard,
-          builder: (context, state) {
-            return DashboardScreen(
-                viewModel: DashboardViewModel(
-                    categoryRepository: context.read(),
-                    authRepository: context.read(),
-                    planRepository: context.read(),
-                    stepRepository: context.read()));
-          },
-        ),
+            path: Routes.dashboard,
+            builder: (context, state) {
+              return DashboardScreen(
+                  viewModel: DashboardViewModel(
+                      categoryRepository: context.read(),
+                      authRepository: context.read(),
+                      planRepository: context.read(),
+                      stepRepository: context.read()));
+            },
+            routes: [
+              GoRoute(
+                path: Routes.createPlan,
+                builder: (context, state) {
+                  return CreatePlansScreen();
+                },
+              ),
+            ]),
         GoRoute(
           path: Routes.createPlan,
           builder: (context, state) {

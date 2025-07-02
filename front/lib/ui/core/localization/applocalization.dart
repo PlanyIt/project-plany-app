@@ -26,6 +26,7 @@ class AppLocalization {
       'login': 'Connexion',
       'register': 'Inscription',
       'tryAgain': 'Réessayer',
+      'searchHint': 'Rechercher des plans, des catégories...',
     },
   };
 
@@ -40,6 +41,7 @@ class AppLocalization {
   String get login => _get('login');
   String get register => _get('register');
   String get tryAgain => _get('tryAgain');
+  String get searchHint => _get('searchHint');
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalization> {

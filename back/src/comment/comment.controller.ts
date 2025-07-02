@@ -15,12 +15,11 @@ import {
 import { CommentService } from './comment.service';
 import { CommentDto } from './dto/comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
+@UseGuards(JwtAuthGuard)
 @Controller('api/comments')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   async createComment(@Body() createCommentDto: CommentDto, @Req() req) {
     const commentData = { ...createCommentDto, userId: req.user._id };
@@ -62,7 +61,6 @@ export class CommentController {
     return this.commentService.findAllByUserId(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':commentId/response/:responseId')
   async removeResponse(
     @Param('commentId') commentId: string,
@@ -82,7 +80,6 @@ export class CommentController {
     return this.commentService.removeResponse(commentId, responseId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':commentId')
   async updateComment(
     @Param('commentId') commentId: string,
@@ -95,19 +92,16 @@ export class CommentController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':commentId/like')
   async likeComment(@Param('commentId') commentId: string, @Req() req) {
     return this.commentService.likeComment(commentId, req.user._id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':commentId/unlike')
   async unlikeComment(@Param('commentId') commentId: string, @Req() req) {
     return this.commentService.unlikeComment(commentId, req.user._id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':commentId/response')
   async addResponse(
     @Param('commentId') commentId: string,
@@ -123,7 +117,6 @@ export class CommentController {
     return this.commentService.findAllResponses(commentId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':commentId')
   async removeComment(@Param('commentId') commentId: string, @Req() req) {
     const comment = await this.commentService.findById(commentId);

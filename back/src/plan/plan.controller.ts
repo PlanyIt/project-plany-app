@@ -19,7 +19,7 @@ import { PlanService } from './plan.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanDto } from './dto/plan.dto';
 import { UserService } from '../user/user.service';
-
+@UseGuards(JwtAuthGuard)
 @Controller('api/plans')
 export class PlanController {
   constructor(
@@ -38,7 +38,6 @@ export class PlanController {
     return this.planService.findById(planId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   async createPlan(@Body() createPlanDto: PlanDto, @Req() req) {
     try {
@@ -66,19 +65,16 @@ export class PlanController {
     return this.planService.updateById(planId, updatePlanDto, userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':planId')
   removePlan(@Param('planId') planId: string, @Req() req) {
     return this.planService.removeById(planId, req.user._id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':planId/favorite')
   async addToFavorites(@Param('planId') planId: string, @Req() req) {
     return this.planService.addToFavorites(planId, req.user._id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':planId/unfavorite')
   async removeFromFavorites(@Param('planId') planId: string, @Req() req) {
     return this.planService.removeFromFavorites(planId, req.user._id);
@@ -94,7 +90,6 @@ export class PlanController {
     return this.planService.findFavoritesByUserId(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/profile')
   async updateUserProfile(
     @Param('id') id: string,

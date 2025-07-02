@@ -10,7 +10,7 @@ import 'package:front/services/step_service.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/card/compact_plan_card.dart';
 import 'package:front/widgets/tag/cutom_chip.dart';
-import 'package:front/widgets/dashboard/search_bar.dart';
+import 'package:front/ui/dashboard/widgets/search_bar/search_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 

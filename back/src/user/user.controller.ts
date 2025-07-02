@@ -20,7 +20,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanService } from 'src/plan/plan.service';
 import { CreateUserDto } from './dto/create-user.dto';
-
+@UseGuards(JwtAuthGuard)
 @Controller('api/users')
 export class UserController {
   constructor(
@@ -56,7 +56,6 @@ export class UserController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/profile')
   updateProfile(
     @Param('id') id: string,
@@ -70,7 +69,6 @@ export class UserController {
     return this.userService.updateById(id, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   removeById(@Param('id') id: string, @Request() req) {
     // Vérifier que l'utilisateur ne supprime que son propre compte
@@ -90,7 +88,6 @@ export class UserController {
     return this.userService.findOneByEmail(email);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/email')
   async updateEmail(
     @Param('id') id: string,
@@ -111,7 +108,6 @@ export class UserController {
     return this.userService.updateById(id, { email });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/photo')
   updateUserPhoto(
     @Param('id') id: string,
@@ -127,7 +123,6 @@ export class UserController {
     return this.userService.updateById(id, { photoUrl });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id/photo')
   deleteUserPhoto(@Param('id') id: string, @Request() req) {
     // Vérifier que l'utilisateur ne supprime que sa propre photo
@@ -171,7 +166,6 @@ export class UserController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id/premium')
   async updatePremiumStatus(
     @Param('id') id: string,
@@ -186,7 +180,6 @@ export class UserController {
   }
 
   // Suivre un utilisateur
-  @UseGuards(JwtAuthGuard)
   @Post(':id/follow')
   async followUser(@Param('id') targetUserId: string, @Request() req) {
     if (!req.user) {
@@ -208,7 +201,6 @@ export class UserController {
   }
 
   // Ne plus suivre un utilisateur
-  @UseGuards(JwtAuthGuard)
   @Delete(':id/follow')
   async unfollowUser(@Param('id') targetUserId: string, @Request() req) {
     if (!req.user) {

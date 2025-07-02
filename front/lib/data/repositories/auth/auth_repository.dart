@@ -22,4 +22,9 @@ abstract class AuthRepository extends ChangeNotifier {
     required String username,
     required String password,
   });
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 }

@@ -20,15 +20,37 @@ class ApiClient {
   final HttpClient Function() _clientFactory;
 
   AuthHeaderProvider? _authHeaderProvider;
+  void Function()? _onUnauthorized;
 
   set authHeaderProvider(AuthHeaderProvider authHeaderProvider) {
     _authHeaderProvider = authHeaderProvider;
+  }
+
+  set onUnauthorized(void Function() callback) {
+    _onUnauthorized = callback;
   }
 
   Future<void> _authHeader(HttpHeaders headers) async {
     final header = _authHeaderProvider?.call();
     if (header != null) {
       headers.add(HttpHeaders.authorizationHeader, header);
+    }
+  }
+
+  Future<Result<T>> _handleResponse<T>(
+    HttpClientResponse response,
+    T Function(dynamic) parser,
+  ) async {
+    if (response.statusCode == 401) {
+      _onUnauthorized?.call();
+      return const Result.error(HttpException("Unauthorized"));
+    }
+
+    if (response.statusCode == 200) {
+      final stringData = await response.transform(utf8.decoder).join();
+      return Result.ok(parser(jsonDecode(stringData)));
+    } else {
+      return const Result.error(HttpException("Invalid response"));
     }
   }
 
@@ -42,18 +64,12 @@ class ApiClient {
       await _authHeader(request.headers);
 
       final response = await request.close();
-
-      if (response.statusCode == 200) {
-        final stringData = await response.transform(utf8.decoder).join();
-        final json = jsonDecode(stringData) as List<dynamic>;
-        final categories = json
+      return await _handleResponse(
+        response,
+        (json) => (json as List<dynamic>)
             .map((category) => CategoryApiModel.fromJson(category))
-            .toList();
-
-        return Result.ok(categories);
-      } else {
-        return const Result.error(HttpException("Invalid response"));
-      }
+            .toList(),
+      );
     } on Exception catch (error) {
       return Result.error(error);
     } finally {

@@ -5,7 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../domain/models/user/user.dart';
 import '../../../../routing/routes_new.dart';
+
 import '../../../core/themes/app_theme.dart';
+import '../../../core/ui/button/logout_button.dart';
+import '../../view_models/dashboard_viewmodel.dart';
 
 class ProfileDrawer extends StatelessWidget {
   final VoidCallback onClose;
@@ -16,8 +19,11 @@ class ProfileDrawer extends StatelessWidget {
     super.key,
     required this.onClose,
     required this.onLogout,
+    required this.viewModel,
     this.user,
   });
+
+  final DashboardViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +55,7 @@ class ProfileDrawer extends StatelessWidget {
               child: _buildMenuItems(context, user?.id ?? ''),
             ),
             _buildDivider(),
-            _buildLogoutButton(context),
+            LogoutButton(onPressed: viewModel.logout.execute),
           ],
         ),
       ),
@@ -255,45 +261,6 @@ class ProfileDrawer extends StatelessWidget {
       onTap: onTap,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: ElevatedButton(
-        onPressed: () async {
-          onClose();
-          onLogout(); // Invoke the logout callback
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.grey[100],
-          foregroundColor: Colors.red,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          elevation: 0,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.logout_rounded,
-              color: Colors.red[700],
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Déconnexion',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.red[700],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

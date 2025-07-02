@@ -5,10 +5,10 @@ import 'package:front/providers/plan_provider.dart';
 import 'package:front/screens/search/search_screen.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/ui/core/ui/logo/plany_logo.dart';
-import 'package:front/widgets/dashboard/category_cards.dart';
-import 'package:front/widgets/dashboard/horizontal_plan_list.dart';
-import 'package:front/widgets/dashboard/search_bar.dart';
-import 'package:front/widgets/dashboard/section_header.dart';
+import 'package:front/ui/dashboard/widgets/card/category_cards.dart';
+import 'package:front/ui/dashboard/widgets/list/horizontal_plan_list.dart';
+import 'package:front/ui/dashboard/widgets/search_bar/search_bar.dart';
+import 'package:front/ui/dashboard/widgets/header/section_header.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 

@@ -23,7 +23,7 @@ class AuthApiClient {
       request.headers.contentType = ContentType.json;
       request.write(jsonEncode(loginRequest));
       final response = await request.close();
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         final stringData = await response.transform(utf8.decoder).join();
         return Result.ok(AuthResponse.fromJson(jsonDecode(stringData)));
       } else {

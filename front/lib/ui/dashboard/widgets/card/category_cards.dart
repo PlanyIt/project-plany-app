@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category/category.dart';
-import 'package:front/utils/icon_utils.dart';
 import 'package:shimmer/shimmer.dart';
+
+import '../../../../domain/models/category/category.dart';
+import '../../../../utils/helpers.dart';
+import '../../../../utils/icon_utils.dart';
 
 class CategoryCards extends StatelessWidget {
   final List<Category> categories;
@@ -34,7 +36,7 @@ class CategoryCards extends StatelessWidget {
     }
 
     // Palette de couleurs harmonisées avec le thème existant
-    final List<List<Color>> categoryGradients = [
+    final categoryGradients = <List<Color>>[
       [const Color(0xFF6C63FF), const Color(0xFF837DFF)], // Secondaire
       [const Color(0xFFFF7B9C), const Color(0xFFFF5C84)], // Accent
       [const Color(0xFF3F8CFF), const Color(0xFF1F78FF)], // Bleu vif
@@ -68,7 +70,7 @@ class CategoryCards extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: gradientColors[1].withValues(alpha: 0.3),
+                    color: colorFromHex(category.color),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                     spreadRadius: 0,

@@ -12,7 +12,7 @@ import {
 import { StepService } from './step.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { StepDto } from './dto/step.dto';
-
+@UseGuards(JwtAuthGuard)
 @Controller('api/steps')
 export class StepController {
   constructor(private readonly stepService: StepService) {}
@@ -34,7 +34,6 @@ export class StepController {
     return this.stepService.findById(stepId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':stepId')
   async removeStep(@Param('stepId') stepId: string) {
     return this.stepService.removeById(stepId);
@@ -45,7 +44,6 @@ export class StepController {
     return this.stepService.findAllByPlanId(planId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':stepId')
   async updateStep(
     @Param('stepId') stepId: string,

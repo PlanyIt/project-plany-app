@@ -39,7 +39,7 @@ export class AuthService {
       );
 
       if (!isPasswordValid) {
-        throw new UnauthorizedException('Mot de passe incorrect', e.message);
+        return null;
       }
     }
 
@@ -53,6 +53,10 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
+
+    if (!user) {
+      throw new UnauthorizedException('Email ou mot de passe incorrect');
+    }
 
     const payload = {
       sub: user._id,

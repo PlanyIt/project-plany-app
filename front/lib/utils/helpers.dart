@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:latlong2/latlong.dart';
 
@@ -226,4 +227,19 @@ double calculateDistanceBetween(
 LatLng? latLngFromDoubles(double? latitude, double? longitude) {
   if (latitude == null || longitude == null) return null;
   return LatLng(latitude, longitude);
+}
+
+/// Converts a hex color string (e.g., "#FF5733" or "FF5733") to a [Color] object.
+/// Optionally, you can provide an [alpha] value (0.0 to 1.0) to override the opacity.
+Color colorFromHex(String hexColor, {double? alpha}) {
+  var hex = hexColor.replaceFirst('#', '');
+  if (hex.length == 6) {
+    hex = 'FF$hex'; // Add full opacity if not specified
+  }
+  final colorInt = int.parse(hex, radix: 16);
+  var color = Color(colorInt);
+  if (alpha != null) {
+    color = color.withValues(alpha: 0.3);
+  }
+  return color;
 }
