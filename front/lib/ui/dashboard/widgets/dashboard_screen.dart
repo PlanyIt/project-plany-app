@@ -3,16 +3,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../../domain/models/category/category.dart' as app_category;
 import '../../../domain/models/plan/plan.dart';
-import '../../../routing/routes_new.dart';
+import '../../../routing/routes.dart';
 import '../../core/ui/bottom_bar/bottom_bar.dart';
 import '../view_models/dashboard_viewmodel.dart';
-import 'app_bar/app_bar.dart';
-import 'card/category_cards.dart';
-import 'drawer/profile_drawer.dart';
-import 'header/section_header.dart';
-import 'list/horizontal_plan_list.dart';
-import 'placeholder/empty_state_widget.dart';
-import 'search_bar/search_bar.dart';
+import 'app_bar.dart';
+import 'category_cards.dart';
+import 'profile_drawer.dart';
+import 'section_header.dart';
+import 'horizontal_plan_list.dart';
+import 'empty_state_widget.dart';
+import 'search_bar.dart';
 
 class DashboardScreen extends StatelessWidget {
   DashboardScreen({super.key, required this.viewModel});

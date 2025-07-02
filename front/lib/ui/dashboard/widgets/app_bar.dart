@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/ui/logo/plany_logo.dart';
+import '../../core/ui/logo/plany_logo.dart';
 
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;

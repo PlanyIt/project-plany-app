@@ -23,4 +23,28 @@ class PlanRepositoryRemote implements PlanRepository {
       return Result.ok(_cachedData!);
     }
   }
+
+  @override
+  Future<Result<Plan>> createPlan(Plan plan) async {
+    final payload = <String, dynamic>{
+      "title": plan.title,
+      "description": plan.description,
+      "category": plan.category,
+      "userId": plan.userId,
+      "steps": plan.steps,
+      "isPublic": plan.isPublic,
+    };
+
+    final result = await _apiClient.createPlan(body: payload);
+
+    if (result case Ok<Plan>()) {
+      final newPlan = result.value;
+      if (newPlan.id != null) {
+        _cachedData ??= [];
+        _cachedData!.add(newPlan);
+      }
+    }
+
+    return result;
+  }
 }

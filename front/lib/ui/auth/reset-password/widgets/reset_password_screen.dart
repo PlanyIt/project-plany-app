@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../routing/routes_new.dart';
+import '../../../../routing/routes.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../core/ui/button/plany_button.dart';
 import '../../../core/ui/form/custom_text_field.dart';

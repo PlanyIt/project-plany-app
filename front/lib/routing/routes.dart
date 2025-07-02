@@ -1,17 +1,10 @@
-import 'package:flutter/material.dart';
-
-import '../screens/details-plan/details_screen.dart';
-import '../screens/profile/profile_screen.dart';
-import '../ui/auth/reset-password/widgets/reset_password_screen.dart';
-import '../ui/auth/widgets/home_screen.dart';
-
-class AppRoutes {
-  static Map<String, WidgetBuilder> routes() {
-    return {
-      '/home': (context) => const HomeScreen(),
-      '/reset-password': (context) => const ResetPasswordScreen(),
-      '/profile': (context) => const ProfileScreen(),
-      '/details': (context) => DetailScreen(),
-    };
-  }
+abstract final class Routes {
+  static const home = '/home';
+  static const login = '/login';
+  static const register = '/register';
+  static const dashboard = '/';
+  static const reset = '/reset-password';
+  static const createPlan = '/create-plan';
+  static const profil = '/profil';
+  static const search = '/search';
 }

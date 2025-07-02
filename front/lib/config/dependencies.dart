@@ -45,8 +45,10 @@ List<SingleChildWidget> get providers {
           PlanRepositoryRemote(apiClient: context.read()) as PlanRepository,
     ),
     Provider(
-      create: (context) =>
-          StepRepositoryRemote(apiClient: context.read()) as StepRepository,
+      create: (context) => StepRepositoryRemote(
+        apiClient: context.read(),
+        imgurService: context.read(),
+      ) as StepRepository,
     ),
   ];
 }

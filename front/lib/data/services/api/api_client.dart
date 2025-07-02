@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../../domain/models/plan/plan.dart';
+import '../../../domain/models/step/step.dart';
 import '../../../utils/result.dart';
 import 'model/category/category_api_model.dart';
 import 'model/step/step_api_model.dart';
@@ -120,6 +121,35 @@ class ApiClient {
     }
   }
 
+  Future<Result<Plan>> createPlan({required Map<String, dynamic> body}) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.post(_host, _port, '/api/plans');
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final encodedBody = jsonEncode(body);
+      request.write(encodedBody);
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode == 201) {
+        final json = jsonDecode(responseBody);
+        return Result.ok(Plan.fromJson(json));
+      } else {
+        return Result.error(
+          HttpException(
+              "Invalid response: ${response.statusCode} | $responseBody"),
+        );
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
   // Step endpoints
   Future<Result<List<StepApiModel>>> getStepsByPlan(String planId) async {
     final client = _clientFactory();
@@ -137,6 +167,50 @@ class ApiClient {
         final steps =
             json.map((element) => StepApiModel.fromJson(element)).toList();
         return Result.ok(steps);
+      } else {
+        return const Result.error(HttpException("Invalid response"));
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<Step>> createStep(
+    Step step,
+    String userId,
+  ) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.post(
+        _host,
+        _port,
+        '/api/steps',
+      );
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final body = jsonEncode({
+        'title': step.title,
+        'description': step.description,
+        'longitude': step.position?.longitude ?? 0.0,
+        'latitude': step.position?.latitude ?? 0.0,
+        'order': step.order,
+        'image': step.image,
+        'duration': step.duration,
+        'cost': step.cost,
+        'userId': userId,
+      });
+
+      request.write(body);
+
+      final response = await request.close();
+      final stringData = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode == 201) {
+        final json = jsonDecode(stringData);
+        return Result.ok(Step.fromJson(json));
       } else {
         return const Result.error(HttpException("Invalid response"));
       }

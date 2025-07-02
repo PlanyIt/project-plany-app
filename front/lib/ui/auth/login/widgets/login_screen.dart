@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../routing/routes_new.dart';
+import '../../../../routing/routes.dart';
 import '../../../core/localization/applocalization.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../core/ui/button/plany_button.dart';
@@ -80,22 +80,26 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildEmailField() => CustomTextField(
-        controller: _email,
-        labelText: 'Email',
-        hintText: 'Entrez votre email',
-        prefixIcon: Icons.email_outlined,
-      );
+  Widget _buildEmailField() {
+    return CustomTextField(
+      controller: _email,
+      labelText: 'Email',
+      hintText: 'Entrez votre email',
+      prefixIcon: Icons.email_outlined,
+    );
+  }
 
-  Widget _buildPasswordField() => CustomTextField(
-        controller: _password,
-        labelText: 'Mot de passe',
-        hintText: 'Entrez votre mot de passe',
-        prefixIcon: Icons.lock_outline,
-        obscureText: obscurePassword,
-        suffixIcon: obscurePassword ? Icons.visibility_off : Icons.visibility,
-        onSuffixIconPressed: togglePasswordVisibility,
-      );
+  Widget _buildPasswordField() {
+    return CustomTextField(
+      controller: _password,
+      labelText: 'Mot de passe',
+      hintText: 'Entrez votre mot de passe',
+      prefixIcon: Icons.lock_outline,
+      obscureText: obscurePassword,
+      suffixIcon: obscurePassword ? Icons.visibility_off : Icons.visibility,
+      onSuffixIconPressed: togglePasswordVisibility,
+    );
+  }
 
   Widget _buildForgotPassword(BuildContext context) => Align(
         alignment: Alignment.centerRight,
@@ -111,20 +115,22 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-  Widget _buildLoginButton(BuildContext context) => ListenableBuilder(
-        listenable: widget.viewModel.login,
-        builder: (context, _) {
-          return PlanyButton(
-            text: AppLocalization.of(context).login,
-            isLoading: widget.viewModel.login.running,
-            onPressed: () {
-              widget.viewModel.login.execute(
-                (_email.value.text, _password.value.text),
-              );
-            },
-          );
-        },
-      );
+  Widget _buildLoginButton(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.viewModel.login,
+      builder: (context, _) {
+        return PlanyButton(
+          text: AppLocalization.of(context).login,
+          isLoading: widget.viewModel.login.running,
+          onPressed: () {
+            widget.viewModel.login.execute(
+              (_email.value.text, _password.value.text),
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildRegisterRow(BuildContext context) => Center(
         child: Row(

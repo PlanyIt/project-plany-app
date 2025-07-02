@@ -11,11 +11,13 @@ import '../ui/auth/register/view_models/register_viewmodel.dart';
 import '../ui/auth/register/widgets/register_screen.dart';
 import '../ui/auth/reset-password/widgets/reset_password_screen.dart';
 import '../ui/auth/widgets/home_screen.dart';
+import '../ui/create_plan/view_models/create_plan_view_model.dart';
+import '../ui/create_plan/widgets/create_plan_screen.dart';
 import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
 import '../ui/dashboard/widgets/dashboard_screen.dart';
 import '../ui/search_plan/view_models/search_view_model.dart';
 import '../ui/search_plan/widgets/search_screen.dart';
-import 'routes_new.dart';
+import 'routes.dart';
 
 /// Top go_router entry point.
 ///
@@ -56,36 +58,45 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           },
         ),
         GoRoute(
-            path: Routes.dashboard,
-            builder: (context, state) {
-              return DashboardScreen(
-                  viewModel: DashboardViewModel(
-                      categoryRepository: context.read(),
-                      authRepository: context.read(),
-                      planRepository: context.read(),
-                      stepRepository: context.read()));
-            },
-            routes: [
-              GoRoute(
-                path: Routes.createPlan,
-                builder: (context, state) {
-                  return CreatePlansScreen();
-                },
-              ),
-            ]),
-        GoRoute(
-          name: 'search',
-          path: '/search',
+          path: Routes.dashboard,
           builder: (context, state) {
-            final initialQuery = state.uri.queryParameters['query'];
-            final initialCategory = state.uri.queryParameters['category'];
-            return SearchScreen(
-              viewModel: SearchViewModel(
+            return DashboardScreen(
+                viewModel: DashboardViewModel(
+                    categoryRepository: context.read(),
+                    authRepository: context.read(),
+                    planRepository: context.read(),
+                    stepRepository: context.read()));
+          },
+          routes: [
+            GoRoute(
+              name: 'search',
+              path: '/search',
+              builder: (context, state) {
+                final initialQuery = state.uri.queryParameters['query'];
+                final initialCategory = state.uri.queryParameters['category'];
+                return SearchScreen(
+                  viewModel: SearchViewModel(
+                    planRepository: context.read(),
+                    stepRepository: context.read(),
+                    categoryRepository: context.read(),
+                  ),
+                  initialQuery: initialQuery,
+                  initialCategory: initialCategory,
+                );
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: Routes.createPlan,
+          builder: (context, state) {
+            return CreatePlanScreen(
+              viewModel: CreatePlanViewModel(
+                authRepository: context.read(),
+                categoryRepository: context.read(),
                 planRepository: context.read(),
                 stepRepository: context.read(),
               ),
-              initialQuery: initialQuery,
-              initialCategory: initialCategory,
             );
           },
         ),

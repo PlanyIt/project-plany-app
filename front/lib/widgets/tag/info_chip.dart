@@ -29,21 +29,29 @@ class InfoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: iconSize ?? 12,
-            color: themeColor,
-          ),
+          _buildIcon(themeColor),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: fontSize ?? 11,
-              fontWeight: FontWeight.w500,
-              color: themeColor,
-            ),
-          ),
+          _buildLabel(themeColor),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIcon(Color themeColor) {
+    return Icon(
+      icon,
+      size: iconSize ?? 12,
+      color: themeColor,
+    );
+  }
+
+  Widget _buildLabel(Color themeColor) {
+    return Text(
+      label,
+      style: TextStyle(
+        fontSize: fontSize ?? 11,
+        fontWeight: FontWeight.w500,
+        color: themeColor,
       ),
     );
   }

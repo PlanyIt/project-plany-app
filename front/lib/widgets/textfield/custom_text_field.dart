@@ -73,6 +73,16 @@ class _CustomTextFieldState extends State<CustomTextField> {
     super.dispose();
   }
 
+  Widget _buildPrefixIcon() {
+    // Extracted prefix icon logic
+    return Icon(Icons.person); // Example icon, replace with your logic
+  }
+
+  Widget _buildSuffixIcon() {
+    // Extracted suffix icon logic
+    return Icon(Icons.visibility); // Example icon, replace with your logic
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -102,6 +112,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
           fillColor: Colors.grey[50],
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          prefixIcon: _buildPrefixIcon(),
+          suffixIcon: _buildSuffixIcon(),
         ),
       ),
     );

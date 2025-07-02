@@ -55,121 +55,127 @@ class StepCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (imageUrl.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      bottomLeft: Radius.circular(16),
-                    ),
-                    child: SizedBox(
-                      width: 100,
-                      height: double.infinity,
-                      child: _buildImage(),
-                    ),
-                  ),
+                if (imageUrl.isNotEmpty) _buildImageSection(),
 
                 // Contenu
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                semanticsLabel: 'Étape: $title',
-                              ),
-                            ),
-                            // Actions pour éditer et supprimer
-                            if (onEdit != null || onDelete != null)
-                              Row(
-                                children: [
-                                  if (onEdit != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 8),
-                                      child: _buildActionButton(
-                                        context: context,
-                                        icon: Icons.edit,
-                                        color: Colors.blue,
-                                        tooltip: 'Modifier cette étape',
-                                        onTap: onEdit!,
-                                      ),
-                                    ),
-                                  if (onDelete != null)
-                                    _buildActionButton(
-                                      context: context,
-                                      icon: Icons.delete_outline,
-                                      color: Colors.red,
-                                      tooltip: 'Supprimer cette étape',
-                                      onTap: () =>
-                                          _showDeleteConfirmation(context),
-                                    ),
-                                ],
-                              ),
-                          ],
-                        ),
-
-                        // Description
-                        if (description.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            description,
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              fontSize: 13,
-                              height: 1.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          children: [
-                            if (duration != null)
-                              InfoChip(
-                                icon: Icons.access_time_outlined,
-                                label: "$duration".toLowerCase() +
-                                    (durationUnit != null
-                                        ? ' $durationUnit'.toLowerCase()
-                                        : ''),
-                                color: themeColor,
-                              ),
-                            if (cost != null)
-                              InfoChip(
-                                icon: Icons.euro_outlined,
-                                label: "$cost€",
-                                color: themeColor,
-                              ),
-                            if (locationName != null)
-                              InfoChip(
-                                icon: Icons.place_outlined,
-                                label: _truncateLocationName(locationName!),
-                                color: themeColor,
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: _buildContentSection(context),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImageSection() {
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(16),
+        bottomLeft: Radius.circular(16),
+      ),
+      child: SizedBox(
+        width: 100,
+        height: double.infinity,
+        child: _buildImage(),
+      ),
+    );
+  }
+
+  Widget _buildContentSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  semanticsLabel: 'Étape: $title',
+                ),
+              ),
+              // Actions pour éditer et supprimer
+              if (onEdit != null || onDelete != null)
+                Row(
+                  children: [
+                    if (onEdit != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _buildActionButton(
+                          context: context,
+                          icon: Icons.edit,
+                          color: Colors.blue,
+                          tooltip: 'Modifier cette étape',
+                          onTap: onEdit!,
+                        ),
+                      ),
+                    if (onDelete != null)
+                      _buildActionButton(
+                        context: context,
+                        icon: Icons.delete_outline,
+                        color: Colors.red,
+                        tooltip: 'Supprimer cette étape',
+                        onTap: () => _showDeleteConfirmation(context),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+
+          // Description
+          if (description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 13,
+                height: 1.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              if (duration != null)
+                InfoChip(
+                  icon: Icons.access_time_outlined,
+                  label: "$duration".toLowerCase() +
+                      (durationUnit != null
+                          ? ' $durationUnit'.toLowerCase()
+                          : ''),
+                  color: themeColor,
+                ),
+              if (cost != null)
+                InfoChip(
+                  icon: Icons.euro_outlined,
+                  label: "$cost€",
+                  color: themeColor,
+                ),
+              if (locationName != null)
+                InfoChip(
+                  icon: Icons.place_outlined,
+                  label: _truncateLocationName(locationName!),
+                  color: themeColor,
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

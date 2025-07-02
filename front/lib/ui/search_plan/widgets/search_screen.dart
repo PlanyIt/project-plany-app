@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../ui/dashboard/widgets/search_bar/search_bar.dart';
+import '../../dashboard/widgets/search_bar.dart';
 import '../view_models/search_view_model.dart';
-import 'filter_bottom_sheet.dart';
+import 'filter_bottom_sheet.dart' hide Colors, Icons, Row;
 import 'filter_chips_section.dart';
 import 'vertical_plan_list.dart';
 
@@ -66,7 +67,7 @@ class _SearchScreenState extends State<SearchScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
       ),
       backgroundColor: Colors.grey[50],
@@ -98,8 +99,8 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: InkWell(
                       onTap: () => _showFilterBottomSheet(context),
                       borderRadius: BorderRadius.circular(12),
-                      child: const Padding(
-                        padding: EdgeInsets.all(14),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
                         child: Icon(
                           Icons.tune,
                           color: Colors.white,

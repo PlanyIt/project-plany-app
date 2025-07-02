@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 
-import '../../../../domain/models/user/user.dart';
-import '../../../../routing/routes_new.dart';
+import '../../../domain/models/user/user.dart';
+import '../../../routing/routes.dart';
 
-import '../../../core/themes/app_theme.dart';
-import '../../../core/ui/button/logout_button.dart';
-import '../../view_models/dashboard_viewmodel.dart';
+import '../../core/themes/app_theme.dart';
+import '../../core/ui/button/logout_button.dart';
+import '../view_models/dashboard_viewmodel.dart';
 
 class ProfileDrawer extends StatelessWidget {
   final VoidCallback onClose;

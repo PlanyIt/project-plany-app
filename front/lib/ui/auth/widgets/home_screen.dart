@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../routing/routes_new.dart';
+import '../../../routing/routes.dart';
 import '../../core/ui/button/plany_button.dart';
 import '../../core/ui/logo/plany_logo.dart';
 

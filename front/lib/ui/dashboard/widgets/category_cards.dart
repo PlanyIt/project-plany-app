@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../../../domain/models/category/category.dart';
-import '../../../../utils/helpers.dart';
-import '../../../../utils/icon_utils.dart';
-import '../../../core/themes/app_theme.dart';
+import '../../../domain/models/category/category.dart';
+import '../../../utils/helpers.dart';
+import '../../../utils/icon_utils.dart';
+import '../../core/themes/app_theme.dart';
 
 class CategoryCards extends StatelessWidget {
   final List<Category> categories;

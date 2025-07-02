@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../routing/routes_new.dart';
+import '../../../../routing/routes.dart';
 
 class BottomBar extends StatelessWidget {
   final int currentIndex;

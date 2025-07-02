@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../../../widgets/card/compact_plan_card.dart';
+import '../../../widgets/card/compact_plan_card.dart';
 
 /// Un HorizontalPlanList générique qui affiche des CompactPlanCard prêtes à l'affichage
 class HorizontalPlanList extends StatelessWidget {

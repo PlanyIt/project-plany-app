@@ -30,7 +30,6 @@ class ImgurService {
         return null;
       }
     } catch (e) {
-      print('❌ Exception lors du refresh : $e');
       return null;
     }
   }
@@ -43,7 +42,6 @@ class ImgurService {
       return storedToken;
     }
 
-    print('⚠️ Aucun access_token stocké. Tentative de refresh...');
     return await refreshAccessToken();
   }
 
