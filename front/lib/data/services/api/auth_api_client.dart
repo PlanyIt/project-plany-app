@@ -2,10 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../../utils/result.dart';
+import 'model/auth_response/auth_response.dart';
 import 'model/login_request/login_request.dart';
-import 'model/login_response/login_response.dart';
 import 'model/register_request/register_request.dart';
-import 'model/register_response/register_response.dart';
 
 class AuthApiClient {
   AuthApiClient({String? host, int? port, HttpClient Function()? clientFactory})
@@ -17,7 +16,7 @@ class AuthApiClient {
   final int _port;
   final HttpClient Function() _clientFactory;
 
-  Future<Result<LoginResponse>> login(LoginRequest loginRequest) async {
+  Future<Result<AuthResponse>> login(LoginRequest loginRequest) async {
     final client = _clientFactory();
     try {
       final request = await client.post(_host, _port, '/login');
@@ -25,7 +24,7 @@ class AuthApiClient {
       final response = await request.close();
       if (response.statusCode == 200) {
         final stringData = await response.transform(utf8.decoder).join();
-        return Result.ok(LoginResponse.fromJson(jsonDecode(stringData)));
+        return Result.ok(AuthResponse.fromJson(jsonDecode(stringData)));
       } else {
         return const Result.error(HttpException("Login error"));
       }
@@ -36,8 +35,7 @@ class AuthApiClient {
     }
   }
 
-  Future<Result<RegisterResponse>> register(
-      RegisterRequest registerRequest) async {
+  Future<Result<AuthResponse>> register(RegisterRequest registerRequest) async {
     final client = _clientFactory();
     try {
       final request = await client.post(_host, _port, '/api/auth/register');
@@ -46,7 +44,7 @@ class AuthApiClient {
       final response = await request.close();
       if (response.statusCode == 201) {
         final stringData = await response.transform(utf8.decoder).join();
-        return Result.ok(RegisterResponse.fromJson(jsonDecode(stringData)));
+        return Result.ok(AuthResponse.fromJson(jsonDecode(stringData)));
       } else {
         return const Result.error(HttpException("Registration error"));
       }

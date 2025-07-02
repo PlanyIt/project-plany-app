@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../../../domain/models/step/step.dart';
 import '../../../utils/result.dart';
 import 'model/category/category_api_model.dart';
+import 'model/step/step_api_model.dart';
 
 /// Adds the `Authentication` header to a header configuration.
 typedef AuthHeaderProvider = String? Function();
@@ -69,6 +71,33 @@ class ApiClient {
         final stringData = await response.transform(utf8.decoder).join();
         final category = CategoryApiModel.fromJson(jsonDecode(stringData));
         return Result.ok(category);
+      } else {
+        return const Result.error(HttpException("Invalid response"));
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  // Step endpoints
+  Future<Result<List<StepApiModel>>> getStepsByPlan(String planId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.get(
+        _host,
+        _port,
+        'api/steps/plan/$planId',
+      );
+      await _authHeader(request.headers);
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        final stringData = await response.transform(utf8.decoder).join();
+        final json = jsonDecode(stringData) as List<dynamic>;
+        final steps =
+            json.map((element) => StepApiModel.fromJson(element)).toList();
+        return Result.ok(steps);
       } else {
         return const Result.error(HttpException("Invalid response"));
       }

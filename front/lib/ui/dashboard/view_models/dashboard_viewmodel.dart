@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 
+import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/category/category_repository.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../utils/command.dart';
@@ -10,11 +11,11 @@ import '../../../utils/command.dart';
 class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel({
     required CategoryRepository categoryRepository,
-    required UserRepository userRepository,
+    required AuthRepository authRepository,
     required PlanRepository planRepository,
     required StepRepository stepRepository,
   })  : _categoryRepository = categoryRepository,
-        _userRepository = userRepository,
+        _authRepository = authRepository,
         _planRepository = planRepository,
         _stepRepository = stepRepository {
     load = Command0(_load);
@@ -24,9 +25,8 @@ class DashboardViewModel extends ChangeNotifier {
   // Services & Repos
   final CategoryRepository _categoryRepository;
   final PlanRepository _planRepository;
-  final UserRepository _userRepository;
+  final AuthRepository _authRepository;
   final StepRepository _stepRepository;
-  final SessionManager _sessionManager;
   final Logger _log = Logger('DashboardViewModel');
 
   // UI State

@@ -62,8 +62,13 @@ export class AuthService {
         id: user._id,
         email: user.email,
         username: user.username,
+        description: user.description || null,
         isPremium: user.isPremium || false,
         photoUrl: user.photoUrl || null,
+        birthdate: user.birthdate || null,
+        gender: user.gender || null,
+        followers: user.followers || [],
+        following: user.following || [],
       },
     };
   }
@@ -89,8 +94,12 @@ export class AuthService {
     };
 
     return {
-      token: this.jwtService.sign(payload),
-      userId: newUser._id,
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        username: newUser.username,
+      },
     };
   }
 

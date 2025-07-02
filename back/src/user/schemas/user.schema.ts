@@ -35,9 +35,6 @@ export class User {
   @Prop({ default: true })
   isActive: boolean;
 
-  @Prop({ type: Date, default: Date.now })
-  registrationDate: Date;
-
   @Prop({ type: [String], default: [] })
   followers: string[];
 
