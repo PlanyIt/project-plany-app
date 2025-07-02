@@ -4,16 +4,14 @@ import 'package:provider/single_child_widget.dart';
 
 import '../data/repositories/auth/auth_repository.dart';
 import '../data/repositories/auth/auth_repository_remote.dart';
+import '../data/repositories/category/category_repository.dart';
+import '../data/repositories/category/category_repository_remote.dart';
 import '../data/services/api/api_client.dart';
 import '../data/services/api/auth_api_client.dart';
 import '../data/services/auth_storage_service.dart';
 import '../data/services/imgur_service.dart';
 
-/// Shared providers for all configurations.
-List<SingleChildWidget> _sharedProviders = [];
-
-/// Configure dependencies for remote data.
-List<SingleChildWidget> get providersRemote {
+List<SingleChildWidget> get providers {
   return [
     Provider(
         create: (context) => AuthApiClient(
@@ -27,16 +25,16 @@ List<SingleChildWidget> get providersRemote {
             )),
     Provider(create: (context) => ImgurService()),
     Provider(create: (context) => AuthStorageService()),
-
-    // Auth Repository
     ChangeNotifierProvider<AuthRepository>(
       create: (context) => AuthRepositoryRemote(
         authApiClient: context.read(),
         apiClient: context.read(),
         authStorageService: context.read(),
-      ),
+      ) as AuthRepository,
     ),
-
-    ..._sharedProviders,
+    Provider(
+      create: (context) => CategoryRepositoryRemote(apiClient: context.read())
+          as CategoryRepository,
+    ),
   ];
 }
