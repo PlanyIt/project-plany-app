@@ -89,14 +89,8 @@ export class AuthService {
     };
 
     return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: newUser._id,
-        email: newUser.email,
-        username: newUser.username,
-        isPremium: newUser.isPremium || false,
-        photoUrl: newUser.photoUrl || null,
-      },
+      token: this.jwtService.sign(payload),
+      userId: newUser._id,
     };
   }
 

@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/ui/core/themes/app_theme.dart';
 import 'package:flutter/services.dart';
 
 class ChooseLocation extends StatefulWidget {

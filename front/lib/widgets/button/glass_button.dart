@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/ui/core/themes/app_theme.dart';
 
 class GlassButton extends StatefulWidget {
   final String text;

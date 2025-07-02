@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category.dart';
+import 'package:front/domain/models/category/category.dart';
 import 'package:front/providers/create_plan_provider.dart';
 import 'package:front/utils/icon_utils.dart';
 import 'package:front/widgets/button/select_button.dart';

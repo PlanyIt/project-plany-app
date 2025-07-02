@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:front/providers/create_plan_provider.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/ui/core/themes/app_theme.dart';
 import 'package:front/widgets/card/compact_plan_card.dart';
 import 'package:front/widgets/card/step_card_timeline.dart';
 import 'package:provider/provider.dart';

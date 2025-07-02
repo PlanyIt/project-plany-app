@@ -1,9 +1,11 @@
 import 'dart:io' show Platform;
+
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:android_intent_plus/android_intent.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:front/domain/models/step.dart' as custom;
+
+import '../domain/models/step.dart' as custom;
 
 class NavigationService {
   static Future<void> navigateTo(BuildContext context,

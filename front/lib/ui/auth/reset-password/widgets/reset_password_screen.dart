@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:front/widgets/common/plany_logo.dart';
-import 'package:front/widgets/common/plany_button.dart';
-import 'package:front/theme/app_theme.dart';
-import 'package:front/widgets/common/custom_text_field.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../routing/routes_new.dart';
+import '../../../core/themes/app_theme.dart';
+import '../../../core/ui/button/plany_button.dart';
+import '../../../core/ui/form/custom_text_field.dart';
+import '../../../core/ui/logo/plany_logo.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -15,7 +18,6 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
 
-  // Méthode pour gérer la réinitialisation du mot de passe via Firebase
   Future<void> _resetPassword() async {
     if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -29,8 +31,6 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
 
     try {
-      /// Todo : Mettre en place la logique de réinitialisation du mot de passe
-      //await _auth.sendPasswordResetEmail(email: _emailController.text);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -38,7 +38,7 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   Text('Email de réinitialisation du mot de passe envoyé.')),
         );
 
-        Navigator.pushReplacementNamed(context, '/login');
+        context.go(Routes.login);
       }
     } catch (e) {
       if (mounted) {
@@ -56,7 +56,6 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Use resizeToAvoidBottomInset to prevent keyboard issues
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
@@ -111,9 +110,7 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     const SizedBox(height: 20),
                     Center(
                       child: TextButton(
-                        onPressed: () {
-                          Navigator.pushReplacementNamed(context, '/login');
-                        },
+                        onPressed: () => context.go(Routes.login),
                         child: Text(
                           'Retour à la connexion',
                           style: TextStyle(

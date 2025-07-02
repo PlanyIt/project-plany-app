@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:front/theme/app_theme.dart';
+
+import '../../themes/app_theme.dart';
 
 class PlanyButton extends StatelessWidget {
   final String text;
@@ -10,6 +11,7 @@ class PlanyButton extends StatelessWidget {
   final double fontSize;
   final double height;
   final double borderRadius;
+  final bool isLoading;
 
   const PlanyButton({
     super.key,
@@ -21,20 +23,21 @@ class PlanyButton extends StatelessWidget {
     this.fontSize = 16,
     this.height = 56,
     this.borderRadius = AppTheme.radiusXL,
+    this.isLoading = false, // Default to false
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color bgColor =
+    final bgColor =
         color ?? (filled ? Theme.of(context).primaryColor : Colors.white);
-    final Color fgColor =
+    final fgColor =
         textColor ?? (filled ? Colors.white : Theme.of(context).primaryColor);
 
     return SizedBox(
       width: double.infinity,
       height: height,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           foregroundColor: fgColor,
           backgroundColor: bgColor,
@@ -43,14 +46,23 @@ class PlanyButton extends StatelessWidget {
           ),
           elevation: 0,
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            color: fgColor,
-          ),
-        ),
+        child: isLoading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: fgColor,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                text,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.bold,
+                  color: fgColor,
+                ),
+              ),
       ),
     );
   }

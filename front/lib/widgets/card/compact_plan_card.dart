@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/domain/models/category/category.dart';
+import 'package:front/ui/core/themes/app_theme.dart';
 import 'package:front/utils/icon_utils.dart';
 
 class CompactPlanCard extends StatelessWidget {

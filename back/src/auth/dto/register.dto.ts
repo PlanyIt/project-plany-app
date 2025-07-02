@@ -26,12 +26,4 @@ export class RegisterDto {
       'Le mot de passe doit contenir au moins une lettre majuscule, une lettre minuscule et un chiffre',
   })
   password: string;
-
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @IsString()
-  @IsOptional()
-  photoUrl?: string;
 }

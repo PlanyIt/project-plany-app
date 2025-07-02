@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category.dart';
+import 'package:front/domain/models/category/category.dart';
 import 'package:front/screens/details-plan/widgets/content/plan_content.dart';
 import 'package:front/screens/details-plan/widgets/header/details_header.dart';
 import 'package:front/services/plan_service.dart';

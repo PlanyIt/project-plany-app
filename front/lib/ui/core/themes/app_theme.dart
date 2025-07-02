@@ -111,7 +111,7 @@ class AppTheme {
         ),
       ),
       // Animation des transitions et cartes
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: elevationS,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusM),
@@ -194,7 +194,7 @@ class AppTheme {
           ),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: darkCardColor,
         elevation: elevationS,
         shape: RoundedRectangleBorder(

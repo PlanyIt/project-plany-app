@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/screens/profile/profile_screen.dart';
-import 'package:front/theme/app_theme.dart';
-import 'package:front/services/auth_service.dart';
+
+import '../../domain/models/user.dart';
+import '../../screens/profile/profile_screen.dart';
+import '../../services/auth_service.dart';
+import '../../ui/core/themes/app_theme.dart';
 
 class ProfileDrawer extends StatelessWidget {
   final VoidCallback onClose;
@@ -15,7 +16,7 @@ class ProfileDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Future<User?> user = AuthService().getUser();
+    final user = AuthService().getUser();
     final size = MediaQuery.of(context).size;
     final drawerWidth = size.width * 0.85;
 
@@ -169,7 +170,7 @@ class ProfileDrawer extends StatelessWidget {
       future: AuthService().getUser(),
       builder: (context, snapshot) {
         final user = snapshot.data;
-        final String userId = user?.id ?? '';
+        final userId = user?.id ?? '';
 
         return ListView(
           padding: EdgeInsets.zero,

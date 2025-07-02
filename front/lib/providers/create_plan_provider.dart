@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category.dart';
+import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan.dart';
 import 'package:front/domain/models/step.dart' as step_model;
 import 'package:front/services/auth_service.dart';

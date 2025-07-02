@@ -3,7 +3,7 @@ import 'package:front/providers/create_plan_provider.dart';
 import 'package:front/screens/create-plan/steps/step_three_content.dart';
 import 'package:front/screens/create-plan/steps/step_one_content.dart';
 import 'package:front/screens/create-plan/steps/step_two_content.dart';
-import 'package:front/theme/app_theme.dart';
+import 'package:front/ui/core/themes/app_theme.dart';
 import 'package:provider/provider.dart';
 
 class CreatePlansScreen extends StatelessWidget {

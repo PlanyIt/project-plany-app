@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category.dart';
+import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan.dart';
 import 'package:front/domain/models/step.dart' as plan_steps;
 import 'package:front/screens/profile/widgets/common/section_header.dart';

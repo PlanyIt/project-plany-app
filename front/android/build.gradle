@@ -11,7 +11,6 @@ buildscript {
     }
 
     ext {
-        // Update these lines if they exist or add them if they don't
         javaVersion = JavaVersion.VERSION_11
     }
 }
@@ -22,7 +21,6 @@ allprojects {
         mavenCentral()
     }
     
-    // Apply consistent Kotlin settings for all projects
     plugins.withId('kotlin-android') {
         kotlin {
             jvmToolchain(17)
