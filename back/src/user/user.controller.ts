@@ -13,6 +13,7 @@ import {
   Request,
   UnauthorizedException,
   Post,
+  BadRequestException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -44,10 +45,15 @@ export class UserController {
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto).catch((error) => {
+    try {
+      return await this.userService.create(createUserDto);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       console.error("Erreur lors de la création de l'utilisateur :", error);
       throw new InternalServerErrorException();
-    });
+    }
   }
 
   @UseGuards(JwtAuthGuard)

@@ -35,8 +35,22 @@ export class UserService {
       );
     }
 
-    const createdUser = new this.userModel(createUserDto);
-    return createdUser.save();
+    try {
+      const createdUser = new this.userModel(createUserDto);
+      return await createdUser.save();
+    } catch (error) {
+      // Gérer les erreurs de duplication de MongoDB
+      if (error.code === 11000) {
+        const field = Object.keys(error.keyPattern)[0];
+        if (field === 'email') {
+          throw new BadRequestException('Cet email est déjà utilisé');
+        } else if (field === 'username') {
+          throw new BadRequestException("Ce nom d'utilisateur est déjà pris");
+        }
+        throw new BadRequestException('Cette valeur est déjà utilisée');
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<UserDocument[]> {

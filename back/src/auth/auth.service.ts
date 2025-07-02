@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PasswordService } from './password.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
@@ -57,15 +61,15 @@ export class AuthService {
     };
 
     return {
-      access_token: this.jwtService.sign(payload),
-      user: {
+      token: this.jwtService.sign(payload),
+      currentUser: {
         id: user._id,
         email: user.email,
         username: user.username,
         description: user.description || null,
         isPremium: user.isPremium || false,
         photoUrl: user.photoUrl || null,
-        birthdate: user.birthdate || null,
+        birthDate: user.birthDate || null,
         gender: user.gender || null,
         followers: user.followers || [],
         following: user.following || [],
@@ -74,33 +78,67 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto) {
+    // Vérifier si l'email existe déjà
+    const existingUserByEmail = await this.usersService.findOneByEmail(
+      createUserDto.email,
+    );
+    if (existingUserByEmail) {
+      throw new BadRequestException('Cet email est déjà utilisé');
+    }
+
+    // Vérifier si le nom d'utilisateur existe déjà
+    const existingUserByUsername = await this.usersService.findOneByUsername(
+      createUserDto.username,
+    );
+    if (existingUserByUsername) {
+      throw new BadRequestException("Ce nom d'utilisateur est déjà pris");
+    }
+
     // Hacher le mot de passe avec notre service spécialisé
     const hashedPassword = await this.passwordService.hashPassword(
       createUserDto.password,
     );
 
-    // Créer l'utilisateur avec le mot de passe déjà haché
-    const newUser = await this.usersService.create({
-      ...createUserDto,
-      password: hashedPassword,
-      isActive: true,
-    });
+    try {
+      // Créer l'utilisateur avec le mot de passe déjà haché
+      const newUser = await this.usersService.create({
+        ...createUserDto,
+        password: hashedPassword,
+        isActive: true,
+      });
 
-    // Générer un token JWT
-    const payload = {
-      sub: newUser._id,
-      email: newUser.email,
-      username: newUser.username,
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: newUser._id,
+      // Générer un token JWT
+      const payload = {
+        sub: newUser._id,
         email: newUser.email,
         username: newUser.username,
-      },
-    };
+      };
+
+      return {
+        token: this.jwtService.sign(payload),
+        currentUser: {
+          id: newUser._id,
+          email: newUser.email,
+          username: newUser.username,
+          description: newUser.description || null,
+          isPremium: newUser.isPremium || false,
+          photoUrl: newUser.photoUrl || null,
+          birthDate: newUser.birthDate || null,
+          gender: newUser.gender || null,
+          followers: newUser.followers || [],
+          following: newUser.following || [],
+        },
+      };
+    } catch (error) {
+      // Gérer les erreurs de duplication de MongoDB
+      if (error.code === 11000) {
+        const field = Object.keys(error.keyPattern)[0];
+        throw new BadRequestException(
+          `Ce ${field === 'email' ? 'email' : "nom d'utilisateur"} est déjà utilisé`,
+        );
+      }
+      throw error;
+    }
   }
 
   async refreshToken(userId: string) {
@@ -116,7 +154,7 @@ export class AuthService {
     };
 
     return {
-      access_token: this.jwtService.sign(payload),
+      token: this.jwtService.sign(payload),
     };
   }
 }

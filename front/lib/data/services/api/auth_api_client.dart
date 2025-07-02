@@ -19,7 +19,8 @@ class AuthApiClient {
   Future<Result<AuthResponse>> login(LoginRequest loginRequest) async {
     final client = _clientFactory();
     try {
-      final request = await client.post(_host, _port, '/login');
+      final request = await client.post(_host, _port, '/api/auth/login');
+      request.headers.contentType = ContentType.json;
       request.write(jsonEncode(loginRequest));
       final response = await request.close();
       if (response.statusCode == 200) {

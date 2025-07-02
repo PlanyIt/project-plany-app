@@ -5,6 +5,7 @@ import {
   UseGuards,
   Get,
   Request,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -22,7 +23,14 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+    try {
+      return await this.authService.register(registerDto);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Erreur lors de la création du compte');
+    }
   }
 
   @UseGuards(JwtAuthGuard)
