@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/step.dart' as plan_steps;
+import 'package:front/domain/models/step/step.dart' as plan_steps;
 import 'package:front/screens/details-plan/widgets/content/steps_carousel/step_detail_card.dart';
 import 'dart:math' as math;
 import 'vertical_flight_path_painter.dart';

@@ -1,14 +1,9 @@
-// Copyright 2024 The Flutter team. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/repositories/auth/auth_repository.dart';
 import '../screens/create-plan/create_plans_screen.dart';
-import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../ui/auth/login/view_models/login_viewmodel.dart';
 import '../ui/auth/login/widgets/login_screen.dart';
@@ -16,6 +11,8 @@ import '../ui/auth/register/view_models/register_viewmodel.dart';
 import '../ui/auth/register/widgets/register_screen.dart';
 import '../ui/auth/reset-password/widgets/reset_password_screen.dart';
 import '../ui/auth/widgets/home_screen.dart';
+import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
+import '../ui/dashboard/widgets/dashboard_screen.dart';
 import 'routes_new.dart';
 
 /// Top go_router entry point.
@@ -59,7 +56,12 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
         GoRoute(
           path: Routes.dashboard,
           builder: (context, state) {
-            return DashboardScreen();
+            return DashboardScreen(
+                viewModel: DashboardViewModel(
+                    categoryRepository: context.read(),
+                    authRepository: context.read(),
+                    planRepository: context.read(),
+                    stepRepository: context.read()));
           },
         ),
         GoRoute(

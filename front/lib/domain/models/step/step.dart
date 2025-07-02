@@ -15,6 +15,7 @@ class Step with _$Step {
     required String image,
     String? duration,
     double? cost,
+    DateTime? createdAt,
   }) = _Step;
 
   factory Step.fromJson(Map<String, dynamic> json) => _$StepFromJson(json);

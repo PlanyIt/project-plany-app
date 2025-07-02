@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/step.dart' as plan_steps;
+import 'package:front/domain/models/step/step.dart' as plan_steps;
 
 class StepDetailCard extends StatelessWidget {
   final plan_steps.Step step;

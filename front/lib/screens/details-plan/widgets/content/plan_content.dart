@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/domain/models/plan.dart';
-import 'package:front/domain/models/step.dart' as plan_steps;
+import 'package:front/domain/models/plan/plan.dart';
+import 'package:front/domain/models/step/step.dart' as plan_steps;
 import 'package:front/screens/details-plan/widgets/content/info_plan/plan_info_section.dart';
 import 'package:front/screens/details-plan/widgets/content/steps_carousel/steps_carousel.dart';
 import 'package:front/screens/details-plan/widgets/content/comments/comment_section.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front/screens/details-plan/widgets/header/components/header_controls.dart';
 import 'package:front/screens/details-plan/widgets/header/components/map_view.dart';
-import 'package:front/domain/models/step.dart' as custom;
+import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/screens/details-plan/widgets/header/components/step_info_card.dart';
 import 'package:front/screens/details-plan/widgets/header/components/header_carousel.dart';
 import 'package:front/services/step_service.dart';
@@ -13,7 +13,7 @@ class DetailsHeader extends StatefulWidget {
   final Color categoryColor;
   final String? planTitle;
   final String? planDescription;
-  
+
   const DetailsHeader({
     Key? key,
     required this.stepIds,
@@ -31,7 +31,7 @@ class DetailsHeaderState extends State<DetailsHeader> {
   final GlobalKey<MapViewState> _mapKey = GlobalKey<MapViewState>();
   final PageController _stepPageController = PageController();
   final StepService _stepService = StepService();
-  
+
   List<custom.Step> _steps = [];
   bool _isLoading = true;
   int _currentStepIndex = 0;
@@ -54,7 +54,7 @@ class DetailsHeaderState extends State<DetailsHeader> {
           loadedSteps.add(step);
         }
       }
-      
+
       if (mounted) {
         setState(() {
           _steps = loadedSteps;
@@ -73,7 +73,7 @@ class DetailsHeaderState extends State<DetailsHeader> {
 
   Future<void> _calculateDistanceToStep(custom.Step step) async {
     if (step.position == null) return;
-    
+
     try {
       final position = await Geolocator.getCurrentPosition();
       final distanceInMeters = Geolocator.distanceBetween(
@@ -82,7 +82,7 @@ class DetailsHeaderState extends State<DetailsHeader> {
         step.position!.latitude,
         step.position!.longitude,
       );
-      
+
       setState(() {
         _distanceToStep = distanceInMeters / 1000;
       });
@@ -102,10 +102,10 @@ class DetailsHeaderState extends State<DetailsHeader> {
       _showStepInfo = true;
       _distanceToStep = null;
     });
-    
+
     // Calculer la distance
     _calculateDistanceToStep(_steps[index]);
-    
+
     // Centrer la carte sur l'étape sélectionnée
     _mapKey.currentState?.centerOnStep(_steps[index].id!);
   }
@@ -124,29 +124,29 @@ class DetailsHeaderState extends State<DetailsHeader> {
           planDescription: widget.planDescription,
           height: MediaQuery.of(context).size.height,
           onStepSelected: _onStepSelected,
-        ),     
+        ),
         // Bouton de retour
         Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
-        left: 16,
-        right: 16,
-        child: HeaderControls(
-          categoryColor: widget.categoryColor,
-          onCenterMap: () => _mapKey.currentState?.recenterMapAll(),
-          steps: _steps,
-          planTitle: widget.planTitle,
-          planDescription: widget.planDescription,
-          showBackButton: true,
+          top: MediaQuery.of(context).padding.top + 16,
+          left: 16,
+          right: 16,
+          child: HeaderControls(
+            categoryColor: widget.categoryColor,
+            onCenterMap: () => _mapKey.currentState?.recenterMapAll(),
+            steps: _steps,
+            planTitle: widget.planTitle,
+            planDescription: widget.planDescription,
+            showBackButton: true,
+          ),
         ),
-      ),
-        
+
         // Carrousel d'étapes (à droite)
         if (!_isLoading && _steps.isNotEmpty)
           Positioned(
             top: MediaQuery.of(context).size.height * 0.15,
             right: 16,
             child: SizedBox(
-              width: 110, 
+              width: 110,
               height: 180,
               child: HeaderCarousel(
                 steps: _steps,
@@ -158,7 +158,7 @@ class DetailsHeaderState extends State<DetailsHeader> {
               ),
             ),
           ),
-        
+
         // Carte d'information de l'étape
         if (_showStepInfo && _selectedStep != null)
           Positioned(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/step.dart' as custom;
+import 'package:front/domain/models/step/step.dart' as custom;
 import 'package:front/services/navigation_service.dart';
 import 'package:geolocator/geolocator.dart';
 

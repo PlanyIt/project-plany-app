@@ -17,6 +17,9 @@ _$StepImpl _$$StepImplFromJson(Map<String, dynamic> json) => _$StepImpl(
       image: json['image'] as String,
       duration: json['duration'] as String?,
       cost: (json['cost'] as num?)?.toDouble(),
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
     );
 
 Map<String, dynamic> _$$StepImplToJson(_$StepImpl instance) =>
@@ -29,4 +32,5 @@ Map<String, dynamic> _$$StepImplToJson(_$StepImpl instance) =>
       'image': instance.image,
       'duration': instance.duration,
       'cost': instance.cost,
+      'createdAt': instance.createdAt?.toIso8601String(),
     };

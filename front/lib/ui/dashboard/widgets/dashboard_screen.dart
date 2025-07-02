@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category/category.dart' as app_category;
-import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/ui/dashboard/widgets/card/category_cards.dart';
-import 'package:front/ui/dashboard/widgets/list/horizontal_plan_list.dart';
-import 'package:front/ui/dashboard/widgets/screen/search_screen.dart';
-import 'package:front/ui/core/ui/bottom_bar/bottom_bar.dart';
-import 'package:front/ui/dashboard/view_models/dashboard_viewmodel.dart';
-import 'package:front/ui/core/ui/logo/plany_logo.dart';
-import 'package:front/ui/dashboard/widgets/placeholder/empty_state_widget.dart';
-import 'package:front/ui/dashboard/widgets/search_bar/search_bar.dart';
-import 'package:front/ui/dashboard/widgets/header/section_header.dart';
-import 'package:front/ui/dashboard/widgets/drawer/profile_drawer.dart';
-import 'package:front/utils/helpers.dart';
 import 'package:go_router/go_router.dart';
-import 'package:front/utils/result.dart';
+
+import '../../../domain/models/category/category.dart' as app_category;
+import '../../../domain/models/plan/plan.dart';
+import '../../../utils/result.dart';
+import '../../../widgets/dashboard/category_cards.dart';
+import '../../../widgets/dashboard/horizontal_plan_list.dart';
+import '../../../widgets/dashboard/search_bar.dart';
+import '../../../widgets/dashboard/section_header.dart';
+import '../../core/ui/bottom_bar/bottom_bar.dart';
+import '../../core/ui/logo/plany_logo.dart';
+import '../view_models/dashboard_viewmodel.dart';
+import 'drawer/profile_drawer.dart';
+import 'placeholder/empty_state_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.viewModel});
@@ -50,7 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     viewModel.load.execute();
 
-    Navigator.push(
+    /*Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => SearchScreen(
@@ -60,7 +59,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           autoFocus: fromSearchBar,
         ),
       ),
-    );
+    );*/
   }
 
   @override
@@ -187,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: SectionHeader(
           title: title,
           onSeeAllPressed:
-              seeAll ? () => _navigateToSearch(fromSearchBar: false) : null,
+              seeAll ? () => _navigateToSearch(fromSearchBar: false) : () {},
         ),
       ),
     );
@@ -205,7 +204,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return SliverToBoxAdapter(
         child: HorizontalPlanList(
           plans: const [],
-          planSteps: const {},
           isLoading: true,
           getCategoryById: (id) async => Result.error(Exception('Chargement')),
           onPlanTap: (_) {},
@@ -227,9 +225,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return SliverToBoxAdapter(
       child: HorizontalPlanList(
         plans: plans,
-        planSteps: viewModel.planSteps,
         isLoading: false,
-        getCategoryById: viewModel.getCategoryById,
+        getCategoryById: (id) => viewModel.getCategoryById(id),
         onPlanTap: (plan) => GoRouter.of(context).pushNamed(
           'detailsPlan',
           queryParameters: {'planId': plan.id},

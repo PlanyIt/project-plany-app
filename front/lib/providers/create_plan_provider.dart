@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/domain/models/plan.dart';
-import 'package:front/domain/models/step.dart' as step_model;
+import 'package:front/domain/models/plan/plan.dart';
+import 'package:front/domain/models/step/step.dart' as step_model;
 import 'package:front/services/auth_service.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/imgur_service.dart';
@@ -313,7 +313,6 @@ class CreatePlanProvider extends ChangeNotifier {
           title: _stepCards[i].title,
           description: _stepCards[i].description,
           order: i + 1,
-          userId: userId, // Utiliser l'ID utilisateur récupéré
           duration: formattedDuration,
           cost: _stepCards[i].cost,
           position: _stepCards[i].location,

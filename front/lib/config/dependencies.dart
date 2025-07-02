@@ -6,6 +6,10 @@ import '../data/repositories/auth/auth_repository.dart';
 import '../data/repositories/auth/auth_repository_remote.dart';
 import '../data/repositories/category/category_repository.dart';
 import '../data/repositories/category/category_repository_remote.dart';
+import '../data/repositories/plan/plan_repository.dart';
+import '../data/repositories/plan/plan_repository_remote.dart';
+import '../data/repositories/step/step_repository.dart';
+import '../data/repositories/step/step_repository_remote.dart';
 import '../data/services/api/api_client.dart';
 import '../data/services/api/auth_api_client.dart';
 import '../data/services/auth_storage_service.dart';
@@ -35,6 +39,14 @@ List<SingleChildWidget> get providers {
     Provider(
       create: (context) => CategoryRepositoryRemote(apiClient: context.read())
           as CategoryRepository,
+    ),
+    Provider(
+      create: (context) =>
+          PlanRepositoryRemote(apiClient: context.read()) as PlanRepository,
+    ),
+    Provider(
+      create: (context) =>
+          StepRepositoryRemote(apiClient: context.read()) as StepRepository,
     ),
   ];
 }

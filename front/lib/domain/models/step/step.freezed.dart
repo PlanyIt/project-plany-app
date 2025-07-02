@@ -28,6 +28,7 @@ mixin _$Step {
   String get image => throw _privateConstructorUsedError;
   String? get duration => throw _privateConstructorUsedError;
   double? get cost => throw _privateConstructorUsedError;
+  DateTime? get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this Step to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -51,7 +52,8 @@ abstract class $StepCopyWith<$Res> {
       int order,
       String image,
       String? duration,
-      double? cost});
+      double? cost,
+      DateTime? createdAt});
 }
 
 /// @nodoc
@@ -77,6 +79,7 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
     Object? image = null,
     Object? duration = freezed,
     Object? cost = freezed,
+    Object? createdAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -111,6 +114,10 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
           ? _value.cost
           : cost // ignore: cast_nullable_to_non_nullable
               as double?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -130,7 +137,8 @@ abstract class _$$StepImplCopyWith<$Res> implements $StepCopyWith<$Res> {
       int order,
       String image,
       String? duration,
-      double? cost});
+      double? cost,
+      DateTime? createdAt});
 }
 
 /// @nodoc
@@ -153,6 +161,7 @@ class __$$StepImplCopyWithImpl<$Res>
     Object? image = null,
     Object? duration = freezed,
     Object? cost = freezed,
+    Object? createdAt = freezed,
   }) {
     return _then(_$StepImpl(
       id: freezed == id
@@ -187,6 +196,10 @@ class __$$StepImplCopyWithImpl<$Res>
           ? _value.cost
           : cost // ignore: cast_nullable_to_non_nullable
               as double?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -202,7 +215,8 @@ class _$StepImpl implements _Step {
       required this.order,
       required this.image,
       this.duration,
-      this.cost});
+      this.cost,
+      this.createdAt});
 
   factory _$StepImpl.fromJson(Map<String, dynamic> json) =>
       _$$StepImplFromJson(json);
@@ -223,10 +237,12 @@ class _$StepImpl implements _Step {
   final String? duration;
   @override
   final double? cost;
+  @override
+  final DateTime? createdAt;
 
   @override
   String toString() {
-    return 'Step(id: $id, title: $title, description: $description, position: $position, order: $order, image: $image, duration: $duration, cost: $cost)';
+    return 'Step(id: $id, title: $title, description: $description, position: $position, order: $order, image: $image, duration: $duration, cost: $cost, createdAt: $createdAt)';
   }
 
   @override
@@ -244,13 +260,15 @@ class _$StepImpl implements _Step {
             (identical(other.image, image) || other.image == image) &&
             (identical(other.duration, duration) ||
                 other.duration == duration) &&
-            (identical(other.cost, cost) || other.cost == cost));
+            (identical(other.cost, cost) || other.cost == cost) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, title, description, position,
-      order, image, duration, cost);
+      order, image, duration, cost, createdAt);
 
   /// Create a copy of Step
   /// with the given fields replaced by the non-null parameter values.
@@ -277,7 +295,8 @@ abstract class _Step implements Step {
       required final int order,
       required final String image,
       final String? duration,
-      final double? cost}) = _$StepImpl;
+      final double? cost,
+      final DateTime? createdAt}) = _$StepImpl;
 
   factory _Step.fromJson(Map<String, dynamic> json) = _$StepImpl.fromJson;
 
@@ -297,6 +316,8 @@ abstract class _Step implements Step {
   String? get duration;
   @override
   double? get cost;
+  @override
+  DateTime? get createdAt;
 
   /// Create a copy of Step
   /// with the given fields replaced by the non-null parameter values.

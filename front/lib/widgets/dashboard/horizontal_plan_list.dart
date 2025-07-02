@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/plan.dart';
-import 'package:front/widgets/card/compact_plan_card.dart';
+
 import 'package:shimmer/shimmer.dart';
-import 'package:front/services/step_service.dart';
+
+import '../../domain/models/plan/plan.dart';
+import '../../services/step_service.dart';
+import '../card/compact_plan_card.dart';
 
 class HorizontalPlanList extends StatelessWidget {
   final List<Plan> plans;

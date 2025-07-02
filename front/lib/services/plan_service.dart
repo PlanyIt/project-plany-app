@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:front/domain/models/plan.dart';
+import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/services/auth_service.dart';
 import 'package:front/services/step_service.dart';
 import 'package:http/http.dart' as http;

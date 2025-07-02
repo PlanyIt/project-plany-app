@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/category/category_repository.dart';
+import '../../../data/repositories/plan/plan_repository.dart';
+import '../../../data/repositories/step/step_repository.dart';
 import '../../../domain/models/category/category.dart';
+import '../../../domain/models/plan/plan.dart';
+import '../../../domain/models/step/step.dart' as step_model;
+import '../../../domain/models/user/user.dart' show User;
 import '../../../utils/command.dart';
+import '../../../utils/helpers.dart';
+import '../../../utils/result.dart';
 
 class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel({
@@ -22,7 +29,7 @@ class DashboardViewModel extends ChangeNotifier {
     logout = Command0(_logout);
   }
 
-  // Services & Repos
+  // Repos
   final CategoryRepository _categoryRepository;
   final PlanRepository _planRepository;
   final AuthRepository _authRepository;
@@ -86,6 +93,7 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _log.info('Loading dashboard data');
+      _user = _authRepository.currentUser;
       final catRes = await _loadCategories();
       if (catRes is Error) return catRes;
 
@@ -93,9 +101,6 @@ class DashboardViewModel extends ChangeNotifier {
       if (planRes is Error) return planRes;
 
       await _loadStepsForPlans();
-
-      final userRes = await _loadUser();
-      if (userRes is Error) return userRes;
 
       return Result.ok(null);
     } catch (e, st) {
@@ -134,30 +139,19 @@ class DashboardViewModel extends ChangeNotifier {
     _stepImageCache.clear();
     for (final plan in _plans) {
       final steps = <step_model.Step>[];
-      for (final id in plan.steps) {
-        final res = await _stepRepository.getStepById(id);
-        if (res is Ok<step_model.Step>) {
-          steps.add(res.value);
-          if (res.value.image.isNotEmpty) {
-            _stepImageCache[id] = res.value.image;
-          }
+      _stepRepository.getStepsList(plan.id!).then((res) {
+        if (res is Ok<List<step_model.Step>>) {
+          steps.addAll(res.value);
+        } else {
+          _log.warning('Failed to load steps for plan ${plan.id}: ${res}');
         }
-      }
+      });
       _planSteps[plan.id!] = steps;
     }
   }
 
-  Future<Result<void>> _loadUser() async {
-    final res = await _userRepository.getCurrentUser();
-    if (res is Ok<User>) {
-      _user = res.value;
-      return Result.ok(null);
-    }
-    return res;
-  }
-
   Future<Result<void>> _logout() async {
-    final res = await _sessionManager.logout();
+    final res = await _authRepository.logout();
     if (res is Ok) {
       _user = null;
       _categories.clear();
@@ -247,10 +241,8 @@ class DashboardViewModel extends ChangeNotifier {
     if (userLatitude == null || userLongitude == null) return null;
     final steps = _planSteps[plan.id] ?? [];
     if (steps.isEmpty) return null;
-    final pos = LatLng(
-      steps.first.latitude ?? 0.0,
-      steps.first.longitude ?? 0.0,
-    );
+    final pos = steps.first.position;
+    if (pos == null) return null;
     return calculateDistanceBetween(
         userLatitude!, userLongitude!, pos.latitude, pos.longitude);
   }
@@ -263,7 +255,7 @@ class DashboardViewModel extends ChangeNotifier {
   void goToCategorySearch(BuildContext ctx, Category cat) {
     selectedCategory = cat;
     load.execute();
-    Navigator.push(
+    /*Navigator.push(
       ctx,
       MaterialPageRoute(
         builder: (_) => SearchScreen(
@@ -272,7 +264,7 @@ class DashboardViewModel extends ChangeNotifier {
           initialCategory: cat,
         ),
       ),
-    );
+    );*/
   }
 
   void goToPlanDetail(BuildContext ctx, String planId) {
@@ -354,6 +346,6 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   Future<Result<Category>> getCategoryById(String id) async {
-    return _categoryRepository.getCategoryById(id);
+    return _categoryRepository.getCategory(id);
   }
 }

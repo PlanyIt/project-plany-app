@@ -31,8 +31,6 @@ class AuthRepositoryRemote extends AuthRepository {
   String? _authToken;
   User? _currentUser;
 
-  User? get currentUser => _currentUser;
-
   final _log = Logger('AuthRepositoryRemote');
 
   /// Charge token et user JSON depuis le storage.
@@ -148,6 +146,9 @@ class AuthRepositoryRemote extends AuthRepository {
       notifyListeners();
     }
   }
+
+  @override
+  User? get currentUser => _currentUser;
 
   @override
   Future<Result<void>> logout() async {

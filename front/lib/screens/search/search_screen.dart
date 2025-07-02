@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
-import 'package:front/domain/models/plan.dart';
+import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/step_service.dart';

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../domain/models/step.dart' as custom;
+import '../domain/models/step/step.dart' as custom;
 
 class NavigationService {
   static Future<void> navigateTo(BuildContext context,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:front/domain/models/category/category.dart' as app_category;
-import 'package:front/domain/models/plan.dart';
 import 'package:front/providers/plan_provider.dart';
 import 'package:front/screens/search/search_screen.dart';
 import 'package:front/services/categorie_service.dart';
@@ -12,6 +11,8 @@ import 'package:front/widgets/dashboard/search_bar.dart';
 import 'package:front/widgets/dashboard/section_header.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
+
+import '../../domain/models/plan/plan.dart';
 
 class DashboardHomeScreen extends StatefulWidget {
   final VoidCallback? onProfileTap;
