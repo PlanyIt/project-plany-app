@@ -6,8 +6,9 @@ abstract final class Routes {
   static const reset = '/reset-password';
   static const createPlan = '/create-plan';
   static const profil = '/profil';
+  static const search = '/search';
 
-  static const search = '/$searchRelative';
+  //static const search = '/$searchRelative';
   static const searchRelative = 'search';
   static const results = '/$resultsRelative';
   static const resultsRelative = 'results';

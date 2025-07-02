@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../domain/models/category/category.dart' as app_category;
 import '../../../domain/models/plan/plan.dart';
-import '../../../utils/result.dart';
+import '../../../routing/routes_new.dart';
 import '../../core/ui/bottom_bar/bottom_bar.dart';
 import '../view_models/dashboard_viewmodel.dart';
 import 'app_bar/app_bar.dart';
@@ -115,6 +115,13 @@ class DashboardScreen extends StatelessWidget {
             child: DashboardSearchBar(
               hintText: 'Rechercher des plans...',
               readOnly: true,
+              onTap: () => context.pushNamed(
+                Routes.search,
+                queryParameters: {
+                  'query': '',
+                  'category': '',
+                },
+              ),
             ),
           ),
         ),

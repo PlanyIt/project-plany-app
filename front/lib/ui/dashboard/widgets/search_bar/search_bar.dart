@@ -31,14 +31,14 @@ class DashboardSearchBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(27),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
             spreadRadius: 0,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 2),
           ),
         ],
         border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.15),
+          color: Colors.grey.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -83,14 +83,12 @@ class DashboardSearchBar extends StatelessWidget {
   }
 
   Widget _buildEditableSearchBar(BuildContext context) {
-    final primaryColor = Theme.of(context).primaryColor;
-
     return Row(
       children: [
         const SizedBox(width: 16),
         Icon(
           Icons.search,
-          color: primaryColor,
+          color: Colors.grey.shade600,
           size: 20,
         ),
         const SizedBox(width: 12),
@@ -105,6 +103,14 @@ class DashboardSearchBar extends StatelessWidget {
             readOnly: readOnly,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: Colors.transparent,
+                ),
+                borderRadius: BorderRadius.circular(0),
+              ),
               hintText: hintText,
               hintStyle: TextStyle(
                 color: Colors.grey.shade500,
