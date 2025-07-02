@@ -4,6 +4,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../domain/models/category/category.dart';
 import '../../../../utils/helpers.dart';
 import '../../../../utils/icon_utils.dart';
+import '../../../core/themes/app_theme.dart';
 
 class CategoryCards extends StatelessWidget {
   final List<Category> categories;
@@ -35,20 +36,6 @@ class CategoryCards extends StatelessWidget {
       );
     }
 
-    // Palette de couleurs harmonisées avec le thème existant
-    final categoryGradients = <List<Color>>[
-      [const Color(0xFF6C63FF), const Color(0xFF837DFF)], // Secondaire
-      [const Color(0xFFFF7B9C), const Color(0xFFFF5C84)], // Accent
-      [const Color(0xFF3F8CFF), const Color(0xFF1F78FF)], // Bleu vif
-      [const Color(0xFF7250DE), const Color(0xFF5E41C2)], // Violet royal
-      [const Color(0xFF3AB6BC), const Color(0xFF2DA0A6)], // Turquoise
-      [const Color(0xFFFF6B6B), const Color(0xFFFF5252)], // Rouge vif
-      [const Color(0xFF9C42F5), const Color(0xFF8333E1)], // Violet électrique
-      [const Color(0xFF00B8A9), const Color(0xFF00A396)], // Vert menthe
-      [const Color(0xFFFF8A48), const Color(0xFFFF7730)], // Orange moderne
-      [const Color(0xFF6A0572), const Color(0xFF4E0058)], // Violet sombre
-    ];
-
     return Container(
       height: 140,
       margin: const EdgeInsets.only(top: 12),
@@ -58,14 +45,17 @@ class CategoryCards extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24),
         itemBuilder: (context, index) {
           final category = categories[index];
-          final gradientColors =
-              categoryGradients[index % categoryGradients.length];
+          final gradientColors = [
+            colorFromHex(category.color),
+            colorFromHex(category.color).withValues(alpha: 0.8),
+          ];
 
           return GestureDetector(
             onTap: () => onCategoryTap(category),
             child: Container(
               width: 110,
-              margin: const EdgeInsets.only(right: 16),
+              margin:
+                  const EdgeInsets.only(right: 16, bottom: AppTheme.paddingM),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
@@ -108,7 +98,6 @@ class CategoryCards extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Contenu principal avec meilleur contraste
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Column(

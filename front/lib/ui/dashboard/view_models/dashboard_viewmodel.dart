@@ -88,7 +88,7 @@ class DashboardViewModel extends ChangeNotifier {
       _log.info('Dashboard data loaded successfully');
       return const Result.ok(null);
     } finally {
-      notifyListeners(); // Ensure listeners are notified after loading completes
+      notifyListeners();
     }
   }
 

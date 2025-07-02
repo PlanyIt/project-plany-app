@@ -18,8 +18,8 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = accentColor ?? Theme.of(context).primaryColor;
-    final Color surfaceColor = Theme.of(context).cardColor;
+    final primaryColor = accentColor ?? Theme.of(context).primaryColor;
+    final surfaceColor = Theme.of(context).cardColor;
 
     return Container(
       height: height,

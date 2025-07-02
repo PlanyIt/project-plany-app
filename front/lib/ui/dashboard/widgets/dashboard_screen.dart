@@ -56,7 +56,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   _buildSectionHeader(
                     context,
-                    title: 'Tendances',
+                    title: 'À proximité',
                     seeAll: true,
                     onSeeAll: () =>
                         context.pushNamed('search', queryParameters: {
@@ -68,11 +68,13 @@ class DashboardScreen extends StatelessWidget {
                     context,
                     plans: viewModel.trendingPlans,
                     isLoading: isLoading,
-                    emptyMessage: 'Aucun plan tendance disponible',
+                    emptyMessage: 'Aucun plan à proximité disponible',
+                    emptySubMessage:
+                        "Consultez cette section plus tard pour découvrir de nouveaux plans",
                   ),
                   _buildSectionHeader(
                     context,
-                    title: 'À découvrir',
+                    title: 'Tendance',
                     seeAll: true,
                     onSeeAll: () =>
                         context.pushNamed('search', queryParameters: {
@@ -131,7 +133,7 @@ class DashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
         child: SectionHeader(
           title: title,
-          onSeeAllPressed: () => context.go(
+          onPressed: () => context.go(
             seeAll ? '/search' : '/',
           ),
         ),
@@ -187,17 +189,15 @@ class DashboardScreen extends StatelessWidget {
     required bool isLoading,
     required String emptyMessage,
     String? emptySubMessage,
-    IconData emptyIcon = Icons.trending_up_rounded,
+    IconData emptyIcon = Icons.map_outlined,
     Color? accentColor,
   }) {
     if (isLoading) {
       return SliverToBoxAdapter(
         child: HorizontalPlanList(
-          plans: [],
           isLoading: true,
-          getCategoryById: (_) async => Result.error(Exception('Chargement')),
-          onPlanTap: (_) {},
-          emptyMessage: '',
+          cards: [],
+          onPressed: (_) {},
         ),
       );
     }
@@ -207,7 +207,7 @@ class DashboardScreen extends StatelessWidget {
         child: EmptyStateWidget(
           message: emptyMessage,
           subMessage: emptySubMessage,
-          icon: emptyIcon,
+          icon: Icons.map_outlined,
           accentColor: accentColor ?? Theme.of(context).primaryColor,
         ),
       );
@@ -215,14 +215,9 @@ class DashboardScreen extends StatelessWidget {
 
     return SliverToBoxAdapter(
       child: HorizontalPlanList(
-        plans: plans,
         isLoading: false,
-        getCategoryById: (id) => viewModel.getCategoryById(id),
-        onPlanTap: (plan) => GoRouter.of(context).pushNamed(
-          'detailsPlan',
-          queryParameters: {'planId': plan.id},
-        ),
-        emptyMessage: '',
+        cards: [],
+        onPressed: (_) {},
       ),
     );
   }

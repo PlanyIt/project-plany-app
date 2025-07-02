@@ -127,7 +127,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                     child: SectionHeader(
                       title: 'Catégories',
-                      onSeeAllPressed: () => _navigateToSearch(context),
+                      onPressed: () => _navigateToSearch(context),
                     ),
                   ),
                 ),
@@ -148,7 +148,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
                     child: SectionHeader(
                       title: 'Tendances',
-                      onSeeAllPressed: () => _navigateToSearch(context),
+                      onPressed: () => _navigateToSearch(context),
                     ),
                   ),
                 ),
@@ -177,7 +177,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                     child: SectionHeader(
                       title: 'À découvrir',
-                      onSeeAllPressed: () => _navigateToSearch(context),
+                      onPressed: () => _navigateToSearch(context),
                     ),
                   ),
                 ),
