@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+<<<<<<< HEAD:front/lib/ui/auth/widgets/home_screen.dart
 import '../../../routing/routes.dart';
 import '../../core/ui/button/plany_button.dart';
 import '../../core/ui/logo/plany_logo.dart';
+=======
+import '../../routing/routes_new.dart';
+import '../core/ui/button/plany_button.dart';
+import '../core/ui/logo/plany_logo.dart';
+>>>>>>> e156ae61f55f43d9ffaea3caaed364c88c0cb62e:front/lib/ui/auth/home_screen.dart
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

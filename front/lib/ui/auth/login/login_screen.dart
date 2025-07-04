@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+<<<<<<< HEAD:front/lib/ui/auth/login/widgets/login_screen.dart
 import '../../../../routing/routes.dart';
 import '../../../core/localization/applocalization.dart';
 import '../../../core/themes/app_theme.dart';
@@ -8,6 +9,16 @@ import '../../../core/ui/button/plany_button.dart';
 import '../../../core/ui/form/custom_text_field.dart';
 import '../../../core/ui/logo/plany_logo.dart';
 import '../view_models/login_viewmodel.dart';
+=======
+import '../../../routing/routes_new.dart';
+
+import '../../core/localization/applocalization.dart';
+import '../../core/themes/app_theme.dart';
+import '../../core/ui/button/plany_button.dart';
+import '../../core/ui/form/custom_text_field.dart';
+import '../../core/ui/logo/plany_logo.dart';
+import 'view_models/login_viewmodel.dart';
+>>>>>>> e156ae61f55f43d9ffaea3caaed364c88c0cb62e:front/lib/ui/auth/login/login_screen.dart
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.viewModel});
