@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../widgets/card/compact_plan_card.dart';
+import '../../core/ui/card/compact_plan_card.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_plan_view_model.dart';
 import 'step_card_timeline.dart';

@@ -9,7 +9,7 @@ import 'package:front/services/categorie_service.dart';
 import 'package:front/services/imgur_service.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/services/step_service.dart';
-import 'package:front/widgets/card/step_card.dart';
+import 'package:front/ui/core/ui/card/step_card.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 

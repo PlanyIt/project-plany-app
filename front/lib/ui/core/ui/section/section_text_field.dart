@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:front/widgets/textfield/custom_text_field.dart';
+
+import '../custom_text_field.dart';
 
 class SectionTextField extends StatelessWidget {
   final String title;

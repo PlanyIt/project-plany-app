@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import '../../../widgets/card/image_picker_card.dart';
+import '../../core/ui/card/image_picker_card.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_plan_view_model.dart';

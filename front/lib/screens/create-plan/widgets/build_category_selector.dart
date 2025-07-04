@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
 import 'package:front/providers/create_plan_provider.dart';
 import 'package:front/utils/icon_utils.dart';
-import 'package:front/widgets/button/select_button.dart';
-import 'package:front/widgets/modal/grid_selector_modal.dart';
+import 'package:front/ui/core/ui/button/select_button.dart';
+import 'package:front/ui/core/ui/modal/grid_selector_modal.dart';
 import 'package:provider/provider.dart';
 
 Widget buildCategorySelector(BuildContext context) {

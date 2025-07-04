@@ -6,7 +6,7 @@ import 'package:front/services/auth_service.dart';
 import 'package:front/services/user_service.dart';
 import 'package:front/services/imgur_service.dart';
 import 'package:front/screens/profile/widgets/settings/components/settings_row.dart';
-import 'package:front/widgets/section/section_text_field.dart';
+import 'package:front/ui/core/ui/section/section_text_field.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';

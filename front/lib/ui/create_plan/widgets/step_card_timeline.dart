@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
-import '../../../widgets/card/step_card.dart';
+import '../../core/ui/card/step_card.dart';
 
 class StepCardTimeline extends StatelessWidget {
   final int index;

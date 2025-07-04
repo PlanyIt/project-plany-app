@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:front/widgets/tag/info_chip.dart';
+import 'package:front/ui/core/ui/tag/info_chip.dart';
 import 'package:latlong2/latlong.dart';
 
 class StepCard extends StatelessWidget {

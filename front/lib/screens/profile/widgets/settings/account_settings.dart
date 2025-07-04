@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:front/domain/models/user.dart';
 import 'package:front/screens/profile/widgets/content/premium_popup.dart';
 import 'package:front/services/auth_service.dart';
-import 'package:front/widgets/section/section_text_field.dart';
+import 'package:front/ui/core/ui/section/section_text_field.dart';
 
 class AccountSettings extends StatefulWidget {
   final User userProfile;

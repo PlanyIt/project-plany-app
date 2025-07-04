@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../widgets/textfield/custom_text_field.dart';
+import '../../core/ui/custom_text_field.dart';
 import '../view_models/search_view_model.dart';
 import 'distance_slider.dart';
 import 'filter_bottom_sheet_header.dart';

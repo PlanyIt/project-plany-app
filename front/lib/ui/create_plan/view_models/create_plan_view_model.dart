@@ -16,7 +16,7 @@ import '../../../domain/use_cases/plan/create_plan_use_case.dart';
 import '../../../routing/routes.dart';
 import '../../../utils/command.dart';
 import '../../../utils/result.dart';
-import '../../../widgets/card/step_card.dart';
+import '../../core/ui/card/step_card.dart';
 
 class CreatePlanViewModel extends ChangeNotifier {
   CreatePlanViewModel({
