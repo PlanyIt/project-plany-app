@@ -30,27 +30,58 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  http: ^1.2.2
+  http: ^1.4.0
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
   flutter_secure_storage: ^9.2.2
+  logging: ^1.3.0
+  go_router: ^14.6.2
   flutter_dotenv: ^5.1.0
   google_fonts: ^6.2.1
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1
+  font_awesome_flutter: ^10.8.0
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+  location: ^8.0.0
+  shared_preferences: ^2.5.3
+  provider: ^6.1.5
+  timeline_tile: ^2.0.0
+  shimmer: ^3.0.0
+  fluttertoast: ^8.2.12
+  intl: 0.20.2 
+  geolocator: ^9.0.2
+  url_launcher: ^6.1.11
+  add_2_calendar: ^2.2.4
+  share_plus: ^7.0.0
+  dio: ^5.4.0 
+  image_picker: ^1.1.2
+  flutter_svg: ^2.1.0
+  permission_handler: ^11.0.0
+  android_intent_plus: ^5.3.0
+  cached_network_image: ^3.4.1
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  build_runner: ^2.4.14
+  freezed: ^2.5.7
+  json_serializable: ^6.9.0
+  mocktail_image_network: ^1.2.0
+  mocktail: ^1.0.4
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -64,7 +95,11 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - .env
     - assets/images/background.png
+    - assets/images/background2.png
+    - assets/images/icon-success.png
+    - assets/images/user.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -1,16 +1,44 @@
-# front
+# Plany Admin
 
-A new Flutter project.
+Administration interface for the Plany application.
+
+## Overview
+
+This admin panel allows management of plans, steps, categories, and users. It connects to the Plany backend API to fetch and manipulate real data.
+
+## Features
+
+- Authentication with Firebase
+- Real-time data from backend API
+- Management of:
+  - Plans
+  - Steps
+  - Categories
+  - Users
+- Dashboard with analytics
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK
+- Firebase project configuration
+- Backend API access
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Environment Setup
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Create a `.env` file in the project root with:
+
+```
+BASE_URL=https://your-backend-api-url.com
+```
+
+2. Run `flutter pub get` to install dependencies
+
+3. Start the app with `flutter run`
+
+## Backend Integration
+
+This admin panel connects to the Plany backend API to fetch and manipulate real data. Authentication is handled via Firebase tokens which are sent with each API request.
+
+flutter pub run build_runner build --delete-conflicting-outputs
