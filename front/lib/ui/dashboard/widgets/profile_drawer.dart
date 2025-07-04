@@ -68,10 +68,12 @@ class ProfileDrawer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          user != null && user.photoUrl != null && user.photoUrl!.isNotEmpty
+          user != null &&
+                  user.profilePicture != null &&
+                  user.profilePicture!.isNotEmpty
               ? CircleAvatar(
                   radius: 35,
-                  backgroundImage: NetworkImage(user.photoUrl!),
+                  backgroundImage: NetworkImage(user.profilePicture!),
                   backgroundColor: Colors.transparent,
                   onBackgroundImageError: (error, stackTrace) {
                     if (kDebugMode) {

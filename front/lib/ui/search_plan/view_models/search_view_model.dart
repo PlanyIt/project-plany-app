@@ -127,7 +127,7 @@ class SearchViewModel extends ChangeNotifier {
 
     final futures = _allPlans.map((plan) async {
       // Filtre catégorie
-      if (selectedCategory != null && plan.category != selectedCategory) {
+      if (selectedCategory != null && plan.categoryId != selectedCategory) {
         return null;
       }
 
@@ -182,7 +182,7 @@ class SearchViewModel extends ChangeNotifier {
     }
 
     // Appliquer filtres numériques
-    var filtered = metricsList.where((m) {
+    final filtered = metricsList.where((m) {
       if (distanceRange != null &&
           (m.totalDistance < distanceRange!.start ||
               m.totalDistance > distanceRange!.end)) {

@@ -11,7 +11,7 @@ class UserApiModel with _$UserApiModel {
     required String email,
     String? description,
     @Default(false) bool isPremium,
-    String? photoUrl,
+    String? profilePicture,
     DateTime? birthDate,
     String? gender,
     @Default([]) List<String> followers,

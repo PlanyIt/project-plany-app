@@ -23,7 +23,7 @@ mixin _$Plan {
   String? get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
-  String get category => throw _privateConstructorUsedError;
+  String get categoryId => throw _privateConstructorUsedError;
   String? get userId => throw _privateConstructorUsedError;
   bool get isPublic => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
@@ -51,7 +51,7 @@ abstract class $PlanCopyWith<$Res> {
       {String? id,
       String title,
       String description,
-      String category,
+      String categoryId,
       String? userId,
       bool isPublic,
       DateTime? createdAt,
@@ -80,7 +80,7 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
     Object? id = freezed,
     Object? title = null,
     Object? description = null,
-    Object? category = null,
+    Object? categoryId = null,
     Object? userId = freezed,
     Object? isPublic = null,
     Object? createdAt = freezed,
@@ -103,9 +103,9 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
-      category: null == category
-          ? _value.category
-          : category // ignore: cast_nullable_to_non_nullable
+      categoryId: null == categoryId
+          ? _value.categoryId
+          : categoryId // ignore: cast_nullable_to_non_nullable
               as String,
       userId: freezed == userId
           ? _value.userId
@@ -154,7 +154,7 @@ abstract class _$$PlanImplCopyWith<$Res> implements $PlanCopyWith<$Res> {
       {String? id,
       String title,
       String description,
-      String category,
+      String categoryId,
       String? userId,
       bool isPublic,
       DateTime? createdAt,
@@ -180,7 +180,7 @@ class __$$PlanImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? title = null,
     Object? description = null,
-    Object? category = null,
+    Object? categoryId = null,
     Object? userId = freezed,
     Object? isPublic = null,
     Object? createdAt = freezed,
@@ -203,9 +203,9 @@ class __$$PlanImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
-      category: null == category
-          ? _value.category
-          : category // ignore: cast_nullable_to_non_nullable
+      categoryId: null == categoryId
+          ? _value.categoryId
+          : categoryId // ignore: cast_nullable_to_non_nullable
               as String,
       userId: freezed == userId
           ? _value.userId
@@ -250,7 +250,7 @@ class _$PlanImpl implements _Plan {
       {this.id,
       required this.title,
       required this.description,
-      required this.category,
+      required this.categoryId,
       this.userId,
       this.isPublic = true,
       this.createdAt,
@@ -272,7 +272,7 @@ class _$PlanImpl implements _Plan {
   @override
   final String description;
   @override
-  final String category;
+  final String categoryId;
   @override
   final String? userId;
   @override
@@ -308,7 +308,7 @@ class _$PlanImpl implements _Plan {
 
   @override
   String toString() {
-    return 'Plan(id: $id, title: $title, description: $description, category: $category, userId: $userId, isPublic: $isPublic, createdAt: $createdAt, updatedAt: $updatedAt, steps: $steps, favorites: $favorites, isFavorite: $isFavorite, estimatedCost: $estimatedCost)';
+    return 'Plan(id: $id, title: $title, description: $description, categoryId: $categoryId, userId: $userId, isPublic: $isPublic, createdAt: $createdAt, updatedAt: $updatedAt, steps: $steps, favorites: $favorites, isFavorite: $isFavorite, estimatedCost: $estimatedCost)';
   }
 
   @override
@@ -320,8 +320,8 @@ class _$PlanImpl implements _Plan {
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.category, category) ||
-                other.category == category) &&
+            (identical(other.categoryId, categoryId) ||
+                other.categoryId == categoryId) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.isPublic, isPublic) ||
                 other.isPublic == isPublic) &&
@@ -345,7 +345,7 @@ class _$PlanImpl implements _Plan {
       id,
       title,
       description,
-      category,
+      categoryId,
       userId,
       isPublic,
       createdAt,
@@ -376,7 +376,7 @@ abstract class _Plan implements Plan {
       {final String? id,
       required final String title,
       required final String description,
-      required final String category,
+      required final String categoryId,
       final String? userId,
       final bool isPublic,
       final DateTime? createdAt,
@@ -395,7 +395,7 @@ abstract class _Plan implements Plan {
   @override
   String get description;
   @override
-  String get category;
+  String get categoryId;
   @override
   String? get userId;
   @override

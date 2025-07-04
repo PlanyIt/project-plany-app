@@ -42,7 +42,7 @@ class MainApp extends StatelessWidget {
       ],
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.system,
-      routerConfig: router(context.read()),
+      routerConfig: router,
     );
   }
 }

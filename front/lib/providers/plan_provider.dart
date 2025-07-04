@@ -125,7 +125,7 @@ class PlanProvider extends ChangeNotifier {
     if (category == 'Tous') {
       return _plans;
     }
-    return _plans.where((plan) => plan.category == category).toList();
+    return _plans.where((plan) => plan.categoryId == category).toList();
   }
 
   // Recherche de plans par texte

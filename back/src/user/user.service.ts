@@ -245,7 +245,7 @@ export class UserService {
     const formattedUsers = followingUsers.map((user) => ({
       id: user._id,
       username: user.username,
-      photoUrl: user.photoUrl,
+      photoUrl: user.profilePicture,
       isPremium: user.isPremium || false,
       followersCount: user.followers?.length || 0,
       followingCount: user.following?.length || 0,

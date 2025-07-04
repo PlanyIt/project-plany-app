@@ -25,7 +25,7 @@ mixin _$User {
   String get email => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   bool get isPremium => throw _privateConstructorUsedError;
-  String? get photoUrl => throw _privateConstructorUsedError;
+  String? get profilePicture => throw _privateConstructorUsedError;
   DateTime? get birthDate => throw _privateConstructorUsedError;
   String? get gender => throw _privateConstructorUsedError;
   List<String> get followers => throw _privateConstructorUsedError;
@@ -51,7 +51,7 @@ abstract class $UserCopyWith<$Res> {
       String email,
       String? description,
       bool isPremium,
-      String? photoUrl,
+      String? profilePicture,
       DateTime? birthDate,
       String? gender,
       List<String> followers,
@@ -78,7 +78,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? email = null,
     Object? description = freezed,
     Object? isPremium = null,
-    Object? photoUrl = freezed,
+    Object? profilePicture = freezed,
     Object? birthDate = freezed,
     Object? gender = freezed,
     Object? followers = null,
@@ -105,9 +105,9 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.isPremium
           : isPremium // ignore: cast_nullable_to_non_nullable
               as bool,
-      photoUrl: freezed == photoUrl
-          ? _value.photoUrl
-          : photoUrl // ignore: cast_nullable_to_non_nullable
+      profilePicture: freezed == profilePicture
+          ? _value.profilePicture
+          : profilePicture // ignore: cast_nullable_to_non_nullable
               as String?,
       birthDate: freezed == birthDate
           ? _value.birthDate
@@ -142,7 +142,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       String email,
       String? description,
       bool isPremium,
-      String? photoUrl,
+      String? profilePicture,
       DateTime? birthDate,
       String? gender,
       List<String> followers,
@@ -166,7 +166,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? email = null,
     Object? description = freezed,
     Object? isPremium = null,
-    Object? photoUrl = freezed,
+    Object? profilePicture = freezed,
     Object? birthDate = freezed,
     Object? gender = freezed,
     Object? followers = null,
@@ -193,9 +193,9 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value.isPremium
           : isPremium // ignore: cast_nullable_to_non_nullable
               as bool,
-      photoUrl: freezed == photoUrl
-          ? _value.photoUrl
-          : photoUrl // ignore: cast_nullable_to_non_nullable
+      profilePicture: freezed == profilePicture
+          ? _value.profilePicture
+          : profilePicture // ignore: cast_nullable_to_non_nullable
               as String?,
       birthDate: freezed == birthDate
           ? _value.birthDate
@@ -226,7 +226,7 @@ class _$UserImpl implements _User {
       required this.email,
       this.description,
       this.isPremium = false,
-      this.photoUrl,
+      this.profilePicture,
       this.birthDate,
       this.gender,
       final List<String> followers = const [],
@@ -249,7 +249,7 @@ class _$UserImpl implements _User {
   @JsonKey()
   final bool isPremium;
   @override
-  final String? photoUrl;
+  final String? profilePicture;
   @override
   final DateTime? birthDate;
   @override
@@ -274,7 +274,7 @@ class _$UserImpl implements _User {
 
   @override
   String toString() {
-    return 'User(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following)';
+    return 'User(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, profilePicture: $profilePicture, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following)';
   }
 
   @override
@@ -290,8 +290,8 @@ class _$UserImpl implements _User {
                 other.description == description) &&
             (identical(other.isPremium, isPremium) ||
                 other.isPremium == isPremium) &&
-            (identical(other.photoUrl, photoUrl) ||
-                other.photoUrl == photoUrl) &&
+            (identical(other.profilePicture, profilePicture) ||
+                other.profilePicture == profilePicture) &&
             (identical(other.birthDate, birthDate) ||
                 other.birthDate == birthDate) &&
             (identical(other.gender, gender) || other.gender == gender) &&
@@ -310,7 +310,7 @@ class _$UserImpl implements _User {
       email,
       description,
       isPremium,
-      photoUrl,
+      profilePicture,
       birthDate,
       gender,
       const DeepCollectionEquality().hash(_followers),
@@ -339,7 +339,7 @@ abstract class _User implements User {
       required final String email,
       final String? description,
       final bool isPremium,
-      final String? photoUrl,
+      final String? profilePicture,
       final DateTime? birthDate,
       final String? gender,
       final List<String> followers,
@@ -358,7 +358,7 @@ abstract class _User implements User {
   @override
   bool get isPremium;
   @override
-  String? get photoUrl;
+  String? get profilePicture;
   @override
   DateTime? get birthDate;
   @override

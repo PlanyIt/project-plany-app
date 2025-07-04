@@ -10,6 +10,8 @@ import '../data/repositories/plan/plan_repository.dart';
 import '../data/repositories/plan/plan_repository_remote.dart';
 import '../data/repositories/step/step_repository.dart';
 import '../data/repositories/step/step_repository_remote.dart';
+import '../data/repositories/user/user_repository.dart';
+import '../data/repositories/user/user_repository_remote.dart';
 import '../data/services/api/api_client.dart';
 import '../data/services/api/auth_api_client.dart';
 import '../data/services/auth_storage_service.dart';
@@ -17,6 +19,7 @@ import '../data/services/imgur_service.dart';
 
 List<SingleChildWidget> get providers {
   return [
+    // Services layer
     Provider(
         create: (context) => AuthApiClient(
               host: dotenv.env['API_HOST'],
@@ -29,6 +32,8 @@ List<SingleChildWidget> get providers {
             )),
     Provider(create: (context) => ImgurService()),
     Provider(create: (context) => AuthStorageService()),
+
+    // Repository layer
     ChangeNotifierProvider<AuthRepository>(
       create: (context) => AuthRepositoryRemote(
         authApiClient: context.read(),
@@ -36,19 +41,20 @@ List<SingleChildWidget> get providers {
         authStorageService: context.read(),
       ) as AuthRepository,
     ),
-    Provider(
-      create: (context) => CategoryRepositoryRemote(apiClient: context.read())
-          as CategoryRepository,
+    Provider<CategoryRepository>(
+      create: (context) => CategoryRepositoryRemote(apiClient: context.read()),
     ),
-    Provider(
-      create: (context) =>
-          PlanRepositoryRemote(apiClient: context.read()) as PlanRepository,
+    Provider<PlanRepository>(
+      create: (context) => PlanRepositoryRemote(apiClient: context.read()),
     ),
-    Provider(
+    Provider<StepRepository>(
       create: (context) => StepRepositoryRemote(
         apiClient: context.read(),
         imgurService: context.read(),
-      ) as StepRepository,
+      ),
+    ),
+    Provider<UserRepository>(
+      create: (context) => UserRepositoryRemote(apiClient: context.read()),
     ),
   ];
 }

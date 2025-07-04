@@ -126,7 +126,7 @@ export class AuthService {
           username: newUser.username,
           description: newUser.description || null,
           isPremium: newUser.isPremium || false,
-          photoUrl: newUser.photoUrl || null,
+          photoUrl: newUser.profilePicture || null,
           birthDate: newUser.birthDate || null,
           gender: newUser.gender || null,
           followers: newUser.followers || [],

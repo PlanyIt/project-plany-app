@@ -21,7 +21,7 @@ export class User {
   isPremium: boolean;
 
   @Prop()
-  photoUrl: string;
+  profilePicture: string;
 
   @Prop({ type: Date })
   birthDate: Date;

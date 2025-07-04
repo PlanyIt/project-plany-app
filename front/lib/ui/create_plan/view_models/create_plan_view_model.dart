@@ -156,7 +156,7 @@ class CreatePlanViewModel extends ChangeNotifier {
       final plan = Plan(
         title: titlePlanController.text.trim(),
         description: descriptionPlanController.text.trim(),
-        category: _selectedCategory!.id,
+        categoryId: _selectedCategory!.id,
         userId: _userId,
         steps: const [],
         isPublic: true,

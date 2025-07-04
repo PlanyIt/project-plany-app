@@ -18,7 +18,7 @@ export class Plan {
   isPublic: boolean;
 
   @Prop({ required: true })
-  category: string;
+  categoryId: string;
 
   @Prop({ type: [String], default: [] })
   steps: string[];

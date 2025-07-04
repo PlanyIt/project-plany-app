@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/domain/models/user.dart';
-import 'package:front/screens/profile/profile_screen.dart';
-import 'package:front/services/plan_service.dart';
-import 'package:front/services/user_service.dart';
-import 'package:front/services/auth_service.dart';
-import 'package:front/utils/helpers.dart';
-import 'package:front/utils/icon_utils.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../../../../../domain/models/plan/plan.dart';
+import '../../../../../domain/models/step/step.dart' as plan_steps;
+import '../../../../../domain/models/user.dart';
+import '../../../../../services/auth_service.dart';
+import '../../../../../services/plan_service.dart';
+import '../../../../../services/user_service.dart';
+import '../../../../../ui/profile/widgets/profile_screen.dart';
+import '../../../../../utils/helpers.dart';
+import '../../../../../utils/icon_utils.dart';
 
 class PlanInfoSection extends StatefulWidget {
   final Plan plan;
@@ -345,7 +346,7 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      widget.categoryName ?? widget.plan.category,
+                      widget.categoryName ?? widget.plan.categoryId,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,

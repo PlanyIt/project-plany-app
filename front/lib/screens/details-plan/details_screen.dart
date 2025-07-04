@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category/category.dart';
-import 'package:front/screens/details-plan/widgets/content/plan_content.dart';
-import 'package:front/screens/details-plan/widgets/header/details_header.dart';
-import 'package:front/services/plan_service.dart';
-import 'package:front/services/step_service.dart';
-import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/services/categorie_service.dart';
+
+import '../../domain/models/category/category.dart';
+import '../../domain/models/plan/plan.dart';
+import '../../domain/models/step/step.dart' as plan_steps;
+import '../../services/categorie_service.dart';
+import '../../services/plan_service.dart';
+import '../../services/step_service.dart';
+import 'widgets/content/plan_content.dart';
+import 'widgets/header/details_header.dart';
 
 final GlobalKey<DetailsHeaderState> _headerKey =
     GlobalKey<DetailsHeaderState>();
@@ -60,7 +61,7 @@ class DetailScreenState extends State<DetailScreen>
   Color _getCategoryColor() {
     if (_plan == null) return const Color(0xFF3425B5);
 
-    if (_currentCategory != null && _currentCategory!.id == _plan!.category) {
+    if (_currentCategory != null && _currentCategory!.id == _plan!.categoryId) {
       return CategorieService.getColorFromHex(_currentCategory!.color);
     }
 
@@ -71,7 +72,8 @@ class DetailScreenState extends State<DetailScreen>
     if (_plan == null) return;
 
     try {
-      final category = await _categorieService.getCategoryById(_plan!.category);
+      final category =
+          await _categorieService.getCategoryById(_plan!.categoryId);
       setState(() {
         _currentCategory = category;
       });
@@ -149,7 +151,7 @@ class DetailScreenState extends State<DetailScreen>
               ? DetailsHeader(
                   key: _headerKey,
                   stepIds: _plan!.steps,
-                  category: _plan!.category,
+                  category: _plan!.categoryId,
                   categoryColor: _getCategoryColor(),
                   planTitle: _plan!.title,
                   planDescription: _plan!.description,

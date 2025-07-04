@@ -9,7 +9,7 @@ class Plan with _$Plan {
     String? id,
     required String title,
     required String description,
-    required String category,
+    required String categoryId,
     String? userId,
     @Default(true) bool isPublic,
     DateTime? createdAt,

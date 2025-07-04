@@ -330,7 +330,7 @@ class CreatePlanProvider extends ChangeNotifier {
       final plan = Plan(
         title: titlePlanController.text.trim(),
         description: descriptionPlanController.text.trim(),
-        category: _selectedCategory!.id,
+        categoryId: _selectedCategory!.id,
         userId: userId, // Utiliser l'ID utilisateur récupéré
         steps: stepIds,
         isPublic: true,

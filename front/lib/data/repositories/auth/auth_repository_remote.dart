@@ -123,7 +123,7 @@ class AuthRepositoryRemote extends AuthRepository {
             email: result.value.currentUser.email,
             description: result.value.currentUser.description,
             isPremium: result.value.currentUser.isPremium,
-            photoUrl: result.value.currentUser.photoUrl,
+            profilePicture: result.value.currentUser.profilePicture,
             birthDate: result.value.currentUser.birthDate,
           );
           // Store in storage
@@ -164,7 +164,7 @@ class AuthRepositoryRemote extends AuthRepository {
             email: result.value.currentUser.email,
             description: result.value.currentUser.description,
             isPremium: result.value.currentUser.isPremium,
-            photoUrl: result.value.currentUser.photoUrl,
+            profilePicture: result.value.currentUser.profilePicture,
             birthDate: result.value.currentUser.birthDate,
           );
           // Store in storage

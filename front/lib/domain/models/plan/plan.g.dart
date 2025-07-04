@@ -10,7 +10,7 @@ _$PlanImpl _$$PlanImplFromJson(Map<String, dynamic> json) => _$PlanImpl(
       id: json['id'] as String?,
       title: json['title'] as String,
       description: json['description'] as String,
-      category: json['category'] as String,
+      categoryId: json['categoryId'] as String,
       userId: json['userId'] as String?,
       isPublic: json['isPublic'] as bool? ?? true,
       createdAt: json['createdAt'] == null
@@ -32,7 +32,7 @@ Map<String, dynamic> _$$PlanImplToJson(_$PlanImpl instance) =>
       'id': instance.id,
       'title': instance.title,
       'description': instance.description,
-      'category': instance.category,
+      'categoryId': instance.categoryId,
       'userId': instance.userId,
       'isPublic': instance.isPublic,
       'createdAt': instance.createdAt?.toIso8601String(),
