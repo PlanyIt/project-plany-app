@@ -4,15 +4,16 @@ import 'package:go_router/go_router.dart';
 import '../../../domain/models/category/category.dart' as app_category;
 import '../../../domain/models/plan/plan.dart';
 import '../../../routing/routes.dart';
+import '../../../widgets/card/compact_plan_card.dart';
 import '../../core/ui/bottom_bar/bottom_bar.dart';
 import '../view_models/dashboard_viewmodel.dart';
 import 'app_bar.dart';
 import 'category_cards.dart';
-import 'profile_drawer.dart';
-import 'section_header.dart';
-import 'horizontal_plan_list.dart';
 import 'empty_state_widget.dart';
+import 'horizontal_plan_list.dart';
+import 'profile_drawer.dart';
 import 'search_bar.dart';
+import 'section_header.dart';
 
 class DashboardScreen extends StatelessWidget {
   DashboardScreen({super.key, required this.viewModel});
@@ -203,7 +204,13 @@ class DashboardScreen extends StatelessWidget {
       return SliverToBoxAdapter(
         child: HorizontalPlanList(
           isLoading: true,
-          cards: [],
+          cards: List.generate(
+            viewModel.plans.length,
+            (index) => CompactPlanCard(
+              title: viewModel.plans[index].title,
+              description: viewModel.plans[index].description,
+            ),
+          ),
           onPressed: (_) {},
         ),
       );
