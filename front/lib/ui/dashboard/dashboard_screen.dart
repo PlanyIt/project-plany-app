@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../domain/models/category/category.dart' as app_category;
-import '../../../domain/models/plan/plan.dart';
-import '../../../widgets/card/compact_plan_card.dart';
-import '../../core/ui/bottom_bar/bottom_bar.dart';
-import '../view_models/dashboard_viewmodel.dart';
-import '../widgets/app_bar.dart';
-import '../widgets/category_cards.dart';
-import '../widgets/empty_state_widget.dart';
-import '../widgets/horizontal_plan_list.dart';
-import '../widgets/profile_drawer.dart';
-import '../widgets/search_bar.dart';
-import '../widgets/section_header.dart';
+import '../../domain/models/category/category.dart' as app_category;
+import '../../domain/models/plan/plan.dart';
+import '../../widgets/card/compact_plan_card.dart';
+import '../core/ui/bottom_bar/bottom_bar.dart';
+import 'view_models/dashboard_viewmodel.dart';
+import 'widgets/app_bar.dart';
+import 'widgets/category_cards.dart';
+import 'widgets/empty_state_widget.dart';
+import 'widgets/horizontal_plan_list.dart';
+import 'widgets/profile_drawer.dart';
+import 'widgets/search_bar.dart';
+import 'widgets/section_header.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.viewModel});

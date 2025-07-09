@@ -20,6 +20,7 @@ Plan _$PlanFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Plan {
+  @JsonKey(name: '_id')
   String? get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
@@ -48,7 +49,7 @@ abstract class $PlanCopyWith<$Res> {
       _$PlanCopyWithImpl<$Res, Plan>;
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(name: '_id') String? id,
       String title,
       String description,
       String category,
@@ -151,7 +152,7 @@ abstract class _$$PlanImplCopyWith<$Res> implements $PlanCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(name: '_id') String? id,
       String title,
       String description,
       String category,
@@ -247,7 +248,7 @@ class __$$PlanImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$PlanImpl implements _Plan {
   const _$PlanImpl(
-      {this.id,
+      {@JsonKey(name: '_id') this.id,
       required this.title,
       required this.description,
       required this.category,
@@ -266,6 +267,7 @@ class _$PlanImpl implements _Plan {
       _$$PlanImplFromJson(json);
 
   @override
+  @JsonKey(name: '_id')
   final String? id;
   @override
   final String title;
@@ -373,7 +375,7 @@ class _$PlanImpl implements _Plan {
 
 abstract class _Plan implements Plan {
   const factory _Plan(
-      {final String? id,
+      {@JsonKey(name: '_id') final String? id,
       required final String title,
       required final String description,
       required final String category,
@@ -389,6 +391,7 @@ abstract class _Plan implements Plan {
   factory _Plan.fromJson(Map<String, dynamic> json) = _$PlanImpl.fromJson;
 
   @override
+  @JsonKey(name: '_id')
   String? get id;
   @override
   String get title;

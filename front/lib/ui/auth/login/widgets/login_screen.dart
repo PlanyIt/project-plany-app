@@ -21,26 +21,25 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
-  bool obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
-    widget.viewModel.login.addListener(_onResult);
+    widget.viewModel.login.addListener(_onLoginResult);
   }
 
   @override
   void didUpdateWidget(covariant LoginScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    oldWidget.viewModel.login.removeListener(_onResult);
-    widget.viewModel.login.addListener(_onResult);
+    oldWidget.viewModel.login.removeListener(_onLoginResult);
+    widget.viewModel.login.addListener(_onLoginResult);
   }
 
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
-    widget.viewModel.login.removeListener(_onResult);
+    widget.viewModel.login.removeListener(_onLoginResult);
     super.dispose();
   }
 
@@ -49,31 +48,34 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.only(
-            left: AppTheme.paddingL,
-            right: AppTheme.paddingL,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              Center(child: PlanyLogo(fontSize: 50)),
-              const SizedBox(height: 40),
-              _buildWelcomeText(context),
-              const SizedBox(height: 40),
-              _buildEmailField(),
-              const SizedBox(height: 20),
-              _buildPasswordField(),
-              const SizedBox(height: 8),
-              _buildForgotPassword(context),
-              const SizedBox(height: 30),
-              _buildLoginButton(context),
-              const SizedBox(height: 20),
-              _buildRegisterRow(context),
-            ],
+        child: ListenableBuilder(
+          listenable: widget.viewModel,
+          builder: (context, _) => SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.only(
+              left: AppTheme.paddingL,
+              right: AppTheme.paddingL,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 40),
+                Center(child: PlanyLogo(fontSize: 50)),
+                const SizedBox(height: 40),
+                _buildWelcomeText(context),
+                const SizedBox(height: 40),
+                _buildEmailField(),
+                const SizedBox(height: 20),
+                _buildPasswordField(),
+                const SizedBox(height: 8),
+                _buildForgotPassword(context),
+                const SizedBox(height: 30),
+                _buildLoginButton(context),
+                const SizedBox(height: 20),
+                _buildRegisterRow(context),
+              ],
+            ),
           ),
         ),
       ),
@@ -95,9 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
       labelText: 'Mot de passe',
       hintText: 'Entrez votre mot de passe',
       prefixIcon: Icons.lock_outline,
-      obscureText: obscurePassword,
-      suffixIcon: obscurePassword ? Icons.visibility_off : Icons.visibility,
-      onSuffixIconPressed: togglePasswordVisibility,
+      obscureText: widget.viewModel.obscurePassword,
+      suffixIcon: widget.viewModel.obscurePassword
+          ? Icons.visibility_off
+          : Icons.visibility,
+      onSuffixIconPressed: widget.viewModel.togglePasswordVisibility,
     );
   }
 
@@ -122,11 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return PlanyButton(
           text: AppLocalization.of(context).login,
           isLoading: widget.viewModel.login.running,
-          onPressed: () {
-            widget.viewModel.login.execute(
-              (_email.value.text, _password.value.text),
-            );
-          },
+          onPressed: _handleLogin,
         );
       },
     );
@@ -184,32 +184,37 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void togglePasswordVisibility() {
-    setState(() {
-      obscurePassword = !obscurePassword;
-    });
+  void _handleLogin() {
+    widget.viewModel.clearError();
+    widget.viewModel.login.execute(
+      (_email.text, _password.text),
+    );
   }
 
-  void _onResult() {
+  void _onLoginResult() {
     if (widget.viewModel.login.completed) {
       widget.viewModel.login.clearResult();
       context.go(Routes.dashboard);
+      return;
     }
 
     if (widget.viewModel.login.error) {
       widget.viewModel.login.clearResult();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalization.of(context).errorWhileLogin),
-          action: SnackBarAction(
-            label: AppLocalization.of(context).tryAgain,
-            onPressed: () => widget.viewModel.login.execute((
-              _email.value.text,
-              _password.value.text,
-            )),
+
+      // Afficher l'erreur via SnackBar
+      if (widget.viewModel.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.viewModel.errorMessage!),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            action: SnackBarAction(
+              label: AppLocalization.of(context).tryAgain,
+              textColor: Colors.white,
+              onPressed: _handleLogin,
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 }

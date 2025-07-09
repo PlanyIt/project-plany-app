@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:logging/logging.dart';
 
@@ -47,8 +47,9 @@ class AuthRepositoryRemote extends AuthRepository {
     try {
       // Décoder le JWT pour extraire l'expiration
       final parts = token.split('.');
-      if (parts.length != 3)
+      if (parts.length != 3) {
         return DateTime.now().add(const Duration(minutes: 2));
+      }
 
       final payload = parts[1];
       // Ajouter padding si nécessaire
@@ -75,6 +76,10 @@ class AuthRepositoryRemote extends AuthRepository {
     if (tokenRes is Ok<String?>) {
       _authToken = tokenRes.value;
       _isAuthenticated = _authToken != null;
+
+      if (_authToken != null) {
+        _tokenExpiration = _parseTokenExpiration(_authToken!);
+      }
     } else if (tokenRes is Error<String?>) {
       _log.severe('Échec fetchToken: ${tokenRes.error}');
     }
@@ -83,9 +88,13 @@ class AuthRepositoryRemote extends AuthRepository {
     final userJsonRes = await _authStorageService.fetchUserJson();
     if (userJsonRes is Ok<String?> && userJsonRes.value != null) {
       try {
-        _currentUser = User.fromJson(jsonDecode(userJsonRes.value!));
+        final userMap = jsonDecode(userJsonRes.value!) as Map<String, dynamic>;
+        _currentUser = User.fromJson(userMap);
+        _log.info('User loaded from storage: ${_currentUser?.username}');
       } catch (e, st) {
         _log.severe('Erreur désérialisation user JSON', e, st);
+        // Nettoyer le cache corrompu
+        await _authStorageService.saveUserJson(null);
       }
     } else if (userJsonRes is Error<String?>) {
       _log.warning('Échec fetchUserJson: ${userJsonRes.error}');
@@ -114,25 +123,7 @@ class AuthRepositoryRemote extends AuthRepository {
       switch (result) {
         case Ok<AuthResponse>():
           _log.info('User registered successfully');
-          // Set auth status
-          _isAuthenticated = true;
-          _authToken = result.value.token;
-          _tokenExpiration = _parseTokenExpiration(result.value.token);
-          _currentUser = User(
-            id: result.value.currentUser.id,
-            username: result.value.currentUser.username,
-            email: result.value.currentUser.email,
-            description: result.value.currentUser.description,
-            isPremium: result.value.currentUser.isPremium,
-            photoUrl: result.value.currentUser.photoUrl,
-            birthDate: result.value.currentUser.birthDate,
-          );
-          // Store in storage
-          await _authStorageService.saveToken(result.value.token);
-          await _authStorageService.saveUserJson(
-            jsonEncode(result.value.currentUser.toJson()),
-          );
-          _log.info('Utilisateur connecté: ${result.value.currentUser.id}');
+          await _setAuthState(result.value);
           return const Result.ok(null);
         case Error<AuthResponse>():
           _log.warning('Error registering user: ${result.error}');
@@ -155,25 +146,7 @@ class AuthRepositoryRemote extends AuthRepository {
       switch (result) {
         case Ok<AuthResponse>():
           _log.info('User logged in');
-          // Set auth status
-          _isAuthenticated = true;
-          _authToken = result.value.token;
-          _tokenExpiration = _parseTokenExpiration(result.value.token);
-          _currentUser = User(
-            id: result.value.currentUser.id,
-            username: result.value.currentUser.username,
-            email: result.value.currentUser.email,
-            description: result.value.currentUser.description,
-            isPremium: result.value.currentUser.isPremium,
-            photoUrl: result.value.currentUser.photoUrl,
-            birthDate: result.value.currentUser.birthDate,
-          );
-          // Store in storage
-          await _authStorageService.saveToken(result.value.token);
-          await _authStorageService.saveUserJson(
-            jsonEncode(result.value.currentUser.toJson()),
-          );
-          _log.info('Utilisateur connecté: ${result.value.currentUser.id}');
+          await _setAuthState(result.value);
           return const Result.ok(null);
         case Error<AuthResponse>():
           _log.warning('Error logging in: ${result.error}');
@@ -182,6 +155,29 @@ class AuthRepositoryRemote extends AuthRepository {
     } finally {
       notifyListeners();
     }
+  }
+
+  Future<void> _setAuthState(AuthResponse authResponse) async {
+    // Set auth status
+    _isAuthenticated = true;
+    _authToken = authResponse.token;
+    _tokenExpiration = _parseTokenExpiration(authResponse.token);
+
+    _currentUser = User(
+      id: authResponse.currentUser.id,
+      username: authResponse.currentUser.username,
+      email: authResponse.currentUser.email,
+      description: authResponse.currentUser.description,
+      isPremium: authResponse.currentUser.isPremium,
+      photoUrl: authResponse.currentUser.photoUrl,
+      birthDate: authResponse.currentUser.birthDate,
+    );
+
+    // Store in storage
+    await _authStorageService.saveToken(authResponse.token);
+    await _authStorageService.saveUserJson(jsonEncode(_currentUser!.toJson()));
+
+    _log.info('Utilisateur connecté: ${authResponse.currentUser.id}');
   }
 
   @override
@@ -207,16 +203,29 @@ class AuthRepositoryRemote extends AuthRepository {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   String? _authHeaderProvider() {
     if (_authToken == null) return null;
 
     _checkTokenExpiration();
 
     return _authToken != null ? 'Bearer $_authToken' : null;
+  }
+
+  @override
+  Future<Result<User>> getCurrentUser() async {
+    if (_currentUser != null) {
+      _log.info('Current user already loaded: ${_currentUser!.id}');
+      return Result.ok(_currentUser!);
+    }
+
+    // Essayer de recharger depuis le storage
+    await _fetch();
+
+    if (_currentUser != null) {
+      _log.info('Current user loaded from storage: ${_currentUser!.id}');
+      return Result.ok(_currentUser!);
+    }
+
+    return Result.error(Exception('No current user loaded'));
   }
 }

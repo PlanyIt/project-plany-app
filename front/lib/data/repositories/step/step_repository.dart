@@ -12,4 +12,7 @@ abstract class StepRepository {
 
   /// Uploads an image for a [Step].
   Future<Result<String>> uploadImage(File imageFile);
+
+  /// Clears the cache of steps.
+  Future<void> clearCache();
 }

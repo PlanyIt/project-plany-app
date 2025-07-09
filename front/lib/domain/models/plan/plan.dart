@@ -6,7 +6,7 @@ part 'plan.g.dart';
 @freezed
 class Plan with _$Plan {
   const factory Plan({
-    String? id,
+    @JsonKey(name: '_id') String? id,
     required String title,
     required String description,
     required String category,

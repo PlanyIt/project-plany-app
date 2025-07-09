@@ -3,18 +3,17 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/repositories/auth/auth_repository.dart';
-import '../screens/create-plan/create_plans_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../ui/auth/login/view_models/login_viewmodel.dart';
-import '../ui/auth/login/widgets/login_screen.dart';
+import '../ui/auth/login/login_screen.dart';
 import '../ui/auth/register/view_models/register_viewmodel.dart';
-import '../ui/auth/register/widgets/register_screen.dart';
-import '../ui/auth/reset-password/widgets/reset_password_screen.dart';
-import '../ui/auth/widgets/home_screen.dart';
+import '../ui/auth/register/register_screen.dart';
+import '../ui/auth/reset-password/reset_password_screen.dart';
 import '../ui/create_plan/view_models/create_plan_view_model.dart';
 import '../ui/create_plan/widgets/create_plan_screen.dart';
 import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
-import '../ui/dashboard/widgets/dashboard_screen.dart';
+import '../ui/dashboard/dashboard_screen.dart';
+import '../ui/home/home_screen.dart';
 import '../ui/search_plan/view_models/search_view_model.dart';
 import '../ui/search_plan/widgets/search_screen.dart';
 import 'routes.dart';
@@ -39,7 +38,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           path: Routes.login,
           builder: (context, state) {
             return LoginScreen(
-              viewModel: LoginViewModel(authRepository: context.read()),
+              viewModel: LoginViewModel(sessionManager: context.read()),
             );
           },
         ),
@@ -47,7 +46,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           path: Routes.register,
           builder: (context, state) {
             return RegisterScreen(
-              viewModel: RegisterViewModel(authRepository: context.read()),
+              viewModel: RegisterViewModel(sessionManager: context.read()),
             );
           },
         ),
@@ -101,7 +100,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           },
         ),
         GoRoute(
-          path: Routes.profil,
+          path: Routes.profile,
           builder: (context, state) {
             return ProfileScreen();
           },

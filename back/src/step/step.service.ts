@@ -5,14 +5,13 @@ import { Step, StepDocument } from './schemas/step.schema';
 import { StepDto } from './dto/step.dto';
 @Injectable()
 export class StepService {
-  constructor(@InjectModel(Step.name) private stepModel: Model<StepDocument>) {}
+  constructor(
+    @InjectModel(Step.name) private stepModel: Model<StepDocument>,
+    @InjectModel('Plan') private planModel: Model<any>,
+  ) {}
 
   async findAll(): Promise<StepDocument[]> {
     return this.stepModel.find().exec();
-  }
-
-  async findAllByPlanId(planId: string): Promise<StepDocument[]> {
-    return this.stepModel.find({ planId }).exec();
   }
 
   async create(createStepDto: StepDto): Promise<StepDocument> {
@@ -20,18 +19,34 @@ export class StepService {
     return newStep.save();
   }
 
+  async findByIds(stepIds: string[]): Promise<StepDocument[]> {
+    return this.stepModel
+      .find({ _id: { $in: stepIds } })
+      .sort({ order: 1 })
+      .exec();
+  }
+
   async removeById(stepId: string): Promise<StepDocument | null> {
-    return this.stepModel.findOneAndDelete({ _id: stepId }).exec();
+    const step = await this.stepModel.findOneAndDelete({ _id: stepId }).exec();
+
+    // Retirer de tous les plans qui le référencent
+    if (step) {
+      await this.planModel.updateMany(
+        { steps: stepId },
+        { $pull: { steps: stepId } },
+      );
+    }
+
+    return step;
   }
 
   async updateById(
     stepId: string,
     updateStepDto: StepDto,
     userId: string,
-    planId: string,
   ): Promise<StepDocument | null> {
     return this.stepModel
-      .findOneAndUpdate({ _id: stepId, userId, planId }, updateStepDto, {
+      .findOneAndUpdate({ _id: stepId, userId }, updateStepDto, {
         new: true,
       })
       .exec();

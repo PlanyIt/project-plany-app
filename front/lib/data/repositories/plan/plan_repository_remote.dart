@@ -9,19 +9,19 @@ class PlanRepositoryRemote implements PlanRepository {
   PlanRepositoryRemote({required ApiClient apiClient}) : _apiClient = apiClient;
   final ApiClient _apiClient;
 
-  List<Plan>? _cachedData = [];
+  List<Plan>? _cachedData;
 
   @override
   Future<Result<List<Plan>>> getPlanList() async {
-    if (_cachedData == null) {
-      final result = await _apiClient.getPlans();
-      if (result is Ok<List<Plan>>) {
-        _cachedData = result.value;
-      }
-      return result;
-    } else {
-      return Result.ok(_cachedData!);
+    // Toujours charger depuis l'API - pour débugger
+    final result = await _apiClient.getPlans();
+    if (result is Ok<List<Plan>>) {
+      _cachedData = result.value;
+      print('🔍 Plans loaded: ${result.value.length}'); // Debug
+    } else if (result is Error<List<Plan>>) {
+      print('❌ Failed to load plans: ${result.error}'); // Debug
     }
+    return result;
   }
 
   @override
@@ -46,5 +46,10 @@ class PlanRepositoryRemote implements PlanRepository {
     }
 
     return result;
+  }
+
+  Future<void> clearCache() async {
+    _cachedData = null; // ❌ Mettre à null, pas []
+    print('🧹 Plan cache cleared'); // Debug
   }
 }

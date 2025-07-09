@@ -20,7 +20,7 @@ class BottomBar extends StatelessWidget {
         context.go(Routes.createPlan);
         break;
       case 2:
-        context.go(Routes.profil);
+        context.go(Routes.profile);
         break;
     }
   }

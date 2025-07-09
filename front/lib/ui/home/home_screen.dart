@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../routing/routes.dart';
-import '../../core/ui/button/plany_button.dart';
-import '../../core/ui/logo/plany_logo.dart';
+import '../../routing/routes.dart';
+import '../core/ui/button/plany_button.dart';
+import '../core/ui/logo/plany_logo.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

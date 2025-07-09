@@ -40,6 +40,10 @@ class DashboardViewModel extends ChangeNotifier {
   final Map<String, List<step_model.Step>> _planSteps = {};
   User? _user;
 
+  // État de l'UI
+  String? _errorMessage;
+  bool _hasError = false;
+
   // Commands
   late Command0 load;
   late Command0 logout;
@@ -56,27 +60,67 @@ class DashboardViewModel extends ChangeNotifier {
     return copy;
   }
 
+  String? get errorMessage => _errorMessage;
+  bool get hasError => _hasError;
+
+  void clearError() {
+    _errorMessage = null;
+    _hasError = false;
+    notifyListeners();
+  }
+
+  void navigateToSearch({String query = '', String category = ''}) {
+    // Émettre un événement pour la navigation
+    _navigationEvent = NavigationEvent.search(query: query, category: category);
+    notifyListeners();
+  }
+
+  void navigateToPlan(String planId) {
+    _navigationEvent = NavigationEvent.plan(planId);
+    notifyListeners();
+  }
+
+  NavigationEvent? _navigationEvent;
+  NavigationEvent? get navigationEvent => _navigationEvent;
+
+  void clearNavigationEvent() {
+    _navigationEvent = null;
+    notifyListeners();
+  }
+
   Future<Result<void>> _load() async {
     _categories = [];
     _plans = [];
     _planSteps.clear();
+    _hasError = false;
+    _errorMessage = null;
+
+    // Charger l'utilisateur
+    await _loadCurrentUser();
     notifyListeners();
+
     try {
-      _user = _authRepository.currentUser;
-      // Lance les deux fetch en parallèle
       final results = await Future.wait([
         _categoryRepository.getCategoriesList(),
         _planRepository.getPlanList(),
       ]);
+
       final categoryResult = results[0] as Result<List<Category>>;
       final planResult = results[1] as Result<List<Plan>>;
 
       if (categoryResult is Error<List<Category>>) {
         _log.warning('Failed to load categories', categoryResult.error);
+        _errorMessage = 'Erreur lors du chargement des catégories';
+        _hasError = true;
+        notifyListeners();
         return categoryResult;
       }
+
       if (planResult is Error<List<Plan>>) {
         _log.warning('Failed to load plans', planResult.error);
+        _errorMessage = 'Erreur lors du chargement des plans';
+        _hasError = true;
+        notifyListeners();
         return planResult;
       }
 
@@ -86,9 +130,33 @@ class DashboardViewModel extends ChangeNotifier {
 
       await _loadStepsForPlans();
       _log.info('Dashboard data loaded successfully');
-      return const Result.ok(null);
-    } finally {
       notifyListeners();
+      return const Result.ok(null);
+    } catch (e) {
+      _log.severe('Unexpected error loading dashboard data', e);
+      _errorMessage = 'Une erreur inattendue s\'est produite';
+      _hasError = true;
+      notifyListeners();
+      return Result.error(e is Exception ? e : Exception(e.toString()));
+    }
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      // Utiliser le AuthRepository pour récupérer l'utilisateur courant
+      _user = _authRepository.currentUser;
+
+      // Si pas d'utilisateur en cache, essayer de le recharger
+      if (_user == null) {
+        final userResult = await _authRepository.getCurrentUser();
+        if (userResult is Ok<User>) {
+          _user = userResult.value;
+        }
+      }
+
+      _log.info('Current user loaded: ${_user?.username ?? "null"}');
+    } catch (e) {
+      _log.warning('Failed to load current user', e);
     }
   }
 
@@ -97,21 +165,21 @@ class DashboardViewModel extends ChangeNotifier {
       _log.warning('No plans found, skipping step loading');
       return;
     }
-    final futures = _plans.map((plan) async {
-      final id = plan.id;
-      if (id == null) {
-        _log.warning('Plan without id: $plan');
-        return;
-      }
+
+    final futures = _plans.where((plan) => plan.id != null).map((plan) async {
+      final id = plan.id!;
       final result = await _stepRepository.getStepsList(id);
       if (result is Ok<List<step_model.Step>>) {
         _planSteps[id] = result.value;
       } else {
-        _log.warning(
-            'Failed to load steps for plan $id', (result as Error).error);
+        _log.warning('Failed to load steps for plan $id',
+            (result as Error<List<step_model.Step>>).error);
       }
     });
-    await Future.wait(futures);
+
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
+    }
   }
 
   Future<Result<Category>> getCategoryById(String id) async {
@@ -125,5 +193,21 @@ class DashboardViewModel extends ChangeNotifier {
       case Error<void>():
         return result;
     }
+  }
+}
+
+// Classe pour gérer les événements de navigation
+class NavigationEvent {
+  final String type;
+  final Map<String, dynamic> data;
+
+  NavigationEvent._(this.type, this.data);
+
+  factory NavigationEvent.search({String query = '', String category = ''}) {
+    return NavigationEvent._('search', {'query': query, 'category': category});
+  }
+
+  factory NavigationEvent.plan(String planId) {
+    return NavigationEvent._('plan', {'planId': planId});
   }
 }

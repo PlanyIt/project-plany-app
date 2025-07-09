@@ -7,4 +7,7 @@ abstract class PlanRepository {
 
   /// Creates a new [Plan].
   Future<Result<Plan>> createPlan(Plan plan);
+
+  /// Clears the cache of plans.
+  Future<void> clearCache();
 }

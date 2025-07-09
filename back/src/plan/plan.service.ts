@@ -3,7 +3,6 @@ import { PlanDto } from './dto/plan.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from './schemas/plan.schema';
 import { Model } from 'mongoose';
-import { StepDto } from 'src/step/dto/step.dto';
 import { User, UserDocument } from 'src/user/schemas/user.schema';
 
 @Injectable()
@@ -19,7 +18,7 @@ export class PlanService {
   }
 
   async findAll(): Promise<PlanDocument[]> {
-    return this.planModel.find().exec();
+    return this.planModel.find().populate('steps').exec();
   }
 
   async removeById(planId: string, userId: string): Promise<PlanDocument> {
@@ -37,19 +36,20 @@ export class PlanService {
   }
 
   async findById(planId: string): Promise<PlanDocument | undefined> {
-    return this.planModel.findOne({ _id: planId }).exec();
+    return this.planModel.findOne({ _id: planId }).populate('steps').exec();
   }
 
   async addStepToPlan(
     planId: string,
-    stepDto: StepDto,
+    stepId: string,
   ): Promise<PlanDocument | undefined> {
     return this.planModel
       .findOneAndUpdate(
         { _id: planId },
-        { $push: { steps: stepDto } },
+        { $push: { steps: stepId } },
         { new: true },
       )
+      .populate('steps')
       .exec();
   }
 

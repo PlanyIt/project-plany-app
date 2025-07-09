@@ -14,6 +14,7 @@ import '../data/services/api/api_client.dart';
 import '../data/services/api/auth_api_client.dart';
 import '../data/services/auth_storage_service.dart';
 import '../data/services/imgur_service.dart';
+import '../data/services/session_manager.dart';
 
 List<SingleChildWidget> get providers {
   return [
@@ -49,6 +50,14 @@ List<SingleChildWidget> get providers {
         apiClient: context.read(),
         imgurService: context.read(),
       ) as StepRepository,
+    ),
+    Provider(
+      create: (context) => SessionManager(
+        authRepository: context.read(),
+        planRepository: context.read(),
+        categoryRepository: context.read(),
+        stepRepository: context.read(),
+      ),
     ),
   ];
 }

@@ -22,19 +22,23 @@ class StepRepositoryRemote implements StepRepository {
   final ApiClient _apiClient;
   final ImgurService _imgurService;
 
-  final Map<String, List<Step>> _cachedData = {};
+  Map<String, List<Step>> _cachedData = {};
 
   @override
   Future<Result<List<Step>>> getStepsList(String planId) async {
-    if (_cachedData.containsKey(planId)) {
-      return Result.ok(List<Step>.from(_cachedData[planId]!));
-    }
+    // Désactiver le cache temporairement pour débugger
+    // if (_cachedData.containsKey(planId)) {
+    //   return Result.ok(List<Step>.from(_cachedData[planId]!));
+    // }
 
     try {
       final result = await _apiClient.getStepsByPlan(planId);
+      print('🔍 Loading steps for plan $planId'); // Debug
+
       switch (result) {
         case Ok<List<StepApiModel>>():
           final stepsApi = result.value;
+          print('✅ Found ${stepsApi.length} steps for plan $planId'); // Debug
           final steps = stepsApi
               .map((stepApi) => Step(
                     title: stepApi.title,
@@ -50,9 +54,11 @@ class StepRepositoryRemote implements StepRepository {
           _cachedData[planId] = steps;
           return Result.ok(steps);
         case Error<List<StepApiModel>>():
+          print('❌ Failed to load steps: ${result.error}'); // Debug
           return Result.error(result.error);
       }
     } on Exception catch (error) {
+      print('❌ Exception loading steps: $error'); // Debug
       return Result.error(error);
     }
   }
@@ -86,5 +92,10 @@ class StepRepositoryRemote implements StepRepository {
     } catch (e) {
       return Result.error(Exception('Failed to upload image: $e'));
     }
+  }
+
+  Future<void> clearCache() async {
+    _cachedData = {};
+    print('🧹 Step cache cleared'); // Debug
   }
 }
