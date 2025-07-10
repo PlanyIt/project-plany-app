@@ -12,6 +12,6 @@ import { PlanModule } from '../plan/plan.module';
   ],
   controllers: [UserController],
   providers: [UserService],
-  exports: [UserService],
+  exports: [UserService, MongooseModule],
 })
 export class UserModule {}

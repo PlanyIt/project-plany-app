@@ -18,7 +18,7 @@ export class PlanService {
   }
 
   async findAll(): Promise<PlanDocument[]> {
-    return this.planModel
+    const plans = await this.planModel
       .find()
       .populate({
         path: 'user',
@@ -26,11 +26,13 @@ export class PlanService {
       })
       .populate({
         path: 'steps',
+        model: 'Step',
         select:
           'title description image order duration cost longitude latitude',
       })
-      .sort({ createdAt: -1 })
       .exec();
+
+    return plans;
   }
 
   async removeById(planId: string, userId: string): Promise<PlanDocument> {
@@ -60,6 +62,7 @@ export class PlanService {
       })
       .populate({
         path: 'steps',
+        model: 'Step',
         select:
           'title description image order duration cost longitude latitude',
       })

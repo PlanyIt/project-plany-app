@@ -16,7 +16,6 @@ class Step with _$Step {
     String? duration,
     double? cost,
     DateTime? createdAt,
-    String? userId,
   }) = _Step;
 
   factory Step.fromJson(Map<String, Object?> json) => _$StepFromJson(json);

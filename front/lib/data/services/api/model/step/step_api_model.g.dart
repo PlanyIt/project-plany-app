@@ -16,7 +16,6 @@ _$StepApiModelImpl _$$StepApiModelImplFromJson(Map<String, dynamic> json) =>
       image: json['image'] as String,
       duration: json['duration'] as String?,
       cost: (json['cost'] as num?)?.toDouble(),
-      userId: json['userId'] as String,
     );
 
 Map<String, dynamic> _$$StepApiModelImplToJson(_$StepApiModelImpl instance) =>
@@ -29,5 +28,4 @@ Map<String, dynamic> _$$StepApiModelImplToJson(_$StepApiModelImpl instance) =>
       'image': instance.image,
       'duration': instance.duration,
       'cost': instance.cost,
-      'userId': instance.userId,
     };

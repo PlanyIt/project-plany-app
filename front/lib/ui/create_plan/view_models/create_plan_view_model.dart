@@ -145,7 +145,6 @@ class CreatePlanViewModel extends ChangeNotifier {
           title: card.title,
           description: card.description,
           order: i + 1,
-          userId: _user?.id ?? '',
           duration: formattedDuration,
           cost: card.cost,
           position: _selectedLocation,

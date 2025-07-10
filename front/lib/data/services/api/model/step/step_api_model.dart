@@ -14,7 +14,6 @@ class StepApiModel with _$StepApiModel {
     required String image,
     String? duration,
     double? cost,
-    required String userId,
   }) = _StepApiModel;
 
   factory StepApiModel.fromJson(Map<String, dynamic> json) =>

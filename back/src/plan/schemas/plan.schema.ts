@@ -24,7 +24,10 @@ export class Plan {
   @Prop({ required: true })
   category: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Step' }], default: [] })
+  @Prop({
+    type: [{ type: Types.ObjectId, ref: 'Step', required: true }],
+    default: [],
+  })
   steps: Types.ObjectId[];
 
   @Prop({ type: [String], default: [] })

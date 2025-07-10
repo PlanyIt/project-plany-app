@@ -28,7 +28,6 @@ mixin _$StepApiModel {
   String get image => throw _privateConstructorUsedError;
   String? get duration => throw _privateConstructorUsedError;
   double? get cost => throw _privateConstructorUsedError;
-  String get userId => throw _privateConstructorUsedError;
 
   /// Serializes this StepApiModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -54,8 +53,7 @@ abstract class $StepApiModelCopyWith<$Res> {
       int order,
       String image,
       String? duration,
-      double? cost,
-      String userId});
+      double? cost});
 }
 
 /// @nodoc
@@ -81,7 +79,6 @@ class _$StepApiModelCopyWithImpl<$Res, $Val extends StepApiModel>
     Object? image = null,
     Object? duration = freezed,
     Object? cost = freezed,
-    Object? userId = null,
   }) {
     return _then(_value.copyWith(
       title: null == title
@@ -116,10 +113,6 @@ class _$StepApiModelCopyWithImpl<$Res, $Val extends StepApiModel>
           ? _value.cost
           : cost // ignore: cast_nullable_to_non_nullable
               as double?,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String,
     ) as $Val);
   }
 }
@@ -140,8 +133,7 @@ abstract class _$$StepApiModelImplCopyWith<$Res>
       int order,
       String image,
       String? duration,
-      double? cost,
-      String userId});
+      double? cost});
 }
 
 /// @nodoc
@@ -165,7 +157,6 @@ class __$$StepApiModelImplCopyWithImpl<$Res>
     Object? image = null,
     Object? duration = freezed,
     Object? cost = freezed,
-    Object? userId = null,
   }) {
     return _then(_$StepApiModelImpl(
       title: null == title
@@ -200,10 +191,6 @@ class __$$StepApiModelImplCopyWithImpl<$Res>
           ? _value.cost
           : cost // ignore: cast_nullable_to_non_nullable
               as double?,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String,
     ));
   }
 }
@@ -219,8 +206,7 @@ class _$StepApiModelImpl implements _StepApiModel {
       required this.order,
       required this.image,
       this.duration,
-      this.cost,
-      required this.userId});
+      this.cost});
 
   factory _$StepApiModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$StepApiModelImplFromJson(json);
@@ -241,12 +227,10 @@ class _$StepApiModelImpl implements _StepApiModel {
   final String? duration;
   @override
   final double? cost;
-  @override
-  final String userId;
 
   @override
   String toString() {
-    return 'StepApiModel(title: $title, description: $description, latitude: $latitude, longitude: $longitude, order: $order, image: $image, duration: $duration, cost: $cost, userId: $userId)';
+    return 'StepApiModel(title: $title, description: $description, latitude: $latitude, longitude: $longitude, order: $order, image: $image, duration: $duration, cost: $cost)';
   }
 
   @override
@@ -265,14 +249,13 @@ class _$StepApiModelImpl implements _StepApiModel {
             (identical(other.image, image) || other.image == image) &&
             (identical(other.duration, duration) ||
                 other.duration == duration) &&
-            (identical(other.cost, cost) || other.cost == cost) &&
-            (identical(other.userId, userId) || other.userId == userId));
+            (identical(other.cost, cost) || other.cost == cost));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, title, description, latitude,
-      longitude, order, image, duration, cost, userId);
+      longitude, order, image, duration, cost);
 
   /// Create a copy of StepApiModel
   /// with the given fields replaced by the non-null parameter values.
@@ -299,8 +282,7 @@ abstract class _StepApiModel implements StepApiModel {
       required final int order,
       required final String image,
       final String? duration,
-      final double? cost,
-      required final String userId}) = _$StepApiModelImpl;
+      final double? cost}) = _$StepApiModelImpl;
 
   factory _StepApiModel.fromJson(Map<String, dynamic> json) =
       _$StepApiModelImpl.fromJson;
@@ -321,8 +303,6 @@ abstract class _StepApiModel implements StepApiModel {
   String? get duration;
   @override
   double? get cost;
-  @override
-  String get userId;
 
   /// Create a copy of StepApiModel
   /// with the given fields replaced by the non-null parameter values.
