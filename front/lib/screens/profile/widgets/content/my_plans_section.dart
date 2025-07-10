@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:front/domain/models/category/category.dart';
 import 'package:front/domain/models/plan/plan.dart';
 import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/screens/create-plan/create_plans_screen.dart';
 import 'package:front/screens/profile/widgets/common/section_header.dart';
 import 'package:front/services/auth_service.dart';
 import 'package:front/services/step_service.dart';
@@ -165,14 +164,7 @@ class MyPlansSectionState extends State<MyPlansSection>
                         Colors.purpleAccent
                       ],
                       action: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const CreatePlansScreen()),
-                          );
-                        },
+                        onTap: () {},
                         borderRadius: BorderRadius.circular(10),
                         child: Tooltip(
                           message: 'Créer un nouveau plan',
@@ -235,7 +227,7 @@ class MyPlansSectionState extends State<MyPlansSection>
     return Stack(
       children: [
         FutureBuilder<Map<String, dynamic>>(
-          future: _getStepData(plan.steps),
+          future: _getStepData(plan.steps.map((e) => e.id ?? '').toList()),
           builder: (context, snapshot) {
             List<String>? imageUrls;
             double? cost;

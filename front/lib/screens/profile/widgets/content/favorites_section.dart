@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category/category.dart';
-import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/screens/profile/widgets/common/section_header.dart';
-import 'package:front/services/plan_service.dart';
-import 'package:front/services/step_service.dart';
-import 'package:front/services/user_service.dart';
-import 'package:front/services/categorie_service.dart';
-import 'package:front/utils/helpers.dart';
-import 'package:front/widgets/card/compact_plan_card.dart';
+
+import '../../../../domain/models/category/category.dart';
+import '../../../../domain/models/plan/plan.dart';
+import '../../../../domain/models/step/step.dart' as plan_steps;
+import '../../../../services/categorie_service.dart';
+import '../../../../services/plan_service.dart';
+import '../../../../services/step_service.dart';
+import '../../../../services/user_service.dart';
+import '../../../../utils/helpers.dart';
+import '../../../../widgets/card/compact_plan_card.dart';
+import '../common/section_header.dart';
 
 class FavoritesSection extends StatefulWidget {
   final String userId;
@@ -181,7 +182,7 @@ class _FavoritesSectionState extends State<FavoritesSection>
     return Stack(
       children: [
         FutureBuilder<Map<String, dynamic>>(
-          future: _getStepData(plan.steps),
+          future: _getStepData(plan.steps.map((e) => e.id ?? '').toList()),
           builder: (context, snapshot) {
             List<String>? imageUrls;
             double? cost;

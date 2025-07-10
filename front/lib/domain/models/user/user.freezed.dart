@@ -20,7 +20,8 @@ User _$UserFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$User {
-  String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: '_id')
+  String? get id => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
@@ -46,7 +47,7 @@ abstract class $UserCopyWith<$Res> {
       _$UserCopyWithImpl<$Res, User>;
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: '_id') String? id,
       String username,
       String email,
       String? description,
@@ -73,7 +74,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? id = freezed,
     Object? username = null,
     Object? email = null,
     Object? description = freezed,
@@ -85,10 +86,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? following = null,
   }) {
     return _then(_value.copyWith(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       username: null == username
           ? _value.username
           : username // ignore: cast_nullable_to_non_nullable
@@ -137,7 +138,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: '_id') String? id,
       String username,
       String email,
       String? description,
@@ -161,7 +162,7 @@ class __$$UserImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? id = freezed,
     Object? username = null,
     Object? email = null,
     Object? description = freezed,
@@ -173,10 +174,10 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? following = null,
   }) {
     return _then(_$UserImpl(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       username: null == username
           ? _value.username
           : username // ignore: cast_nullable_to_non_nullable
@@ -221,7 +222,7 @@ class __$$UserImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UserImpl implements _User {
   const _$UserImpl(
-      {required this.id,
+      {@JsonKey(name: '_id') this.id,
       required this.username,
       required this.email,
       this.description,
@@ -238,7 +239,8 @@ class _$UserImpl implements _User {
       _$$UserImplFromJson(json);
 
   @override
-  final String id;
+  @JsonKey(name: '_id')
+  final String? id;
   @override
   final String username;
   @override
@@ -334,7 +336,7 @@ class _$UserImpl implements _User {
 
 abstract class _User implements User {
   const factory _User(
-      {required final String id,
+      {@JsonKey(name: '_id') final String? id,
       required final String username,
       required final String email,
       final String? description,
@@ -348,7 +350,8 @@ abstract class _User implements User {
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
   @override
-  String get id;
+  @JsonKey(name: '_id')
+  String? get id;
   @override
   String get username;
   @override

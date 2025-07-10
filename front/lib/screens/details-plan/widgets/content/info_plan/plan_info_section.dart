@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/domain/models/user.dart';
-import 'package:front/screens/profile/profile_screen.dart';
-import 'package:front/services/plan_service.dart';
-import 'package:front/services/user_service.dart';
-import 'package:front/services/auth_service.dart';
-import 'package:front/utils/helpers.dart';
-import 'package:front/utils/icon_utils.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../../../../../domain/models/plan/plan.dart';
+import '../../../../../domain/models/step/step.dart' as plan_steps;
+import '../../../../../domain/models/user.dart';
+import '../../../../../services/auth_service.dart';
+import '../../../../../services/plan_service.dart';
+import '../../../../../services/user_service.dart';
+import '../../../../../utils/helpers.dart';
+import '../../../../../utils/icon_utils.dart';
+import '../../../../profile/profile_screen.dart';
 
 class PlanInfoSection extends StatefulWidget {
   final Plan plan;
@@ -173,7 +174,7 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
   }
 
   Future<void> _loadAuthorProfile() async {
-    if (widget.plan.userId == null || widget.plan.userId!.isEmpty) {
+    if (widget.plan.user == null) {
       setState(() => _isLoadingAuthor = false);
       return;
     }
@@ -181,10 +182,13 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
     setState(() => _isLoadingAuthor = true);
 
     try {
-      final author = await _userService.getUserProfile(widget.plan.userId!);
+      final author =
+          await _userService.getUserProfile(widget.plan.user?.id ?? '');
 
       bool isFollowing = false;
-      if (_currentUserId != null && _currentUserId != widget.plan.userId) {
+      if (_currentUserId != null &&
+          widget.plan.user != null &&
+          _currentUserId != widget.plan.user!.id) {
         isFollowing = await _userService.isFollowing(author.id);
       }
 
@@ -241,7 +245,7 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
 
     // Utiliser directement _currentUserId au lieu de FirebaseAuth
     final isOwnPlan =
-        _currentUserId != null && _currentUserId == widget.plan.userId;
+        _currentUserId != null && _currentUserId == widget.plan.user?.id;
 
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -451,7 +455,7 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
     final String followers = "${_authorProfile!.followersCount ?? 0}";
 
     final isOwnPlan =
-        _currentUserId != null && _currentUserId == widget.plan.userId;
+        _currentUserId != null && _currentUserId == widget.plan.user?.id;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),

@@ -12,6 +12,7 @@ import '../../../data/repositories/step/step_repository.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart' as step_model;
+import '../../../domain/models/user/user.dart';
 import '../../../domain/use_cases/plan/create_plan_use_case.dart';
 import '../../../routing/routes.dart';
 import '../../../utils/command.dart';
@@ -56,11 +57,11 @@ class CreatePlanViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String selectedUnit = 'Heures';
-  String? _userId;
   LatLng? _selectedLocation;
   String? _selectedLocationName;
   int? _editingStepIndex;
   bool _isEditingStep = false;
+  User? _user;
 
   int get currentStep => _currentStep;
   List<Category> get categories => _categories;
@@ -72,7 +73,7 @@ class CreatePlanViewModel extends ChangeNotifier {
   LatLng? get selectedLocation => _selectedLocation;
   String? get selectedLocationName => _selectedLocationName;
   AnimationController? get animationController => _animationController;
-  String? get userId => _userId;
+  User? get user => _user;
   bool get isEditingStep => _isEditingStep;
   int? get editingStepIndex => _editingStepIndex;
 
@@ -96,7 +97,7 @@ class CreatePlanViewModel extends ChangeNotifier {
       _setLoading(true);
       _setError(null);
 
-      _userId = _authRepository.currentUser?.id;
+      _user = _authRepository.currentUser;
 
       final categoryResult = await _categoryRepository.getCategoriesList();
       if (categoryResult is Ok<List<Category>>) {
@@ -144,7 +145,7 @@ class CreatePlanViewModel extends ChangeNotifier {
           title: card.title,
           description: card.description,
           order: i + 1,
-          userId: _userId,
+          userId: _user?.id ?? '',
           duration: formattedDuration,
           cost: card.cost,
           position: _selectedLocation,
@@ -157,7 +158,7 @@ class CreatePlanViewModel extends ChangeNotifier {
         title: titlePlanController.text.trim(),
         description: descriptionPlanController.text.trim(),
         category: _selectedCategory!.id,
-        userId: _userId,
+        user: _user!,
         steps: const [],
         isPublic: true,
       );
@@ -166,7 +167,7 @@ class CreatePlanViewModel extends ChangeNotifier {
         plan: plan,
         steps: steps,
         stepImages: stepImages,
-        userId: _userId ?? '',
+        user: _user?.id ?? '',
       );
 
       if (result is! Ok<Plan>) {
@@ -176,8 +177,9 @@ class CreatePlanViewModel extends ChangeNotifier {
 
       _resetFormFields();
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
       _setError('Erreur interne: ${e.toString()}');
+      print('Erreur lors de la création du plan: $e');
       return false;
     } finally {
       _setLoading(false);

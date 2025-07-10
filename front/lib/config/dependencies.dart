@@ -51,7 +51,7 @@ List<SingleChildWidget> get providers {
         imgurService: context.read(),
       ) as StepRepository,
     ),
-    Provider(
+    ChangeNotifierProvider(
       create: (context) => SessionManager(
         authRepository: context.read(),
         planRepository: context.read(),

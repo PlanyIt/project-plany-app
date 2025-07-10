@@ -10,8 +10,10 @@ _$PlanImpl _$$PlanImplFromJson(Map<String, dynamic> json) => _$PlanImpl(
       id: json['_id'] as String?,
       title: json['title'] as String,
       description: json['description'] as String,
-      category: json['category'] as String,
-      userId: json['userId'] as String?,
+      category: json['category'] as String? ?? '',
+      user: json['user'] == null
+          ? null
+          : User.fromJson(json['user'] as Map<String, dynamic>),
       isPublic: json['isPublic'] as bool? ?? true,
       createdAt: json['createdAt'] == null
           ? null
@@ -19,10 +21,14 @@ _$PlanImpl _$$PlanImplFromJson(Map<String, dynamic> json) => _$PlanImpl(
       updatedAt: json['updatedAt'] == null
           ? null
           : DateTime.parse(json['updatedAt'] as String),
-      steps: (json['steps'] as List<dynamic>).map((e) => e as String).toList(),
+      steps: (json['steps'] as List<dynamic>?)
+              ?.map((e) => Step.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       favorites: (json['favorites'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       isFavorite: json['isFavorite'] as bool? ?? false,
       estimatedCost: (json['estimatedCost'] as num?)?.toDouble(),
     );
@@ -33,7 +39,7 @@ Map<String, dynamic> _$$PlanImplToJson(_$PlanImpl instance) =>
       'title': instance.title,
       'description': instance.description,
       'category': instance.category,
-      'userId': instance.userId,
+      'user': instance.user,
       'isPublic': instance.isPublic,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),

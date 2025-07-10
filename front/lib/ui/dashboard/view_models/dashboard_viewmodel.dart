@@ -125,16 +125,25 @@ class DashboardViewModel extends ChangeNotifier {
       }
 
       _categories = (categoryResult as Ok).value;
-      _plans = (planResult as Ok).value;
-      _log.fine('Loaded categories & plans');
+      // Filter out plans with null or invalid data
+      final allPlans = (planResult as Ok).value;
+      _plans = allPlans.where((plan) {
+        return plan.title.isNotEmpty &&
+            plan.description.isNotEmpty &&
+            plan.category.isNotEmpty;
+      }).toList();
+
+      _log.fine(
+          'Loaded ${_categories.length} categories & ${_plans.length} valid plans');
 
       await _loadStepsForPlans();
       _log.info('Dashboard data loaded successfully');
       notifyListeners();
       return const Result.ok(null);
-    } catch (e) {
-      _log.severe('Unexpected error loading dashboard data', e);
-      _errorMessage = 'Une erreur inattendue s\'est produite';
+    } catch (e, stackTrace) {
+      _log.severe('Unexpected error loading dashboard data', e, stackTrace);
+      _errorMessage =
+          'Une erreur inattendue s\'est produite lors du chargement';
       _hasError = true;
       notifyListeners();
       return Result.error(e is Exception ? e : Exception(e.toString()));

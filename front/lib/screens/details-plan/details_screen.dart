@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category/category.dart';
-import 'package:front/screens/details-plan/widgets/content/plan_content.dart';
-import 'package:front/screens/details-plan/widgets/header/details_header.dart';
-import 'package:front/services/plan_service.dart';
-import 'package:front/services/step_service.dart';
-import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/services/categorie_service.dart';
+
+import '../../domain/models/category/category.dart';
+import '../../domain/models/plan/plan.dart';
+import '../../domain/models/step/step.dart' as plan_steps;
+import '../../services/categorie_service.dart';
+import '../../services/plan_service.dart';
+import '../../services/step_service.dart';
+import 'widgets/content/plan_content.dart';
+import 'widgets/header/details_header.dart';
 
 final GlobalKey<DetailsHeaderState> _headerKey =
     GlobalKey<DetailsHeaderState>();
@@ -91,15 +92,17 @@ class DetailScreenState extends State<DetailScreen>
 
       _loadCategory();
 
-      List<plan_steps.Step> steps = [];
-      for (String stepId in _plan!.steps) {
+      var steps = <plan_steps.Step>[];
+      for (var stepId in _plan!.steps) {
         try {
-          final step = await _stepService.getStepById(stepId);
+          final id = stepId is String ? stepId : stepId.id;
+          final step = await _stepService.getStepById(id.toString());
           if (step != null) {
             steps.add(step);
           }
         } catch (e) {
-          print("Erreur lors du chargement de l'étape $stepId: $e");
+          print(
+              "Erreur lors du chargement de l'étape ${stepId is String ? stepId : stepId.id}: $e");
         }
       }
       setState(() {
@@ -148,7 +151,7 @@ class DetailScreenState extends State<DetailScreen>
           _plan!.steps.isNotEmpty
               ? DetailsHeader(
                   key: _headerKey,
-                  stepIds: _plan!.steps,
+                  stepIds: _plan!.steps.map((e) => e.id ?? '').toList(),
                   category: _plan!.category,
                   categoryColor: _getCategoryColor(),
                   planTitle: _plan!.title,

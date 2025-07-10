@@ -23,10 +23,10 @@ class CreatePlanUseCase {
     required Plan plan,
     required List<step_model.Step> steps,
     required List<File?> stepImages,
-    required String userId,
+    required String user,
   }) async {
     // 1. Upload images et créer steps
-    final stepIds = <String>[];
+    final createdSteps = <step_model.Step>[]; // Renamed to avoid collision
     for (var i = 0; i < steps.length; i++) {
       final step = steps[i];
       final imageFile = stepImages[i];
@@ -42,15 +42,17 @@ class CreatePlanUseCase {
       }
 
       final stepToCreate = step.copyWith(image: imageUrl);
-      final stepResult = await stepRepository.createStep(stepToCreate, userId);
+      final stepResult = await stepRepository.createStep(stepToCreate, user);
       if (stepResult is! Ok<step_model.Step>) {
         return Result.error(Exception('Erreur création étape ${i + 1}'));
       }
-      stepIds.add(stepResult.value.id!);
+      createdSteps.add(stepResult.value);
     }
 
+    print('✅ Created ${createdSteps.length} steps'); // Debug
+
     // 2. Créer le plan avec les stepIds
-    final planToCreate = plan.copyWith(steps: stepIds);
+    final planToCreate = plan.copyWith(steps: createdSteps);
     final planResult = await planRepository.createPlan(planToCreate);
     if (planResult is! Ok<Plan>) {
       return Result.error(Exception('Erreur création du plan'));

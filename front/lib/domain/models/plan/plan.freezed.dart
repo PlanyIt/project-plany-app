@@ -25,11 +25,11 @@ mixin _$Plan {
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   String get category => throw _privateConstructorUsedError;
-  String? get userId => throw _privateConstructorUsedError;
+  User? get user => throw _privateConstructorUsedError;
   bool get isPublic => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
-  List<String> get steps => throw _privateConstructorUsedError;
+  List<Step> get steps => throw _privateConstructorUsedError;
   List<String>? get favorites => throw _privateConstructorUsedError;
   bool get isFavorite => throw _privateConstructorUsedError;
   double? get estimatedCost => throw _privateConstructorUsedError;
@@ -53,14 +53,16 @@ abstract class $PlanCopyWith<$Res> {
       String title,
       String description,
       String category,
-      String? userId,
+      User? user,
       bool isPublic,
       DateTime? createdAt,
       DateTime? updatedAt,
-      List<String> steps,
+      List<Step> steps,
       List<String>? favorites,
       bool isFavorite,
       double? estimatedCost});
+
+  $UserCopyWith<$Res>? get user;
 }
 
 /// @nodoc
@@ -82,7 +84,7 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
     Object? title = null,
     Object? description = null,
     Object? category = null,
-    Object? userId = freezed,
+    Object? user = freezed,
     Object? isPublic = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -108,10 +110,10 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
               as String,
-      userId: freezed == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String?,
+      user: freezed == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as User?,
       isPublic: null == isPublic
           ? _value.isPublic
           : isPublic // ignore: cast_nullable_to_non_nullable
@@ -127,7 +129,7 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
       steps: null == steps
           ? _value.steps
           : steps // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as List<Step>,
       favorites: freezed == favorites
           ? _value.favorites
           : favorites // ignore: cast_nullable_to_non_nullable
@@ -141,6 +143,20 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
           : estimatedCost // ignore: cast_nullable_to_non_nullable
               as double?,
     ) as $Val);
+  }
+
+  /// Create a copy of Plan
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $UserCopyWith<$Res>? get user {
+    if (_value.user == null) {
+      return null;
+    }
+
+    return $UserCopyWith<$Res>(_value.user!, (value) {
+      return _then(_value.copyWith(user: value) as $Val);
+    });
   }
 }
 
@@ -156,14 +172,17 @@ abstract class _$$PlanImplCopyWith<$Res> implements $PlanCopyWith<$Res> {
       String title,
       String description,
       String category,
-      String? userId,
+      User? user,
       bool isPublic,
       DateTime? createdAt,
       DateTime? updatedAt,
-      List<String> steps,
+      List<Step> steps,
       List<String>? favorites,
       bool isFavorite,
       double? estimatedCost});
+
+  @override
+  $UserCopyWith<$Res>? get user;
 }
 
 /// @nodoc
@@ -182,7 +201,7 @@ class __$$PlanImplCopyWithImpl<$Res>
     Object? title = null,
     Object? description = null,
     Object? category = null,
-    Object? userId = freezed,
+    Object? user = freezed,
     Object? isPublic = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -208,10 +227,10 @@ class __$$PlanImplCopyWithImpl<$Res>
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
               as String,
-      userId: freezed == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String?,
+      user: freezed == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as User?,
       isPublic: null == isPublic
           ? _value.isPublic
           : isPublic // ignore: cast_nullable_to_non_nullable
@@ -227,7 +246,7 @@ class __$$PlanImplCopyWithImpl<$Res>
       steps: null == steps
           ? _value._steps
           : steps // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as List<Step>,
       favorites: freezed == favorites
           ? _value._favorites
           : favorites // ignore: cast_nullable_to_non_nullable
@@ -251,13 +270,13 @@ class _$PlanImpl implements _Plan {
       {@JsonKey(name: '_id') this.id,
       required this.title,
       required this.description,
-      required this.category,
-      this.userId,
+      this.category = '',
+      this.user,
       this.isPublic = true,
       this.createdAt,
       this.updatedAt,
-      required final List<String> steps,
-      final List<String>? favorites,
+      final List<Step> steps = const [],
+      final List<String>? favorites = const [],
       this.isFavorite = false,
       this.estimatedCost})
       : _steps = steps,
@@ -274,9 +293,10 @@ class _$PlanImpl implements _Plan {
   @override
   final String description;
   @override
+  @JsonKey()
   final String category;
   @override
-  final String? userId;
+  final User? user;
   @override
   @JsonKey()
   final bool isPublic;
@@ -284,9 +304,10 @@ class _$PlanImpl implements _Plan {
   final DateTime? createdAt;
   @override
   final DateTime? updatedAt;
-  final List<String> _steps;
+  final List<Step> _steps;
   @override
-  List<String> get steps {
+  @JsonKey()
+  List<Step> get steps {
     if (_steps is EqualUnmodifiableListView) return _steps;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_steps);
@@ -294,6 +315,7 @@ class _$PlanImpl implements _Plan {
 
   final List<String>? _favorites;
   @override
+  @JsonKey()
   List<String>? get favorites {
     final value = _favorites;
     if (value == null) return null;
@@ -310,7 +332,7 @@ class _$PlanImpl implements _Plan {
 
   @override
   String toString() {
-    return 'Plan(id: $id, title: $title, description: $description, category: $category, userId: $userId, isPublic: $isPublic, createdAt: $createdAt, updatedAt: $updatedAt, steps: $steps, favorites: $favorites, isFavorite: $isFavorite, estimatedCost: $estimatedCost)';
+    return 'Plan(id: $id, title: $title, description: $description, category: $category, user: $user, isPublic: $isPublic, createdAt: $createdAt, updatedAt: $updatedAt, steps: $steps, favorites: $favorites, isFavorite: $isFavorite, estimatedCost: $estimatedCost)';
   }
 
   @override
@@ -324,7 +346,7 @@ class _$PlanImpl implements _Plan {
                 other.description == description) &&
             (identical(other.category, category) ||
                 other.category == category) &&
-            (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.user, user) || other.user == user) &&
             (identical(other.isPublic, isPublic) ||
                 other.isPublic == isPublic) &&
             (identical(other.createdAt, createdAt) ||
@@ -348,7 +370,7 @@ class _$PlanImpl implements _Plan {
       title,
       description,
       category,
-      userId,
+      user,
       isPublic,
       createdAt,
       updatedAt,
@@ -378,12 +400,12 @@ abstract class _Plan implements Plan {
       {@JsonKey(name: '_id') final String? id,
       required final String title,
       required final String description,
-      required final String category,
-      final String? userId,
+      final String category,
+      final User? user,
       final bool isPublic,
       final DateTime? createdAt,
       final DateTime? updatedAt,
-      required final List<String> steps,
+      final List<Step> steps,
       final List<String>? favorites,
       final bool isFavorite,
       final double? estimatedCost}) = _$PlanImpl;
@@ -400,7 +422,7 @@ abstract class _Plan implements Plan {
   @override
   String get category;
   @override
-  String? get userId;
+  User? get user;
   @override
   bool get isPublic;
   @override
@@ -408,7 +430,7 @@ abstract class _Plan implements Plan {
   @override
   DateTime? get updatedAt;
   @override
-  List<String> get steps;
+  List<Step> get steps;
   @override
   List<String>? get favorites;
   @override

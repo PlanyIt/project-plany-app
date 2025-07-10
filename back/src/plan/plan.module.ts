@@ -5,12 +5,14 @@ import { PlanController } from './plan.controller';
 import { Plan, PlanSchema } from './schemas/plan.schema';
 import { UserModule } from '../user/user.module';
 import { User, UserSchema } from '../user/schemas/user.schema';
+import { Step, StepSchema } from '../step/schemas/step.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Plan.name, schema: PlanSchema },
       { name: User.name, schema: UserSchema },
+      { name: Step.name, schema: StepSchema },
     ]),
     forwardRef(() => UserModule),
   ],

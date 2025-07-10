@@ -59,6 +59,15 @@ abstract class Command<T> extends ChangeNotifier {
 
     try {
       _result = await action();
+    } catch (e, stackTrace) {
+      // Convert any uncaught exception into a Result.error
+      _result = Result.error(e is Exception ? e : Exception(e.toString()));
+
+      // Log the error for debugging
+      if (kDebugMode) {
+        print('Command execution failed: $e');
+        print('Stack trace: $stackTrace');
+      }
     } finally {
       _running = false;
       notifyListeners();

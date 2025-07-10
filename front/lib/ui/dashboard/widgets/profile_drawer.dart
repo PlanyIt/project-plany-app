@@ -181,7 +181,7 @@ class ProfileDrawer extends StatelessWidget {
           AppTheme.primaryColor,
           () {
             onClose();
-            if (viewModel.user != null && viewModel.user!.id.isNotEmpty) {
+            if (viewModel.user != null && viewModel.user!.id!.isNotEmpty) {
               GoRouter.of(context).go(
                 Routes.profile,
               );

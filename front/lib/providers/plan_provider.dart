@@ -70,7 +70,7 @@ class PlanProvider extends ChangeNotifier {
 
     for (final stepId in plan.steps) {
       try {
-        final step = await _stepService.getStepById(stepId);
+        final step = await _stepService.getStepById(stepId.id ?? '');
         if (step != null) {
           stepsList.add(step);
         }
@@ -144,7 +144,7 @@ class PlanProvider extends ChangeNotifier {
   // Obtenir les plans créés par l'utilisateur courant
   Future<List<Plan>> get userPlans async {
     final userId = await _auth.getCurrentUserId();
-    return _plans.where((plan) => plan.userId == userId).toList();
+    return _plans.where((plan) => plan.user!.id == userId).toList();
   }
 
   // Calcule le coût total d'un plan en additionnant les coûts de toutes les étapes

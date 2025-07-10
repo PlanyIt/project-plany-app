@@ -21,6 +21,7 @@ class ProfileUserInfo extends StatelessWidget {
 
 //TODO: A Gérer par le backend
   String _getUserLevelEmoji() {
+    // Safely access plansCount with null fallback
     final plansCount = userProfile.plansCount ?? 0;
     if (plansCount >= 50) return "🏆";
     if (plansCount >= 20) return "⭐";

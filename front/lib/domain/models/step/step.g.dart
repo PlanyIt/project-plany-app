@@ -7,7 +7,7 @@ part of 'step.dart';
 // **************************************************************************
 
 _$StepImpl _$$StepImplFromJson(Map<String, dynamic> json) => _$StepImpl(
-      id: json['id'] as String?,
+      id: json['_id'] as String?,
       title: json['title'] as String,
       description: json['description'] as String,
       position: json['position'] == null
@@ -25,7 +25,7 @@ _$StepImpl _$$StepImplFromJson(Map<String, dynamic> json) => _$StepImpl(
 
 Map<String, dynamic> _$$StepImplToJson(_$StepImpl instance) =>
     <String, dynamic>{
-      'id': instance.id,
+      '_id': instance.id,
       'title': instance.title,
       'description': instance.description,
       'position': instance.position,

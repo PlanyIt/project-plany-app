@@ -155,7 +155,8 @@ class StepService {
 
     for (final stepId in plan.steps) {
       try {
-        final step = await getStepById(stepId);
+        final step = await getStepById(
+            plan.steps.firstWhere((s) => s.id == stepId).toString());
         if (step != null && step.cost != null) {
           totalCost += step.cost!;
         }
@@ -198,7 +199,8 @@ class StepService {
 
     for (final stepId in plan.steps) {
       try {
-        final step = await getStepById(stepId);
+        final step = await getStepById(
+            plan.steps.firstWhere((s) => s.id == stepId).toString());
         if (step != null && step.duration != null) {
           totalMinutes +=
               _parseDurationToMinutes(step.duration!); // Use helper function

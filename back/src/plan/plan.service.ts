@@ -18,11 +18,25 @@ export class PlanService {
   }
 
   async findAll(): Promise<PlanDocument[]> {
-    return this.planModel.find().populate('steps').exec();
+    return this.planModel
+      .find()
+      .populate({
+        path: 'user',
+        select: 'username email photoUrl',
+      })
+      .populate({
+        path: 'steps',
+        select:
+          'title description image order duration cost longitude latitude',
+      })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async removeById(planId: string, userId: string): Promise<PlanDocument> {
-    return this.planModel.findOneAndDelete({ _id: planId, userId }).exec();
+    return this.planModel
+      .findOneAndDelete({ _id: planId, user: userId })
+      .exec();
   }
 
   async updateById(
@@ -31,12 +45,25 @@ export class PlanService {
     userId: string,
   ): Promise<PlanDocument> {
     return this.planModel
-      .findOneAndUpdate({ _id: planId, userId }, updatePlanDto, { new: true })
+      .findOneAndUpdate({ _id: planId, user: userId }, updatePlanDto, {
+        new: true,
+      })
       .exec();
   }
 
   async findById(planId: string): Promise<PlanDocument | undefined> {
-    return this.planModel.findOne({ _id: planId }).populate('steps').exec();
+    return this.planModel
+      .findOne({ _id: planId })
+      .populate({
+        path: 'user',
+        select: 'username email photoUrl',
+      })
+      .populate({
+        path: 'steps',
+        select:
+          'title description image order duration cost longitude latitude',
+      })
+      .exec();
   }
 
   async addStepToPlan(
@@ -49,7 +76,15 @@ export class PlanService {
         { $push: { steps: stepId } },
         { new: true },
       )
-      .populate('steps')
+      .populate({
+        path: 'user',
+        select: 'username email photoUrl',
+      })
+      .populate({
+        path: 'steps',
+        select:
+          'title description image order duration cost longitude latitude',
+      })
       .exec();
   }
 
@@ -103,18 +138,35 @@ export class PlanService {
   }
 
   async findAllByUserId(userId: string): Promise<PlanDocument[]> {
-    return this.planModel.find({ userId }).sort({ createdAt: -1 }).exec();
+    return this.planModel
+      .find({ user: userId })
+      .populate({
+        path: 'steps',
+        select:
+          'title description image order duration cost longitude latitude',
+      })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async findFavoritesByUserId(userId: string): Promise<PlanDocument[]> {
     return this.planModel
       .find({ favorites: userId })
+      .populate({
+        path: 'user',
+        select: 'username email photoUrl',
+      })
+      .populate({
+        path: 'steps',
+        select:
+          'title description image order duration cost longitude latitude',
+      })
       .sort({ createdAt: -1 })
       .exec();
   }
 
   async countUserPlans(userId: string): Promise<number> {
-    return this.planModel.countDocuments({ userId }).exec();
+    return this.planModel.countDocuments({ user: userId }).exec();
   }
 
   async countUserFavorites(userId: string): Promise<number> {

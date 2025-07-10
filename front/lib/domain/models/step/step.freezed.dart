@@ -20,6 +20,7 @@ Step _$StepFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Step {
+  @JsonKey(name: '_id')
   String? get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
@@ -46,7 +47,7 @@ abstract class $StepCopyWith<$Res> {
       _$StepCopyWithImpl<$Res, Step>;
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(name: '_id') String? id,
       String title,
       String description,
       LatLng? position,
@@ -137,7 +138,7 @@ abstract class _$$StepImplCopyWith<$Res> implements $StepCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(name: '_id') String? id,
       String title,
       String description,
       LatLng? position,
@@ -221,7 +222,7 @@ class __$$StepImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$StepImpl implements _Step {
   const _$StepImpl(
-      {this.id,
+      {@JsonKey(name: '_id') this.id,
       required this.title,
       required this.description,
       this.position,
@@ -236,6 +237,7 @@ class _$StepImpl implements _Step {
       _$$StepImplFromJson(json);
 
   @override
+  @JsonKey(name: '_id')
   final String? id;
   @override
   final String title;
@@ -305,7 +307,7 @@ class _$StepImpl implements _Step {
 
 abstract class _Step implements Step {
   const factory _Step(
-      {final String? id,
+      {@JsonKey(name: '_id') final String? id,
       required final String title,
       required final String description,
       final LatLng? position,
@@ -319,6 +321,7 @@ abstract class _Step implements Step {
   factory _Step.fromJson(Map<String, dynamic> json) = _$StepImpl.fromJson;
 
   @override
+  @JsonKey(name: '_id')
   String? get id;
   @override
   String get title;

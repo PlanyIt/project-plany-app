@@ -7,7 +7,7 @@ part 'step.g.dart';
 @freezed
 class Step with _$Step {
   const factory Step({
-    String? id,
+    @JsonKey(name: '_id') String? id,
     required String title,
     required String description,
     LatLng? position,
@@ -19,5 +19,5 @@ class Step with _$Step {
     String? userId,
   }) = _Step;
 
-  factory Step.fromJson(Map<String, dynamic> json) => _$StepFromJson(json);
+  factory Step.fromJson(Map<String, Object?> json) => _$StepFromJson(json);
 }

@@ -105,11 +105,6 @@ class ApiClient {
       final request = await client.get(_host, _port, '/api/plans');
       await _authHeader(request.headers);
       final response = await request.close();
-      print('Response status: ${response.statusCode}');
-      print('Response headers: ${response.headers}');
-      print('Response content type: ${response.headers.contentType}');
-      print('Response content length: ${response.contentLength}');
-      print('Response reason phrase: ${response.reasonPhrase}');
 
       if (response.statusCode == 200) {
         final stringData = await response.transform(utf8.decoder).join();

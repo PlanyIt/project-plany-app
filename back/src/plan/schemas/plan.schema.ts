@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type PlanDocument = HydratedDocument<Plan>;
 
@@ -11,8 +11,12 @@ export class Plan {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ required: true })
-  userId: string;
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+  })
+  user: Types.ObjectId;
 
   @Prop({ default: true })
   isPublic: boolean;
@@ -20,8 +24,8 @@ export class Plan {
   @Prop({ required: true })
   category: string;
 
-  @Prop({ type: [String], default: [] })
-  steps: string[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Step' }], default: [] })
+  steps: Types.ObjectId[];
 
   @Prop({ type: [String], default: [] })
   favorites: string[];

@@ -30,8 +30,8 @@ class PlanRepositoryRemote implements PlanRepository {
       "title": plan.title,
       "description": plan.description,
       "category": plan.category,
-      "userId": plan.userId,
-      "steps": plan.steps,
+      "user": plan.user?.id,
+      "steps": plan.steps.map((step) => step.id).toList(),
       "isPublic": plan.isPublic,
     };
 
@@ -48,6 +48,7 @@ class PlanRepositoryRemote implements PlanRepository {
     return result;
   }
 
+  @override
   Future<void> clearCache() async {
     _cachedData = null; // ❌ Mettre à null, pas []
     print('🧹 Plan cache cleared'); // Debug

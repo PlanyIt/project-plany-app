@@ -117,7 +117,7 @@ export class UserService {
     }
 
     return this.planModel
-      .find({ userId: user.id })
+      .find({ user: user.id })
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -301,7 +301,7 @@ export class UserService {
     }
 
     const plansCount = await this.planModel.countDocuments({
-      userId: userId,
+      user: userId,
     });
 
     const favoritesCount = await this.planModel.countDocuments({
