@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../dashboard/widgets/search_bar.dart';
+import '../../core/ui/search_bar/search_bar.dart';
 import '../view_models/search_view_model.dart';
 import 'filter_bottom_sheet.dart' hide Colors, Icons, Row;
 import 'filter_chips_section.dart';

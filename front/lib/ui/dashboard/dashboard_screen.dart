@@ -3,15 +3,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/models/category/category.dart' as app_category;
 import '../../domain/models/plan/plan.dart';
-import '../../widgets/card/compact_plan_card.dart';
 import '../core/ui/bottom_bar/bottom_bar.dart';
+import '../core/ui/card/compact_plan_card.dart';
+import '../core/ui/placeholder/empty_state_widget.dart';
 import 'view_models/dashboard_viewmodel.dart';
 import 'widgets/app_bar.dart';
 import 'widgets/category_cards.dart';
-import 'widgets/empty_state_widget.dart';
-import 'widgets/horizontal_plan_list.dart';
+import '../core/ui/list/horizontal_plan_list.dart';
 import 'widgets/profile_drawer.dart';
-import 'widgets/search_bar.dart';
+import '../core/ui/search_bar/search_bar.dart';
 import 'widgets/section_header.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -42,21 +42,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Gestion des erreurs via SnackBar
     if (widget.viewModel.hasError && widget.viewModel.errorMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.viewModel.errorMessage!),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            action: SnackBarAction(
-              label: 'Réessayer',
-              textColor: Colors.white,
-              onPressed: () {
-                widget.viewModel.clearError();
-                widget.viewModel.load.execute();
-              },
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.viewModel.errorMessage!),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              action: SnackBarAction(
+                label: 'Réessayer',
+                textColor: Colors.white,
+                onPressed: () {
+                  widget.viewModel.clearError();
+                  widget.viewModel.load.execute();
+                },
+              ),
             ),
-          ),
-        );
-        widget.viewModel.clearError();
+          );
+          widget.viewModel.clearError();
+        }
       });
     }
 
@@ -64,8 +66,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final navigationEvent = widget.viewModel.navigationEvent;
     if (navigationEvent != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _handleNavigation(navigationEvent);
-        widget.viewModel.clearNavigationEvent();
+        if (mounted) {
+          _handleNavigation(navigationEvent);
+          widget.viewModel.clearNavigationEvent();
+        }
       });
     }
   }
@@ -186,9 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
         child: SectionHeader(
           title: title,
-          onPressed: () => context.go(
-            seeAll ? '/search' : '/',
-          ),
+          onPressed: seeAll && onSeeAll != null ? onSeeAll : () {},
         ),
       ),
     );
@@ -202,9 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (isLoading) {
       return SliverToBoxAdapter(
         child: CategoryCards(
-          categories: [],
-          isLoading: true,
-          onCategoryTap: (_) {},
+          viewModel: widget.viewModel,
         ),
       );
     }
@@ -223,10 +223,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return SliverToBoxAdapter(
       child: CategoryCards(
-        categories: categories,
-        isLoading: false,
-        onCategoryTap: (cat) =>
-            widget.viewModel.navigateToSearch(category: cat.id),
+        viewModel: widget.viewModel,
       ),
     );
   }
@@ -245,10 +242,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: HorizontalPlanList(
           isLoading: true,
           cards: List.generate(
-            widget.viewModel.plans.length,
+            3,
             (index) => CompactPlanCard(
-              title: widget.viewModel.plans[index].title,
-              description: widget.viewModel.plans[index].description,
+              title: '',
+              description: '',
+              category: null,
+              user: null,
+              imageUrl: null,
+              stepsCount: 0,
+              totalCost: 0,
+              totalDuration: 0,
             ),
           ),
           onPressed: (_) {},
@@ -261,7 +264,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: EmptyStateWidget(
           message: emptyMessage,
           subMessage: emptySubMessage,
-          icon: Icons.map_outlined,
+          icon: emptyIcon,
           accentColor: accentColor ?? Theme.of(context).primaryColor,
         ),
       );
@@ -274,6 +277,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .map((plan) => CompactPlanCard(
                   title: plan.title,
                   description: plan.description,
+                  category: plan.category,
+                  user: plan.user,
+                  imageUrl:
+                      plan.steps.isNotEmpty ? plan.steps.first.image : null,
+                  stepsCount: plan.steps.length,
+                  totalCost: plan.totalCost,
+                  totalDuration: plan.totalDuration,
+                  distance: 20,
                 ))
             .toList(),
         onPressed: (index) =>

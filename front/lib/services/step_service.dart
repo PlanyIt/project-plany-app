@@ -1,10 +1,13 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
-import 'package:front/services/auth_service.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:front/domain/models/step/step.dart';
-import 'package:front/domain/models/plan/plan.dart';
+import 'package:http/http.dart' as http;
+
+import '../domain/models/plan/plan.dart';
+import '../domain/models/step/step.dart';
+import '../utils/helpers.dart';
+import 'auth_service.dart';
 
 class StepService {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
@@ -151,6 +154,8 @@ class StepService {
   }
 
   Future<double> calculatePlanTotalCost(Plan plan) async {
+    // This will now be calculated on the backend
+    // Keep for backward compatibility if needed
     double totalCost = 0.0;
 
     for (final stepId in plan.steps) {
@@ -168,33 +173,9 @@ class StepService {
     return totalCost;
   }
 
-  int _parseDurationToMinutes(String durationStr) {
-    final parts = durationStr.trim().split(' ');
-    if (parts.length < 2) return 0;
-
-    int value;
-    try {
-      value = int.parse(parts[0]);
-    } catch (e) {
-      return 0;
-    }
-
-    final unit = parts[1].toLowerCase();
-
-    if (unit.contains('seconde')) {
-      return (value / 60).ceil(); // Convert seconds to minutes, rounding up
-    } else if (unit.contains('minute')) {
-      return value;
-    } else if (unit.contains('heure')) {
-      return value * 60; // Convert hours to minutes
-    } else if (unit.contains('jour')) {
-      return value * 24 * 60; // Convert days to minutes
-    }
-
-    return 0;
-  }
-
   Future<int> calculatePlanTotalDuration(Plan plan) async {
+    // This will now be calculated on the backend
+    // Keep for backward compatibility if needed
     int totalMinutes = 0;
 
     for (final stepId in plan.steps) {
@@ -202,8 +183,7 @@ class StepService {
         final step = await getStepById(
             plan.steps.firstWhere((s) => s.id == stepId).toString());
         if (step != null && step.duration != null) {
-          totalMinutes +=
-              _parseDurationToMinutes(step.duration!); // Use helper function
+          totalMinutes += parseDurationStringToMinutes(step.duration!);
         }
       } catch (e) {
         print('Erreur lors du calcul de la durée pour l\'étape $stepId: $e');

@@ -4,7 +4,6 @@ import '../../../domain/models/category/category.dart';
 import '../../../utils/icon_utils.dart';
 import '../../../widgets/button/select_button.dart';
 import '../../../widgets/modal/grid_selector_modal.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_plan_view_model.dart';
 

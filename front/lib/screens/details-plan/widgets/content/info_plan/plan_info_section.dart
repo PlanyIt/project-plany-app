@@ -349,7 +349,7 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      widget.categoryName ?? widget.plan.category,
+                      widget.categoryName ?? widget.plan.category?.id ?? '',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,

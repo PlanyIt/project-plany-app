@@ -21,7 +21,11 @@ export class Plan {
   @Prop({ default: true })
   isPublic: boolean;
 
-  @Prop({ required: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  })
   category: string;
 
   @Prop({
@@ -32,6 +36,12 @@ export class Plan {
 
   @Prop({ type: [String], default: [] })
   favorites: string[];
+
+  @Prop({ default: 0 })
+  totalCost: number;
+
+  @Prop({ default: 0 })
+  totalDuration: number;
 }
 
 export const PlanSchema = SchemaFactory.createForClass(Plan);

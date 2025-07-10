@@ -9,6 +9,7 @@ import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart' as step_model;
 import '../../../utils/command.dart';
+import '../../../utils/helpers.dart';
 import '../../../utils/result.dart';
 
 /// Critères de tri disponibles
@@ -149,27 +150,14 @@ class SearchViewModel extends ChangeNotifier {
         }
       }
       final totalCost = steps.fold<double>(0, (sum, s) => sum + (s.cost ?? 0));
-      final totalDuration = steps.fold<Duration>(
-        Duration.zero,
-        (sum, s) {
-          if (s.duration != null) {
-            final parts = s.duration!.split(':').map(int.parse).toList();
-            if (parts.length == 2) {
-              return sum + Duration(hours: parts[0], minutes: parts[1]);
-            }
-            return sum + Duration(minutes: parts[0]);
-          }
-          return sum;
-        },
-      );
-      final favCount = plan.favorites?.length ?? 0;
+      final totalDurationMinutes = calculateTotalDuration(steps);
 
       return PlanWithMetrics(
         plan: plan,
         totalDistance: totalDist,
         totalCost: totalCost,
-        totalDuration: totalDuration,
-        favoritesCount: favCount,
+        totalDuration: Duration(minutes: totalDurationMinutes),
+        favoritesCount: plan.favorites?.length ?? 0,
       );
     }).toList();
 

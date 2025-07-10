@@ -4,15 +4,15 @@ import 'package:provider/provider.dart';
 
 import '../data/repositories/auth/auth_repository.dart';
 import '../screens/profile/profile_screen.dart';
-import '../ui/auth/login/view_models/login_viewmodel.dart';
 import '../ui/auth/login/login_screen.dart';
-import '../ui/auth/register/view_models/register_viewmodel.dart';
+import '../ui/auth/login/view_models/login_viewmodel.dart';
 import '../ui/auth/register/register_screen.dart';
+import '../ui/auth/register/view_models/register_viewmodel.dart';
 import '../ui/auth/reset-password/reset_password_screen.dart';
 import '../ui/create_plan/view_models/create_plan_view_model.dart';
 import '../ui/create_plan/widgets/create_plan_screen.dart';
-import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
 import '../ui/dashboard/dashboard_screen.dart';
+import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
 import '../ui/home/home_screen.dart';
 import '../ui/search_plan/view_models/search_view_model.dart';
 import '../ui/search_plan/widgets/search_screen.dart';
@@ -60,11 +60,12 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           path: Routes.dashboard,
           builder: (context, state) {
             return DashboardScreen(
-                viewModel: DashboardViewModel(
-                    categoryRepository: context.read(),
-                    authRepository: context.read(),
-                    planRepository: context.read(),
-                    stepRepository: context.read()));
+              viewModel: DashboardViewModel(
+                categoryRepository: context.read(),
+                authRepository: context.read(),
+                planRepository: context.read(),
+              ),
+            );
           },
           routes: [
             GoRoute(

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 
-import '../../../domain/models/user/user.dart';
 import '../../../routing/routes.dart';
 
 import '../../core/themes/app_theme.dart';

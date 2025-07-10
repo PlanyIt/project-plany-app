@@ -5,7 +5,6 @@ import 'package:logging/logging.dart';
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/category/category_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
-import '../../../data/repositories/step/step_repository.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart' as step_model;
@@ -18,11 +17,9 @@ class DashboardViewModel extends ChangeNotifier {
     required CategoryRepository categoryRepository,
     required AuthRepository authRepository,
     required PlanRepository planRepository,
-    required StepRepository stepRepository,
   })  : _categoryRepository = categoryRepository,
         _authRepository = authRepository,
-        _planRepository = planRepository,
-        _stepRepository = stepRepository {
+        _planRepository = planRepository {
     load = Command0(_load)..execute();
     logout = Command0(_logout);
   }
@@ -31,7 +28,6 @@ class DashboardViewModel extends ChangeNotifier {
   final CategoryRepository _categoryRepository;
   final PlanRepository _planRepository;
   final AuthRepository _authRepository;
-  final StepRepository _stepRepository;
   final Logger _log = Logger('DashboardViewModel');
 
   // Data
@@ -78,6 +74,10 @@ class DashboardViewModel extends ChangeNotifier {
   void navigateToPlan(String planId) {
     _navigationEvent = NavigationEvent.plan(planId);
     notifyListeners();
+  }
+
+  void onCategoryTap(Category category) {
+    navigateToSearch(category: category.id);
   }
 
   NavigationEvent? _navigationEvent;
@@ -130,13 +130,12 @@ class DashboardViewModel extends ChangeNotifier {
       _plans = allPlans.where((plan) {
         return plan.title.isNotEmpty &&
             plan.description.isNotEmpty &&
-            plan.category.isNotEmpty;
+            plan.category != null &&
+            plan.category!.id.isNotEmpty;
       }).toList();
 
       _log.fine(
           'Loaded ${_categories.length} categories & ${_plans.length} valid plans');
-
-      await _loadStepsForPlans();
       _log.info('Dashboard data loaded successfully');
       notifyListeners();
       return const Result.ok(null);
@@ -166,28 +165,6 @@ class DashboardViewModel extends ChangeNotifier {
       _log.info('Current user loaded: ${_user?.username ?? "null"}');
     } catch (e) {
       _log.warning('Failed to load current user', e);
-    }
-  }
-
-  Future<void> _loadStepsForPlans() async {
-    if (_plans.isEmpty) {
-      _log.warning('No plans found, skipping step loading');
-      return;
-    }
-
-    final futures = _plans.where((plan) => plan.id != null).map((plan) async {
-      final id = plan.id!;
-      final result = await _stepRepository.getStepsList(id);
-      if (result is Ok<List<step_model.Step>>) {
-        _planSteps[id] = result.value;
-      } else {
-        _log.warning('Failed to load steps for plan $id',
-            (result as Error<List<step_model.Step>>).error);
-      }
-    });
-
-    if (futures.isNotEmpty) {
-      await Future.wait(futures);
     }
   }
 

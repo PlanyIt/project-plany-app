@@ -10,7 +10,9 @@ _$PlanImpl _$$PlanImplFromJson(Map<String, dynamic> json) => _$PlanImpl(
       id: json['_id'] as String?,
       title: json['title'] as String,
       description: json['description'] as String,
-      category: json['category'] as String? ?? '',
+      category: json['category'] == null
+          ? null
+          : Category.fromJson(json['category'] as Map<String, dynamic>),
       user: json['user'] == null
           ? null
           : User.fromJson(json['user'] as Map<String, dynamic>),
@@ -30,7 +32,8 @@ _$PlanImpl _$$PlanImplFromJson(Map<String, dynamic> json) => _$PlanImpl(
               .toList() ??
           const [],
       isFavorite: json['isFavorite'] as bool? ?? false,
-      estimatedCost: (json['estimatedCost'] as num?)?.toDouble(),
+      totalCost: (json['totalCost'] as num?)?.toDouble(),
+      totalDuration: (json['totalDuration'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$PlanImplToJson(_$PlanImpl instance) =>
@@ -46,5 +49,6 @@ Map<String, dynamic> _$$PlanImplToJson(_$PlanImpl instance) =>
       'steps': instance.steps,
       'favorites': instance.favorites,
       'isFavorite': instance.isFavorite,
-      'estimatedCost': instance.estimatedCost,
+      'totalCost': instance.totalCost,
+      'totalDuration': instance.totalDuration,
     };

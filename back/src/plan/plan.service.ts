@@ -1,15 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PlanDto } from './dto/plan.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from './schemas/plan.schema';
 import { Model } from 'mongoose';
 import { User, UserDocument } from 'src/user/schemas/user.schema';
+import { StepService } from '../step/step.service';
 
 @Injectable()
 export class PlanService {
   constructor(
     @InjectModel(Plan.name) private planModel: Model<PlanDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @Inject(forwardRef(() => StepService))
+    private stepService: StepService,
   ) {}
 
   async createPlan(createPlanDto: PlanDto): Promise<PlanDocument> {
@@ -25,12 +33,24 @@ export class PlanService {
         select: 'username email photoUrl',
       })
       .populate({
+        path: 'category',
+        select: 'name icon',
+      })
+      .populate({
         path: 'steps',
         model: 'Step',
         select:
           'title description image order duration cost longitude latitude',
       })
       .exec();
+
+    // Calculate totals for each plan
+    for (const plan of plans) {
+      const stepIds = plan.steps.map((step) => step._id.toString());
+      plan.totalCost = await this.stepService.calculateTotalCost(stepIds);
+      plan.totalDuration =
+        await this.stepService.calculateTotalDuration(stepIds);
+    }
 
     return plans;
   }
@@ -54,7 +74,7 @@ export class PlanService {
   }
 
   async findById(planId: string): Promise<PlanDocument | undefined> {
-    return this.planModel
+    const plan = await this.planModel
       .findOne({ _id: planId })
       .populate({
         path: 'user',
@@ -67,6 +87,15 @@ export class PlanService {
           'title description image order duration cost longitude latitude',
       })
       .exec();
+
+    if (plan) {
+      const stepIds = plan.steps.map((step) => step._id.toString());
+      plan.totalCost = await this.stepService.calculateTotalCost(stepIds);
+      plan.totalDuration =
+        await this.stepService.calculateTotalDuration(stepIds);
+    }
+
+    return plan;
   }
 
   async addStepToPlan(
@@ -141,7 +170,7 @@ export class PlanService {
   }
 
   async findAllByUserId(userId: string): Promise<PlanDocument[]> {
-    return this.planModel
+    const plans = await this.planModel
       .find({ user: userId })
       .populate({
         path: 'steps',
@@ -150,10 +179,20 @@ export class PlanService {
       })
       .sort({ createdAt: -1 })
       .exec();
+
+    // Calculate totals for each plan
+    for (const plan of plans) {
+      const stepIds = plan.steps.map((step) => step._id.toString());
+      plan.totalCost = await this.stepService.calculateTotalCost(stepIds);
+      plan.totalDuration =
+        await this.stepService.calculateTotalDuration(stepIds);
+    }
+
+    return plans;
   }
 
   async findFavoritesByUserId(userId: string): Promise<PlanDocument[]> {
-    return this.planModel
+    const plans = await this.planModel
       .find({ favorites: userId })
       .populate({
         path: 'user',
@@ -166,6 +205,16 @@ export class PlanService {
       })
       .sort({ createdAt: -1 })
       .exec();
+
+    // Calculate totals for each plan
+    for (const plan of plans) {
+      const stepIds = plan.steps.map((step) => step._id.toString());
+      plan.totalCost = await this.stepService.calculateTotalCost(stepIds);
+      plan.totalDuration =
+        await this.stepService.calculateTotalDuration(stepIds);
+    }
+
+    return plans;
   }
 
   async countUserPlans(userId: string): Promise<number> {

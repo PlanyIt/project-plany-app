@@ -95,43 +95,33 @@ int _parseDurationToMinutes(String durationStr) {
     } else if (unit.contains('heure')) {
       totalMinutes += value * 60; // Convert hours to minutes
     } else if (unit.contains('jour')) {
-      totalMinutes += value * 24 * 60; // Convert days to minutes
+      totalMinutes += value * 8 * 60; // 8 heures de travail par jour
+    } else if (unit.contains('semaine')) {
+      totalMinutes += value * 5 * 8 * 60; // 5 jours * 8 heures par semaine
     }
   }
 
   return totalMinutes;
 }
 
-/// Formats minutes into a readable duration string.
+/// Formats a duration in minutes to a human-readable string
 String _formatDuration(int totalMinutes) {
-  if (totalMinutes == 0) return "0 minute";
+  if (totalMinutes == 0) return '0 minute';
 
-  final days = totalMinutes ~/ (24 * 60);
-  totalMinutes %= (24 * 60);
-
-  final hours = totalMinutes ~/ 60;
-  totalMinutes %= 60;
-
-  final minutes = totalMinutes;
+  final weeks = totalMinutes ~/ (5 * 8 * 60);
+  final days = (totalMinutes % (5 * 8 * 60)) ~/ (8 * 60);
+  final hours = (totalMinutes % (8 * 60)) ~/ 60;
+  final minutes = totalMinutes % 60;
 
   final parts = <String>[];
 
-  if (days > 0) {
-    parts.add('$days ${days == 1 ? "jour" : "jours"}');
-  }
+  if (weeks > 0) parts.add('$weeks semaine${weeks > 1 ? 's' : ''}');
+  if (days > 0) parts.add('$days jour${days > 1 ? 's' : ''}');
+  if (hours > 0) parts.add('$hours heure${hours > 1 ? 's' : ''}');
+  if (minutes > 0) parts.add('$minutes minute${minutes > 1 ? 's' : ''}');
 
-  if (hours > 0) {
-    parts.add('$hours ${hours == 1 ? "heure" : "heures"}');
-  }
-
-  if (minutes > 0) {
-    parts.add('$minutes ${minutes == 1 ? "minute" : "minutes"}');
-  }
-
-  // Join the parts with commas and 'et' for the last part if there are multiple parts
   if (parts.length > 1) {
-    final lastPart = parts.removeLast();
-    return '${parts.join(', ')} et $lastPart';
+    return '${parts.sublist(0, parts.length - 1).join(', ')} et ${parts.last}';
   }
   return parts.first;
 }

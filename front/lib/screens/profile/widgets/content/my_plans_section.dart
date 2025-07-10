@@ -9,7 +9,7 @@ import 'package:front/services/user_service.dart';
 import 'package:front/services/categorie_service.dart';
 import 'package:front/services/plan_service.dart';
 import 'package:front/utils/helpers.dart';
-import 'package:front/widgets/card/compact_plan_card.dart';
+import 'package:front/ui/core/ui/card/compact_plan_card.dart';
 
 class MyPlansSection extends StatefulWidget {
   final String userId;

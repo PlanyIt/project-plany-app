@@ -24,7 +24,7 @@ mixin _$Plan {
   String? get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
-  String get category => throw _privateConstructorUsedError;
+  Category? get category => throw _privateConstructorUsedError;
   User? get user => throw _privateConstructorUsedError;
   bool get isPublic => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
@@ -32,7 +32,8 @@ mixin _$Plan {
   List<Step> get steps => throw _privateConstructorUsedError;
   List<String>? get favorites => throw _privateConstructorUsedError;
   bool get isFavorite => throw _privateConstructorUsedError;
-  double? get estimatedCost => throw _privateConstructorUsedError;
+  double? get totalCost => throw _privateConstructorUsedError;
+  int? get totalDuration => throw _privateConstructorUsedError;
 
   /// Serializes this Plan to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -52,7 +53,7 @@ abstract class $PlanCopyWith<$Res> {
       {@JsonKey(name: '_id') String? id,
       String title,
       String description,
-      String category,
+      Category? category,
       User? user,
       bool isPublic,
       DateTime? createdAt,
@@ -60,8 +61,10 @@ abstract class $PlanCopyWith<$Res> {
       List<Step> steps,
       List<String>? favorites,
       bool isFavorite,
-      double? estimatedCost});
+      double? totalCost,
+      int? totalDuration});
 
+  $CategoryCopyWith<$Res>? get category;
   $UserCopyWith<$Res>? get user;
 }
 
@@ -83,7 +86,7 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
     Object? id = freezed,
     Object? title = null,
     Object? description = null,
-    Object? category = null,
+    Object? category = freezed,
     Object? user = freezed,
     Object? isPublic = null,
     Object? createdAt = freezed,
@@ -91,7 +94,8 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
     Object? steps = null,
     Object? favorites = freezed,
     Object? isFavorite = null,
-    Object? estimatedCost = freezed,
+    Object? totalCost = freezed,
+    Object? totalDuration = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -106,10 +110,10 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
-      category: null == category
+      category: freezed == category
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
-              as String,
+              as Category?,
       user: freezed == user
           ? _value.user
           : user // ignore: cast_nullable_to_non_nullable
@@ -138,11 +142,29 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
-      estimatedCost: freezed == estimatedCost
-          ? _value.estimatedCost
-          : estimatedCost // ignore: cast_nullable_to_non_nullable
+      totalCost: freezed == totalCost
+          ? _value.totalCost
+          : totalCost // ignore: cast_nullable_to_non_nullable
               as double?,
+      totalDuration: freezed == totalDuration
+          ? _value.totalDuration
+          : totalDuration // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
+  }
+
+  /// Create a copy of Plan
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $CategoryCopyWith<$Res>? get category {
+    if (_value.category == null) {
+      return null;
+    }
+
+    return $CategoryCopyWith<$Res>(_value.category!, (value) {
+      return _then(_value.copyWith(category: value) as $Val);
+    });
   }
 
   /// Create a copy of Plan
@@ -171,7 +193,7 @@ abstract class _$$PlanImplCopyWith<$Res> implements $PlanCopyWith<$Res> {
       {@JsonKey(name: '_id') String? id,
       String title,
       String description,
-      String category,
+      Category? category,
       User? user,
       bool isPublic,
       DateTime? createdAt,
@@ -179,8 +201,11 @@ abstract class _$$PlanImplCopyWith<$Res> implements $PlanCopyWith<$Res> {
       List<Step> steps,
       List<String>? favorites,
       bool isFavorite,
-      double? estimatedCost});
+      double? totalCost,
+      int? totalDuration});
 
+  @override
+  $CategoryCopyWith<$Res>? get category;
   @override
   $UserCopyWith<$Res>? get user;
 }
@@ -200,7 +225,7 @@ class __$$PlanImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? title = null,
     Object? description = null,
-    Object? category = null,
+    Object? category = freezed,
     Object? user = freezed,
     Object? isPublic = null,
     Object? createdAt = freezed,
@@ -208,7 +233,8 @@ class __$$PlanImplCopyWithImpl<$Res>
     Object? steps = null,
     Object? favorites = freezed,
     Object? isFavorite = null,
-    Object? estimatedCost = freezed,
+    Object? totalCost = freezed,
+    Object? totalDuration = freezed,
   }) {
     return _then(_$PlanImpl(
       id: freezed == id
@@ -223,10 +249,10 @@ class __$$PlanImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
-      category: null == category
+      category: freezed == category
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
-              as String,
+              as Category?,
       user: freezed == user
           ? _value.user
           : user // ignore: cast_nullable_to_non_nullable
@@ -255,10 +281,14 @@ class __$$PlanImplCopyWithImpl<$Res>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
-      estimatedCost: freezed == estimatedCost
-          ? _value.estimatedCost
-          : estimatedCost // ignore: cast_nullable_to_non_nullable
+      totalCost: freezed == totalCost
+          ? _value.totalCost
+          : totalCost // ignore: cast_nullable_to_non_nullable
               as double?,
+      totalDuration: freezed == totalDuration
+          ? _value.totalDuration
+          : totalDuration // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -270,7 +300,7 @@ class _$PlanImpl implements _Plan {
       {@JsonKey(name: '_id') this.id,
       required this.title,
       required this.description,
-      this.category = '',
+      this.category,
       this.user,
       this.isPublic = true,
       this.createdAt,
@@ -278,7 +308,8 @@ class _$PlanImpl implements _Plan {
       final List<Step> steps = const [],
       final List<String>? favorites = const [],
       this.isFavorite = false,
-      this.estimatedCost})
+      this.totalCost,
+      this.totalDuration})
       : _steps = steps,
         _favorites = favorites;
 
@@ -293,8 +324,7 @@ class _$PlanImpl implements _Plan {
   @override
   final String description;
   @override
-  @JsonKey()
-  final String category;
+  final Category? category;
   @override
   final User? user;
   @override
@@ -328,11 +358,13 @@ class _$PlanImpl implements _Plan {
   @JsonKey()
   final bool isFavorite;
   @override
-  final double? estimatedCost;
+  final double? totalCost;
+  @override
+  final int? totalDuration;
 
   @override
   String toString() {
-    return 'Plan(id: $id, title: $title, description: $description, category: $category, user: $user, isPublic: $isPublic, createdAt: $createdAt, updatedAt: $updatedAt, steps: $steps, favorites: $favorites, isFavorite: $isFavorite, estimatedCost: $estimatedCost)';
+    return 'Plan(id: $id, title: $title, description: $description, category: $category, user: $user, isPublic: $isPublic, createdAt: $createdAt, updatedAt: $updatedAt, steps: $steps, favorites: $favorites, isFavorite: $isFavorite, totalCost: $totalCost, totalDuration: $totalDuration)';
   }
 
   @override
@@ -358,8 +390,10 @@ class _$PlanImpl implements _Plan {
                 .equals(other._favorites, _favorites) &&
             (identical(other.isFavorite, isFavorite) ||
                 other.isFavorite == isFavorite) &&
-            (identical(other.estimatedCost, estimatedCost) ||
-                other.estimatedCost == estimatedCost));
+            (identical(other.totalCost, totalCost) ||
+                other.totalCost == totalCost) &&
+            (identical(other.totalDuration, totalDuration) ||
+                other.totalDuration == totalDuration));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -377,7 +411,8 @@ class _$PlanImpl implements _Plan {
       const DeepCollectionEquality().hash(_steps),
       const DeepCollectionEquality().hash(_favorites),
       isFavorite,
-      estimatedCost);
+      totalCost,
+      totalDuration);
 
   /// Create a copy of Plan
   /// with the given fields replaced by the non-null parameter values.
@@ -400,7 +435,7 @@ abstract class _Plan implements Plan {
       {@JsonKey(name: '_id') final String? id,
       required final String title,
       required final String description,
-      final String category,
+      final Category? category,
       final User? user,
       final bool isPublic,
       final DateTime? createdAt,
@@ -408,7 +443,8 @@ abstract class _Plan implements Plan {
       final List<Step> steps,
       final List<String>? favorites,
       final bool isFavorite,
-      final double? estimatedCost}) = _$PlanImpl;
+      final double? totalCost,
+      final int? totalDuration}) = _$PlanImpl;
 
   factory _Plan.fromJson(Map<String, dynamic> json) = _$PlanImpl.fromJson;
 
@@ -420,7 +456,7 @@ abstract class _Plan implements Plan {
   @override
   String get description;
   @override
-  String get category;
+  Category? get category;
   @override
   User? get user;
   @override
@@ -436,7 +472,9 @@ abstract class _Plan implements Plan {
   @override
   bool get isFavorite;
   @override
-  double? get estimatedCost;
+  double? get totalCost;
+  @override
+  int? get totalDuration;
 
   /// Create a copy of Plan
   /// with the given fields replaced by the non-null parameter values.

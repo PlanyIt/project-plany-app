@@ -8,7 +8,7 @@ import '../../../../services/plan_service.dart';
 import '../../../../services/step_service.dart';
 import '../../../../services/user_service.dart';
 import '../../../../utils/helpers.dart';
-import '../../../../widgets/card/compact_plan_card.dart';
+import '../../../../ui/core/ui/card/compact_plan_card.dart';
 import '../common/section_header.dart';
 
 class FavoritesSection extends StatefulWidget {

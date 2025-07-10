@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../category/category.dart';
 import '../step/step.dart';
 import '../user/user.dart';
 
@@ -12,7 +13,7 @@ class Plan with _$Plan {
     @JsonKey(name: '_id') String? id,
     required String title,
     required String description,
-    @Default('') String category,
+    Category? category,
     User? user,
     @Default(true) bool isPublic,
     DateTime? createdAt,
@@ -20,7 +21,8 @@ class Plan with _$Plan {
     @Default([]) List<Step> steps,
     @Default([]) List<String>? favorites,
     @Default(false) bool isFavorite,
-    double? estimatedCost,
+    double? totalCost,
+    int? totalDuration,
   }) = _Plan;
 
   factory Plan.fromJson(Map<String, Object?> json) => _$PlanFromJson(json);

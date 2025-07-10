@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../../widgets/card/compact_plan_card.dart';
+import '../../core/ui/card/compact_plan_card.dart';
 import '../view_models/search_view_model.dart';
 
 class VerticalPlanList extends StatelessWidget {

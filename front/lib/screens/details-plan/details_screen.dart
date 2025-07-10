@@ -72,7 +72,8 @@ class DetailScreenState extends State<DetailScreen>
     if (_plan == null) return;
 
     try {
-      final category = await _categorieService.getCategoryById(_plan!.category);
+      final category =
+          await _categorieService.getCategoryById(_plan!.category?.id ?? '');
       setState(() {
         _currentCategory = category;
       });
@@ -152,7 +153,7 @@ class DetailScreenState extends State<DetailScreen>
               ? DetailsHeader(
                   key: _headerKey,
                   stepIds: _plan!.steps.map((e) => e.id ?? '').toList(),
-                  category: _plan!.category,
+                  category: _plan!.category?.id ?? '',
                   categoryColor: _getCategoryColor(),
                   planTitle: _plan!.title,
                   planDescription: _plan!.description,

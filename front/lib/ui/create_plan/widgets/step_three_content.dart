@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../widgets/card/compact_plan_card.dart';
+import '../../core/ui/card/compact_plan_card.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_plan_view_model.dart';
 import 'step_card_timeline.dart';
+import '../../../utils/helpers.dart';
 
 class StepThreeContent extends StatefulWidget {
   const StepThreeContent({super.key, required this.viewModel});
@@ -127,15 +128,10 @@ class _StepThreeContentState extends State<StepThreeContent> {
       }
 
       if (step.duration != null && step.duration!.isNotEmpty) {
-        // Convert duration to minutes based on unit
-        final durationValue = int.tryParse(step.duration!) ?? 0;
-        if (step.durationUnit == 'Heures') {
-          totalDurationMinutes += durationValue * 60;
-        } else if (step.durationUnit == 'Minutes') {
-          totalDurationMinutes += durationValue;
-        } else if (step.durationUnit == 'Jours') {
-          totalDurationMinutes += durationValue * 24 * 60;
-        }
+        // Use helper function for consistent duration parsing
+        final durationString =
+            '${step.duration} ${step.durationUnit?.toLowerCase()}';
+        totalDurationMinutes += _parseDurationToMinutes(durationString);
       }
     }
 
@@ -468,4 +464,26 @@ class _ImageCarouselState extends State<ImageCarousel> {
       ),
     );
   }
+}
+
+/// Helper method to parse duration consistently
+int _parseDurationToMinutes(String durationStr) {
+  final parts = durationStr.toLowerCase().split(' ');
+  if (parts.length < 2) return 0;
+
+  try {
+    final value = int.parse(parts[0]);
+    final unit = parts[1];
+
+    if (unit.contains('minute')) {
+      return value;
+    } else if (unit.contains('heure')) {
+      return value * 60;
+    } else if (unit.contains('jour')) {
+      return value * 24 * 60; // Full day
+    }
+  } catch (e) {
+    return 0;
+  }
+  return 0;
 }

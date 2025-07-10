@@ -59,4 +59,79 @@ export class StepService {
     }
     return step;
   }
+
+  /**
+   * Calculate total cost for a list of steps
+   */
+  async calculateTotalCost(stepIds: string[]): Promise<number> {
+    const steps = await this.findByIds(stepIds);
+    return steps.reduce((total, step) => total + (step.cost || 0), 0);
+  }
+
+  /**
+   * Calculate total duration for a list of steps in minutes
+   */
+  async calculateTotalDuration(stepIds: string[]): Promise<number> {
+    const steps = await this.findByIds(stepIds);
+    return steps.reduce((total, step) => {
+      if (!step.duration) return total;
+      return total + this.parseDurationToMinutes(step.duration);
+    }, 0);
+  }
+
+  /**
+   * Parse duration string to minutes
+   */
+  private parseDurationToMinutes(durationStr: string): number {
+    if (!durationStr) return 0;
+
+    const parts = durationStr.toLowerCase().split(' ');
+    if (parts.length < 2) return 0;
+
+    try {
+      const value = parseInt(parts[0]);
+      const unit = parts[1];
+
+      if (unit.includes('seconde')) {
+        return Math.ceil(value / 60); // Convert seconds to minutes, rounding up
+      } else if (unit.includes('minute')) {
+        return value;
+      } else if (unit.includes('heure')) {
+        return value * 60; // Convert hours to minutes
+      } else if (unit.includes('jour')) {
+        return value * 8 * 60; // Convert days to minutes (8 hour workday)
+      } else if (unit.includes('semaine')) {
+        return value * 5 * 8 * 60; // Convert weeks to minutes (5 day work week)
+      }
+    } catch (e) {
+      console.error(`Error parsing duration: ${durationStr}`, e);
+      return 0;
+    }
+
+    return 0;
+  }
+
+  /**
+   * Format minutes to human readable duration
+   */
+  formatDuration(totalMinutes: number): string {
+    if (totalMinutes === 0) return '0 minute';
+
+    const weeks = Math.floor(totalMinutes / (5 * 8 * 60));
+    const days = Math.floor((totalMinutes % (5 * 8 * 60)) / (8 * 60));
+    const hours = Math.floor((totalMinutes % (8 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+
+    const parts: string[] = [];
+
+    if (weeks > 0) parts.push(`${weeks} semaine${weeks > 1 ? 's' : ''}`);
+    if (days > 0) parts.push(`${days} jour${days > 1 ? 's' : ''}`);
+    if (hours > 0) parts.push(`${hours} heure${hours > 1 ? 's' : ''}`);
+    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+
+    if (parts.length > 1) {
+      return `${parts.slice(0, -1).join(', ')} et ${parts[parts.length - 1]}`;
+    }
+    return parts[0];
+  }
 }
