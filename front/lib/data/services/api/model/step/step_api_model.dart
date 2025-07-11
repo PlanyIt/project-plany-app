@@ -12,7 +12,7 @@ class StepApiModel with _$StepApiModel {
     double? longitude,
     required int order,
     required String image,
-    String? duration,
+    int? duration,
     double? cost,
   }) = _StepApiModel;
 

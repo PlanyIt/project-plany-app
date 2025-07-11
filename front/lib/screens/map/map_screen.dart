@@ -30,6 +30,7 @@ class _MapScreenState extends State<MapScreen> {
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             userAgentPackageName: 'com.plany.app',
+            retinaMode: RetinaMode.isHighDensity(context),
           ),
           // Add markers if needed
           MarkerLayer(

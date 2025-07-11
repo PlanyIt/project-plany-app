@@ -7,8 +7,8 @@ import '../../../../services/categorie_service.dart';
 import '../../../../services/plan_service.dart';
 import '../../../../services/step_service.dart';
 import '../../../../services/user_service.dart';
-import '../../../../utils/helpers.dart';
 import '../../../../ui/core/ui/card/compact_plan_card.dart';
+import '../../../../utils/helpers.dart';
 import '../common/section_header.dart';
 
 class FavoritesSection extends StatefulWidget {
@@ -22,10 +22,10 @@ class FavoritesSection extends StatefulWidget {
   });
 
   @override
-  _FavoritesSectionState createState() => _FavoritesSectionState();
+  FavoritesSectionState createState() => FavoritesSectionState();
 }
 
-class _FavoritesSectionState extends State<FavoritesSection>
+class FavoritesSectionState extends State<FavoritesSection>
     with AutomaticKeepAliveClientMixin {
   final UserService _userService = UserService();
   final StepService _stepService = StepService();
@@ -244,8 +244,8 @@ class _FavoritesSectionState extends State<FavoritesSection>
   }
 
   Future<Map<String, dynamic>> _getStepData(List<String> stepIds) async {
-    List<String> imageUrls = [];
-    List<plan_steps.Step> steps = [];
+    final imageUrls = <String>[];
+    final steps = <plan_steps.Step>[];
 
     try {
       for (final stepId in stepIds) {
@@ -261,7 +261,10 @@ class _FavoritesSectionState extends State<FavoritesSection>
 
       // Calculer le coût total et la durée en minutes
       final totalCost = calculateTotalStepsCost(steps);
-      final durationString = calculateTotalStepsDuration(steps);
+      final durationString =
+          formatDurationToString(steps.fold(0, (total, step) {
+        return total + (step.duration ?? 0);
+      }));
 
       // Convertir la durée en minutes pour CompactPlanCard
       int durationMinutes = 0;

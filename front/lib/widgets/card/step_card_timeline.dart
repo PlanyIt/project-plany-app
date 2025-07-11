@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:front/widgets/card/step_card.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+
+import '../../ui/create_plan/widgets/step_card.dart';
+import '../../utils/helpers.dart';
 
 class StepCardTimeline extends StatelessWidget {
   final int index;
@@ -14,7 +16,7 @@ class StepCardTimeline extends StatelessWidget {
   final double? cost;
   final String? locationName;
   final VoidCallback? onDelete;
-  final VoidCallback? onEdit; // Ajout du callback d'édition
+  final VoidCallback? onEdit;
   final Color? themeColor;
 
   const StepCardTimeline({
@@ -85,12 +87,12 @@ class StepCardTimeline extends StatelessWidget {
           title: title,
           description: description,
           imageUrl: imagePath ?? '',
-          duration: duration,
+          duration: formatDurationToMinutes(duration ?? ''),
           durationUnit: durationUnit,
           cost: cost,
           locationName: locationName,
           onDelete: onDelete,
-          onEdit: onEdit, // Passer le callback d'édition
+          onEdit: onEdit,
           themeColor: themeColor,
           location: null,
         ),

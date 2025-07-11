@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category/category.dart';
-import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/screens/profile/widgets/common/section_header.dart';
-import 'package:front/services/auth_service.dart';
-import 'package:front/services/step_service.dart';
-import 'package:front/services/user_service.dart';
-import 'package:front/services/categorie_service.dart';
-import 'package:front/services/plan_service.dart';
-import 'package:front/utils/helpers.dart';
-import 'package:front/ui/core/ui/card/compact_plan_card.dart';
+
+import '../../../../domain/models/category/category.dart';
+import '../../../../domain/models/plan/plan.dart';
+import '../../../../domain/models/step/step.dart' as plan_steps;
+import '../../../../services/categorie_service.dart';
+import '../../../../services/plan_service.dart';
+import '../../../../services/step_service.dart';
+import '../../../../services/user_service.dart';
+import '../../../../ui/core/ui/card/compact_plan_card.dart';
+import '../../../../utils/helpers.dart';
+import '../common/section_header.dart';
 
 class MyPlansSection extends StatefulWidget {
   final String userId;
@@ -301,7 +301,9 @@ class MyPlansSectionState extends State<MyPlansSection>
       }
 
       final totalCost = calculateTotalStepsCost(steps);
-      final durationString = calculateTotalStepsDuration(steps);
+      final durationString = formatDurationToString(
+        steps.fold(0, (total, step) => total + (step.duration ?? 0)),
+      );
 
       // Convertir la durée en minutes pour CompactPlanCard
       int durationMinutes = 0;

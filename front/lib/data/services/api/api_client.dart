@@ -180,7 +180,6 @@ class ApiClient {
 
   Future<Result<Step>> createStep(
     Step step,
-    String userId,
   ) async {
     final client = _clientFactory();
     try {
@@ -201,7 +200,6 @@ class ApiClient {
         'image': step.image,
         'duration': step.duration,
         'cost': step.cost,
-        'userId': userId,
       });
 
       request.write(body);

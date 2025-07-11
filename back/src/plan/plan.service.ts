@@ -8,14 +8,12 @@ import { PlanDto } from './dto/plan.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from './schemas/plan.schema';
 import { Model } from 'mongoose';
-import { User, UserDocument } from 'src/user/schemas/user.schema';
 import { StepService } from '../step/step.service';
 
 @Injectable()
 export class PlanService {
   constructor(
     @InjectModel(Plan.name) private planModel: Model<PlanDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
     @Inject(forwardRef(() => StepService))
     private stepService: StepService,
   ) {}

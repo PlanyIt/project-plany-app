@@ -13,7 +13,7 @@ class Step with _$Step {
     double? longitude,
     required int order,
     required String image,
-    String? duration,
+    int? duration,
     double? cost,
     DateTime? createdAt,
   }) = _Step;

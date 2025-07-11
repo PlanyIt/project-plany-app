@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../domain/models/step/step.dart' as plan_steps;
+import '../../../../../utils/helpers.dart';
 
 class StepDetailCard extends StatelessWidget {
   final plan_steps.Step step;
@@ -132,7 +133,7 @@ class StepDetailCard extends StatelessWidget {
                       if (step.duration != null)
                         _buildInfoChip(
                           Icons.access_time_rounded,
-                          step.duration!,
+                          formatDurationToString(step.duration ?? 0),
                           color,
                         ),
                       if (step.cost != null)

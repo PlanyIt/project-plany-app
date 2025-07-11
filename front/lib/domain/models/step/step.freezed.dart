@@ -28,7 +28,7 @@ mixin _$Step {
   double? get longitude => throw _privateConstructorUsedError;
   int get order => throw _privateConstructorUsedError;
   String get image => throw _privateConstructorUsedError;
-  String? get duration => throw _privateConstructorUsedError;
+  int? get duration => throw _privateConstructorUsedError;
   double? get cost => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
 
@@ -54,7 +54,7 @@ abstract class $StepCopyWith<$Res> {
       double? longitude,
       int order,
       String image,
-      String? duration,
+      int? duration,
       double? cost,
       DateTime? createdAt});
 }
@@ -117,7 +117,7 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
       duration: freezed == duration
           ? _value.duration
           : duration // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as int?,
       cost: freezed == cost
           ? _value.cost
           : cost // ignore: cast_nullable_to_non_nullable
@@ -145,7 +145,7 @@ abstract class _$$StepImplCopyWith<$Res> implements $StepCopyWith<$Res> {
       double? longitude,
       int order,
       String image,
-      String? duration,
+      int? duration,
       double? cost,
       DateTime? createdAt});
 }
@@ -205,7 +205,7 @@ class __$$StepImplCopyWithImpl<$Res>
       duration: freezed == duration
           ? _value.duration
           : duration // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as int?,
       cost: freezed == cost
           ? _value.cost
           : cost // ignore: cast_nullable_to_non_nullable
@@ -252,7 +252,7 @@ class _$StepImpl implements _Step {
   @override
   final String image;
   @override
-  final String? duration;
+  final int? duration;
   @override
   final double? cost;
   @override
@@ -315,7 +315,7 @@ abstract class _Step implements Step {
       final double? longitude,
       required final int order,
       required final String image,
-      final String? duration,
+      final int? duration,
       final double? cost,
       final DateTime? createdAt}) = _$StepImpl;
 
@@ -337,7 +337,7 @@ abstract class _Step implements Step {
   @override
   String get image;
   @override
-  String? get duration;
+  int? get duration;
   @override
   double? get cost;
   @override

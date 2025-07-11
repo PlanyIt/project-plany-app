@@ -1,19 +1,21 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:front/widgets/tag/info_chip.dart';
 import 'package:latlong2/latlong.dart';
+
+import '../../../widgets/tag/info_chip.dart';
 
 class StepCard extends StatelessWidget {
   final String title;
   final String description;
   final String imageUrl;
-  final String? duration;
+  final int? duration;
   final String? durationUnit;
   final double? cost;
   final LatLng? location;
   final String? locationName;
   final VoidCallback? onDelete;
-  final VoidCallback? onEdit; // Ajout d'un callback pour l'édition
+  final VoidCallback? onEdit;
   final Color? themeColor;
 
   const StepCard({
@@ -27,7 +29,7 @@ class StepCard extends StatelessWidget {
     this.location,
     this.locationName,
     this.onDelete,
-    this.onEdit, // Nouveau paramètre
+    this.onEdit,
     this.themeColor,
   });
 
@@ -155,10 +157,7 @@ class StepCard extends StatelessWidget {
               if (duration != null)
                 InfoChip(
                   icon: Icons.access_time_outlined,
-                  label: "$duration".toLowerCase() +
-                      (durationUnit != null
-                          ? ' $durationUnit'.toLowerCase()
-                          : ''),
+                  label: ('$duration ${durationUnit ?? 'min'}').toLowerCase(),
                   color: themeColor,
                 ),
               if (cost != null)

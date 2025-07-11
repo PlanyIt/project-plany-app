@@ -1,29 +1,22 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../../utils/helpers.dart';
+import '../../../domain/models/step/step_data.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/ui/card/compact_plan_card.dart';
 import '../view_models/create_plan_view_model.dart';
 import 'step_card_timeline.dart';
 
-class StepThreeContent extends StatefulWidget {
+class StepThreeContent extends StatelessWidget {
   const StepThreeContent({super.key, required this.viewModel});
 
   final CreatePlanViewModel viewModel;
 
   @override
-  State<StepThreeContent> createState() => _StepThreeContentState();
-}
-
-class _StepThreeContentState extends State<StepThreeContent> {
-  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.paddingL),
       physics: const BouncingScrollPhysics(),
-      // On utilise Container avec fond blanc pour assurer la cohérence
       child: Container(
         color: Colors.white,
         child: Column(
@@ -33,14 +26,22 @@ class _StepThreeContentState extends State<StepThreeContent> {
             const SizedBox(height: 24),
             _buildSectionTitle(context, 'Aperçu final'),
             const SizedBox(height: 16),
-            _buildPlanPreview(context),
+            _buildPlanPreview(),
             const SizedBox(height: 24),
-            if (widget.viewModel.stepCards.isNotEmpty) ...[
-              _buildSectionTitle(context, 'Étapes'),
-              const SizedBox(height: 16),
-              _buildStepsList(),
-              const SizedBox(height: 24),
-            ],
+            ValueListenableBuilder<List<StepData>>(
+              valueListenable: viewModel.steps,
+              builder: (_, steps, __) {
+                if (steps.isNotEmpty) {
+                  [
+                    _buildSectionTitle(context, 'Étapes'),
+                    const SizedBox(height: 16),
+                    _buildStepsList(steps),
+                    const SizedBox(height: 24),
+                  ];
+                }
+                return const SizedBox();
+              },
+            ),
             _buildPublishCard(),
             const SizedBox(height: 100),
           ],
@@ -49,19 +50,111 @@ class _StepThreeContentState extends State<StepThreeContent> {
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildPlanPreview() {
+    return ValueListenableBuilder<List<StepData>>(
+      valueListenable: viewModel.steps,
+      builder: (_, stepCards, __) {
+        final stepImages = stepCards
+            .where((step) => step.imageUrl.isNotEmpty)
+            .map((step) => step.imageUrl)
+            .toList();
+
+        double totalCost = 0;
+        var totalDurationInMinutes = 0;
+
+        for (final step in stepCards) {
+          if (step.cost != null) totalCost += step.cost!;
+          if (step.duration != null &&
+              step.duration! > 0 &&
+              step.durationUnit != null) {
+            totalDurationInMinutes = formatDurationToMinutes(
+                '${step.duration} ${step.durationUnit!.toLowerCase()}');
+          }
+        }
+
+        return ValueListenableBuilder<String>(
+          valueListenable: viewModel.title,
+          builder: (_, title, __) {
+            return ValueListenableBuilder<String>(
+              valueListenable: viewModel.description,
+              builder: (_, description, __) {
+                return Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: .05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: CompactPlanCard(
+                    title: title,
+                    description: description,
+                    category: viewModel.selectedCategory,
+                    stepsCount: stepCards.length,
+                    borderRadius: BorderRadius.circular(16),
+                    imageUrls: stepImages.isEmpty ? null : stepImages,
+                    totalCost: totalCost > 0 ? totalCost : null,
+                    totalDuration: totalDurationInMinutes > 0
+                        ? totalDurationInMinutes
+                        : null,
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildStepsList(List<StepData> steps) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: steps.length,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        itemBuilder: (context, index) {
+          final step = steps[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: StepCardTimeline(
+              index: index,
+              isFirst: index == 0,
+              isLast: index == steps.length - 1,
+              title: step.title,
+              description: step.description,
+              imagePath: step.imageUrl.isNotEmpty ? step.imageUrl : null,
+              duration: step.duration,
+              durationUnit: step.durationUnit,
+              cost: step.cost,
+              locationName: step.locationName,
+              themeColor: AppTheme.primaryColor,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -70,13 +163,21 @@ class _StepThreeContentState extends State<StepThreeContent> {
             const Color(0xFFFF5A85),
           ],
         ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withValues(alpha: .2),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -114,99 +215,6 @@ class _StepThreeContentState extends State<StepThreeContent> {
     );
   }
 
-  Widget _buildPlanPreview(BuildContext context) {
-    final stepImages = widget.viewModel.stepCards
-        .where((step) => step.imageUrl.isNotEmpty)
-        .map((step) => step.imageUrl)
-        .toList();
-
-    // Calculate total cost and duration from step cards
-    double totalCost = 0;
-    var totalDurationMinutes = 0;
-
-    for (final step in widget.viewModel.stepCards) {
-      if (step.cost != null) {
-        totalCost += step.cost!;
-      }
-
-      if (step.duration != null && step.duration!.isNotEmpty) {
-        // Utiliser la fonction helper pour une conversion cohérente
-        final value = int.tryParse(step.duration!) ?? 0;
-        final unit = step.durationUnit?.toLowerCase() ?? 'minutes';
-        totalDurationMinutes += convertDurationToMinutes(value, unit);
-      }
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          CompactPlanCard(
-            title: widget.viewModel.titlePlanController.text,
-            description: widget.viewModel.descriptionPlanController.text,
-            category: widget.viewModel.selectedCategory,
-            stepsCount: widget.viewModel.stepCards.length,
-            borderRadius: BorderRadius.circular(16),
-            imageUrls: stepImages.isEmpty ? null : stepImages,
-            totalCost: totalCost > 0 ? totalCost : null,
-            totalDuration:
-                totalDurationMinutes > 0 ? totalDurationMinutes : null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepsList() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        itemCount: widget.viewModel.stepCards.length,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        itemBuilder: (context, index) {
-          final step = widget.viewModel.stepCards[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: StepCardTimeline(
-              index: index,
-              isFirst: index == 0,
-              isLast: index == widget.viewModel.stepCards.length - 1,
-              title: step.title,
-              description: step.description,
-              imagePath: step.imageUrl.isNotEmpty ? step.imageUrl : null,
-              duration: step.duration,
-              durationUnit: step.durationUnit,
-              cost: step.cost,
-              locationName: step.locationName,
-              themeColor: AppTheme.primaryColor,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildPublishCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -215,14 +223,13 @@ class _StepThreeContentState extends State<StepThreeContent> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
         border: Border.all(
-          color: AppTheme.accentColor.withValues(alpha: 0.3),
-          width: 1,
+          color: AppTheme.accentColor.withValues(alpha: .3),
         ),
       ),
       child: Column(
@@ -233,7 +240,7 @@ class _StepThreeContentState extends State<StepThreeContent> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.accentColor.withValues(alpha: 0.1),
+                  color: AppTheme.accentColor.withValues(alpha: .1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -254,7 +261,7 @@ class _StepThreeContentState extends State<StepThreeContent> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'En publiant ce plan, vous le rendez visible par tous les utilisateurs de l\'application. Vous pourrez le modifier ou le supprimer ultérieurement depuis votre profil.',
+            'En publiant ce plan, vous le rendez visible par tous les utilisateurs. Vous pourrez le modifier ou le supprimer plus tard.',
             style: TextStyle(
               color: Colors.black54,
               fontSize: 14,
@@ -263,36 +270,22 @@ class _StepThreeContentState extends State<StepThreeContent> {
           const SizedBox(height: 16),
           const Row(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 16,
-              ),
+              Icon(Icons.check_circle, color: Colors.green, size: 16),
               SizedBox(width: 8),
               Text(
                 'Vos coordonnées ne sont pas partagées',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.black87),
               ),
             ],
           ),
           const SizedBox(height: 8),
           const Row(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 16,
-              ),
+              Icon(Icons.check_circle, color: Colors.green, size: 16),
               SizedBox(width: 8),
               Text(
                 'Vous pouvez modifier ce plan à tout moment',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.black87),
               ),
             ],
           ),
@@ -311,180 +304,4 @@ class _StepThreeContentState extends State<StepThreeContent> {
       ),
     );
   }
-}
-
-class ImageCarousel extends StatefulWidget {
-  final List<String> images;
-
-  const ImageCarousel({
-    super.key,
-    required this.images,
-  });
-
-  @override
-  State<ImageCarousel> createState() => _ImageCarouselState();
-}
-
-class _ImageCarouselState extends State<ImageCarousel> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.images.isEmpty) {
-      return Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(16),
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.image_not_supported,
-            size: 40,
-            color: Colors.grey.shade400,
-          ),
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 180,
-      child: Stack(
-        children: [
-          // Images du carousel
-          PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            itemCount: widget.images.length,
-            itemBuilder: (context, index) {
-              final imagePath = widget.images[index];
-              return ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: imagePath.startsWith('http')
-                    ? Image.network(
-                        imagePath,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _buildErrorImage(),
-                      )
-                    : Image.file(
-                        File(imagePath),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _buildErrorImage(),
-                      ),
-              );
-            },
-          ),
-
-          // Indicateurs de pagination
-          if (widget.images.length > 1)
-            Positioned(
-              bottom: 10,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  widget.images.length,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: _currentPage == index ? 18 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _currentPage == index
-                          ? AppTheme.primaryColor
-                          : Colors.white.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 3,
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-          // Numéro de l'image actuelle
-          Positioned(
-            top: 10,
-            right: 10,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${_currentPage + 1}/${widget.images.length}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorImage() {
-    return Container(
-      color: Colors.grey.shade200,
-      height: 180,
-      child: Center(
-        child: Icon(
-          Icons.image_not_supported,
-          size: 40,
-          color: Colors.grey.shade400,
-        ),
-      ),
-    );
-  }
-}
-/// Helper method to parse duration consistently
-int _parseDurationToMinutes(String durationStr) {
-  final parts = durationStr.toLowerCase().split(' ');
-  if (parts.length < 2) return 0;
-
-  try {
-    final value = int.parse(parts[0]);
-    final unit = parts[1];
-
-    if (unit.contains('minute')) {
-      return value;
-    } else if (unit.contains('heure')) {
-      return value * 60;
-    } else if (unit.contains('jour')) {
-      return value * 24 * 60; // Full day
-    }
-  } catch (e) {
-    return 0;
-  }
-  return 0;
 }

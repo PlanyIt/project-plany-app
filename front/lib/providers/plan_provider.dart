@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:front/domain/models/plan/plan.dart';
-import 'package:front/domain/models/step/step.dart' as step_model;
-import 'package:front/services/auth_service.dart';
-import 'package:front/services/plan_service.dart';
-import 'package:front/services/step_service.dart';
+import '../domain/models/plan/plan.dart';
+import '../domain/models/step/step.dart' as step_model;
+import '../services/auth_service.dart';
+import '../services/plan_service.dart';
+import '../services/step_service.dart';
 
 class PlanProvider extends ChangeNotifier {
   // Services
@@ -125,7 +125,7 @@ class PlanProvider extends ChangeNotifier {
     if (category == 'Tous') {
       return _plans;
     }
-    return _plans.where((plan) => plan.category == category).toList();
+    return _plans.where((plan) => plan.category?.id == category).toList();
   }
 
   // Recherche de plans par texte
@@ -163,49 +163,6 @@ class PlanProvider extends ChangeNotifier {
       }
     }
     return totalCost;
-  }
-
-  // Calcule la durée totale d'un plan en additionnant les durées de toutes les étapes
-  Future<int> calculatePlanTotalDuration(Plan plan) async {
-    int totalMinutes = 0;
-    try {
-      final steps = await _loadStepsForPlan(plan);
-      for (final step in steps) {
-        if (step.duration != null) {
-          totalMinutes += _convertDurationToMinutes(step.duration!);
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Erreur lors du calcul de la durée totale: $e');
-      }
-    }
-    return totalMinutes;
-  }
-
-  // Convertit une chaîne de durée (ex: "2 heures" ou "30 minutes") en minutes
-  int _convertDurationToMinutes(String duration) {
-    final parts = duration.toLowerCase().split(' ');
-    if (parts.length < 2) return 0;
-
-    try {
-      final value = double.parse(parts[0]);
-      final unit = parts[1];
-
-      if (unit.contains('heure')) {
-        return (value * 60).round();
-      } else if (unit.contains('minute')) {
-        return value.round();
-      } else if (unit.contains('jour')) {
-        return (value * 24 * 60).round();
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Erreur de conversion de durée: $e');
-      }
-    }
-
-    return 0;
   }
 
   // Recherche avancée avec filtres de coût et durée
@@ -249,7 +206,7 @@ class PlanProvider extends ChangeNotifier {
       }
 
       // Appliquer un filtre de texte supplémentaire côté client si nécessaire
-      List<Plan> filteredPlans = plans;
+      var filteredPlans = plans;
       if (query != null && query.isNotEmpty) {
         final lowercaseQuery = query.toLowerCase();
         filteredPlans = plans.where((plan) {
@@ -265,14 +222,14 @@ class PlanProvider extends ChangeNotifier {
 
       // Si des filtres de coût sont spécifiés, appliquer un filtre supplémentaire côté client
       if (minCost != null || maxCost != null) {
-        final List<Plan> costFilteredPlans = [];
+        final costFilteredPlans = <Plan>[];
 
         // Parcourir tous les plans et vérifier si leur coût total correspond aux critères
         for (final plan in filteredPlans) {
           final totalCost = await calculatePlanTotalCost(plan);
 
-          bool passesMinCost = minCost == null || totalCost >= minCost;
-          bool passesMaxCost = maxCost == null || totalCost <= maxCost;
+          final passesMinCost = minCost == null || totalCost >= minCost;
+          final passesMaxCost = maxCost == null || totalCost <= maxCost;
 
           if (passesMinCost && passesMaxCost) {
             costFilteredPlans.add(plan);

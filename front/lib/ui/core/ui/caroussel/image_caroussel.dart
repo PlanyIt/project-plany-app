@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 
 import '../../themes/app_theme.dart';
 
-class _ImageCarousel extends StatefulWidget {
+class ImageCarousel extends StatefulWidget {
   final List<String> imageUrls;
 
-  const _ImageCarousel({required this.imageUrls});
+  const ImageCarousel({super.key, required this.imageUrls});
 
   @override
-  _ImageCarouselState createState() => _ImageCarouselState();
+  ImageCarouselState createState() => ImageCarouselState();
 }
 
-class _ImageCarouselState extends State<_ImageCarousel> {
+class ImageCarouselState extends State<ImageCarousel> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 

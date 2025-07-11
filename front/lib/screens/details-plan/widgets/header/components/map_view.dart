@@ -236,6 +236,7 @@ class MapViewState extends State<MapView> {
                               "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                           subdomains: ['a', 'b', 'c'],
                           userAgentPackageName: 'com.example.app',
+                          retinaMode: RetinaMode.isHighDensity(context),
                         ),
 
                         // Marqueurs avec indicateur de sélection

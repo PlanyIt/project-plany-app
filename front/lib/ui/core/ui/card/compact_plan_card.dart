@@ -5,8 +5,8 @@ import '../../../../domain/models/category/category.dart';
 import '../../../../domain/models/user/user.dart';
 import '../../../../utils/helpers.dart';
 import '../../../../utils/icon_utils.dart';
-import '../../../create_plan/widgets/step_three_content.dart';
 import '../../themes/app_theme.dart';
+import '../caroussel/image_caroussel.dart';
 
 class CompactPlanCard extends StatelessWidget {
   final List<String>? imageUrls;
@@ -43,6 +43,7 @@ class CompactPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('totalDuration: $totalDuration');
     return Material(
       color: Colors.white,
       borderRadius: borderRadius ?? BorderRadius.circular(16),
@@ -58,7 +59,6 @@ class CompactPlanCard extends StatelessWidget {
               aspectRatio: aspectRatio,
               child: _buildImageSection(),
             ),
-            // Content section avec Flexible au lieu d'Expanded
             Flexible(
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -73,7 +73,7 @@ class CompactPlanCard extends StatelessWidget {
 
   Widget _buildImageSection() {
     if (imageUrls != null && imageUrls!.isNotEmpty) {
-      return ImageCarousel(images: imageUrls!);
+      return ImageCarousel(imageUrls: imageUrls!);
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
       return _buildSingleImage(imageUrl!);
     } else {
@@ -190,7 +190,7 @@ class CompactPlanCard extends StatelessWidget {
               if (totalDuration != null)
                 _buildMetadataItem(
                   icon: Icons.access_time,
-                  text: formatDuration(totalDuration!),
+                  text: formatDurationToString(totalDuration!),
                 ),
             ],
           ),

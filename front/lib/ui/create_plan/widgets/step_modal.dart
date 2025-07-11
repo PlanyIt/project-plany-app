@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../widgets/card/image_picker_card.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_plan_view_model.dart';
@@ -20,6 +21,128 @@ class StepModalState extends State<StepModal>
   late TabController _tabController;
   final PageController _pageController = PageController();
   int _currentTab = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final maxHeight = screenHeight * 0.9;
+
+    return Container(
+      height: maxHeight,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Drag handle
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header with title and close button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Ajouter une étape',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
+
+          // Tab bar
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'Infos'),
+              Tab(text: 'Détails'),
+              Tab(text: 'Lieu'),
+            ],
+          ),
+
+          // Content
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildBasicInfoTab(),
+                _buildDetailsTab(),
+                _buildLocationTab(),
+              ],
+            ),
+          ),
+
+          // Bottom navigation
+          _buildBottomNavigation(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('Lieu'),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _chooseLocation,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: .05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.location_on, color: AppTheme.primaryColor),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.viewModel.selectedLocationName ??
+                          'Choisir un lieu',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -46,7 +169,6 @@ class StepModalState extends State<StepModal>
   }
 
   void _chooseLocation() async {
-    // Ne pas utiliser le MapController ici, mais plutôt passer directement à l'écran de sélection
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -62,154 +184,54 @@ class StepModalState extends State<StepModal>
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          _buildHeader(),
-          _buildTabBar(),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              onPageChanged: (index) {
-                if (_tabController.index != index) {
-                  _tabController.animateTo(index);
-                }
-              },
-              children: [
-                _buildBasicInfoTab(),
-                _buildDetailsTab(),
-                _buildLocationTab(),
-              ],
-            ),
-          ),
-          _buildBottomNavigation(),
-        ],
-      ),
-    );
-  }
+  Widget _buildTextField<T>({
+    required ValueNotifier<T> valueNotifier,
+    required void Function(String) onChanged,
+    required String hintText,
+    required IconData prefixIcon,
+    int maxLines = 1,
+    String? suffixText,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return ValueListenableBuilder<T>(
+      valueListenable: valueNotifier,
+      builder: (context, value, _) {
+        final text = value.toString();
+        final controller = TextEditingController(text: text)
+          ..selection = TextSelection.collapsed(offset: text.length);
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            widget.viewModel.isEditingStep
-                ? 'Modifier une étape'
-                : 'Ajouter une étape',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(13),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
-              child: const Icon(Icons.close, color: Colors.black54, size: 20),
-            ),
-            onPressed: () {
-              if (widget.viewModel.isEditingStep) {
-                widget.viewModel.cancelEditingStep();
-              }
-              Navigator.pop(context);
-            },
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-              blurRadius: 8,
-              spreadRadius: 0,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        dividerColor: Colors.transparent,
-        labelColor: AppTheme.primaryColor,
-        unselectedLabelColor: Colors.black54,
-        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        unselectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
-        padding: EdgeInsets.zero,
-        splashBorderRadius: BorderRadius.circular(14),
-        overlayColor: WidgetStateProperty.all(Colors.transparent),
-        tabs: [
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(_currentTab == 0 ? Icons.info : Icons.info_outline,
-                    size: 18),
-                const SizedBox(width: 8),
-                const Text('Infos'),
-              ],
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            decoration: InputDecoration(
+              hintText: hintText,
+              prefixIcon: Icon(prefixIcon, color: AppTheme.primaryColor),
+              suffixText: suffixText,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.all(16),
             ),
           ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                    _currentTab == 1
-                        ? Icons.attach_money
-                        : Icons.attach_money_outlined,
-                    size: 18),
-                const SizedBox(width: 8),
-                const Text('Détails'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(_currentTab == 2 ? Icons.place : Icons.place_outlined,
-                    size: 18),
-                const SizedBox(width: 8),
-                const Text('Lieu'),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -223,7 +245,8 @@ class StepModalState extends State<StepModal>
           _buildSectionTitle('Nom de l\'étape'),
           const SizedBox(height: 12),
           _buildTextField(
-            controller: widget.viewModel.titleStepController,
+            valueNotifier: widget.viewModel.stepTitle,
+            onChanged: widget.viewModel.setStepTitle,
             hintText: 'Ex: Visite du musée, Déjeuner au restaurant...',
             prefixIcon: Icons.title,
           ),
@@ -231,7 +254,8 @@ class StepModalState extends State<StepModal>
           _buildSectionTitle('Description'),
           const SizedBox(height: 12),
           _buildTextField(
-            controller: widget.viewModel.descriptionStepController,
+            valueNotifier: widget.viewModel.stepDescription,
+            onChanged: widget.viewModel.setStepDescription,
             hintText: 'Décrivez cette étape en détail...',
             prefixIcon: Icons.description,
             maxLines: 5,
@@ -273,55 +297,44 @@ class StepModalState extends State<StepModal>
               Expanded(
                 flex: 2,
                 child: _buildTextField(
-                  controller: widget.viewModel.durationStepController,
+                  valueNotifier: widget.viewModel.stepDuration,
+                  onChanged: (value) {
+                    final parsed = int.tryParse(value);
+                    if (parsed != null) {
+                      widget.viewModel.setStepDuration(parsed);
+                    }
+                  },
                   hintText: 'Durée',
                   prefixIcon: Icons.timer,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 flex: 3,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: DropdownButtonFormField<String>(
-                    value: widget.viewModel.selectedUnit,
-                    decoration: InputDecoration(
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      fillColor: Colors.white,
-                      filled: true,
+                child: DropdownButtonFormField<String>(
+                  value: widget.viewModel.selectedUnit,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
-                    items: ['Heures', 'Minutes', 'Jours']
-                        .map<DropdownMenuItem<String>>((String unit) {
-                      return DropdownMenuItem<String>(
-                        value: unit,
-                        child: Text(unit),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        widget.viewModel.selectedUnit = newValue;
-                      }
-                    },
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
+                  items: ['Heures', 'Minutes', 'Jours']
+                      .map((unit) => DropdownMenuItem(
+                            value: unit,
+                            child: Text(unit),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      widget.viewModel.selectedUnit = value;
+                    }
+                  },
                 ),
               ),
             ],
@@ -330,273 +343,12 @@ class StepModalState extends State<StepModal>
           _buildSectionTitle('Coût estimé'),
           const SizedBox(height: 12),
           _buildTextField(
-            controller: widget.viewModel.costStepController,
+            valueNotifier: widget.viewModel.stepCost,
+            onChanged: widget.viewModel.setStepCost,
             hintText: 'Ex: 15',
             prefixIcon: Icons.euro,
             suffixText: '€',
             keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 24),
-          _buildInfoCard(
-            title: 'Pourquoi ajouter ces détails ?',
-            description:
-                'Indiquer la durée et le coût de chaque étape permet aux utilisateurs de mieux planifier leur temps et leur budget.',
-            icon: Icons.info_outline,
-            color: Colors.blue,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Localisation'),
-          const SizedBox(height: 8),
-          const Text(
-            'Ajoutez une localisation à cette étape pour que les utilisateurs puissent facilement s\'y rendre',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (widget.viewModel.selectedLocationName != null)
-            _buildSelectedLocation()
-          else
-            _buildLocationSelector(),
-          const SizedBox(height: 24),
-          _buildInfoCard(
-            title: 'Astuce',
-            description:
-                'Ajoutez une localisation précise pour faciliter l\'orientation des utilisateurs qui suivront votre plan.',
-            icon: Icons.lightbulb_outline,
-            color: Colors.amber,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSelectedLocation() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: AppTheme.primaryColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.place,
-                  color: AppTheme.primaryColor,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Localisation sélectionnée',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.viewModel.selectedLocationName!,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: () {
-                  widget.viewModel.selectedLocation = null;
-                  widget.viewModel.selectedLocationName = null;
-                },
-                icon: const Icon(Icons.delete_outline, size: 18),
-                label: const Text('Supprimer'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.red,
-                ),
-              ),
-              const SizedBox(width: 12),
-              TextButton.icon(
-                onPressed: () => _chooseLocation(),
-                icon: const Icon(Icons.edit_location_alt, size: 18),
-                label: const Text('Modifier'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationSelector() {
-    return InkWell(
-      onTap: () => _chooseLocation(),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: Border.all(
-            color: Colors.grey.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.add_location_alt,
-                color: Colors.grey,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Ajouter une localisation',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Sélectionnez un lieu sur la carte',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.grey,
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoCard({
-    required String title,
-    required String description,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -614,45 +366,6 @@ class StepModalState extends State<StepModal>
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    required IconData prefixIcon,
-    int maxLines = 1,
-    String? suffixText,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          hintText: hintText,
-          prefixIcon: Icon(prefixIcon, color: AppTheme.primaryColor),
-          suffixText: suffixText,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.all(16),
-        ),
-      ),
-    );
-  }
-
   Widget _buildBottomNavigation() {
     final canProceed = _validateCurrentTab();
     final isEditMode = widget.viewModel.isEditingStep;
@@ -666,41 +379,19 @@ class StepModalState extends State<StepModal>
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, -4),
-            blurRadius: 10,
-            spreadRadius: 0,
-          ),
-        ],
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
         children: [
           if (_currentTab > 0)
             Expanded(
-              flex: 1,
               child: OutlinedButton(
-                onPressed: () {
-                  _tabController.animateTo(_currentTab - 1);
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: BorderSide(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Précédent',
-                  style: TextStyle(color: AppTheme.primaryColor),
-                ),
+                onPressed: () => _tabController.animateTo(_currentTab - 1),
+                child: const Text('Précédent'),
               ),
             ),
           if (_currentTab > 0) const SizedBox(width: 16),
           Expanded(
-            flex: 2,
             child: ElevatedButton(
               onPressed: canProceed
                   ? () {
@@ -711,38 +402,9 @@ class StepModalState extends State<StepModal>
                       }
                     }
                   : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                disabledBackgroundColor: Colors.grey.withValues(alpha: 0.3),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _currentTab == 2
-                        ? (isEditMode
-                            ? 'Mettre à jour l\'étape'
-                            : 'Ajouter l\'étape')
-                        : 'Continuer',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    _currentTab == 2 ? Icons.check_circle : Icons.arrow_forward,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ],
-              ),
+              child: Text(_currentTab == 2
+                  ? (isEditMode ? 'Mettre à jour' : 'Ajouter')
+                  : 'Continuer'),
             ),
           ),
         ],
@@ -753,9 +415,13 @@ class StepModalState extends State<StepModal>
   bool _validateCurrentTab() {
     switch (_currentTab) {
       case 0:
-        return widget.viewModel.titleStepController.text.isNotEmpty;
+        return widget.viewModel.stepTitle.value.trim().isNotEmpty &&
+            widget.viewModel.stepDescription.value.trim().isNotEmpty &&
+            widget.viewModel.imageStep != null;
       case 1:
-        return widget.viewModel.durationStepController.text.isNotEmpty;
+        return widget.viewModel.stepDuration.value > 0 &&
+            widget.viewModel.selectedUnit.isNotEmpty &&
+            widget.viewModel.stepCost.value.trim().isNotEmpty;
       case 2:
         return true;
       default:
@@ -763,28 +429,22 @@ class StepModalState extends State<StepModal>
     }
   }
 
-  // Remplacer la méthode _addStep par _saveStep
   void _saveStep() {
-    // Validation finale
-    if (widget.viewModel.titleStepController.text.isEmpty) {
+    if (widget.viewModel.stepTitle.value.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le titre de l\'étape est obligatoire')),
+        const SnackBar(content: Text("Le titre de l'étape est obligatoire")),
       );
       return;
     }
 
-    // Debug: Vérifier que la position est bien présente
-    print('Position sélectionnée: ${widget.viewModel.selectedLocation}');
-    print('Nom de la position: ${widget.viewModel.selectedLocationName}');
-
     widget.viewModel.saveStep(
-      widget.viewModel.titleStepController.text,
-      widget.viewModel.descriptionStepController.text,
-      widget.viewModel.imageStep != null
+      title: widget.viewModel.stepTitle.value.trim(),
+      description: widget.viewModel.stepDescription.value.trim(),
+      image: widget.viewModel.imageStep != null
           ? File(widget.viewModel.imageStep!.path)
           : null,
-      widget.viewModel.durationStepController.text,
-      double.tryParse(widget.viewModel.costStepController.text),
+      duration: widget.viewModel.stepDuration.value,
+      cost: double.tryParse(widget.viewModel.stepCost.value.trim()),
     );
 
     Navigator.pop(context);

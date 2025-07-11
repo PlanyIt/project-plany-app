@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../domain/models/step/step.dart' as plan_steps;
+import '../../../../../utils/helpers.dart';
 import 'step_detail_card.dart';
 import 'vertical_flight_path_painter.dart';
 
@@ -272,7 +273,7 @@ class StepsCarouselState extends State<StepsCarousel>
                   borderRadius: BorderRadius.circular(12),
                   child: step.image.isNotEmpty
                       ? Image.network(
-                          step.image!,
+                          step.image,
                           height: 150,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -307,7 +308,9 @@ class StepsCarouselState extends State<StepsCarousel>
                 Row(
                   children: [
                     if (step.duration != null)
-                      _buildInfoBadge(Icons.access_time_rounded, step.duration!,
+                      _buildInfoBadge(
+                          Icons.access_time_rounded,
+                          formatDurationToString(step.duration ?? 0),
                           actualColor),
                     if (step.duration != null && step.cost != null)
                       const SizedBox(width: 10),

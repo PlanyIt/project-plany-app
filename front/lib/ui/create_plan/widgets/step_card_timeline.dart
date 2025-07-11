@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
-import '../../../widgets/card/step_card.dart';
+import 'step_card.dart';
 
 class StepCardTimeline extends StatelessWidget {
   final int index;
@@ -10,7 +10,7 @@ class StepCardTimeline extends StatelessWidget {
   final String title;
   final String description;
   final String? imagePath;
-  final String? duration;
+  final int? duration;
   final String? durationUnit;
   final double? cost;
   final String? locationName;
@@ -31,7 +31,7 @@ class StepCardTimeline extends StatelessWidget {
     this.cost,
     this.locationName,
     this.onDelete,
-    this.onEdit, // Nouveau paramètre
+    this.onEdit,
     this.themeColor,
   });
 

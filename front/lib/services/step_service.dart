@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 
 import '../domain/models/plan/plan.dart';
 import '../domain/models/step/step.dart';
-import '../utils/helpers.dart';
 import 'auth_service.dart';
 
 class StepService {
@@ -183,7 +182,7 @@ class StepService {
         final step = await getStepById(
             plan.steps.firstWhere((s) => s.id == stepId).toString());
         if (step != null && step.duration != null) {
-          totalMinutes += parseDurationStringToMinutes(step.duration!);
+          totalMinutes += step.duration!;
         }
       } catch (e) {
         print('Erreur lors du calcul de la durée pour l\'étape $stepId: $e');

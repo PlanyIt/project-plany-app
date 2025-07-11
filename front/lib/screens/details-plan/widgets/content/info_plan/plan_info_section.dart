@@ -861,7 +861,7 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
 
     try {
       final totalCost = calculateTotalStepsCost(widget.steps!);
-      final totalDuration = calculateTotalStepsDuration(widget.steps!);
+      final totalDuration = formatDurationToString(widget.plan.totalDuration ?? 0);
 
       return {
         'cost': totalCost,

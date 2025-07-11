@@ -15,196 +15,67 @@ double calculateTotalStepsCost(List<step_model.Step> steps) {
   });
 }
 
-/// Calculates the total duration of steps from a list of Step objects.
-/// Calculates the total duration in minutes from a list of Step objects.
-/// Handles "minute", "heure", "jour", and "semaine" units.
-/// 1 jour = 8 heures, 1 semaine = 5 jours (work week).
-int calculateTotalDuration(List<step_model.Step> steps) {
-  var total = 0;
-  final regex = RegExp(r'(\d+)\s*(minute|heure|jour|semaine)');
+/// Calculates duration from minutes to a formatted string.
+/// Returns a string in the format "X jours" ou "X heures" ou "X minutes".
+/// If the duration is null or empty, returns "0 minutes".
+String formatDurationToString(int minutes) {
+  if (minutes <= 0) return '0 minutes';
 
-  for (final step in steps) {
-    final match = regex.firstMatch(step.duration ?? '');
-    if (match != null) {
-      final value = int.tryParse(match.group(1)!);
-      final unit = match.group(2);
-      if (value != null && unit != null) {
-        switch (unit) {
-          case 'minute':
-            total += value;
-            break;
-          case 'heure':
-            total += value * 60;
-            break;
-          case 'jour':
-            total += value * 8 * 60;
-            break;
-          case 'semaine':
-            total += value * 5 * 8 * 60;
-            break;
-        }
-      }
-    }
-  }
-
-  return total;
-}
-
-/// Handles durations in the format "X minutes", "X heures", "X jours", etc.
-/// Returns a formatted string representing the total duration.
-String calculateTotalStepsDuration(List<step_model.Step> steps) {
-  // Convert all durations to minutes for easy calculation
-  var totalMinutes = 0;
-
-  for (final step in steps) {
-    if (step.duration == null || step.duration!.isEmpty) continue;
-    totalMinutes += _parseDurationToMinutes(step.duration!);
-  }
-
-  // Convert total minutes back to a readable format
-  return _formatDuration(totalMinutes);
-}
-
-/// Parses a duration string like "2 minutes", "6 heures", or "2 heures et 30 minutes" to minutes.
-int _parseDurationToMinutes(String durationStr) {
-  if (durationStr.isEmpty) return 0;
-
-  var totalMinutes = 0;
-
-  // Split by "et" to handle complex durations like "2 heures et 30 minutes"
-  final segments = durationStr.split(' et ');
-
-  for (final segment in segments) {
-    final parts = segment.trim().split(' ');
-    if (parts.length < 2) continue;
-
-    int value;
-    try {
-      value = int.parse(parts[0]);
-    } catch (e) {
-      continue; // Skip invalid segments
-    }
-
-    final unit = parts[1].toLowerCase();
-
-    if (unit.contains('seconde')) {
-      totalMinutes +=
-          (value / 60).ceil(); // Convert seconds to minutes, rounding up
-    } else if (unit.contains('minute')) {
-      totalMinutes += value;
-    } else if (unit.contains('heure')) {
-      totalMinutes += value * 60; // Convert hours to minutes
-    } else if (unit.contains('jour')) {
-      totalMinutes += value * 8 * 60; // 8 heures de travail par jour
-    } else if (unit.contains('semaine')) {
-      totalMinutes += value * 5 * 8 * 60; // 5 jours * 8 heures par semaine
-    }
-  }
-
-  return totalMinutes;
-}
-
-/// Formats a duration in minutes to a human-readable string
-String _formatDuration(int totalMinutes) {
-  if (totalMinutes == 0) return '0 minute';
-
-  final weeks = totalMinutes ~/ (5 * 8 * 60);
-  final days = (totalMinutes % (5 * 8 * 60)) ~/ (8 * 60);
-  final hours = (totalMinutes % (8 * 60)) ~/ 60;
-  final minutes = totalMinutes % 60;
-
-  final parts = <String>[];
-
-  if (weeks > 0) parts.add('$weeks semaine${weeks > 1 ? 's' : ''}');
-  if (days > 0) parts.add('$days jour${days > 1 ? 's' : ''}');
-  if (hours > 0) parts.add('$hours heure${hours > 1 ? 's' : ''}');
-  if (minutes > 0) parts.add('$minutes minute${minutes > 1 ? 's' : ''}');
-
-  if (parts.length > 1) {
-    return '${parts.sublist(0, parts.length - 1).join(', ')} et ${parts.last}';
-  }
-  return parts.first;
-}
-
-/// Converts a formatted duration string back to minutes
-/// Used when you have a duration like "2 heures et 30 minutes" and need to convert it back to minutes
-int parseDurationStringToMinutes(String durationStr) {
-  if (durationStr.isEmpty || durationStr == "0 minute") return 0;
-
-  var totalMinutes = 0;
-
-  // Remove common words and split by different separators
-  final cleanStr =
-      durationStr.replaceAll(',', ' ').replaceAll('  ', ' ').trim();
-
-  // Split by "et" first
-  final segments = cleanStr.split(' et ');
-
-  for (final segment in segments) {
-    // Then split each segment by spaces
-    final words = segment.trim().split(' ');
-
-    for (var i = 0; i < words.length - 1; i++) {
-      final valueStr = words[i];
-      final unit = words[i + 1].toLowerCase();
-
-      int value;
-      try {
-        value = int.parse(valueStr);
-      } catch (e) {
-        continue; // Skip invalid numbers
-      }
-
-      if (unit.contains('jour')) {
-        totalMinutes += value * 24 * 60;
-      } else if (unit.contains('heure')) {
-        totalMinutes += value * 60;
-      } else if (unit.contains('minute')) {
-        totalMinutes += value;
-      }
-    }
-  }
-
-  return totalMinutes;
-}
-
-String formatDuration(int minutes) {
-  if (minutes == 0) return '0 min';
-
-  // Utiliser 24h par jour au lieu de 8h
-  final workDayMinutes = 24 * 60; 
-  final days = minutes ~/ workDayMinutes;
-  final hours = (minutes % workDayMinutes) ~/ 60;
+  final days = minutes ~/ (24 * 60);
+  final hours = (minutes % (24 * 60)) ~/ 60;
   final remainingMinutes = minutes % 60;
 
   final parts = <String>[];
+  if (days > 0) parts.add('$days jours');
+  if (hours > 0) parts.add('$hours heures');
+  if (remainingMinutes > 0) parts.add('$remainingMinutes minutes');
 
-  if (days > 0) {
-    parts.add('${days}j');
-  }
-  if (hours > 0) {
-    parts.add('${hours}h');
-  }
-  if (remainingMinutes > 0 && days == 0) {
-    // N'afficher les minutes que si on a moins d'un jour
-    parts.add('${remainingMinutes}min');
-  }
+  return parts.join(' ');
+}
 
-  // Pour les longues durées (plusieurs jours), simplifier l'affichage
-  if (days > 0) {
-    if (hours == 0) {
-      return '${days}j';
-    } else {
-      return '${days}j ${hours}h';
+/// Calculates duration String "X jours" "X heures" "X minutes" to Minutes.
+/// If the duration is null or empty, returns "0 minutes".
+int formatDurationToMinutes(String duration) {
+  if (duration.isEmpty) return 0;
+
+  final parts = duration.split(' ');
+  var totalMinutes = 0;
+
+  for (var i = 0; i < parts.length; i++) {
+    final part = parts[i];
+
+    // Check if current part is a number and next part is a unit
+    if (i + 1 < parts.length) {
+      final number = int.tryParse(part);
+      final unit = parts[i + 1];
+
+      if (number != null) {
+        if (unit == 'jours') {
+          totalMinutes += number * 24 * 60;
+          i++; // Skip the unit part
+        } else if (unit == 'heures') {
+          totalMinutes += number * 60;
+          i++; // Skip the unit part
+        } else if (unit == 'minutes') {
+          totalMinutes += number;
+          i++; // Skip the unit part
+        }
+      }
+    }
+
+    if (part.endsWith('jours')) {
+      final days = int.tryParse(part.replaceAll('jours', '').trim()) ?? 0;
+      totalMinutes += days * 24 * 60;
+    } else if (part.endsWith('heures')) {
+      final hours = int.tryParse(part.replaceAll('heures', '').trim()) ?? 0;
+      totalMinutes += hours * 60;
+    } else if (part.endsWith('minutes')) {
+      final minutes = int.tryParse(part.replaceAll('minutes', '').trim()) ?? 0;
+      totalMinutes += minutes;
     }
   }
 
-  // Pour les durées courtes, afficher tout
-  if (parts.length > 1) {
-    return parts.join(' ');
-  }
-
-  return parts.isNotEmpty ? parts.first : '0 min';
+  return totalMinutes;
 }
 
 /// Calcule la distance en mètres entre deux points GPS (Haversine)

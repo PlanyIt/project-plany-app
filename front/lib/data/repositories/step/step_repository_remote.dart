@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:latlong2/latlong.dart';
-
 import '../../../domain/models/step/step.dart';
 import '../../../utils/result.dart';
 import '../../services/api/api_client.dart';
@@ -66,10 +64,9 @@ class StepRepositoryRemote implements StepRepository {
   @override
   Future<Result<Step>> createStep(
     Step step,
-    String userId,
   ) async {
     try {
-      final result = await _apiClient.createStep(step, userId);
+      final result = await _apiClient.createStep(step);
 
       if (result is Ok<Step>) {
         final created = result.value;

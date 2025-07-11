@@ -74,63 +74,7 @@ export class StepService {
     const steps = await this.findByIds(stepIds);
     return steps.reduce((total, step) => {
       if (!step.duration) return total;
-      return total + this.parseDurationToMinutes(step.duration);
+      return total + step.duration;
     }, 0);
-  }
-
-  /**
-   * Parse duration string to minutes
-   */
-  private parseDurationToMinutes(durationStr: string): number {
-    if (!durationStr) return 0;
-
-    const parts = durationStr.toLowerCase().split(' ');
-    if (parts.length < 2) return 0;
-
-    try {
-      const value = parseInt(parts[0]);
-      const unit = parts[1];
-
-      if (unit.includes('seconde')) {
-        return Math.ceil(value / 60);
-      } else if (unit.includes('minute')) {
-        return value;
-      } else if (unit.includes('heure')) {
-        return value * 60;
-      } else if (unit.includes('jour')) {
-        return value * 24 * 60;
-      } else if (unit.includes('semaine')) {
-        return value * 7 * 24 * 60;
-      }
-    } catch (e) {
-      console.error(`Error parsing duration: ${durationStr}`, e);
-      return 0;
-    }
-
-    return 0;
-  }
-
-  /**
-   * Format minutes to human readable duration
-   */
-  formatDuration(totalMinutes: number): string {
-    if (totalMinutes === 0) return '0 minute';
-
-    const weeks = Math.floor(totalMinutes / (7 * 24 * 60));
-    const days = Math.floor((totalMinutes % (7 * 24 * 60)) / (24 * 60));
-    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-    const minutes = totalMinutes % 60;
-
-    const parts: string[] = [];
-
-    if (weeks > 0) parts.push(`${weeks} semaine${weeks > 1 ? 's' : ''}`);
-    if (days > 0) parts.push(`${days} jour${days > 1 ? 's' : ''}`);
-    if (hours > 0) parts.push(`${hours} heure${hours > 1 ? 's' : ''}`);
-    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
-
-    if (parts.length > 1) {
-      return `${parts.slice(0, -1).join(', ')} et ${parts[parts.length - 1]}`;
-    }
-    return parts[0];
   }
 }
