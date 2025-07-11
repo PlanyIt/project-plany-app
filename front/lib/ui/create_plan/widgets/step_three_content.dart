@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../utils/helpers.dart';
-import '../../../domain/models/step/step_data.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/ui/card/compact_plan_card.dart';
 import '../view_models/create_plan_view_model.dart';
+import '../view_models/create_step_viewmodel.dart';
 import 'step_card_timeline.dart';
 
 class StepThreeContent extends StatelessWidget {

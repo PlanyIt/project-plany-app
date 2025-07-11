@@ -130,6 +130,10 @@ class _ChooseLocationState extends State<ChooseLocation> {
               // Barre de recherche et résultats
               _buildSearchSection(),
 
+              // Location name display
+              if (_viewModel.selectedLocation != null)
+                _buildLocationNameDisplay(),
+
               // Bouton de confirmation
               if (_viewModel.canConfirmSelection) _buildConfirmButton(),
 
@@ -215,6 +219,72 @@ class _ChooseLocationState extends State<ChooseLocation> {
                 );
               },
             ),
+    );
+  }
+
+  Widget _buildLocationNameDisplay() {
+    return Positioned(
+      top: _viewModel.searchResults.isNotEmpty ? 200 : 80,
+      left: 16,
+      right: 16,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.location_on,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _viewModel.isLoadingLocationName
+                  ? Row(
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Localisation en cours...',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      _viewModel.selectedLocationName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

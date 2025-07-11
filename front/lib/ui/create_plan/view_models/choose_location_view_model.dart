@@ -27,6 +27,7 @@ class ChooseLocationViewModel extends ChangeNotifier {
   String _selectedLocationName = '';
   bool _isSearching = false;
   bool _isLoadingCurrentLocation = false;
+  bool _isLoadingLocationName = false;
   List<SearchResult> _searchResults = [];
   String? _errorMessage;
 
@@ -35,6 +36,7 @@ class ChooseLocationViewModel extends ChangeNotifier {
   String get selectedLocationName => _selectedLocationName;
   bool get isSearching => _isSearching;
   bool get isLoadingCurrentLocation => _isLoadingCurrentLocation;
+  bool get isLoadingLocationName => _isLoadingLocationName;
   List<SearchResult> get searchResults => _searchResults;
   String? get errorMessage => _errorMessage;
 
@@ -73,15 +75,18 @@ class ChooseLocationViewModel extends ChangeNotifier {
       if (_isDisposed) return;
 
       if (position != null) {
-        _selectedLocation = LatLng(position.latitude, position.longitude);
-        _selectedLocationName = 'Ma position actuelle';
-        _errorMessage = null;
+        final latLng = LatLng(position.latitude, position.longitude);
+        _selectedLocation = latLng;
+        _selectedLocationName = 'Localisation en cours...';
+        _safeNotifyListeners();
+
+        // Fetch the actual location name
+        await _updateLocationName(latLng);
       } else {
         _setFallbackLocation();
       }
     } catch (e) {
       if (_isDisposed) return;
-      print('Erreur lors de l\'obtention de la position: $e');
       _setFallbackLocation();
     } finally {
       if (!_isDisposed) {
@@ -99,14 +104,119 @@ class ChooseLocationViewModel extends ChangeNotifier {
     _errorMessage = 'Impossible d\'obtenir votre position';
   }
 
-  void onMapTap(LatLng point) {
+  void onMapTap(LatLng point) async {
     if (_isDisposed) return;
     _selectedLocation = point;
-    _selectedLocationName = 'Position sélectionnée';
+    _selectedLocationName = 'Localisation en cours...';
     _safeNotifyListeners();
+
+    // Fetch the actual location name
+    await _updateLocationName(point);
   }
 
-  Future<void> onSearchChanged(String query) async {
+  Future<void> _updateLocationName(LatLng location) async {
+    if (_isDisposed) return;
+
+    _isLoadingLocationName = true;
+    _safeNotifyListeners();
+
+    try {
+      final locationName = await _reverseGeocode(location);
+
+      if (_isDisposed) return;
+
+      _selectedLocationName = locationName;
+    } catch (e) {
+      if (_isDisposed) return;
+      _selectedLocationName = 'Position sélectionnée';
+    } finally {
+      if (!_isDisposed) {
+        _isLoadingLocationName = false;
+        _safeNotifyListeners();
+      }
+    }
+  }
+
+  Future<String> _reverseGeocode(LatLng location) async {
+    try {
+      final url = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=18&addressdetails=1');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'User-Agent': 'Plany-App/1.0.0',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['display_name'] != null) {
+          final displayName = data['display_name'] as String;
+          final parts = displayName.split(', ');
+
+          // Try to get a meaningful name from the address components
+          final address = data['address'] as Map<String, dynamic>?;
+
+          if (address != null) {
+            // Priority order for location name
+            final nameKeys = [
+              'house_number',
+              'road',
+              'pedestrian',
+              'amenity',
+              'shop',
+              'tourism',
+              'leisure',
+              'building',
+              'suburb',
+              'neighbourhood',
+              'quarter',
+              'city_district',
+              'village',
+              'town',
+              'city',
+            ];
+
+            String? primaryName;
+            String? secondaryName;
+
+            for (final key in nameKeys) {
+              if (address[key] != null) {
+                if (primaryName == null) {
+                  primaryName = address[key] as String;
+                } else if (secondaryName == null && key != 'house_number') {
+                  secondaryName = address[key] as String;
+                  break;
+                }
+              }
+            }
+
+            if (primaryName != null) {
+              if (address['house_number'] != null && address['road'] != null) {
+                return '${address['house_number']} ${address['road']}';
+              } else if (secondaryName != null &&
+                  primaryName != secondaryName) {
+                return '$primaryName, $secondaryName';
+              } else {
+                return primaryName;
+              }
+            }
+          }
+
+          return parts.first;
+        }
+      }
+
+      return 'Position sélectionnée';
+    } catch (e) {
+      return 'Position sélectionnée';
+    }
+  }
+
+  void onSearchChanged(String query) async {
     if (_isDisposed) return;
 
     if (query.isEmpty) {
@@ -127,7 +237,6 @@ class ChooseLocationViewModel extends ChangeNotifier {
       _searchResults = results;
     } catch (e) {
       if (_isDisposed) return;
-      print('Erreur lors de la recherche: $e');
       _searchResults = [];
     } finally {
       if (!_isDisposed) {
@@ -174,7 +283,6 @@ class ChooseLocationViewModel extends ChangeNotifier {
         throw Exception('Erreur lors de la recherche: ${response.statusCode}');
       }
     } catch (e) {
-      print('Erreur geocoding: $e');
       return [];
     }
   }

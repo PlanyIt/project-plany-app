@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/category/category_repository.dart';
@@ -11,12 +9,12 @@ import '../../../data/repositories/step/step_repository.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart' as step_model;
-import '../../../domain/models/step/step_data.dart';
 import '../../../domain/models/user/user.dart';
 import '../../../domain/use_cases/plan/create_plan_use_case.dart';
 import '../../../utils/command.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/result.dart';
+import 'create_step_viewmodel.dart';
 
 class CreatePlanViewModel extends ChangeNotifier {
   CreatePlanViewModel({
@@ -42,52 +40,20 @@ class CreatePlanViewModel extends ChangeNotifier {
   final ValueNotifier<String> title = ValueNotifier('');
   final ValueNotifier<String> description = ValueNotifier('');
   final ValueNotifier<List<StepData>> steps = ValueNotifier([]);
-
-  final ValueNotifier<String> stepTitle = ValueNotifier('');
-  final ValueNotifier<String> stepDescription = ValueNotifier('');
-  final ValueNotifier<int> stepDuration = ValueNotifier(0);
-  final ValueNotifier<String> stepCost = ValueNotifier('');
   final ValueNotifier<int> currentStep = ValueNotifier(1);
-
-  void setStepTitle(String value) => stepTitle.value = value;
-  void setStepDescription(String value) => stepDescription.value = value;
-  void setStepDuration(int value) => stepDuration.value = value;
-  void setStepCost(String value) => stepCost.value = value;
 
   List<Category> _categories = [];
   Category? _selectedCategory;
-  XFile? _imageStep;
-  LatLng? _selectedLocation;
-  String? _selectedLocationName;
-  String selectedUnit = 'Heures';
-
   bool _isLoading = false;
   String? _error;
-  bool _isEditingStep = false;
-  int? _editingStepIndex;
   User? _user;
 
   AnimationController? _animationController;
 
   List<Category> get categories => _categories;
   Category? get selectedCategory => _selectedCategory;
-  XFile? get imageStep => _imageStep;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  LatLng? get selectedLocation => _selectedLocation;
-  String? get selectedLocationName => _selectedLocationName;
-  bool get isEditingStep => _isEditingStep;
-  int? get editingStepIndex => _editingStepIndex;
-
-  set selectedLocation(LatLng? location) {
-    _selectedLocation = location;
-    notifyListeners();
-  }
-
-  set selectedLocationName(String? name) {
-    _selectedLocationName = name;
-    notifyListeners();
-  }
 
   void setCategory(Category category) {
     _selectedCategory = category;
@@ -115,6 +81,29 @@ class CreatePlanViewModel extends ChangeNotifier {
     }
   }
 
+  void addOrEditStep(StepData data, {int? index}) {
+    final updated = List<StepData>.from(steps.value);
+    if (index != null && index >= 0 && index < updated.length) {
+      updated[index] = data;
+    } else {
+      updated.add(data);
+    }
+    steps.value = updated;
+  }
+
+  void removeStepAt(int index) {
+    final updated = List<StepData>.from(steps.value)..removeAt(index);
+    steps.value = updated;
+  }
+
+  void reorderSteps(int oldIndex, int newIndex) {
+    final updated = List<StepData>.from(steps.value);
+    if (newIndex > oldIndex) newIndex -= 1;
+    final step = updated.removeAt(oldIndex);
+    updated.insert(newIndex, step);
+    steps.value = updated;
+  }
+
   Future<bool> createPlan() async {
     try {
       _setLoading(true);
@@ -137,6 +126,7 @@ class CreatePlanViewModel extends ChangeNotifier {
           _setError('L\'image est obligatoire pour l\'étape ${i + 1}');
           return false;
         }
+
         final formattedDuration = formatDurationToMinutes(
             '${s.duration} ${s.durationUnit?.toLowerCase()}');
 
@@ -184,6 +174,14 @@ class CreatePlanViewModel extends ChangeNotifier {
     }
   }
 
+  void resetAllFields() {
+    title.value = '';
+    description.value = '';
+    _selectedCategory = null;
+    steps.value = [];
+    notifyListeners();
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
@@ -191,123 +189,6 @@ class CreatePlanViewModel extends ChangeNotifier {
 
   void _setError(String? message) {
     _error = message;
-    notifyListeners();
-  }
-
-  void saveStep({
-    required String title,
-    required String description,
-    required File? image,
-    required int duration,
-    required double? cost,
-  }) {
-    final step = StepData(
-      title: title,
-      description: description,
-      imageUrl: image?.path ?? '',
-      duration: duration,
-      durationUnit: selectedUnit,
-      cost: cost,
-      location: _selectedLocation,
-      locationName: _selectedLocationName,
-    );
-
-    final updated = List<StepData>.from(steps.value);
-
-    if (_isEditingStep && _editingStepIndex != null) {
-      updated[_editingStepIndex!] = step;
-    } else {
-      updated.add(step);
-    }
-
-    steps.value = updated;
-    _resetStepFields();
-  }
-
-  void startEditingStep(int index) {
-    final step = steps.value[index];
-    selectedUnit = step.durationUnit ?? 'Heures';
-    _imageStep = step.imageUrl.isNotEmpty ? XFile(step.imageUrl) : null;
-    _selectedLocation = step.location;
-    _selectedLocationName = step.locationName;
-    stepTitle.value = step.title;
-    stepDescription.value = step.description;
-    stepDuration.value = step.duration ?? 0;
-    stepCost.value = step.cost?.toString() ?? '';
-    _editingStepIndex = index;
-    _isEditingStep = true;
-  }
-
-  void cancelEditingStep() {
-    _resetStepFields();
-    _isEditingStep = false;
-    _editingStepIndex = null;
-  }
-
-  void _resetStepFields() {
-    _imageStep = null;
-    _selectedLocation = null;
-    _selectedLocationName = null;
-    stepTitle.value = '';
-    stepDescription.value = '';
-    stepDuration.value = 0;
-    stepCost.value = '';
-    _editingStepIndex = null;
-    _isEditingStep = false;
-  }
-
-  Future<void> pickStepImage() async {
-    final picker = ImagePicker();
-    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedImage != null) {
-      _imageStep = pickedImage;
-      notifyListeners();
-    }
-  }
-
-  void removeStepImage() {
-    _imageStep = null;
-    notifyListeners();
-  }
-
-  void removeStepAt(int index) {
-    final updated = List<StepData>.from(steps.value)..removeAt(index);
-    steps.value = updated;
-  }
-
-  void reorderSteps(int oldIndex, int newIndex) {
-    final updated = List<StepData>.from(steps.value);
-    if (newIndex > oldIndex) newIndex -= 1;
-    final step = updated.removeAt(oldIndex);
-    updated.insert(newIndex, step);
-    steps.value = updated;
-  }
-
-  void initAnimationController(TickerProvider vsync) {
-    _animationController = AnimationController(
-      vsync: vsync,
-      duration: const Duration(milliseconds: 300),
-    );
-  }
-
-  void resetAllFields() {
-    title.value = '';
-    description.value = '';
-    _selectedCategory = null;
-    steps.value = [];
-
-    stepTitle.value = '';
-    stepDescription.value = '';
-    stepDuration.value = 0;
-    stepCost.value = '';
-
-    _imageStep = null;
-    _selectedLocation = null;
-    _selectedLocationName = null;
-    _editingStepIndex = null;
-    _isEditingStep = false;
-
     notifyListeners();
   }
 
@@ -341,7 +222,6 @@ class CreatePlanViewModel extends ChangeNotifier {
 
   bool validateCurrentStep() {
     _setError(null);
-
     switch (currentStep.value) {
       case 1:
         if (title.value.trim().isEmpty ||
@@ -362,15 +242,19 @@ class CreatePlanViewModel extends ChangeNotifier {
     }
   }
 
+  void initAnimationController(TickerProvider vsync) {
+    _animationController = AnimationController(
+      vsync: vsync,
+      duration: const Duration(milliseconds: 300),
+    );
+  }
+
   @override
   void dispose() {
     title.dispose();
     description.dispose();
     steps.dispose();
-    stepTitle.dispose();
-    stepDescription.dispose();
-    stepDuration.dispose();
-    stepCost.dispose();
+    currentStep.dispose();
     _animationController?.dispose();
     super.dispose();
   }
