@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/ui/search_bar/search_bar.dart';
-import '../view_models/search_view_model.dart';
-import 'filter_bottom_sheet.dart' hide Colors, Icons, Row;
-import 'filter_chips_section.dart';
-import 'vertical_plan_list.dart';
+import '../../routing/routes.dart';
+import '../core/ui/list/vertical_plan_list.dart';
+import '../core/ui/search_bar/search_bar.dart';
+import 'view_models/search_view_model.dart';
+import 'widgets/filter_bottom_sheet.dart';
+import 'widgets/filter_chips_section.dart';
 
 class SearchScreen extends StatefulWidget {
   final String? initialQuery;
@@ -27,6 +29,7 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  bool _isUpdatingController = false;
 
   @override
   void initState() {
@@ -34,10 +37,17 @@ class _SearchScreenState extends State<SearchScreen> {
     if (widget.initialQuery != null) {
       _searchController.text = widget.initialQuery!;
     }
+
+    // Appliquer les filtres initiaux
+    widget.viewModel.setInitialFilters(categoryId: widget.initialCategory);
+
+    // Écouter les changements du viewModel pour synchroniser le controller
+    widget.viewModel.addListener(_syncSearchController);
   }
 
   @override
   void dispose() {
+    widget.viewModel.removeListener(_syncSearchController);
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -55,9 +65,26 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _onSearchChanged(String query) {
-    // TODO: Implement search functionality
-    // For now, we'll just trigger the search command
-    widget.viewModel.search.execute();
+    if (!_isUpdatingController) {
+      widget.viewModel.setSearchQuery(query);
+    }
+  }
+
+  void _syncSearchController() {
+    // Éviter les cycles de notifications
+    if (_isUpdatingController) return;
+
+    final currentQuery = widget.viewModel.searchQuery ?? '';
+    if (currentQuery != _searchController.text) {
+      // Différer la mise à jour pour éviter setState during build
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isUpdatingController) {
+          _isUpdatingController = true;
+          _searchController.text = currentQuery;
+          _isUpdatingController = false;
+        }
+      });
+    }
   }
 
   @override
@@ -67,7 +94,7 @@ class _SearchScreenState extends State<SearchScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go(Routes.dashboard),
         ),
       ),
       backgroundColor: Colors.grey[50],

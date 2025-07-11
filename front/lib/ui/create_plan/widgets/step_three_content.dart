@@ -1,10 +1,12 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import '../../core/ui/card/compact_plan_card.dart';
+
+import '../../../../utils/helpers.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/ui/card/compact_plan_card.dart';
 import '../view_models/create_plan_view_model.dart';
 import 'step_card_timeline.dart';
-import '../../../utils/helpers.dart';
 
 class StepThreeContent extends StatefulWidget {
   const StepThreeContent({super.key, required this.viewModel});
@@ -128,10 +130,10 @@ class _StepThreeContentState extends State<StepThreeContent> {
       }
 
       if (step.duration != null && step.duration!.isNotEmpty) {
-        // Use helper function for consistent duration parsing
-        final durationString =
-            '${step.duration} ${step.durationUnit?.toLowerCase()}';
-        totalDurationMinutes += _parseDurationToMinutes(durationString);
+        // Utiliser la fonction helper pour une conversion cohérente
+        final value = int.tryParse(step.duration!) ?? 0;
+        final unit = step.durationUnit?.toLowerCase() ?? 'minutes';
+        totalDurationMinutes += convertDurationToMinutes(value, unit);
       }
     }
 
@@ -465,7 +467,6 @@ class _ImageCarouselState extends State<ImageCarousel> {
     );
   }
 }
-
 /// Helper method to parse duration consistently
 int _parseDurationToMinutes(String durationStr) {
   final parts = durationStr.toLowerCase().split(' ');

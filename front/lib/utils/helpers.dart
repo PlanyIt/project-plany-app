@@ -169,28 +169,42 @@ int parseDurationStringToMinutes(String durationStr) {
 }
 
 String formatDuration(int minutes) {
-  if (minutes < 60) {
-    return '$minutes min';
-  } else {
-    final hours = (minutes / 60).floor();
-    final remainingMinutes = minutes % 60;
-    if (remainingMinutes == 0) {
-      return '${hours}h';
+  if (minutes == 0) return '0 min';
+
+  // Utiliser 24h par jour au lieu de 8h
+  final workDayMinutes = 24 * 60; 
+  final days = minutes ~/ workDayMinutes;
+  final hours = (minutes % workDayMinutes) ~/ 60;
+  final remainingMinutes = minutes % 60;
+
+  final parts = <String>[];
+
+  if (days > 0) {
+    parts.add('${days}j');
+  }
+  if (hours > 0) {
+    parts.add('${hours}h');
+  }
+  if (remainingMinutes > 0 && days == 0) {
+    // N'afficher les minutes que si on a moins d'un jour
+    parts.add('${remainingMinutes}min');
+  }
+
+  // Pour les longues durées (plusieurs jours), simplifier l'affichage
+  if (days > 0) {
+    if (hours == 0) {
+      return '${days}j';
     } else {
-      return '${hours}h ${remainingMinutes}min';
+      return '${days}j ${hours}h';
     }
   }
-}
 
-String? formatDistance(double? meters) {
-  if (meters == null || meters < 0) return null;
-
-  if (meters < 1000) {
-    return '${meters.toStringAsFixed(0)} m';
-  } else {
-    final kilometers = meters / 1000;
-    return '${kilometers.toStringAsFixed(2)} km';
+  // Pour les durées courtes, afficher tout
+  if (parts.length > 1) {
+    return parts.join(' ');
   }
+
+  return parts.isNotEmpty ? parts.first : '0 min';
 }
 
 /// Calcule la distance en mètres entre deux points GPS (Haversine)
@@ -232,4 +246,64 @@ Color colorFromHex(String hexColor, {double? alpha}) {
     color = color.withValues(alpha: 0.3);
   }
   return color;
+}
+
+/// Convertit une durée en minutes selon l'unité
+int convertDurationToMinutes(int value, String unit) {
+  switch (unit.toLowerCase()) {
+    case 'min':
+    case 'minute':
+    case 'minutes':
+      return value;
+    case 'h':
+    case 'heure':
+    case 'heures':
+      return value * 60;
+    case 'j':
+    case 'jour':
+    case 'jours':
+      return value * 24 * 60; // 24 heures par jour au lieu de 8
+    default:
+      return value;
+  }
+}
+
+/// Convertit des minutes en unité spécifiée
+double convertMinutesToUnit(int minutes, String unit) {
+  switch (unit.toLowerCase()) {
+    case 'minutes':
+      return minutes.toDouble();
+    case 'heures':
+      return minutes / 60;
+    case 'jours':
+      return minutes / (24 * 60);
+    default:
+      return minutes.toDouble();
+  }
+}
+
+/// Formate une distance en mètres vers une chaîne lisible
+String formatDistance(double? distanceInMeters) {
+  if (distanceInMeters == null) return 'Distance inconnue';
+
+  if (distanceInMeters < 1000) {
+    return '${distanceInMeters.round()} m';
+  } else {
+    final kilometers = distanceInMeters / 1000;
+    if (kilometers < 10) {
+      return '${kilometers.toStringAsFixed(1)} km';
+    } else {
+      return '${kilometers.round()} km';
+    }
+  }
+}
+
+/// Calcule la distance en mètres entre deux points LatLng
+double calculateDistanceBetweenLatLng(LatLng point1, LatLng point2) {
+  return calculateDistanceBetween(
+    point1.latitude,
+    point1.longitude,
+    point2.latitude,
+    point2.longitude,
+  );
 }

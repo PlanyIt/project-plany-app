@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/helpers.dart';
+
 class DistanceSlider extends StatelessWidget {
   final RangeValues? values;
   final Function(RangeValues) onChanged;
@@ -12,31 +14,39 @@ class DistanceSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentValues = values ?? const RangeValues(0, 10000);
+    final currentValues = values != null
+        ? RangeValues(values!.start / 1000, values!.end / 1000)
+        : const RangeValues(0, 10);
 
     return Column(
       children: [
         RangeSlider(
           values: currentValues,
           min: 0,
-          max: 50000,
-          divisions: 50,
+          max: 50,
+          divisions: 200,
           activeColor: Colors.blue,
           labels: RangeLabels(
-            '${currentValues.start.toInt()}m',
-            '${currentValues.end.toInt()}m',
+            formatDistance(currentValues.start * 1000) ??
+                '${currentValues.start.toInt()} km',
+            formatDistance(currentValues.end * 1000) ??
+                '${currentValues.end.toInt()} km',
           ),
-          onChanged: onChanged,
+          onChanged: (values) {
+            onChanged(RangeValues(values.start * 1000, values.end * 1000));
+          },
         ),
         Row(
           children: [
             Text(
-              '${currentValues.start.toInt()}m',
+              formatDistance(currentValues.start * 1000) ??
+                  '${currentValues.start.toInt()} km',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             Text(
-              '${currentValues.end.toInt()}m',
+              formatDistance(currentValues.end * 1000) ??
+                  '${currentValues.end.toInt()} km',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ],

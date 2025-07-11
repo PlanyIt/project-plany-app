@@ -14,8 +14,8 @@ import '../ui/create_plan/widgets/create_plan_screen.dart';
 import '../ui/dashboard/dashboard_screen.dart';
 import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
 import '../ui/home/home_screen.dart';
+import '../ui/search_plan/search_screen.dart';
 import '../ui/search_plan/view_models/search_view_model.dart';
-import '../ui/search_plan/widgets/search_screen.dart';
 import 'routes.dart';
 
 /// Top go_router entry point.
@@ -64,20 +64,20 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
                 categoryRepository: context.read(),
                 authRepository: context.read(),
                 planRepository: context.read(),
+                locationService: context.read(),
               ),
             );
           },
           routes: [
             GoRoute(
               name: 'search',
-              path: '/search',
+              path: 'search',
               builder: (context, state) {
                 final initialQuery = state.uri.queryParameters['query'];
                 final initialCategory = state.uri.queryParameters['category'];
                 return SearchScreen(
                   viewModel: SearchViewModel(
                     planRepository: context.read(),
-                    stepRepository: context.read(),
                     categoryRepository: context.read(),
                   ),
                   initialQuery: initialQuery,

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../core/ui/card/compact_plan_card.dart';
-import '../view_models/search_view_model.dart';
+import '../../../../domain/models/step/step.dart';
+import '../../../../services/location_service.dart';
+import '../../../../utils/helpers.dart';
+import '../../../search_plan/view_models/search_view_model.dart';
+import '../card/compact_plan_card.dart';
 
 class VerticalPlanList extends StatelessWidget {
   final List<PlanWithMetrics> plans;
@@ -31,6 +35,19 @@ class VerticalPlanList extends StatelessWidget {
         final planWithMetrics = plans[index];
         final plan = planWithMetrics.plan;
 
+        // Calculer la distance si le plan a des coordonnées
+        String? distance;
+        if (plan.steps.isNotEmpty) {
+          final firstStep = plan.steps.first;
+          if (firstStep.position != null) {
+            final distanceInMeters = LocationService().calculateDistanceToPoint(
+              firstStep.position!.latitude,
+              firstStep.position!.longitude,
+            );
+            distance = formatDistance(distanceInMeters);
+          }
+        }
+
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           child: CompactPlanCard(
@@ -43,11 +60,15 @@ class VerticalPlanList extends StatelessWidget {
             totalDuration: planWithMetrics.totalDuration.inMinutes > 0
                 ? planWithMetrics.totalDuration.inMinutes
                 : null,
+            imageUrls: plan.steps.map((step) => step.image).toList(),
+            category: plan.category,
+            user: plan.user,
+            distance: distance,
+            aspectRatio: 2.5, // More compact for vertical display
             onTap: () {
-              Navigator.pushNamed(
-                context,
-                '/details',
-                arguments: plan.id,
+              context.pushNamed(
+                'planDetails',
+                pathParameters: {'planId': plan.id ?? ''},
               );
             },
           ),

@@ -50,7 +50,7 @@ class NavigationService {
 
   static Future<void> navigateToStep(
       BuildContext context, custom.Step step) async {
-    if (step.position == null) {
+    if (step.latitude == null || step.longitude == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Impossible de naviguer: coordonnées manquantes")));
       return;
@@ -58,8 +58,8 @@ class NavigationService {
 
     await navigateTo(
       context,
-      latitude: step.position!.latitude,
-      longitude: step.position!.longitude,
+      latitude: step.latitude!,
+      longitude: step.longitude!,
       title: step.title,
     );
   }

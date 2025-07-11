@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/category/category.dart';
@@ -21,7 +20,9 @@ class CompactPlanCard extends StatelessWidget {
   final BorderRadius? borderRadius;
   final double? totalCost;
   final int? totalDuration;
-  final double? distance;
+  final String? distance;
+
+  final double aspectRatio;
 
   const CompactPlanCard({
     super.key,
@@ -37,6 +38,7 @@ class CompactPlanCard extends StatelessWidget {
     this.totalCost,
     this.totalDuration,
     this.distance,
+    this.aspectRatio = 16 / 9,
   });
 
   @override
@@ -53,10 +55,10 @@ class CompactPlanCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             AspectRatio(
-              aspectRatio: 16 / 9,
+              aspectRatio: aspectRatio,
               child: _buildImageSection(),
             ),
-            // Content section
+            // Content section avec Flexible au lieu d'Expanded
             Flexible(
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -118,6 +120,7 @@ class CompactPlanCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             if (category != null) Flexible(child: _buildCategoryBadge(context)),
             const Spacer(),
@@ -146,35 +149,35 @@ class CompactPlanCard extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 6),
-        _buildMetadataSection(),
-      ],
-    );
-  }
-
-  Widget _buildMetadataSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Première ligne: étapes et distance
+        const SizedBox(height: 8),
+        // Ligne avec distance et nombre d'étapes
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            if (distance != null)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.location_on, size: 12, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    distance!,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             _buildMetadataItem(
               icon: Icons.format_list_numbered,
               text: "$stepsCount étapes",
             ),
-            if (distance != null) ...[
-              const SizedBox(width: 12),
-              _buildMetadataItem(
-                icon: Icons.place,
-                text: formatDistance(distance) ?? '',
-              ),
-            ],
           ],
         ),
         if (totalCost != null || totalDuration != null) ...[
           const SizedBox(height: 2),
-          // Deuxième ligne: coût et durée
           Row(
             children: [
               if (totalCost != null)
@@ -233,7 +236,7 @@ class CompactPlanCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withAlpha(25),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -245,7 +248,7 @@ class CompactPlanCard extends StatelessWidget {
                 user!.photoUrl!,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  color: AppTheme.primaryColor.withAlpha(25),
                   child: Icon(
                     Icons.person,
                     size: 14,
@@ -254,7 +257,7 @@ class CompactPlanCard extends StatelessWidget {
                 ),
               )
             : Container(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                color: AppTheme.primaryColor.withAlpha(25),
                 child: Icon(
                   Icons.person,
                   size: 14,
@@ -269,7 +272,7 @@ class CompactPlanCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+        color: AppTheme.primaryColor.withAlpha(25),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

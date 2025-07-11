@@ -8,6 +8,7 @@ import 'config/dependencies.dart';
 import 'routing/router.dart';
 import 'ui/core/localization/applocalization.dart';
 import 'ui/core/themes/app_theme.dart';
+import 'services/location_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,12 +19,23 @@ Future<void> main() async {
     debugPrint('${rec.level.name}: ${rec.time}: ${rec.message}');
   });
 
+  // Initialiser le service de géolocalisation
+  final locationService = LocationService();
+
   runApp(
     MultiProvider(
-      providers: providers,
+      providers: [
+        ...providers,
+        ChangeNotifierProvider.value(value: locationService),
+      ],
       child: const MainApp(),
     ),
   );
+
+  // Initialiser la géolocalisation après un court délai pour que l'app soit prête
+  Future.delayed(const Duration(milliseconds: 500), () {
+    locationService.initialize();
+  });
 }
 
 class MainApp extends StatelessWidget {

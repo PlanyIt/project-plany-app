@@ -9,7 +9,9 @@ import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart' as step_model;
 import '../../../domain/models/user/user.dart' show User;
+import '../../../services/location_service.dart';
 import '../../../utils/command.dart';
+import '../../../utils/helpers.dart';
 import '../../../utils/result.dart';
 
 class DashboardViewModel extends ChangeNotifier {
@@ -17,17 +19,23 @@ class DashboardViewModel extends ChangeNotifier {
     required CategoryRepository categoryRepository,
     required AuthRepository authRepository,
     required PlanRepository planRepository,
+    required LocationService locationService,
   })  : _categoryRepository = categoryRepository,
         _authRepository = authRepository,
-        _planRepository = planRepository {
+        _planRepository = planRepository,
+        _locationService = locationService {
     load = Command0(_load)..execute();
     logout = Command0(_logout);
+
+    // Écouter les changements de position
+    _locationService.addListener(_onLocationChanged);
   }
 
   // Repos
   final CategoryRepository _categoryRepository;
   final PlanRepository _planRepository;
   final AuthRepository _authRepository;
+  final LocationService _locationService;
   final Logger _log = Logger('DashboardViewModel');
 
   // Data
@@ -65,29 +73,6 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void navigateToSearch({String query = '', String category = ''}) {
-    // Émettre un événement pour la navigation
-    _navigationEvent = NavigationEvent.search(query: query, category: category);
-    notifyListeners();
-  }
-
-  void navigateToPlan(String planId) {
-    _navigationEvent = NavigationEvent.plan(planId);
-    notifyListeners();
-  }
-
-  void onCategoryTap(Category category) {
-    navigateToSearch(category: category.id);
-  }
-
-  NavigationEvent? _navigationEvent;
-  NavigationEvent? get navigationEvent => _navigationEvent;
-
-  void clearNavigationEvent() {
-    _navigationEvent = null;
-    notifyListeners();
-  }
-
   Future<Result<void>> _load() async {
     _categories = [];
     _plans = [];
@@ -110,7 +95,6 @@ class DashboardViewModel extends ChangeNotifier {
 
       if (categoryResult is Error<List<Category>>) {
         _log.warning('Failed to load categories', categoryResult.error);
-        _errorMessage = 'Erreur lors du chargement des catégories';
         _hasError = true;
         notifyListeners();
         return categoryResult;
@@ -118,7 +102,6 @@ class DashboardViewModel extends ChangeNotifier {
 
       if (planResult is Error<List<Plan>>) {
         _log.warning('Failed to load plans', planResult.error);
-        _errorMessage = 'Erreur lors du chargement des plans';
         _hasError = true;
         notifyListeners();
         return planResult;
@@ -180,20 +163,77 @@ class DashboardViewModel extends ChangeNotifier {
         return result;
     }
   }
-}
 
-// Classe pour gérer les événements de navigation
-class NavigationEvent {
-  final String type;
-  final Map<String, dynamic> data;
+  // Getter pour accéder au service de localisation
+  LocationService get locationService => _locationService;
 
-  NavigationEvent._(this.type, this.data);
+  /// Obtient les plans avec leur distance calculée (moins de 10km)
+  List<Plan> get nearbyPlans {
+    if (_locationService.currentPosition == null) return [];
 
-  factory NavigationEvent.search({String query = '', String category = ''}) {
-    return NavigationEvent._('search', {'query': query, 'category': category});
+    const maxDistanceKm = 10.0; // Distance maximale en kilomètres
+    const maxDistanceMeters = maxDistanceKm * 1000;
+
+    // Calculer les distances et filtrer les plans à moins de 10km
+    final plansWithDistance = _plans
+        .map((plan) {
+          final distance = _calculatePlanDistance(plan);
+          return {
+            'plan': plan,
+            'distance': distance,
+          };
+        })
+        .where((item) =>
+            item['distance'] != null &&
+            (item['distance'] as double) <= maxDistanceMeters)
+        .toList();
+
+    // Trier par distance croissante (du plus proche au plus loin)
+    plansWithDistance.sort(
+        (a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
+
+    // Retourner les 10 premiers plans les plus proches
+    return plansWithDistance
+        .take(10)
+        .map((item) => item['plan'] as Plan)
+        .toList();
   }
 
-  factory NavigationEvent.plan(String planId) {
-    return NavigationEvent._('plan', {'planId': planId});
+  /// Calcule la distance pour un plan donné
+  double? _calculatePlanDistance(Plan plan) {
+    if (plan.steps.isEmpty) return null;
+
+    // Utiliser la position du premier step comme référence
+    final firstStep = plan.steps.first;
+    if (firstStep.position == null) {
+      return null;
+    }
+
+    final userPosition = _locationService.currentPosition;
+    if (userPosition == null) return null;
+
+    return calculateDistanceBetween(
+      userPosition.latitude,
+      userPosition.longitude,
+      firstStep.position!.latitude,
+      firstStep.position!.longitude,
+    );
+  }
+
+  /// Obtient la distance formatée pour un plan
+  String getFormattedDistanceForPlan(Plan plan) {
+    final distance = _calculatePlanDistance(plan);
+    return formatDistance(distance);
+  }
+
+  void _onLocationChanged() {
+    // Notifier les changements quand la position change
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _locationService.removeListener(_onLocationChanged);
+    super.dispose();
   }
 }

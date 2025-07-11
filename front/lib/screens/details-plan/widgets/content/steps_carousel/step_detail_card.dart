@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/step/step.dart' as plan_steps;
+import '../../../../../domain/models/step/step.dart' as plan_steps;
 
 class StepDetailCard extends StatelessWidget {
   final plan_steps.Step step;
@@ -51,14 +51,14 @@ class StepDetailCard extends StatelessWidget {
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
               ),
-              image: step.image != null && step.image!.isNotEmpty
+              image: step.image.isNotEmpty
                   ? DecorationImage(
-                      image: NetworkImage(step.image!),
+                      image: NetworkImage(step.image),
                       fit: BoxFit.cover,
                     )
                   : null,
             ),
-            child: step.image == null || step.image!.isEmpty
+            child: step.image.isEmpty
                 ? Center(
                     child: Icon(
                       Icons.image_not_supported,

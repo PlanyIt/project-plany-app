@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../domain/models/category/category.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/icon_utils.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/dashboard_viewmodel.dart';
 
 class CategoryCards extends StatelessWidget {
-  const CategoryCards({super.key, required this.viewModel});
+  final Function(Category)? onPressed;
+  const CategoryCards({super.key, required this.viewModel, this.onPressed});
 
   final DashboardViewModel viewModel;
 
@@ -44,7 +46,7 @@ class CategoryCards extends StatelessWidget {
           ];
 
           return GestureDetector(
-            onTap: () => viewModel.onCategoryTap(category),
+            onTap: onPressed != null ? () => onPressed!(category) : null,
             child: Container(
               width: 110,
               margin:

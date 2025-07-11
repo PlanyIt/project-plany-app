@@ -195,8 +195,8 @@ class ApiClient {
       final body = jsonEncode({
         'title': step.title,
         'description': step.description,
-        'longitude': step.position?.longitude ?? 0.0,
-        'latitude': step.position?.latitude ?? 0.0,
+        'longitude': step.longitude ?? 0.0,
+        'latitude': step.latitude ?? 0.0,
         'order': step.order,
         'image': step.image,
         'duration': step.duration,

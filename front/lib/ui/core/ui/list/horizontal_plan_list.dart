@@ -25,7 +25,7 @@ class HorizontalPlanList extends StatelessWidget {
     required this.cards,
     required this.isLoading,
     required this.onPressed,
-    this.height = 250,
+    this.height = 260,
     this.cardWidth = 200,
   });
 

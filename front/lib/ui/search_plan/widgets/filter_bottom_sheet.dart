@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-import '../../../widgets/textfield/custom_text_field.dart';
+import '../../../utils/icon_utils.dart';
 import '../view_models/search_view_model.dart';
 import 'distance_slider.dart';
 import 'filter_bottom_sheet_header.dart';
@@ -23,14 +22,6 @@ class FilterBottomSheet extends StatefulWidget {
 
 class _FilterBottomSheetState extends State<FilterBottomSheet>
     with TickerProviderStateMixin {
-  late RangeValues? _tempDistanceRange;
-  late int? _tempMinCost;
-  late int? _tempMaxCost;
-  late int? _tempMinDuration;
-  late int? _tempMaxDuration;
-  late int? _tempFavoritesThreshold;
-  late SortOption _tempSortBy;
-
   final _minCostController = TextEditingController();
   final _maxCostController = TextEditingController();
   final _minDurationController = TextEditingController();
@@ -43,35 +34,34 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
   @override
   void initState() {
     super.initState();
-    _initializeValues();
+    widget.viewModel.initializeTempValues();
+    _initializeControllers();
     _initializeAnimation();
   }
 
-  void _initializeValues() {
-    _tempDistanceRange = widget.viewModel.distanceRange;
-    _tempSortBy = widget.viewModel.sortBy;
+  void _initializeControllers() {
+    _minCostController.text = widget.viewModel.tempMinCost;
+    _maxCostController.text = widget.viewModel.tempMaxCost;
+    _minDurationController.text = widget.viewModel.tempMinDuration;
+    _maxDurationController.text = widget.viewModel.tempMaxDuration;
+    _favoritesController.text =
+        widget.viewModel.tempFavoritesThreshold?.toString() ?? '';
 
-    // Cost
-    if (widget.viewModel.costRange != null) {
-      _tempMinCost = widget.viewModel.costRange!.start.toInt();
-      _tempMaxCost = widget.viewModel.costRange!.end.toInt();
-      _minCostController.text = _tempMinCost.toString();
-      _maxCostController.text = _tempMaxCost.toString();
-    }
-
-    // Duration
-    if (widget.viewModel.durationRange != null) {
-      _tempMinDuration = (widget.viewModel.durationRange!.start / 3600).toInt();
-      _tempMaxDuration = (widget.viewModel.durationRange!.end / 3600).toInt();
-      _minDurationController.text = _tempMinDuration.toString();
-      _maxDurationController.text = _tempMaxDuration.toString();
-    }
-
-    // Favorites
-    if (widget.viewModel.favoritesThreshold != null) {
-      _tempFavoritesThreshold = widget.viewModel.favoritesThreshold;
-      _favoritesController.text = _tempFavoritesThreshold.toString();
-    }
+    // Écouter les changements des controllers
+    _minCostController.addListener(() {
+      widget.viewModel.updateTempCost(minCost: _minCostController.text);
+    });
+    _maxCostController.addListener(() {
+      widget.viewModel.updateTempCost(maxCost: _maxCostController.text);
+    });
+    _minDurationController.addListener(() {
+      widget.viewModel
+          .updateTempDuration(minDuration: _minDurationController.text);
+    });
+    _maxDurationController.addListener(() {
+      widget.viewModel
+          .updateTempDuration(maxDuration: _maxDurationController.text);
+    });
   }
 
   void _initializeAnimation() {
@@ -100,51 +90,23 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
     super.dispose();
   }
 
-  void _applyFilters() {
-    widget.viewModel.distanceRange = _tempDistanceRange;
-
-    // Cost range
-    if (_tempMinCost != null && _tempMaxCost != null) {
-      widget.viewModel.costRange = RangeValues(
-        _tempMinCost!.toDouble(),
-        _tempMaxCost!.toDouble(),
-      );
-    } else {
-      widget.viewModel.costRange = null;
+  void _applyFilters() async {
+    final success = widget.viewModel.applyTempFilters();
+    if (success && mounted) {
+      Navigator.of(context).pop();
     }
-
-    // Duration range
-    if (_tempMinDuration != null && _tempMaxDuration != null) {
-      widget.viewModel.durationRange = RangeValues(
-        (_tempMinDuration! * 3600).toDouble(),
-        (_tempMaxDuration! * 3600).toDouble(),
-      );
-    } else {
-      widget.viewModel.durationRange = null;
-    }
-
-    widget.viewModel.favoritesThreshold = _tempFavoritesThreshold;
-    widget.viewModel.sortBy = _tempSortBy;
-    widget.viewModel.search.execute();
-    Navigator.of(context).pop();
   }
 
   void _resetFilters() {
-    setState(() {
-      _tempDistanceRange = null;
-      _tempMinCost = null;
-      _tempMaxCost = null;
-      _tempMinDuration = null;
-      _tempMaxDuration = null;
-      _tempFavoritesThreshold = null;
-      _tempSortBy = SortOption.recent;
+    widget.viewModel.clearAllFilters();
+    widget.viewModel.resetTempValues();
 
-      _minCostController.clear();
-      _maxCostController.clear();
-      _minDurationController.clear();
-      _maxDurationController.clear();
-      _favoritesController.clear();
-    });
+    // Réinitialiser les controllers
+    _minCostController.clear();
+    _maxCostController.clear();
+    _minDurationController.clear();
+    _maxDurationController.clear();
+    _favoritesController.clear();
   }
 
   @override
@@ -178,13 +140,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                   children: [
                     _buildSortSection(),
                     const SizedBox(height: 32),
+                    _buildCategorySection(),
+                    const SizedBox(height: 32),
                     _buildDistanceSection(),
                     const SizedBox(height: 32),
                     _buildCostSection(),
                     const SizedBox(height: 32),
                     _buildDurationSection(),
-                    const SizedBox(height: 32),
-                    _buildFavoritesSection(),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -202,10 +164,134 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
       title: 'Trier par',
       icon: Icons.sort_rounded,
       color: Colors.purple,
-      child: SortOptionSelector(
-        selectedOption: _tempSortBy,
-        onChanged: (option) => setState(() => _tempSortBy = option),
+      child: AnimatedBuilder(
+        animation: widget.viewModel,
+        builder: (context, _) {
+          return SortOptionSelector(
+            selectedOption: widget.viewModel.tempSortBy,
+            onChanged: widget.viewModel.updateTempSortBy,
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildCategorySection() {
+    return FilterSection(
+      title: 'Catégorie',
+      icon: Icons.category_rounded,
+      color: Colors.indigo,
+      child: _buildCategorySelector(),
+    );
+  }
+
+  Widget _buildCategorySelector() {
+    final theme = Theme.of(context);
+    final categories = widget.viewModel.fullCategories;
+
+    return AnimatedBuilder(
+      animation: widget.viewModel,
+      builder: (context, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Option "Toutes les catégories"
+            GestureDetector(
+              onTap: () => widget.viewModel.updateTempSelectedCategory(null),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: widget.viewModel.tempSelectedCategory == null
+                      ? Colors.indigo.withValues(alpha: .1)
+                      : Colors.transparent,
+                  border: Border.all(
+                    color: widget.viewModel.tempSelectedCategory == null
+                        ? Colors.indigo
+                        : theme.dividerColor.withValues(alpha: .3),
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.all_inclusive_rounded,
+                      color: widget.viewModel.tempSelectedCategory == null
+                          ? Colors.indigo
+                          : theme.textTheme.bodyMedium?.color,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Toutes les catégories',
+                      style: TextStyle(
+                        color: widget.viewModel.tempSelectedCategory == null
+                            ? Colors.indigo
+                            : theme.textTheme.bodyMedium?.color,
+                        fontWeight:
+                            widget.viewModel.tempSelectedCategory == null
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Liste des catégories
+            ...categories.map((category) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: GestureDetector(
+                    onTap: () => widget.viewModel
+                        .updateTempSelectedCategory(category.id),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color:
+                            widget.viewModel.tempSelectedCategory == category.id
+                                ? Colors.indigo.withValues(alpha: .1)
+                                : Colors.transparent,
+                        border: Border.all(
+                          color: widget.viewModel.tempSelectedCategory ==
+                                  category.id
+                              ? Colors.indigo
+                              : theme.dividerColor.withValues(alpha: .3),
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            getIconData(category.icon),
+                            color: widget.viewModel.tempSelectedCategory ==
+                                    category.id
+                                ? Colors.indigo
+                                : theme.textTheme.bodyMedium?.color,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            category.name,
+                            style: TextStyle(
+                              color: widget.viewModel.tempSelectedCategory ==
+                                      category.id
+                                  ? Colors.indigo
+                                  : theme.textTheme.bodyMedium?.color,
+                              fontWeight:
+                                  widget.viewModel.tempSelectedCategory ==
+                                          category.id
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )),
+          ],
+        );
+      },
     );
   }
 
@@ -214,9 +300,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
       title: 'Rayon de recherche',
       icon: Icons.location_on_rounded,
       color: Colors.blue,
-      child: DistanceSlider(
-        values: _tempDistanceRange,
-        onChanged: (values) => setState(() => _tempDistanceRange = values),
+      child: AnimatedBuilder(
+        animation: widget.viewModel,
+        builder: (context, _) {
+          return DistanceSlider(
+            values: widget.viewModel.tempDistanceRange,
+            onChanged: widget.viewModel.updateTempDistanceRange,
+          );
+        },
       ),
     );
   }
@@ -227,51 +318,113 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
       icon: Icons.euro_rounded,
       color: Colors.green,
       child: RangeInput(
+        viewModel: widget.viewModel,
         minController: _minCostController,
         maxController: _maxCostController,
         minLabel: 'Prix minimum',
         maxLabel: 'Prix maximum',
         suffix: '€',
         color: Colors.green,
-        onMinChanged: (value) => _tempMinCost = int.tryParse(value),
-        onMaxChanged: (value) => _tempMaxCost = int.tryParse(value),
+        fieldName: 'prix',
       ),
     );
   }
 
   Widget _buildDurationSection() {
     return FilterSection(
-      title: 'Durée (heures)',
+      title: 'Durée',
       icon: Icons.schedule_rounded,
       color: Colors.orange,
-      child: RangeInput(
-        minController: _minDurationController,
-        maxController: _maxDurationController,
-        minLabel: 'Durée minimum',
-        maxLabel: 'Durée maximum',
-        suffix: 'h',
-        color: Colors.orange,
-        onMinChanged: (value) => _tempMinDuration = int.tryParse(value),
-        onMaxChanged: (value) => _tempMaxDuration = int.tryParse(value),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RangeInput(
+            viewModel: widget.viewModel,
+            minController: _minDurationController,
+            maxController: _maxDurationController,
+            minLabel: 'Durée minimum',
+            maxLabel: 'Durée maximum',
+            suffix: widget.viewModel.tempDurationUnit,
+            color: Colors.orange,
+            fieldName: 'durée',
+          ),
+          const SizedBox(height: 16),
+          _buildDurationUnitSelector(),
+        ],
       ),
     );
   }
 
-  Widget _buildFavoritesSection() {
-    return FilterSection(
-      title: 'Favoris minimum',
-      icon: Icons.favorite_rounded,
-      color: Colors.red,
-      child: CustomTextField(
-        controller: _favoritesController,
-        labelText: 'Nombre minimum de favoris',
-        keyboardType: TextInputType.number,
-        onFocusChange: (_) =>
-            _tempFavoritesThreshold = int.tryParse(_favoritesController.text),
-        onTextFieldTap: () {
-          HapticFeedback.lightImpact();
-        },
-      ),
+  Widget _buildDurationUnitSelector() {
+    return AnimatedBuilder(
+      animation: widget.viewModel,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        final units = ['min', 'h', 'j'];
+        final unitLabels = {
+          'min': 'Minutes',
+          'h': 'Heures',
+          'j': 'Jours',
+        };
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Unité de durée',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: units.map((unit) {
+                final isSelected = widget.viewModel.tempDurationUnit == unit;
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: unit != units.last ? 8 : 0,
+                    ),
+                    child: GestureDetector(
+                      onTap: () =>
+                          widget.viewModel.updateTempDurationUnit(unit),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.orange.withValues(alpha: 0.1)
+                              : Colors.transparent,
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.orange
+                                : theme.dividerColor.withValues(alpha: 0.3),
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          unitLabels[unit]!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.orange
+                                : theme.textTheme.bodyMedium?.color,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -310,24 +463,34 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
           const SizedBox(width: 16),
           Expanded(
             flex: 2,
-            child: ElevatedButton(
-              onPressed: _applyFilters,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Appliquer les filtres',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
+            child: AnimatedBuilder(
+              animation: widget.viewModel,
+              builder: (context, _) {
+                final hasErrors = widget.viewModel.hasTempValidationErrors;
+
+                return ElevatedButton(
+                  onPressed: hasErrors ? null : _applyFilters,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.primaryColor,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.withValues(alpha: 0.3),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    hasErrors
+                        ? 'Erreurs de validation'
+                        : 'Appliquer les filtres',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],

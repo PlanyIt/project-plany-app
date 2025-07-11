@@ -15,6 +15,7 @@ import '../data/services/api/auth_api_client.dart';
 import '../data/services/auth_storage_service.dart';
 import '../data/services/imgur_service.dart';
 import '../data/services/session_manager.dart';
+import '../services/location_service.dart';
 
 List<SingleChildWidget> get providers {
   return [
@@ -29,6 +30,7 @@ List<SingleChildWidget> get providers {
               port: int.parse(dotenv.env['API_PORT'] ?? '3000'),
             )),
     Provider(create: (context) => ImgurService()),
+    Provider(create: (context) => LocationService()),
     Provider(create: (context) => AuthStorageService()),
     ChangeNotifierProvider<AuthRepository>(
       create: (context) => AuthRepositoryRemote(

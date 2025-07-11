@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/step/step.dart' as custom;
-import 'package:front/services/navigation_service.dart';
+import '../../../../../domain/models/step/step.dart' as custom;
+import '../../../../../services/navigation_service.dart';
 
 class HeaderControls extends StatelessWidget {
   final Color categoryColor;
@@ -66,7 +66,9 @@ class HeaderControls extends StatelessWidget {
       return;
     }
 
-    final validSteps = steps.where((step) => step.position != null).toList();
+    final validSteps = steps
+        .where((step) => step.latitude != null && step.longitude != null)
+        .toList();
 
     if (validSteps.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

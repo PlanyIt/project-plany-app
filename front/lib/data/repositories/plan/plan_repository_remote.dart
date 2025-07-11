@@ -29,7 +29,7 @@ class PlanRepositoryRemote implements PlanRepository {
     final payload = <String, dynamic>{
       "title": plan.title,
       "description": plan.description,
-      "category": plan.category,
+      "category": plan.category?.id,
       "user": plan.user?.id,
       "steps": plan.steps.map((step) => step.id).toList(),
       "isPublic": plan.isPublic,

@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:front/domain/models/step/step.dart' as plan_steps;
-import 'package:front/screens/details-plan/widgets/content/steps_carousel/step_detail_card.dart';
 import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../../domain/models/step/step.dart' as plan_steps;
+import 'step_detail_card.dart';
 import 'vertical_flight_path_painter.dart';
 
 class StepsCarousel extends StatefulWidget {
@@ -9,16 +12,16 @@ class StepsCarousel extends StatefulWidget {
   final Color categoryColor;
 
   const StepsCarousel({
-    Key? key,
+    super.key,
     required this.steps,
     this.categoryColor = const Color(0xFF3425B5),
-  }) : super(key: key);
+  });
 
   @override
-  _StepsCarouselState createState() => _StepsCarouselState();
+  StepsCarouselState createState() => StepsCarouselState();
 }
 
-class _StepsCarouselState extends State<StepsCarousel>
+class StepsCarouselState extends State<StepsCarousel>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   int _currentStepIndex = 0;
@@ -29,7 +32,7 @@ class _StepsCarouselState extends State<StepsCarousel>
   AnimationController? _flightController;
   double _flightPosition = 0.0;
 
-  Map<int, double> _distancesBetweenSteps = {};
+  final Map<int, double> _distancesBetweenSteps = {};
 
   @override
   void initState() {
@@ -113,8 +116,8 @@ class _StepsCarouselState extends State<StepsCarousel>
   }
 
   Widget _buildStepCard(plan_steps.Step step, int index) {
-    final bool isActive = index == _currentStepIndex;
-    final Color actualColor = _effectiveColor ?? widget.categoryColor;
+    final isActive = index == _currentStepIndex;
+    final actualColor = _effectiveColor ?? widget.categoryColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
@@ -412,15 +415,15 @@ class _StepsCarouselState extends State<StepsCarousel>
 
     try {
       // Conversion des degrés en radians
-      final double latRad1 = lat1 * math.pi / 180;
-      final double lonRad1 = lon1 * math.pi / 180;
-      final double latRad2 = lat2 * math.pi / 180;
-      final double lonRad2 = lon2 * math.pi / 180;
+      final latRad1 = lat1 * math.pi / 180;
+      final lonRad1 = lon1 * math.pi / 180;
+      final latRad2 = lat2 * math.pi / 180;
+      final lonRad2 = lon2 * math.pi / 180;
 
       // Formule de Haversine
-      final double dLat = latRad2 - latRad1;
-      final double dLon = lonRad2 - lonRad1;
-      final double a = math.pow(math.sin(dLat / 2), 2) +
+      final dLat = latRad2 - latRad1;
+      final dLon = lonRad2 - lonRad1;
+      final a = math.pow(math.sin(dLat / 2), 2) +
           math.cos(latRad1) *
               math.cos(latRad2) *
               math.pow(math.sin(dLon / 2), 2);
@@ -428,12 +431,14 @@ class _StepsCarouselState extends State<StepsCarousel>
       // Éviter les divisions par zéro ou racines négatives
       if (a.isNaN || a < 0) return 0.0;
 
-      final double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-      final double distance = earthRadius * c;
+      final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+      final distance = earthRadius * c;
 
       return distance.isFinite ? distance : 0.0;
     } catch (e) {
-      print('Erreur dans le calcul de distance: $e');
+      if (kDebugMode) {
+        print('Erreur dans le calcul de distance: $e');
+      }
       return 0.0;
     }
   }
@@ -442,18 +447,22 @@ class _StepsCarouselState extends State<StepsCarousel>
     final steps = widget.steps ?? _loadedSteps;
     if (steps == null || steps.length < 2) return;
 
-    for (int i = 0; i < steps.length - 1; i++) {
+    for (var i = 0; i < steps.length - 1; i++) {
       final currentStep = steps[i];
       final nextStep = steps[i + 1];
 
       try {
         // Vérifier si les positions existent
-        if (currentStep.position != null && nextStep.position != null) {
-          double distance = _calculateDistance(
-              currentStep.position!.latitude,
-              currentStep.position!.longitude,
-              nextStep.position!.latitude,
-              nextStep.position!.longitude);
+        if (currentStep.latitude != null &&
+            currentStep.longitude != null &&
+            nextStep.latitude != null &&
+            nextStep.longitude != null) {
+          final distance = _calculateDistance(
+            currentStep.latitude!,
+            currentStep.longitude!,
+            nextStep.latitude!,
+            nextStep.longitude!,
+          );
 
           // Ne stocker que les distances valides
           if (distance > 0) {
@@ -461,7 +470,9 @@ class _StepsCarouselState extends State<StepsCarousel>
           }
         }
       } catch (e) {
-        print('Erreur lors du calcul de distance entre étapes: $e');
+        if (kDebugMode) {
+          print('Erreur lors du calcul de distance entre étapes: $e');
+        }
       }
     }
   }

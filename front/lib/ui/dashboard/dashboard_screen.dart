@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../domain/models/category/category.dart' as app_category;
 import '../../domain/models/plan/plan.dart';
+import '../../services/location_service.dart';
 import '../core/ui/bottom_bar/bottom_bar.dart';
 import '../core/ui/card/compact_plan_card.dart';
+import '../core/ui/list/horizontal_plan_list.dart';
 import '../core/ui/placeholder/empty_state_widget.dart';
+import '../core/ui/search_bar/search_bar.dart';
 import 'view_models/dashboard_viewmodel.dart';
 import 'widgets/app_bar.dart';
 import 'widgets/category_cards.dart';
-import '../core/ui/list/horizontal_plan_list.dart';
 import 'widgets/profile_drawer.dart';
-import '../core/ui/search_bar/search_bar.dart';
 import 'widgets/section_header.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -30,6 +32,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     widget.viewModel.addListener(_onViewModelChanged);
+
+    // Forcer une vérification initiale de l'état de la localisation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final locationService = context.read<LocationService>();
+      if (!locationService.hasLocation && !locationService.isLoading) {
+        locationService.getCurrentLocation();
+      }
+    });
   }
 
   @override
@@ -61,31 +71,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       });
     }
-
-    // Gestion de la navigation
-    final navigationEvent = widget.viewModel.navigationEvent;
-    if (navigationEvent != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _handleNavigation(navigationEvent);
-          widget.viewModel.clearNavigationEvent();
-        }
-      });
-    }
-  }
-
-  void _handleNavigation(NavigationEvent event) {
-    switch (event.type) {
-      case 'search':
-        context.pushNamed('search', queryParameters: {
-          'query': event.data['query'] ?? '',
-          'category': event.data['category'] ?? '',
-        });
-        break;
-      case 'plan':
-        context.push('/plan/${event.data['planId']}');
-        break;
-    }
   }
 
   @override
@@ -102,7 +87,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           color: Theme.of(context).primaryColor,
-          onRefresh: () => widget.viewModel.load.execute(),
+          onRefresh: () async {
+            // Rafraîchir aussi la position
+            await context
+                .read<LocationService>()
+                .getCurrentLocation(forceRefresh: true);
+            return widget.viewModel.load.execute();
+          },
           child: ListenableBuilder(
             listenable: widget.viewModel,
             builder: (context, _) {
@@ -112,40 +103,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               return CustomScrollView(
                 slivers: [
                   _buildSearchBar(context),
-                  _buildSectionHeader(
-                    context,
-                    title: 'Catégories',
-                  ),
+                  _buildLocationStatus(context),
+                  _buildSectionHeader(context, title: 'Catégories'),
                   _buildCategoryCardsSection(
                     context,
                     categories: widget.viewModel.categories,
                     isLoading: isLoading,
                   ),
-                  _buildSectionHeader(
-                    context,
-                    title: 'À proximité',
-                    seeAll: true,
-                    onSeeAll: () => widget.viewModel.navigateToSearch(),
-                  ),
-                  _buildPlanListSection(
-                    context,
-                    plans: widget.viewModel.trendingPlans,
-                    isLoading: isLoading,
-                    emptyMessage: 'Aucun plan à proximité disponible',
-                    emptySubMessage:
-                        "Consultez cette section plus tard pour découvrir de nouveaux plans",
-                  ),
-                  _buildSectionHeader(
-                    context,
-                    title: 'Tendance',
-                    seeAll: true,
-                    onSeeAll: () => widget.viewModel.navigateToSearch(),
-                  ),
+                  _buildSectionHeader(context,
+                      title: 'À proximité', seeAll: true, onSeeAll: () => {}),
+                  _buildNearbyPlansSection(context, isLoading: isLoading),
+                  _buildSectionHeader(context,
+                      title: 'Populaire', seeAll: true, onSeeAll: () => {}),
                   _buildPlanListSection(
                     context,
                     plans: widget.viewModel.discoveryPlans,
                     isLoading: isLoading,
-                    emptyMessage: 'Aucun plan à découvrir disponible',
+                    emptyMessage: 'Aucun plan disponible',
                     emptySubMessage:
                         'Consultez cette section plus tard pour découvrir de nouveaux plans',
                     emptyIcon: Icons.explore_off_rounded,
@@ -166,13 +140,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
         child: InkWell(
-          onTap: () => widget.viewModel.navigateToSearch(),
+          onTap: () => {},
           child: AbsorbPointer(
             child: DashboardSearchBar(
-              hintText: 'Rechercher des plans...',
-              readOnly: true,
-              onTap: () => widget.viewModel.navigateToSearch(),
-            ),
+                hintText: 'Rechercher des plans...',
+                readOnly: true,
+                onTap: () => {}),
           ),
         ),
       ),
@@ -205,6 +178,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return SliverToBoxAdapter(
         child: CategoryCards(
           viewModel: widget.viewModel,
+          onPressed: (category) => context
+              .go('/search?category=${Uri.encodeComponent(category.id)}'),
         ),
       );
     }
@@ -224,7 +199,222 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return SliverToBoxAdapter(
       child: CategoryCards(
         viewModel: widget.viewModel,
+        onPressed: (category) =>
+            context.go('/search?category=${Uri.encodeComponent(category.id)}'),
       ),
+    );
+  }
+
+  /// Widget pour afficher le statut de la géolocalisation
+  Widget _buildLocationStatus(BuildContext context) {
+    return Consumer<LocationService>(
+      builder: (context, locationService, child) {
+        if (locationService.isLoading) {
+          return SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Localisation en cours...',
+                    style: TextStyle(
+                      color: Colors.blue.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (locationService.errorMessage != null) {
+          return SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_off,
+                    color: Colors.red.shade600,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      locationService.errorMessage!,
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () async {
+                      if (locationService.serviceDisabled) {
+                        await locationService.requestLocationService();
+                      }
+                      await locationService.getCurrentLocation(
+                          forceRefresh: true);
+                    },
+                    icon: Icon(
+                      Icons.refresh,
+                      size: 16,
+                      color: Colors.red.shade600,
+                    ),
+                    label: Text(
+                      'Réessayer',
+                      style: TextStyle(
+                        color: Colors.red.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (locationService.hasLocation) {
+          return SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    color: Colors.green.shade600,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Position actualisée',
+                      style: TextStyle(
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () async {
+                      await locationService.getCurrentLocation(
+                          forceRefresh: true);
+                    },
+                    icon: Icon(
+                      Icons.my_location,
+                      size: 16,
+                      color: Colors.green.shade600,
+                    ),
+                    label: Text(
+                      'Actualiser',
+                      style: TextStyle(
+                        color: Colors.green.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return const SliverToBoxAdapter(child: SizedBox.shrink());
+      },
+    );
+  }
+
+  /// Section pour les plans à proximité
+  Widget _buildNearbyPlansSection(BuildContext context,
+      {required bool isLoading}) {
+    return Consumer<LocationService>(
+      builder: (context, locationService, child) {
+        final nearbyPlans = widget.viewModel.nearbyPlans;
+
+        if (isLoading || locationService.isLoading) {
+          return _buildPlanListSection(
+            context,
+            plans: [],
+            isLoading: true,
+            emptyMessage: 'Chargement des plans à proximité...',
+          );
+        }
+
+        if (!locationService.hasLocation) {
+          return _buildPlanListSection(
+            context,
+            plans: widget.viewModel.trendingPlans,
+            isLoading: false,
+            emptyMessage: 'Plans populaires',
+            emptySubMessage:
+                'Activez la géolocalisation pour voir les plans à proximité',
+          );
+        }
+
+        if (nearbyPlans.isEmpty) {
+          return _buildPlanListSection(
+            context,
+            plans: widget.viewModel.trendingPlans,
+            isLoading: false,
+            emptyMessage: 'Aucun plan à moins de 10km',
+            emptySubMessage: 'Découvrez les plans populaires en attendant',
+            showDistance: false,
+          );
+        }
+
+        return _buildPlanListSection(
+          context,
+          plans: nearbyPlans,
+          isLoading: false,
+          emptyMessage: 'Plans à proximité',
+          emptySubMessage: 'Triés du plus proche au plus loin',
+          showDistance: true,
+        );
+      },
     );
   }
 
@@ -236,6 +426,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String? emptySubMessage,
     IconData emptyIcon = Icons.map_outlined,
     Color? accentColor,
+    bool showDistance = false,
   }) {
     if (isLoading) {
       return SliverToBoxAdapter(
@@ -272,24 +463,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return SliverToBoxAdapter(
       child: HorizontalPlanList(
-        isLoading: false,
-        cards: plans
-            .map((plan) => CompactPlanCard(
-                  title: plan.title,
-                  description: plan.description,
-                  category: plan.category,
-                  user: plan.user,
-                  imageUrl:
-                      plan.steps.isNotEmpty ? plan.steps.first.image : null,
-                  stepsCount: plan.steps.length,
-                  totalCost: plan.totalCost,
-                  totalDuration: plan.totalDuration,
-                  distance: 20,
-                ))
-            .toList(),
-        onPressed: (index) =>
-            widget.viewModel.navigateToPlan(plans[index].id ?? ''),
-      ),
+          isLoading: isLoading,
+          cards: plans
+              .map((plan) => CompactPlanCard(
+                    title: plan.title,
+                    description: plan.description,
+                    category: plan.category,
+                    user: plan.user,
+                    imageUrl:
+                        plan.steps.isNotEmpty ? plan.steps.first.image : null,
+                    stepsCount: plan.steps.length,
+                    totalCost: plan.totalCost,
+                    totalDuration: plan.totalDuration,
+                    distance: showDistance
+                        ? widget.viewModel.getFormattedDistanceForPlan(plan)
+                        : null,
+                  ))
+              .toList(),
+          onPressed: (index) => {}),
     );
   }
 }

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:front/domain/models/step/step.dart' as custom;
-import 'package:front/services/step_service.dart';
-import 'dart:math' as math;
+import '../../../../../domain/models/step/step.dart' as custom;
+import '../../../../../services/step_service.dart';
 
 class MapView extends StatefulWidget {
   final List<String> stepIds;
@@ -52,12 +51,12 @@ class MapViewState extends State<MapView> {
 
   Future<void> _loadSteps() async {
     try {
-      List<custom.Step> loadedSteps = [];
+      final loadedSteps = <custom.Step>[];
 
-      for (String id in widget.stepIds) {
+      for (final id in widget.stepIds) {
         final step = await _stepService.getStepById(id);
         if (step != null) {
-          if (step.position != null) {
+          if (step.latitude != null && step.longitude != null) {
             loadedSteps.add(step);
           } else {
             print("Position nulle pour étape ${step.id}");
@@ -90,13 +89,16 @@ class MapViewState extends State<MapView> {
 
     try {
       if (_steps.length == 1) {
-        _mapController.move(_steps[0].position!, 12.0);
+        _mapController.move(
+          LatLng(_steps[0].latitude ?? 0.0, _steps[0].longitude ?? 0.0),
+          14.0,
+        );
         return;
       }
 
       final points = _steps
-          .where((step) => step.position != null)
-          .map((step) => step.position!)
+          .where((step) => step.latitude != null && step.longitude != null)
+          .map((step) => LatLng(step.latitude!, step.longitude!))
           .toList();
 
       if (points.isEmpty) return;
@@ -114,18 +116,21 @@ class MapViewState extends State<MapView> {
       print("Erreur d'ajustement de la carte: $e");
       // Tentative de fallback
       if (_steps.isNotEmpty) {
-        _mapController.move(_steps[0].position!, 13.0);
+        _mapController.move(
+          LatLng(_steps[0].latitude ?? 0.0, _steps[0].longitude ?? 0.0),
+          14.0,
+        );
       }
     }
   }
 
   void _zoomToStep(int index) {
-    if (index < 0 || index >= _steps.length || _steps[index].position == null)
-      return;
-
+    if (index < 0 || index >= _steps.length) return;
     final step = _steps[index];
     _mapController.move(
-        LatLng(step.position!.latitude, step.position!.longitude), 18.0);
+      LatLng(step.latitude ?? 0.0, step.longitude ?? 0.0),
+      15.0,
+    );
 
     setState(() {
       _currentStepIndex = index;
@@ -133,11 +138,19 @@ class MapViewState extends State<MapView> {
   }
 
   void recenterMap() {
-    if (_steps.isNotEmpty && _steps[0].position != null) {
-      _mapController.move(
-        LatLng(_steps[0].position!.latitude, _steps[0].position!.longitude),
-        15.0,
-      );
+    if (_steps.isEmpty) return;
+    if (!_hasCenteredMap) {
+      _hasCenteredMap = true;
+      _fitBounds();
+    } else {
+      // Si la carte est déjà centrée, on recentre sur le marqueur actuel
+      if (_currentStepIndex >= 0 && _currentStepIndex < _steps.length) {
+        final step = _steps[_currentStepIndex];
+        _mapController.move(
+          LatLng(step.latitude ?? 0.0, step.longitude ?? 0.0),
+          15.0,
+        );
+      }
     }
   }
 
@@ -148,18 +161,18 @@ class MapViewState extends State<MapView> {
     final bounds = LatLngBounds(
       LatLng(
         _steps
-            .map((m) => m.position!.latitude)
+            .map((m) => m.latitude!)
             .reduce((min, pos) => pos < min ? pos : min),
         _steps
-            .map((m) => m.position!.longitude)
+            .map((m) => m.longitude!)
             .reduce((min, pos) => pos < min ? pos : min),
       ),
       LatLng(
         _steps
-            .map((m) => m.position!.latitude)
+            .map((m) => m.latitude!)
             .reduce((max, pos) => pos > max ? pos : max),
         _steps
-            .map((m) => m.position!.longitude)
+            .map((m) => m.longitude!)
             .reduce((max, pos) => pos > max ? pos : max),
       ),
     );
@@ -187,12 +200,12 @@ class MapViewState extends State<MapView> {
 
   Color get categoryColor {
     // Utiliser la couleur fournie, ou une couleur par défaut si null
-    return widget.categoryColor ?? Colors.deepPurpleAccent;
+    return widget.categoryColor;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: widget.height,
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -206,7 +219,10 @@ class MapViewState extends State<MapView> {
                       options: MapOptions(
                         initialZoom: 13,
                         initialCenter: _steps.isNotEmpty
-                            ? _steps[0].position!
+                            ? LatLng(
+                                _steps[0].latitude ?? 0.0,
+                                _steps[0].longitude ?? 0.0,
+                              )
                             : const LatLng(48.856614, 2.3522219),
                         onMapReady: () {
                           Future.delayed(const Duration(milliseconds: 500), () {
@@ -232,7 +248,10 @@ class MapViewState extends State<MapView> {
                             return Marker(
                               width: 40,
                               height: 40,
-                              point: step.position!,
+                              point: LatLng(
+                                step.latitude ?? 0.0,
+                                step.longitude ?? 0.0,
+                              ),
                               child: GestureDetector(
                                 onTap: () {
                                   setState(() {
@@ -264,7 +283,12 @@ class MapViewState extends State<MapView> {
                           PolylineLayer(
                             polylines: [
                               Polyline(
-                                points: _steps.map((s) => s.position!).toList(),
+                                points: _steps
+                                    .map((step) => LatLng(
+                                          step.latitude ?? 0.0,
+                                          step.longitude ?? 0.0,
+                                        ))
+                                    .toList(),
                                 color: categoryColor,
                                 strokeWidth: 4,
                               ),

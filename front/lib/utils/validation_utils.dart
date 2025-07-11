@@ -62,4 +62,85 @@ class ValidationUtils {
 
     return null;
   }
+
+  /// Valide qu'une valeur minimale n'est pas supérieure à une valeur maximale
+  static String? validateRange({
+    required String? minValue,
+    required String? maxValue,
+    String fieldName = 'valeur',
+  }) {
+    // Si les deux sont vides, c'est valide
+    if ((minValue == null || minValue.isEmpty) &&
+        (maxValue == null || maxValue.isEmpty)) return null;
+
+    double? min, max;
+
+    // Parse les valeurs non vides
+    if (minValue != null && minValue.isNotEmpty) {
+      min = double.tryParse(minValue);
+      if (min == null) {
+        return 'Veuillez entrer un nombre valide pour le minimum';
+      }
+      if (min < 0) {
+        return 'La valeur minimale ne peut pas être négative';
+      }
+    }
+
+    if (maxValue != null && maxValue.isNotEmpty) {
+      max = double.tryParse(maxValue);
+      if (max == null) {
+        return 'Veuillez entrer un nombre valide pour le maximum';
+      }
+      if (max < 0) {
+        return 'La valeur maximale ne peut pas être négative';
+      }
+    }
+
+    // Valider que min <= max seulement si les deux sont définies
+    if (min != null && max != null && min > max) {
+      return 'La ${fieldName} minimale ne peut pas être supérieure à la maximale';
+    }
+
+    return null;
+  }
+
+  /// Valide une valeur de coût
+  static String? validateCost(String? value) {
+    if (value == null || value.isEmpty) return null;
+
+    final cost = double.tryParse(value);
+    if (cost == null) {
+      return 'Veuillez entrer un nombre valide';
+    }
+
+    if (cost < 0) {
+      return 'Le coût ne peut pas être négatif';
+    }
+
+    if (cost > 10000) {
+      return 'Le coût semble trop élevé';
+    }
+
+    return null;
+  }
+
+  /// Valide une valeur de durée
+  static String? validateDuration(String? value) {
+    if (value == null || value.isEmpty) return null;
+
+    final duration = int.tryParse(value);
+    if (duration == null) {
+      return 'Veuillez entrer un nombre entier valide';
+    }
+
+    if (duration < 0) {
+      return 'La durée ne peut pas être négative';
+    }
+
+    if (duration > 1000) {
+      return 'La durée semble trop élevée';
+    }
+
+    return null;
+  }
 }

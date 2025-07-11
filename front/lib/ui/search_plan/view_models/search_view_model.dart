@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 
 import '../../../data/repositories/category/category_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
-import '../../../data/repositories/step/step_repository.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
-import '../../../domain/models/step/step.dart' as step_model;
+import '../../../domain/models/step/step.dart';
+import '../../../services/location_service.dart';
 import '../../../utils/command.dart';
-import '../../../utils/helpers.dart';
 import '../../../utils/result.dart';
-
-/// Critères de tri disponibles
-enum SortOption { distance, cost, duration, favorites, recent }
+import 'search_chips_view_model.dart';
+import 'search_filters_view_model.dart';
 
 /// Association d'un Plan avec ses métriques calculées
 class PlanWithMetrics {
@@ -32,55 +29,123 @@ class PlanWithMetrics {
   });
 }
 
-/// ViewModel pour la recherche de plans
+/// ViewModel principal pour la recherche de plans
 class SearchViewModel extends ChangeNotifier {
   SearchViewModel({
     required PlanRepository planRepository,
-    required StepRepository stepRepository,
     required CategoryRepository categoryRepository,
   })  : _planRepository = planRepository,
-        _stepRepository = stepRepository,
-        _categoryRepository = categoryRepository {
+        _categoryRepository = categoryRepository,
+        _locationService = LocationService(),
+        filtersViewModel = SearchFiltersViewModel() {
     load = Command0(_load)..execute();
     search = Command0(_search);
+
+    // Écouter les changements de filtres pour relancer la recherche
+    filtersViewModel.addListener(() => search.execute());
   }
 
   final _log = Logger('SearchViewModel');
   final PlanRepository _planRepository;
-  final StepRepository _stepRepository;
   final CategoryRepository _categoryRepository;
+  final LocationService _locationService;
 
-  /// Indicateur de chargement initial
+  /// ViewModel pour la gestion des filtres
+  final SearchFiltersViewModel filtersViewModel;
+
+  /// ViewModel pour la gestion des chips (sera initialisé après le chargement des catégories)
+  SearchChipsViewModel? chipsViewModel;
+
+  /// Indicateurs d'état
   bool isLoading = false;
-
-  /// Indicateur de recherche en cours
   bool isSearching = false;
-
-  /// Éventuelle erreur
   String? errorMessage;
 
-  /// Liste brute de tous les plans
+  /// Données
   List<Plan> _allPlans = [];
-
-  /// Résultats après application des filtres / tris
   List<PlanWithMetrics> results = [];
-
-  /// Liste des catégories disponibles
-  List<String> categories = [];
-
-  /// Catégorie sélectionnée, null = toutes
-  String? selectedCategory;
-
-  // --- filtres sélectionnés ---
-  RangeValues? distanceRange; // en mètres
-  RangeValues? costRange; // unités monétaires
-  RangeValues? durationRange; // en secondes
-  int? favoritesThreshold; // nb minimum de favoris
-  SortOption sortBy = SortOption.recent;
+  List<Category> _categories = [];
 
   /// Commandes
   late final Command0 load;
   late final Command0 search;
+
+  /// Getters pour l'accès aux données
+  List<Category> get fullCategories => _categories;
+
+  /// Obtient le nom d'une catégorie par son ID
+  String getCategoryName(String categoryId) {
+    final category = _categories.firstWhere(
+      (cat) => cat.id == categoryId,
+      orElse: () =>
+          Category(id: categoryId, name: categoryId, icon: '', color: ''),
+    );
+    return category.name;
+  }
+
+  /// Délégation vers les sous-ViewModels
+  void setSearchQuery(String? query) => filtersViewModel.setSearchQuery(query);
+  void setSelectedCategory(String? categoryId) =>
+      filtersViewModel.setSelectedCategory(categoryId);
+
+  /// Définit les filtres initiaux (utilisé lors de l'arrivée depuis le dashboard)
+  void setInitialFilters({String? categoryId}) {
+    if (categoryId != null && categoryId.isNotEmpty) {
+      filtersViewModel.selectedCategory = categoryId;
+    }
+  }
+
+  // Getters pour accéder aux filtres
+  String? get searchQuery => filtersViewModel.searchQuery;
+  String? get selectedCategory => filtersViewModel.selectedCategory;
+  RangeValues? get distanceRange => filtersViewModel.distanceRange;
+  RangeValues? get costRange => filtersViewModel.costRange;
+  RangeValues? get durationRange => filtersViewModel.durationRange;
+  int? get favoritesThreshold => filtersViewModel.favoritesThreshold;
+  SortOption get sortBy => filtersViewModel.sortBy;
+
+  // Délégation vers le chips ViewModel
+  List<Map<String, dynamic>> getActiveFilters() =>
+      chipsViewModel?.getActiveFilters() ?? [];
+  bool get hasActiveFilters => chipsViewModel?.hasActiveFilters ?? false;
+  int get activeFiltersCount => chipsViewModel?.activeFiltersCount ?? 0;
+  void clearAllFilters() => filtersViewModel.clearAllFilters();
+
+  // Délégation pour la validation et les valeurs temporaires
+  void initializeTempValues() => filtersViewModel.initializeTempValues();
+  bool applyTempFilters() => filtersViewModel.applyTempFilters();
+  void resetTempValues() => filtersViewModel.resetTempValues();
+  bool get hasTempValidationErrors => filtersViewModel.hasTempValidationErrors;
+  String? getFieldError(String fieldName) =>
+      filtersViewModel.getFieldError(fieldName);
+
+  // Getters pour les valeurs temporaires
+  RangeValues? get tempDistanceRange => filtersViewModel.tempDistanceRange;
+  String? get tempSelectedCategory => filtersViewModel.tempSelectedCategory;
+  String get tempMinCost => filtersViewModel.tempMinCost;
+  String get tempMaxCost => filtersViewModel.tempMaxCost;
+  String get tempMinDuration => filtersViewModel.tempMinDuration;
+  String get tempMaxDuration => filtersViewModel.tempMaxDuration;
+  String get tempDurationUnit => filtersViewModel.tempDurationUnit;
+  int? get tempFavoritesThreshold => filtersViewModel.tempFavoritesThreshold;
+  SortOption get tempSortBy => filtersViewModel.tempSortBy;
+
+  // Méthodes pour mettre à jour les valeurs temporaires
+  void updateTempDistanceRange(RangeValues? values) =>
+      filtersViewModel.updateTempDistanceRange(values);
+  void updateTempSelectedCategory(String? categoryId) =>
+      filtersViewModel.updateTempSelectedCategory(categoryId);
+  void updateTempCost({String? minCost, String? maxCost}) =>
+      filtersViewModel.updateTempCost(minCost: minCost, maxCost: maxCost);
+  void updateTempDuration({String? minDuration, String? maxDuration}) =>
+      filtersViewModel.updateTempDuration(
+          minDuration: minDuration, maxDuration: maxDuration);
+  void updateTempDurationUnit(String unit) =>
+      filtersViewModel.updateTempDurationUnit(unit);
+  void updateTempFavoritesThreshold(int? threshold) =>
+      filtersViewModel.updateTempFavoritesThreshold(threshold);
+  void updateTempSortBy(SortOption sortOption) =>
+      filtersViewModel.updateTempSortBy(sortOption);
 
   /// Charge catégories et plans
   Future<Result<void>> _load() async {
@@ -88,33 +153,39 @@ class SearchViewModel extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
-    // Charger catégories
-    final catRes = await _categoryRepository.getCategoriesList();
-    if (catRes is Ok<List<Category>>) {
-      categories = catRes.value.map((c) => c.id).toList();
-    } else {
-      _log.warning(
-          'Impossible de charger les catégories', (catRes as Error).error);
-    }
+    try {
+      // Charger catégories
+      final catRes = await _categoryRepository.getCategoriesList();
+      if (catRes is Ok<List<Category>>) {
+        _categories = catRes.value;
 
-    // Charger plans
-    final res = await _planRepository.getPlanList();
-    if (res is Error) {
-      errorMessage = (res).toString();
-      _log.warning('Échec du chargement des plans', res);
+        // Initialiser le chips ViewModel maintenant que nous avons les catégories
+        chipsViewModel = SearchChipsViewModel(
+          filtersViewModel: filtersViewModel,
+          categories: _categories,
+        );
+      } else {
+        _log.warning(
+            'Impossible de charger les catégories', (catRes as Error).error);
+      }
+
+      // Charger plans
+      final res = await _planRepository.getPlanList();
+      if (res is Error) {
+        errorMessage = (res).toString();
+        _log.warning('Échec du chargement des plans', res);
+        return res;
+      }
+
+      _allPlans = (res as Ok<List<Plan>>).value;
+      _log.fine('Plans chargés : ${_allPlans.length}');
+
+      final searchRes = await _search();
+      return searchRes;
+    } finally {
       isLoading = false;
       notifyListeners();
-      return res;
     }
-
-    _allPlans = (res as Ok<List<Plan>>).value;
-    _log.fine('Plans chargés : ${_allPlans.length}');
-
-    final searchRes = await _search();
-
-    isLoading = false;
-    notifyListeners();
-    return searchRes;
   }
 
   /// Applique filtres, catégorie et tris sur [_allPlans]
@@ -123,40 +194,57 @@ class SearchViewModel extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
-    var hadError = false;
-    final distance = Distance();
-
     final futures = _allPlans.map((plan) async {
       // Filtre catégorie
-      if (selectedCategory != null && plan.category != selectedCategory) {
+      if (filtersViewModel.selectedCategory != null &&
+          plan.category?.id != filtersViewModel.selectedCategory) {
         return null;
       }
 
-      final stepRes = await _stepRepository.getStepsList(plan.id!);
-      if (stepRes is Error) {
-        hadError = true;
-        _log.warning('Échec chargement steps pour plan ${plan.id}', (stepRes));
-        return null;
-      }
-      final steps = (stepRes as Ok<List<step_model.Step>>).value;
+      // Filtre de recherche par texte
+      if (filtersViewModel.searchQuery != null &&
+          filtersViewModel.searchQuery!.isNotEmpty) {
+        final query = filtersViewModel.searchQuery!.toLowerCase();
+        bool matchesSearch = false;
 
-      // Calcul métriques
-      double totalDist = 0;
-      for (var i = 1; i < steps.length; i++) {
-        final p1 = steps[i - 1].position;
-        final p2 = steps[i].position;
-        if (p1 != null && p2 != null) {
-          totalDist += distance.as(LengthUnit.Meter, p1, p2);
+        // Recherche dans le titre et description du plan
+        if (plan.title.toLowerCase().contains(query) ||
+            plan.description.toLowerCase().contains(query)) {
+          matchesSearch = true;
+        }
+
+        // Recherche dans les étapes si pas encore trouvé
+        if (!matchesSearch) {
+          for (final step in plan.steps) {
+            if (step.title.toLowerCase().contains(query) ||
+                step.description.toLowerCase().contains(query)) {
+              matchesSearch = true;
+              break;
+            }
+          }
+        }
+
+        if (!matchesSearch) return null;
+      }
+
+      // Calculer la distance réelle au plan
+      double totalDistance = 0;
+      if (plan.steps.isNotEmpty) {
+        final firstStep = plan.steps.first;
+        if (firstStep.position != null) {
+          final distanceInMeters = _locationService.calculateDistanceToPoint(
+            firstStep.position!.latitude,
+            firstStep.position!.longitude,
+          );
+          totalDistance = distanceInMeters ?? 0;
         }
       }
-      final totalCost = steps.fold<double>(0, (sum, s) => sum + (s.cost ?? 0));
-      final totalDurationMinutes = calculateTotalDuration(steps);
 
       return PlanWithMetrics(
         plan: plan,
-        totalDistance: totalDist,
-        totalCost: totalCost,
-        totalDuration: Duration(minutes: totalDurationMinutes),
+        totalDistance: totalDistance,
+        totalCost: plan.totalCost ?? 0,
+        totalDuration: Duration(minutes: plan.totalDuration ?? 0),
         favoritesCount: plan.favorites?.length ?? 0,
       );
     }).toList();
@@ -164,39 +252,52 @@ class SearchViewModel extends ChangeNotifier {
     final metricsList =
         (await Future.wait(futures)).whereType<PlanWithMetrics>().toList();
 
-    if (hadError) {
-      errorMessage ??= 'Certaines étapes n’ont pas pu être chargées';
-      _log.warning(errorMessage!);
-    }
-
     // Appliquer filtres numériques
-    var filtered = metricsList.where((m) {
-      if (distanceRange != null &&
-          (m.totalDistance < distanceRange!.start ||
-              m.totalDistance > distanceRange!.end)) {
-        return false;
+    final filtered = metricsList.where((m) {
+      // Filtre distance
+      if (filtersViewModel.distanceRange != null) {
+        final range = filtersViewModel.distanceRange!;
+        if (m.totalDistance < range.start || m.totalDistance > range.end) {
+          return false;
+        }
       }
-      if (costRange != null &&
-          (m.totalCost < costRange!.start || m.totalCost > costRange!.end)) {
-        return false;
+
+      // Filtre coût avec support pour min ou max seul
+      if (filtersViewModel.costRange != null) {
+        final range = filtersViewModel.costRange!;
+        // Seulement vérifier le minimum si ce n'est pas la valeur par défaut
+        if (range.start > 0.0 && m.totalCost < range.start) {
+          return false;
+        }
+        // Seulement vérifier le maximum si ce n'est pas la valeur par défaut
+        if (range.end < 999999.0 && m.totalCost > range.end) {
+          return false;
+        }
       }
-      final durSec = m.totalDuration.inSeconds.toDouble();
-      if (durationRange != null &&
-          (durSec < durationRange!.start || durSec > durationRange!.end)) {
-        return false;
+
+      // Filtre durée avec support pour min ou max seul
+      if (filtersViewModel.durationRange != null) {
+        final range = filtersViewModel.durationRange!;
+        final durSec = m.totalDuration.inSeconds.toDouble();
+        // Seulement vérifier le minimum si ce n'est pas la valeur par défaut
+        if (range.start > 0.0 && durSec < range.start) {
+          return false;
+        }
+        // Seulement vérifier le maximum si ce n'est pas la valeur par défaut
+        if (range.end < (999999 * 60) && durSec > range.end) {
+          return false;
+        }
       }
-      if (favoritesThreshold != null &&
-          m.favoritesCount < favoritesThreshold!) {
+
+      if (filtersViewModel.favoritesThreshold != null &&
+          m.favoritesCount < filtersViewModel.favoritesThreshold!) {
         return false;
       }
       return true;
     }).toList();
 
-    // Tri
-    switch (sortBy) {
-      case SortOption.distance:
-        filtered.sort((a, b) => a.totalDistance.compareTo(b.totalDistance));
-        break;
+    // Tri avec support pour la distance
+    switch (filtersViewModel.sortBy) {
       case SortOption.cost:
         filtered.sort((a, b) => a.totalCost.compareTo(b.totalCost));
         break;
@@ -221,8 +322,12 @@ class SearchViewModel extends ChangeNotifier {
 
     isSearching = false;
     notifyListeners();
-    return hadError
-        ? Result.error(Exception(errorMessage ?? 'Erreur inconnue'))
-        : Result.ok(null);
+    return const Result.ok(null);
+  }
+
+  @override
+  void dispose() {
+    filtersViewModel.dispose();
+    super.dispose();
   }
 }

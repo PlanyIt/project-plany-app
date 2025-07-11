@@ -58,7 +58,7 @@ class FilterBottomSheetHeader extends StatelessWidget {
               TextButton.icon(
                 onPressed: onReset,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Reset'),
+                label: const Text('Réinitialiser'),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.grey[600],
                   padding:

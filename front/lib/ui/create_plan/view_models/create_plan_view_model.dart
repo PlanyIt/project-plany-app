@@ -141,13 +141,18 @@ class CreatePlanViewModel extends ChangeNotifier {
         final formattedDuration = (card.duration?.isNotEmpty ?? false)
             ? '${card.duration} ${card.durationUnit?.toLowerCase()}'
             : null;
+
+        // Utiliser la position de la carte pour créer l'étape
         steps.add(step_model.Step(
           title: card.title,
           description: card.description,
           order: i + 1,
           duration: formattedDuration,
           cost: card.cost,
-          position: _selectedLocation,
+          latitude:
+              card.location?.latitude, // Utiliser la position de la StepCard
+          longitude:
+              card.location?.longitude, // Utiliser la position de la StepCard
           image: card.imageUrl,
         ));
         stepImages.add(File(card.imageUrl));
@@ -176,7 +181,7 @@ class CreatePlanViewModel extends ChangeNotifier {
 
       _resetFormFields();
       return true;
-    } catch (e, stackTrace) {
+    } catch (e, _) {
       _setError('Erreur interne: ${e.toString()}');
       print('Erreur lors de la création du plan: $e');
       return false;
@@ -334,6 +339,7 @@ class CreatePlanViewModel extends ChangeNotifier {
       durationUnit: selectedUnit,
       cost: cost,
       location: selectedLocation,
+      locationName: selectedLocationName, // Ajouter aussi le nom
     );
 
     if (_isEditingStep && _editingStepIndex != null) {

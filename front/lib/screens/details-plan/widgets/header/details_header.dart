@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:front/screens/details-plan/widgets/header/components/header_controls.dart';
-import 'package:front/screens/details-plan/widgets/header/components/map_view.dart';
-import 'package:front/domain/models/step/step.dart' as custom;
-import 'package:front/screens/details-plan/widgets/header/components/step_info_card.dart';
-import 'package:front/screens/details-plan/widgets/header/components/header_carousel.dart';
-import 'package:front/services/step_service.dart';
 import 'package:geolocator/geolocator.dart';
+
+import '../../../../domain/models/step/step.dart' as custom;
+import '../../../../services/step_service.dart';
+import 'components/header_carousel.dart';
+import 'components/header_controls.dart';
+import 'components/map_view.dart';
+import 'components/step_info_card.dart';
 
 class DetailsHeader extends StatefulWidget {
   final List<String> stepIds;
@@ -15,13 +16,13 @@ class DetailsHeader extends StatefulWidget {
   final String? planDescription;
 
   const DetailsHeader({
-    Key? key,
+    super.key,
     required this.stepIds,
     required this.category,
     required this.categoryColor,
     this.planTitle,
     this.planDescription,
-  }) : super(key: key);
+  });
 
   @override
   DetailsHeaderState createState() => DetailsHeaderState();
@@ -72,15 +73,20 @@ class DetailsHeaderState extends State<DetailsHeader> {
   }
 
   Future<void> _calculateDistanceToStep(custom.Step step) async {
-    if (step.position == null) return;
+    if (step.latitude == null || step.longitude == null) {
+      setState(() {
+        _distanceToStep = null;
+      });
+      return;
+    }
 
     try {
       final position = await Geolocator.getCurrentPosition();
       final distanceInMeters = Geolocator.distanceBetween(
         position.latitude,
         position.longitude,
-        step.position!.latitude,
-        step.position!.longitude,
+        step.latitude!,
+        step.longitude!,
       );
 
       setState(() {

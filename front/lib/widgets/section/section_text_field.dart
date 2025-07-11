@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:front/widgets/textfield/custom_text_field.dart';
+
+import '../../ui/core/ui/form/custom_text_field.dart';
 
 class SectionTextField extends StatelessWidget {
   final String title;
@@ -33,7 +34,8 @@ class SectionTextField extends StatelessWidget {
         CustomTextField(
           controller: controller,
           labelText: labelText,
-          maxLines: maxLines,
+          hintText: '',
+          prefixIcon: null,
         ),
       ],
     );

@@ -10,9 +10,8 @@ _$StepImpl _$$StepImplFromJson(Map<String, dynamic> json) => _$StepImpl(
       id: json['_id'] as String?,
       title: json['title'] as String,
       description: json['description'] as String,
-      position: json['position'] == null
-          ? null
-          : LatLng.fromJson(json['position'] as Map<String, dynamic>),
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       order: (json['order'] as num).toInt(),
       image: json['image'] as String,
       duration: json['duration'] as String?,
@@ -27,7 +26,8 @@ Map<String, dynamic> _$$StepImplToJson(_$StepImpl instance) =>
       '_id': instance.id,
       'title': instance.title,
       'description': instance.description,
-      'position': instance.position,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
       'order': instance.order,
       'image': instance.image,
       'duration': instance.duration,

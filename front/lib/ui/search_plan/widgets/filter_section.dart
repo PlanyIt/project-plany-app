@@ -5,6 +5,7 @@ class FilterSection extends StatelessWidget {
   final IconData icon;
   final Color color;
   final Widget child;
+  final Widget? titleAction;
 
   const FilterSection({
     super.key,
@@ -12,6 +13,7 @@ class FilterSection extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.child,
+    this.titleAction,
   });
 
   @override
@@ -43,14 +45,17 @@ class FilterSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: color,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
                 ),
               ),
+              if (titleAction != null) titleAction!,
             ],
           ),
           const SizedBox(height: 16),

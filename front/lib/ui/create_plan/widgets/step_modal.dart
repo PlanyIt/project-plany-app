@@ -773,6 +773,10 @@ class StepModalState extends State<StepModal>
       return;
     }
 
+    // Debug: Vérifier que la position est bien présente
+    print('Position sélectionnée: ${widget.viewModel.selectedLocation}');
+    print('Nom de la position: ${widget.viewModel.selectedLocationName}');
+
     widget.viewModel.saveStep(
       widget.viewModel.titleStepController.text,
       widget.viewModel.descriptionStepController.text,

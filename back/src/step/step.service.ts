@@ -29,7 +29,6 @@ export class StepService {
   async removeById(stepId: string): Promise<StepDocument | null> {
     const step = await this.stepModel.findOneAndDelete({ _id: stepId }).exec();
 
-    // Retirer de tous les plans qui le référencent
     if (step) {
       await this.planModel.updateMany(
         { steps: stepId },
@@ -93,15 +92,15 @@ export class StepService {
       const unit = parts[1];
 
       if (unit.includes('seconde')) {
-        return Math.ceil(value / 60); // Convert seconds to minutes, rounding up
+        return Math.ceil(value / 60);
       } else if (unit.includes('minute')) {
         return value;
       } else if (unit.includes('heure')) {
-        return value * 60; // Convert hours to minutes
+        return value * 60;
       } else if (unit.includes('jour')) {
-        return value * 8 * 60; // Convert days to minutes (8 hour workday)
+        return value * 24 * 60;
       } else if (unit.includes('semaine')) {
-        return value * 5 * 8 * 60; // Convert weeks to minutes (5 day work week)
+        return value * 7 * 24 * 60;
       }
     } catch (e) {
       console.error(`Error parsing duration: ${durationStr}`, e);
@@ -117,9 +116,9 @@ export class StepService {
   formatDuration(totalMinutes: number): string {
     if (totalMinutes === 0) return '0 minute';
 
-    const weeks = Math.floor(totalMinutes / (5 * 8 * 60));
-    const days = Math.floor((totalMinutes % (5 * 8 * 60)) / (8 * 60));
-    const hours = Math.floor((totalMinutes % (8 * 60)) / 60);
+    const weeks = Math.floor(totalMinutes / (7 * 24 * 60));
+    const days = Math.floor((totalMinutes % (7 * 24 * 60)) / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
 
     const parts: string[] = [];

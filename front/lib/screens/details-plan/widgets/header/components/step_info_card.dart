@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/step/step.dart' as custom;
-import 'package:front/services/navigation_service.dart';
 import 'package:geolocator/geolocator.dart';
+
+import '../../../../../domain/models/step/step.dart' as custom;
+import '../../../../../services/navigation_service.dart';
 
 class StepInfoCard extends StatefulWidget {
   final custom.Step step;
@@ -18,10 +19,10 @@ class StepInfoCard extends StatefulWidget {
   });
 
   @override
-  _StepInfoCardState createState() => _StepInfoCardState();
+  StepInfoCardState createState() => StepInfoCardState();
 }
 
-class _StepInfoCardState extends State<StepInfoCard> {
+class StepInfoCardState extends State<StepInfoCard> {
   double? _distance;
   bool _isCalculatingDistance = false;
 
@@ -40,7 +41,12 @@ class _StepInfoCardState extends State<StepInfoCard> {
   }
 
   Future<void> _calculateDistanceToStep() async {
-    if (widget.step.position == null) return;
+    if (widget.step.latitude == null || widget.step.longitude == null) {
+      setState(() {
+        _distance = null;
+      });
+      return;
+    }
 
     setState(() {
       _isCalculatingDistance = true;
@@ -48,7 +54,7 @@ class _StepInfoCardState extends State<StepInfoCard> {
 
     try {
       // Vérifier les permissions
-      LocationPermission permission = await Geolocator.checkPermission();
+      var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
@@ -63,10 +69,9 @@ class _StepInfoCardState extends State<StepInfoCard> {
       final distanceInMeters = Geolocator.distanceBetween(
         position.latitude,
         position.longitude,
-        widget.step.position!.latitude,
-        widget.step.position!.longitude,
+        widget.step.latitude!,
+        widget.step.longitude!,
       );
-
       // Convertir en km
       final distanceInKm = distanceInMeters / 1000;
 

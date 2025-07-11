@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:front/ui/core/themes/app_theme.dart';
+import '../../themes/app_theme.dart';
 
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
   final String hintText;
-  final IconData prefixIcon;
+  final IconData? prefixIcon;
   final IconData? suffixIcon;
   final bool obscureText;
   final VoidCallback? onSuffixIconPressed;
@@ -17,7 +17,7 @@ class CustomTextField extends StatefulWidget {
     required this.controller,
     required this.labelText,
     required this.hintText,
-    required this.prefixIcon,
+    this.prefixIcon,
     this.suffixIcon,
     this.obscureText = false,
     this.onSuffixIconPressed,
@@ -104,8 +104,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
           decoration: InputDecoration(
             labelText: widget.labelText,
             hintText: widget.hintText,
-            prefixIcon:
-                Icon(widget.prefixIcon, color: Theme.of(context).primaryColor),
+            prefixIcon: widget.prefixIcon != null
+                ? Icon(widget.prefixIcon, color: Theme.of(context).primaryColor)
+                : null,
             suffixIcon: widget.suffixIcon != null
                 ? IconButton(
                     icon: Icon(widget.suffixIcon, color: Colors.grey),

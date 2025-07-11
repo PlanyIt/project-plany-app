@@ -43,8 +43,8 @@ class StepRepositoryRemote implements StepRepository {
               .map((stepApi) => Step(
                     title: stepApi.title,
                     description: stepApi.description,
-                    position:
-                        LatLng(stepApi.latitude ?? 0, stepApi.longitude ?? 0),
+                    latitude: stepApi.latitude,
+                    longitude: stepApi.longitude,
                     order: stepApi.order,
                     image: stepApi.image,
                     duration: stepApi.duration,
