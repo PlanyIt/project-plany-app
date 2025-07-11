@@ -35,14 +35,19 @@ class PlanRepositoryRemote implements PlanRepository {
       "isPublic": plan.isPublic,
     };
 
+    print('🚀 Creating plan with payload: $payload'); // Debug
+
     final result = await _apiClient.createPlan(body: payload);
 
     if (result case Ok<Plan>()) {
       final newPlan = result.value;
+      print('✅ Plan created successfully: ${newPlan.id}'); // Debug
       if (newPlan.id != null) {
         _cachedData ??= [];
         _cachedData!.add(newPlan);
       }
+    } else if (result case Error()) {
+      print('❌ Plan creation failed: ${result.error}'); // Debug
     }
 
     return result;

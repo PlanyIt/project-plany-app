@@ -135,9 +135,26 @@ class ApiClient {
       final response = await request.close();
       final responseBody = await response.transform(utf8.decoder).join();
 
-      if (response.statusCode == 201) {
-        final json = jsonDecode(responseBody);
-        return Result.ok(Plan.fromJson(json));
+      print('📝 API Response Status: ${response.statusCode}');
+      print('📝 API Response Body: $responseBody');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        try {
+          final json = jsonDecode(responseBody);
+          if (json is Map<String, dynamic>) {
+            return Result.ok(Plan.fromJson(json));
+          } else {
+            return Result.error(
+              HttpException(
+                  "Response is not a valid JSON object: $responseBody"),
+            );
+          }
+        } catch (e) {
+          return Result.error(
+            HttpException(
+                "Failed to parse JSON response: $e | Body: $responseBody"),
+          );
+        }
       } else {
         return Result.error(
           HttpException(
@@ -145,6 +162,7 @@ class ApiClient {
         );
       }
     } on Exception catch (error) {
+      print('❌ API Client Error: $error');
       return Result.error(error);
     } finally {
       client.close();

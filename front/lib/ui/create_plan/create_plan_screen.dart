@@ -321,7 +321,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
                           actions: [
                             TextButton(
                               onPressed: () {
-                                GoRouter.of(context).go(Routes.dashboard);
+                                context.go(Routes.dashboard);
                               },
                               child: const Text('OK'),
                             ),

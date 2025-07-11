@@ -19,8 +19,33 @@ export class PlanService {
   ) {}
 
   async createPlan(createPlanDto: PlanDto): Promise<PlanDocument> {
+    console.log('📝 Service creating plan with:', createPlanDto);
+
     const createdPlan = new this.planModel(createPlanDto);
-    return createdPlan.save();
+    const savedPlan = await createdPlan.save();
+
+    // Populate the plan with related data before returning
+    const populatedPlan = await this.planModel
+      .findById(savedPlan._id)
+      .populate({
+        path: 'user',
+        select: 'username email photoUrl',
+      })
+      .populate({
+        path: 'category',
+        select: 'name icon color',
+      })
+      .populate({
+        path: 'steps',
+        model: 'Step',
+        select:
+          'title description image order duration cost longitude latitude',
+      })
+      .exec();
+
+    console.log('✅ Plan created and populated:', populatedPlan?._id);
+
+    return populatedPlan || savedPlan;
   }
 
   async findAll(): Promise<PlanDocument[]> {

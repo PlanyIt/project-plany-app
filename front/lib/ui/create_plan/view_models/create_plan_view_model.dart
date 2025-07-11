@@ -45,7 +45,7 @@ class CreatePlanViewModel extends ChangeNotifier {
 
   final ValueNotifier<String> stepTitle = ValueNotifier('');
   final ValueNotifier<String> stepDescription = ValueNotifier('');
-  final ValueNotifier<int> stepDuration = ValueNotifier(1);
+  final ValueNotifier<int> stepDuration = ValueNotifier(0);
   final ValueNotifier<String> stepCost = ValueNotifier('');
   final ValueNotifier<int> currentStep = ValueNotifier(1);
 
@@ -250,7 +250,7 @@ class CreatePlanViewModel extends ChangeNotifier {
     _selectedLocationName = null;
     stepTitle.value = '';
     stepDescription.value = '';
-    stepDuration.value = 1;
+    stepDuration.value = 0;
     stepCost.value = '';
     _editingStepIndex = null;
     _isEditingStep = false;
@@ -299,7 +299,7 @@ class CreatePlanViewModel extends ChangeNotifier {
 
     stepTitle.value = '';
     stepDescription.value = '';
-    stepDuration.value = 1;
+    stepDuration.value = 0;
     stepCost.value = '';
 
     _imageStep = null;

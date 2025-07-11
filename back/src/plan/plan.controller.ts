@@ -41,10 +41,21 @@ export class PlanController {
   @Post()
   async createPlan(@Body() createPlanDto: PlanDto, @Req() req) {
     try {
-      const planData = { ...createPlanDto, userId: req.user._id };
-      return await this.planService.createPlan(planData);
+      // Properly set the user field from the authenticated request
+      const planData = {
+        ...createPlanDto,
+        user: req.user._id, // Make sure this is correctly set
+      };
+
+      console.log('📝 Creating plan with data:', planData);
+
+      const createdPlan = await this.planService.createPlan(planData);
+
+      console.log('✅ Plan created successfully:', createdPlan._id);
+
+      return createdPlan;
     } catch (error) {
-      console.error('Erreur lors de la création du plan :', error);
+      console.error('❌ Error creating plan:', error);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
