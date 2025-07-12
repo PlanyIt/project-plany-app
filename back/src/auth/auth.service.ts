@@ -32,7 +32,7 @@ export class AuthService {
         password,
         user.password,
       );
-    } catch (e) {
+    } catch {
       isPasswordValid = await this.passwordService.verifyLegacyPassword(
         password,
         user.password,
@@ -44,7 +44,7 @@ export class AuthService {
     }
 
     if (isPasswordValid) {
-      const { password, ...result } = user.toObject();
+      const result = user.toObject();
       return result;
     }
 

@@ -1,0 +1,258 @@
+{
+  "validSteps": [
+    {
+      "_id": "507f1f77bcf86cd799439051",
+      "title": "Tour Eiffel",
+      "description": "Montée au sommet de la Tour Eiffel avec guide",
+      "latitude": 48.8584,
+      "longitude": 2.2945,
+      "order": 1,
+      "image": "https://example.com/tour-eiffel.jpg",
+      "duration": "2h30",
+      "cost": 25.50,
+      "userId": "507f1f77bcf86cd799439011",
+      "createdAt": "2024-01-20T10:00:00Z",
+      "updatedAt": "2024-01-20T10:00:00Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439052",
+      "title": "Musée du Louvre",
+      "description": "Visite des œuvres principales du Louvre",
+      "latitude": 48.8606,
+      "longitude": 2.3376,
+      "order": 2,
+      "image": "https://example.com/louvre.jpg",
+      "duration": "3h",
+      "cost": 17,
+      "userId": "507f1f77bcf86cd799439011",
+      "createdAt": "2024-01-20T11:00:00Z",
+      "updatedAt": "2024-01-20T11:00:00Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439053",
+      "title": "Balade à Montmartre",
+      "description": "Découverte du quartier de Montmartre",
+      "latitude": 48.8867,
+      "longitude": 2.3431,
+      "order": 3,
+      "image": "https://example.com/montmartre.jpg",
+      "duration": "2h",
+      "userId": "507f1f77bcf86cd799439012",
+      "createdAt": "2024-01-20T12:00:00Z",
+      "updatedAt": "2024-01-20T12:00:00Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439054",
+      "title": "Restaurant Le Jules Verne",
+      "description": "Dîner gastronomique dans la Tour Eiffel",
+      "latitude": 48.8584,
+      "longitude": 2.2945,
+      "order": 4,
+      "image": "https://example.com/jules-verne.jpg",
+      "duration": "2h30",
+      "cost": 190,
+      "userId": "507f1f77bcf86cd799439011",
+      "createdAt": "2024-01-20T13:00:00Z",
+      "updatedAt": "2024-01-20T13:00:00Z"
+    }
+  ],
+  "stepWithoutLocation": {
+    "_id": "507f1f77bcf86cd799439055",
+    "title": "Préparation du voyage",
+    "description": "Recherche et réservation des activités",
+    "order": 0,
+    "image": "https://example.com/preparation.jpg",
+    "duration": "1h",
+    "userId": "507f1f77bcf86cd799439011",
+    "createdAt": "2024-01-19T10:00:00Z",
+    "updatedAt": "2024-01-19T10:00:00Z"
+  },
+  "stepWithoutCost": {
+    "_id": "507f1f77bcf86cd799439056",
+    "title": "Promenade aux Champs-Élysées",
+    "description": "Balade gratuite sur les Champs-Élysées",
+    "latitude": 48.8698,
+    "longitude": 2.3076,
+    "order": 5,
+    "image": "https://example.com/champs-elysees.jpg",
+    "duration": "1h30",
+    "userId": "507f1f77bcf86cd799439012",
+    "createdAt": "2024-01-20T14:00:00Z",
+    "updatedAt": "2024-01-20T14:00:00Z"
+  },
+  "stepWithoutDuration": {
+    "_id": "507f1f77bcf86cd799439057",
+    "title": "Shopping aux Galeries Lafayette",
+    "description": "Shopping dans le grand magasin parisien",
+    "latitude": 48.8738,
+    "longitude": 2.3320,
+    "order": 6,
+    "image": "https://example.com/galeries-lafayette.jpg",
+    "cost": 50,
+    "userId": "507f1f77bcf86cd799439011",
+    "createdAt": "2024-01-20T15:00:00Z",
+    "updatedAt": "2024-01-20T15:00:00Z"
+  },
+  "minimalStep": {
+    "_id": "507f1f77bcf86cd799439058",
+    "title": "Étape minimale",
+    "description": "Avec seulement les champs requis",
+    "order": 7,
+    "image": "https://example.com/minimal.jpg",
+    "userId": "507f1f77bcf86cd799439011",
+    "createdAt": "2024-01-20T16:00:00Z",
+    "updatedAt": "2024-01-20T16:00:00Z"
+  },
+  "createStepDtos": {
+    "validCreate": {
+      "title": "Nouvelle étape",
+      "description": "Description de la nouvelle étape",
+      "latitude": 48.8566,
+      "longitude": 2.3522,
+      "order": 1,
+      "image": "https://example.com/new-step.jpg",
+      "duration": "2h",
+      "cost": 30,
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    "minimalCreate": {
+      "title": "Étape simple",
+      "description": "Description simple",
+      "order": 2,
+      "image": "https://example.com/simple.jpg",
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    "withoutLocation": {
+      "title": "Étape sans localisation",
+      "description": "Une étape qui ne nécessite pas de géolocalisation",
+      "order": 3,
+      "image": "https://example.com/no-location.jpg",
+      "duration": "1h",
+      "cost": 15,
+      "userId": "507f1f77bcf86cd799439012"
+    },
+    "expensiveStep": {
+      "title": "Activité premium",
+      "description": "Une activité coûteuse mais exclusive",
+      "latitude": 48.8584,
+      "longitude": 2.2945,
+      "order": 4,
+      "image": "https://example.com/premium.jpg",
+      "duration": "4h",
+      "cost": 299.99,
+      "userId": "507f1f77bcf86cd799439011"
+    }
+  },
+  "updateStepDtos": {
+    "fullUpdate": {
+      "title": "Titre mis à jour",
+      "description": "Description mise à jour",
+      "latitude": 48.8600,
+      "longitude": 2.3200,
+      "order": 1,
+      "image": "https://example.com/updated.jpg",
+      "duration": "3h",
+      "cost": 35,
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    "partialUpdate": {
+      "title": "Nouveau titre seulement",
+      "description": "Description",
+      "order": 1,
+      "image": "https://example.com/image.jpg",
+      "cost": 20,
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    "locationUpdate": {
+      "title": "Localisation mise à jour",
+      "description": "Description",
+      "latitude": 48.8566,
+      "longitude": 2.3522,
+      "order": 1,
+      "image": "https://example.com/image.jpg",
+      "userId": "507f1f77bcf86cd799439011"
+    }
+  },
+  "stepsForPlan": [
+    {
+      "_id": "507f1f77bcf86cd799439061",
+      "title": "Première étape du plan",
+      "description": "Description première étape",
+      "order": 1,
+      "image": "step1.jpg",
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439062",
+      "title": "Deuxième étape du plan",
+      "description": "Description deuxième étape",
+      "order": 2,
+      "image": "step2.jpg",
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439063",
+      "title": "Troisième étape du plan",
+      "description": "Description troisième étape",
+      "order": 3,
+      "image": "step3.jpg",
+      "userId": "507f1f77bcf86cd799439011"
+    }
+  ],
+  "differentUsers": [
+    {
+      "_id": "507f1f77bcf86cd799439071",
+      "title": "Étape utilisateur 1",
+      "description": "Créée par le premier utilisateur",
+      "order": 1,
+      "image": "user1-step.jpg",
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439072",
+      "title": "Étape utilisateur 2",
+      "description": "Créée par le deuxième utilisateur",
+      "order": 2,
+      "image": "user2-step.jpg",
+      "userId": "507f1f77bcf86cd799439012"
+    }
+  ],
+  "specialCases": {
+    "zeroCost": {
+      "_id": "507f1f77bcf86cd799439081",
+      "title": "Activité gratuite",
+      "description": "Une activité qui ne coûte rien",
+      "order": 1,
+      "image": "free-activity.jpg",
+      "cost": 0,
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    "negativeCoordinates": {
+      "_id": "507f1f77bcf86cd799439082",
+      "title": "Lieu hémisphère sud",
+      "description": "Un lieu avec coordonnées négatives",
+      "latitude": -33.8688,
+      "longitude": 151.2093,
+      "order": 1,
+      "image": "sydney.jpg",
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    "longDuration": {
+      "_id": "507f1f77bcf86cd799439083",
+      "title": "Activité longue",
+      "description": "Une activité qui prend du temps",
+      "order": 1,
+      "image": "long-activity.jpg",
+      "duration": "1 jour et 2 heures",
+      "userId": "507f1f77bcf86cd799439011"
+    },
+    "highOrder": {
+      "_id": "507f1f77bcf86cd799439084",
+      "title": "Étape en fin de plan",
+      "description": "Une étape avec un ordre élevé",
+      "order": 50,
+      "image": "final-step.jpg",
+      "userId": "507f1f77bcf86cd799439011"
+    }
+  }
+}

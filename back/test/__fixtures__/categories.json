@@ -1,0 +1,59 @@
+{
+  "validCategories": [
+    {
+      "_id": "507f1f77bcf86cd799439021",
+      "name": "Fitness",
+      "icon": "dumbbell",
+      "color": "#FF6B6B",
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439022", 
+      "name": "Travel",
+      "icon": "plane",
+      "color": "#4ECDC4",
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439023",
+      "name": "Food",
+      "icon": "utensils", 
+      "color": "#45B7D1",
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z"
+    }
+  ],
+  "createCategoryDtos": {
+    "validCreate": {
+      "name": "Education",
+      "icon": "book",
+      "color": "#96CEB4"
+    },
+    "minimalCreate": {
+      "name": "Work",
+      "icon": "briefcase", 
+      "color": "#FCEA2B"
+    }
+  },
+  "updateCategoryDtos": {
+    "partialUpdate": {
+      "name": "Updated Fitness",
+      "icon": "updated-dumbbell",
+      "color": "#E74C3C"
+    },
+    "fullUpdate": {
+      "name": "Complete Update",
+      "icon": "star",
+      "color": "#9B59B6"
+    }
+  },
+  "invalidData": {
+    "duplicateName": {
+      "name": "Fitness",
+      "icon": "duplicate",
+      "color": "#000000"
+    }
+  }
+}
