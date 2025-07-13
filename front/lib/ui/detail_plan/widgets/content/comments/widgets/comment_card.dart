@@ -135,21 +135,36 @@ class CommentCard extends StatelessWidget {
 
   Widget _buildActions(bool isLiked) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        IconButton(
-          icon: Icon(isLiked ? Icons.favorite : Icons.favorite_border,
-              size: 16, color: isLiked ? Colors.red : Colors.grey),
-          onPressed: () => onLikeToggle(comment),
+        Row(
+          mainAxisSize: MainAxisSize.min, // Important : garde le bloc compact
+          children: [
+            IconButton(
+              icon: Icon(
+                isLiked ? Icons.favorite : Icons.favorite_border,
+                size: 16,
+                color: isLiked ? categoryColor : Colors.grey,
+              ),
+              onPressed: () => onLikeToggle(comment),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+            ),
+            Text('${comment.likes?.length ?? 0}',
+                style: const TextStyle(fontSize: 12)),
+          ],
         ),
-        Text('${comment.likes?.length ?? 0}',
-            style: const TextStyle(fontSize: 12)),
-        const SizedBox(width: 12),
+        const SizedBox(width: 22),
         if (!isResponse)
           TextButton.icon(
             onPressed: () => onReplyTap(comment.id!),
             icon:
                 Icon(Icons.chat_bubble_outline, size: 16, color: categoryColor),
-            label: const Text('Répondre', style: TextStyle(fontSize: 12)),
+            label: Text(
+              'Répondre',
+              style: TextStyle(fontSize: 12, color: categoryColor),
+            ),
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
@@ -177,7 +192,7 @@ class CommentCard extends StatelessWidget {
           },
           child: Text(
             'Voir $nbResponses réponse${nbResponses > 1 ? "s" : ""}',
-            style: const TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: 12, color: categoryColor),
           ),
         ),
       );
@@ -215,7 +230,7 @@ class CommentCard extends StatelessWidget {
                 showAll
                     ? 'Réduire'
                     : 'Voir ${responsesList.length} réponse${responsesList.length > 1 ? "s" : ""}',
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: 12, color: categoryColor),
               ),
             ),
           ),

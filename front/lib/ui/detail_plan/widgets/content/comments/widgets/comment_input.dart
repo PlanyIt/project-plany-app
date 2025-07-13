@@ -59,11 +59,14 @@ class CommentInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = categoryColor.withOpacity(0.6);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -91,15 +94,23 @@ class CommentInput extends StatelessWidget {
                 child: TextField(
                   controller: controller,
                   focusNode: focusNode,
+                  cursorColor: categoryColor,
                   decoration: InputDecoration(
+                    isCollapsed: true,
+                    fillColor: Colors.white,
                     hintText: hintText,
                     border: InputBorder.none,
                     hintStyle: TextStyle(color: Colors.grey[400]),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: categoryColor),
+                    ),
                   ),
                   minLines: 1,
                   maxLines: 5,
+                  style: const TextStyle(fontSize: 14),
                 ),
               ),
+              const SizedBox(width: 8),
               _buildSubmitButton(),
             ],
           ),
@@ -114,10 +125,10 @@ class CommentInput extends StatelessWidget {
       children: [
         Container(
           width: double.infinity,
-          height: 120,
+          height: 140,
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
           ),
         ),
@@ -144,18 +155,18 @@ class CommentInput extends StatelessWidget {
     final color = isSubmitting ? Colors.grey : categoryColor;
     return Container(
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      width: 32,
-      height: 32,
+      width: 36,
+      height: 36,
       child: isSubmitting
           ? const Padding(
-              padding: EdgeInsets.all(6),
+              padding: EdgeInsets.all(8),
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : IconButton(
-              icon: const Icon(Icons.send, color: Colors.white, size: 16),
+              icon: const Icon(Icons.send, color: Colors.white, size: 18),
               onPressed: onSubmit,
               padding: EdgeInsets.zero,
-              splashRadius: 16,
+              splashRadius: 18,
             ),
     );
   }
