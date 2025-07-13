@@ -64,6 +64,10 @@ class CommentListViewModel {
 
   User? get currentUser => _authRepository.currentUser;
 
+  int _currentPage = 1;
+  final int _limit = 10;
+  bool _isLoadingMore = false;
+
   CommentListViewModel({
     required AuthRepository authRepository,
     required UserRepository userRepository,
@@ -74,21 +78,24 @@ class CommentListViewModel {
 
   Future<void> loadComments({
     bool reset = false,
-    int page = 1,
-    int limit = 10,
   }) async {
     if (state.value.isLoading) return;
+
+    if (reset) {
+      _currentPage = 1;
+      state.value = state.value.copyWith(comments: []);
+    }
 
     state.value = state.value.copyWith(isLoading: true, errorMessage: null);
 
     try {
       final result = await _commentRepository.getComments(planId,
-          page: page, limit: limit);
+          page: _currentPage, limit: _limit);
 
       if (result is Ok<List<Comment>>) {
         final newComments =
             reset ? result.value : [...state.value.comments, ...result.value];
-        final hasMore = result.value.length >= limit;
+        final hasMore = result.value.length >= _limit;
 
         state.value = state.value.copyWith(
           comments: newComments,
@@ -100,6 +107,29 @@ class CommentListViewModel {
       }
     } finally {
       state.value = state.value.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> loadMoreComments() async {
+    if (_isLoadingMore || !state.value.hasMoreComments) return;
+    _isLoadingMore = true;
+    _currentPage++;
+
+    try {
+      final result = await _commentRepository.getComments(planId,
+          page: _currentPage, limit: _limit);
+
+      if (result is Ok<List<Comment>>) {
+        final newComments = [...state.value.comments, ...result.value];
+        final hasMore = result.value.length >= _limit;
+
+        state.value = state.value.copyWith(
+          comments: newComments,
+          hasMoreComments: hasMore,
+        );
+      }
+    } finally {
+      _isLoadingMore = false;
     }
   }
 

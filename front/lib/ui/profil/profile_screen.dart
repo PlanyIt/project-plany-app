@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:front/domain/models/user.dart';
-import 'package:front/screens/profile/widgets/content/favorites_section.dart';
-import 'package:front/screens/profile/widgets/content/followers_section.dart';
-import 'package:front/screens/profile/widgets/content/following_section.dart'
+import 'package:front/ui/profil/widgets/content/favorites_section.dart';
+import 'package:front/ui/profil/widgets/content/followers_section.dart';
+import 'package:front/ui/profil/widgets/content/following_section.dart'
     show FollowingSection;
-import 'package:front/screens/profile/widgets/content/my_plans_section.dart';
-import 'package:front/screens/profile/widgets/content/settings_section.dart';
-import 'package:front/screens/profile/widgets/header/profile_header.dart';
+import 'package:front/ui/profil/widgets/content/my_plans_section.dart';
+import 'package:front/ui/profil/widgets/content/settings_section.dart';
+import 'package:front/ui/profil/widgets/header/profile_header.dart';
 import 'package:front/services/auth_service.dart';
 import 'package:front/services/user_service.dart';
 

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../data/repositories/auth/auth_repository.dart';
 import '../domain/models/plan/plan.dart';
-import '../screens/profile/profile_screen.dart';
+import '../ui/profil/profile_screen.dart';
 import '../ui/auth/login/login_screen.dart';
 import '../ui/auth/login/view_models/login_viewmodel.dart';
 import '../ui/auth/register/register_screen.dart';

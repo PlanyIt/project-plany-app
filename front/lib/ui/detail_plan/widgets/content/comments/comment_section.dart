@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../../../../domain/models/comment/comment.dart';
 import '../../../../../utils/helpers.dart';
 import '../../../view_models/comment/comment_list_viewmodel.dart';
@@ -58,6 +57,15 @@ class CommentSection extends StatelessWidget {
                 if (!state.isLoading && state.comments.isNotEmpty)
                   ..._buildCommentList(
                       context, state, viewModel.respondingToCommentId.value),
+                if (!state.isLoading && state.hasMoreComments)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: TextButton(
+                      onPressed: () => planDetailsViewModel.commentListViewModel
+                          .loadMoreComments(),
+                      child: const Text('Charger plus de commentaires'),
+                    ),
+                  ),
               ],
             );
           },
@@ -91,8 +99,7 @@ class CommentSection extends StatelessWidget {
 
   List<Widget> _buildCommentList(
       BuildContext context, CommentListState state, String? respondingId) {
-    final displayComments =
-        isEmbedded ? state.comments.take(2).toList() : state.comments;
+    final displayComments = state.comments;
 
     return displayComments
         .map(
