@@ -1,7 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/comment.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../../../../../domain/models/comment/comment.dart';
 
 class ResponseInput extends StatelessWidget {
   final Comment parentComment;

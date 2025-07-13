@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/services/location_service.dart';
 import '../../domain/models/category/category.dart' as app_category;
 import '../../domain/models/plan/plan.dart';
-import '../../services/location_service.dart';
+import '../../routing/routes.dart';
 import '../core/ui/bottom_bar/bottom_bar.dart';
 import '../core/ui/card/compact_plan_card.dart';
 import '../core/ui/list/horizontal_plan_list.dart';
@@ -140,12 +141,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
         child: InkWell(
-          onTap: () => {},
+          onTap: () => context.go('/search'),
           child: AbsorbPointer(
             child: DashboardSearchBar(
                 hintText: 'Rechercher des plans...',
                 readOnly: true,
-                onTap: () => {}),
+                onTap: () => context.go('/search')),
           ),
         ),
       ),
@@ -480,7 +481,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         : null,
                   ))
               .toList(),
-          onPressed: (index) => {}),
+          onPressed: (index) =>
+              context.push(Routes.planDetails, extra: plans[index])),
     );
   }
 }

@@ -7,5 +7,5 @@ abstract final class Routes {
   static const createPlan = '/create-plan';
   static const profile = '/profile';
   static const search = '/search';
-  static const plan = '/plan';
+  static const planDetails = '/plan-details';
 }

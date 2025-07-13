@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/comment.dart';
+import '../../../../../../domain/models/comment/comment.dart';
 
 class CommentOptionSheet extends StatelessWidget {
   final Comment comment;
@@ -9,13 +9,13 @@ class CommentOptionSheet extends StatelessWidget {
   final bool isResponse;
 
   const CommentOptionSheet({
-    Key? key,
+    super.key,
     required this.comment,
     required this.categoryColor,
     required this.onEdit,
     required this.onDelete,
     this.isResponse = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

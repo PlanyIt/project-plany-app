@@ -9,7 +9,7 @@ import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart' as step_model;
 import '../../../domain/models/user/user.dart' show User;
-import '../../../services/location_service.dart';
+import '../../../data/services/location_service.dart';
 import '../../../utils/command.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/result.dart';

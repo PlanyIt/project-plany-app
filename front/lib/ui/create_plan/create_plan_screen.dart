@@ -316,7 +316,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
                           ),
                           title: const Text('Plan créé avec succès'),
                           content: const Text(
-                            'Votre plan est maintenant disponible dans votre dashboard.',
+                            'Votre plan est maintenant disponible sur votre tableau de bord.',
                           ),
                           actions: [
                             TextButton(

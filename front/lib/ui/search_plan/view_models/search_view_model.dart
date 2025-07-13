@@ -6,7 +6,7 @@ import '../../../data/repositories/plan/plan_repository.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart';
-import '../../../services/location_service.dart';
+import '../../../data/services/location_service.dart';
 import '../../../utils/command.dart';
 import '../../../utils/result.dart';
 import 'search_chips_view_model.dart';

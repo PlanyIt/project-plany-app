@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../../data/services/location_service.dart';
 import '../../../../domain/models/step/step.dart';
-import '../../../../services/location_service.dart';
+import '../../../../routing/routes.dart';
 import '../../../../utils/helpers.dart';
 import '../../../search_plan/view_models/search_view_model.dart';
 import '../card/compact_plan_card.dart';
@@ -64,11 +65,11 @@ class VerticalPlanList extends StatelessWidget {
             category: plan.category,
             user: plan.user,
             distance: distance,
-            aspectRatio: 2.5, // More compact for vertical display
+            aspectRatio: 2.5,
             onTap: () {
-              context.pushNamed(
-                'planDetails',
-                pathParameters: {'planId': plan.id ?? ''},
+              context.push(
+                Routes.planDetails,
+                extra: plan,
               );
             },
           ),

@@ -1,23 +1,22 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/ui/detail_plan/widgets/content/comments/widgets/comment_input.dart';
-import 'package:front/ui/detail_plan/widgets/content/comments/widgets/empty_state.dart';
-import 'package:front/ui/detail_plan/widgets/content/comments/widgets/option_sheet.dart';
-import 'package:front/ui/detail_plan/widgets/content/comments/widgets/response_input.dart';
-import 'package:front/domain/models/comment.dart';
-import 'dart:math';
-import 'package:front/ui/detail_plan/widgets/content/comments/widgets/comment_card.dart';
-import 'package:front/ui/detail_plan/widgets/content/comments/controller/comment_controller.dart';
-import 'package:front/services/auth_service.dart';
-import 'package:front/services/user_service.dart';
+
+import '../../../../../domain/models/comment/comment.dart';
+import '../../../view_models/comment_viewmodel.dart';
+import 'widgets/comment_card.dart';
+import 'widgets/comment_input.dart';
+import 'widgets/empty_state.dart';
+import 'widgets/option_sheet.dart';
+import 'widgets/response_input.dart';
 
 class CommentSection extends StatefulWidget {
   final String planId;
   final Function(int)? onCommentCountChanged;
   final bool isEmbedded;
   final Color categoryColor;
+  final CommentViewModel viewModel;
 
   const CommentSection({
     super.key,
@@ -25,6 +24,7 @@ class CommentSection extends StatefulWidget {
     this.onCommentCountChanged,
     this.isEmbedded = false,
     this.categoryColor = const Color(0xFF3425B5),
+    required this.viewModel,
   });
 
   @override
@@ -32,9 +32,6 @@ class CommentSection extends StatefulWidget {
 }
 
 class CommentSectionState extends State<CommentSection> {
-  late CommentController _controller;
-  late final UserService _userService = UserService();
-  final AuthService _auth = AuthService();
   final TextEditingController _commentController = TextEditingController();
   final TextEditingController _responseController = TextEditingController();
   final FocusNode _commentFocusNode = FocusNode();
@@ -44,40 +41,18 @@ class CommentSectionState extends State<CommentSection> {
   String? _editingCommentId;
   int _currentPage = 1;
   final int _pageLimit = 10;
-  bool _isLoading = false;
   bool _isInitialLoad = true;
   bool _showAllComments = false;
   final int _initialCommentsToShow = 2;
-  bool _isSubmittingComment = false;
-  bool _isSubmittingResponse = false;
-  String? _currentUserId;
-
-  final Map<String, User> _userProfilesCache = {};
 
   @override
   void initState() {
     super.initState();
-
-    _controller = CommentController(
-      planId: widget.planId,
-      context: context,
-      onCommentCountChanged: widget.onCommentCountChanged,
-      currentUserId: null, // Initialement null
-    );
-
-    // Charger l'ID utilisateur, puis les commentaires
     _loadUserIdAndComments();
   }
 
   Future<void> _loadUserIdAndComments() async {
     try {
-      // Récupérer l'ID utilisateur de façon asynchrone
-      _currentUserId = await _auth.getCurrentUserId();
-
-      // Mettre à jour le contrôleur avec l'ID utilisateur
-      _controller.updateCurrentUserId(_currentUserId);
-
-      // Charger les commentaires
       _loadComments(reset: true);
     } catch (e) {
       if (mounted) {
@@ -87,7 +62,6 @@ class CommentSectionState extends State<CommentSection> {
                   Text('Erreur de chargement des données utilisateur: $e')),
         );
       }
-      // Charger quand même les commentaires même en cas d'erreur
       _loadComments(reset: true);
     }
   }
@@ -100,14 +74,8 @@ class CommentSectionState extends State<CommentSection> {
       });
     }
 
-    if (_isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      await _controller.loadComments(
+      await widget.viewModel.loadComments(
           reset: reset, currentPage: _currentPage, pageLimit: _pageLimit);
 
       setState(() {
@@ -115,50 +83,41 @@ class CommentSectionState extends State<CommentSection> {
       });
 
       if (_listKey.currentState != null && !widget.isEmbedded) {
-        final int startIndex =
-            reset ? 0 : _controller.comments.length - (_pageLimit);
-        for (int i = 0; i < _pageLimit; i++) {
-          if (i + startIndex < _controller.comments.length) {
+        final startIndex =
+            reset ? 0 : widget.viewModel.comments.length - (_pageLimit);
+        for (var i = 0; i < _pageLimit; i++) {
+          if (i + startIndex < widget.viewModel.comments.length) {
             _listKey.currentState!.insertItem(startIndex + i);
           }
         }
       }
     } catch (e) {
-      // Les messages d'erreur sont gérés par le contrôleur
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      // Error handling is done in the ViewModel
     }
   }
 
   Future<void> _saveComment() async {
-    if (_isSubmittingComment) return;
-
-    setState(() {
-      _isSubmittingComment = true;
-    });
-
     try {
       if (_editingCommentId != null) {
-        // Mode édition
-        final updatedComment = await _controller.editComment(
+        // Edit mode
+        final updatedComment = await widget.viewModel.editComment(
             _editingCommentId!, _commentController.text,
-            newImage: _controller.selectedImage);
+            newImage: widget.viewModel.selectedImage);
 
         if (updatedComment != null) {
           _commentController.clear();
-          _controller.removeImage();
+          widget.viewModel.removeImage();
           _commentFocusNode.unfocus();
           _editingCommentId = null;
           setState(() {});
         }
       } else {
-        // Mode création
-        final comment = await _controller.saveComment(_commentController.text);
+        // Create mode
+        final comment =
+            await widget.viewModel.saveComment(_commentController.text);
         if (comment != null) {
           _commentController.clear();
-          _controller.removeImage();
+          widget.viewModel.removeImage();
           _commentFocusNode.unfocus();
 
           if (!widget.isEmbedded) {
@@ -169,27 +128,17 @@ class CommentSectionState extends State<CommentSection> {
         }
       }
     } catch (e) {
-      // Déjà géré par le contrôleur
-    } finally {
-      setState(() {
-        _isSubmittingComment = false;
-      });
+      // Error handling is done in the ViewModel
     }
   }
 
   Future<void> _saveResponse(String commentId) async {
-    if (_isSubmittingResponse) return;
-
-    setState(() {
-      _isSubmittingResponse = true;
-    });
-
     try {
       if (_editingCommentId != null) {
-        // Mode édition
-        final updatedResponse = await _controller.editComment(
+        // Edit mode
+        final updatedResponse = await widget.viewModel.editComment(
             _editingCommentId!, _responseController.text,
-            newImage: _controller.selectedResponseImage);
+            newImage: widget.viewModel.selectedResponseImage);
 
         if (updatedResponse != null) {
           setState(() {
@@ -197,32 +146,28 @@ class CommentSectionState extends State<CommentSection> {
             _responseController.clear();
             _editingCommentId = null;
           });
-          _controller.removeResponseImage();
+          widget.viewModel.removeResponseImage();
         }
       } else {
-        // Mode création
-        final response =
-            await _controller.saveResponse(commentId, _responseController.text);
+        // Create mode
+        final response = await widget.viewModel
+            .saveResponse(commentId, _responseController.text);
         if (response != null) {
           setState(() {
             _respondingToCommentId = null;
             _responseController.clear();
           });
-          _controller.removeResponseImage();
+          widget.viewModel.removeResponseImage();
         }
       }
     } catch (e) {
-      // Déjà géré par le contrôleur
-    } finally {
-      setState(() {
-        _isSubmittingResponse = false;
-      });
+      // Error handling is done in the ViewModel
     }
   }
 
   void _showCommentOptions(Comment comment) {
-    bool isResponse = comment.parentId != null;
-    String? parentCommentId = comment.parentId;
+    final isResponse = comment.parentId != null;
+    final parentCommentId = comment.parentId;
 
     showModalBottomSheet(
       context: context,
@@ -251,12 +196,12 @@ class CommentSectionState extends State<CommentSection> {
 
   void _deleteComment(String commentId) async {
     try {
-      final index =
-          _controller.comments.indexWhere((comment) => comment.id == commentId);
+      final index = widget.viewModel.comments
+          .indexWhere((comment) => comment.id == commentId);
       if (index == -1) return;
 
-      final removedComment = _controller.comments[index];
-      final success = await _controller.deleteComment(commentId);
+      final removedComment = widget.viewModel.comments[index];
+      final success = await widget.viewModel.deleteComment(commentId);
 
       if (success) {
         setState(() {});
@@ -270,39 +215,37 @@ class CommentSectionState extends State<CommentSection> {
         }
       }
     } catch (e) {
-      // Déjà géré par le contrôleur
+      // Error handling is done in the ViewModel
     }
   }
 
   void _deleteResponse(String commentId, String responseId) async {
-    final success = await _controller.deleteResponse(commentId, responseId);
+    final success =
+        await widget.viewModel.deleteResponse(commentId, responseId);
     if (success) {
       setState(() {});
     }
   }
 
   void _editComment(String commentId) {
-    CommentResult? result = _controller.findCommentById(commentId);
+    final result = widget.viewModel.findCommentById(commentId);
     if (result == null) return;
 
-    final Comment commentToEdit = result.comment;
-    final bool isResponse = result.isResponse;
-    final String? parentCommentId = result.parentCommentId;
+    final commentToEdit = result.comment;
+    final isResponse = result.isResponse;
+    final parentCommentId = result.parentCommentId;
 
     setState(() {
       if (isResponse) {
         _responseController.text = commentToEdit.content;
         _respondingToCommentId = parentCommentId;
-        _controller.existingImageUrl = commentToEdit.imageUrl;
+        widget.viewModel.setExistingImageUrl(commentToEdit.imageUrl);
       } else {
         _commentController.text = commentToEdit.content;
-        _controller.existingImageUrl = commentToEdit.imageUrl;
+        widget.viewModel.setExistingImageUrl(commentToEdit.imageUrl);
       }
 
       _editingCommentId = commentId;
-
-      _controller.selectedImage = null;
-      _controller.selectedResponseImage = null;
     });
 
     if (isResponse) {
@@ -325,45 +268,34 @@ class CommentSectionState extends State<CommentSection> {
       controller: _commentController,
       focusNode: _commentFocusNode,
       categoryColor: widget.categoryColor,
-      isUploadingImage: _controller.isUploadingImage,
-      isSubmitting: _isSubmittingComment,
-      selectedImage: _controller.selectedImage,
-      existingImageUrl: _controller.existingImageUrl,
+      isUploadingImage: widget.viewModel.isUploadingImage,
+      isSubmitting: widget.viewModel.isSubmittingComment,
+      selectedImage: widget.viewModel.selectedImage,
+      existingImageUrl: widget.viewModel.existingImageUrl,
       onPickImage: (File imageFile) {
-        _controller.selectedImage = imageFile;
-        setState(() {
-          _controller.selectedImage = imageFile;
-        });
+        widget.viewModel.setSelectedImage(imageFile);
       },
       onRemoveImage: () {
-        _controller.removeImage();
-        setState(() {});
+        widget.viewModel.removeImage();
       },
       onClearExistingImage: () {
-        _controller.existingImageUrl = null;
-        setState(() {});
+        widget.viewModel.clearExistingImageUrl();
       },
       onSubmit: _saveComment,
     );
   }
 
-  Future<User?> _getUserProfile(String userId) async {
-    if (_userProfilesCache.containsKey(userId)) {
-      return _userProfilesCache[userId];
-    }
-
-    try {
-      final profile = await _userService.getUserProfile(userId);
-      _userProfilesCache[userId] = profile;
-      return profile;
-    } catch (e) {
-      print('Erreur lors du chargement du profil $userId: $e');
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Display error messages
+    if (widget.viewModel.errorMessage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.viewModel.errorMessage!)),
+        );
+      });
+    }
+
     if (widget.isEmbedded) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -376,7 +308,7 @@ class CommentSectionState extends State<CommentSection> {
                     child: CircularProgressIndicator(),
                   ),
                 )
-              : _controller.comments.isEmpty
+              : widget.viewModel.comments.isEmpty
                   ? const EmptyCommentsMessage()
                   : Column(
                       children: [
@@ -385,7 +317,7 @@ class CommentSectionState extends State<CommentSection> {
                           child: Row(
                             children: [
                               Text(
-                                "${_controller.comments.length} commentaire${_controller.comments.length > 1 ? 's' : ''}",
+                                "${widget.viewModel.comments.length} commentaire${widget.viewModel.comments.length > 1 ? 's' : ''}",
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -393,7 +325,7 @@ class CommentSectionState extends State<CommentSection> {
                                 ),
                               ),
                               const Spacer(),
-                              if (_controller.comments.length >
+                              if (widget.viewModel.comments.length >
                                   _initialCommentsToShow)
                                 TextButton.icon(
                                   onPressed: () {
@@ -427,12 +359,12 @@ class CommentSectionState extends State<CommentSection> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _showAllComments
-                              ? _controller.comments.length
+                              ? widget.viewModel.comments.length
                               : min(_initialCommentsToShow,
-                                  _controller.comments.length),
+                                  widget.viewModel.comments.length),
                           itemBuilder: (context, index) {
                             return _buildCommentItem(
-                                _controller.comments[index],
+                                widget.viewModel.comments[index],
                                 AlwaysStoppedAnimation(1.0));
                           },
                         ),
@@ -454,10 +386,10 @@ class CommentSectionState extends State<CommentSection> {
                 ? const Center(child: CircularProgressIndicator())
                 : AnimatedList(
                     key: _listKey,
-                    initialItemCount: _controller.comments.length,
+                    initialItemCount: widget.viewModel.comments.length,
                     itemBuilder: (context, index, animation) {
                       return _buildCommentItem(
-                          _controller.comments[index], animation);
+                          widget.viewModel.comments[index], animation);
                     },
                   ),
           ),
@@ -472,13 +404,14 @@ class CommentSectionState extends State<CommentSection> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: CommentCard(
-          key: ValueKey('${comment.id}_${comment.userId}'),
+          key: ValueKey('${comment.id}_${comment.user?.id}'),
           comment: comment,
-          currentUserId: _controller.currentUserId,
+          viewModel: widget.viewModel,
+          currentUserId: widget.viewModel.currentUser?.id,
           categoryColor: widget.categoryColor,
           onShowOptions: _showCommentOptions,
           onLikeToggle: (comment, isLiked) async {
-            final success = await _controller.toggleLike(comment, isLiked);
+            final success = await widget.viewModel.toggleLike(comment, isLiked);
             if (success) {
               setState(() {});
             }
@@ -492,16 +425,13 @@ class CommentSectionState extends State<CommentSection> {
             });
           },
           loadResponses: (commentId) async {
-            await _controller.loadResponses(commentId);
+            await widget.viewModel.loadResponses(commentId);
             setState(() {});
           },
-          responses: _controller.responses,
-          showAllResponsesMap: _controller.showAllResponsesMap,
+          responses: widget.viewModel.responses,
+          showAllResponsesMap: widget.viewModel.showAllResponsesMap,
           onToggleResponses: (commentId) {
-            setState(() {
-              _controller.showAllResponsesMap[commentId] =
-                  !(_controller.showAllResponsesMap[commentId] ?? false);
-            });
+            widget.viewModel.toggleShowAllResponses(commentId);
           },
           respondingToCommentId: _respondingToCommentId,
           responseInputWidget: _respondingToCommentId == comment.id
@@ -510,32 +440,27 @@ class CommentSectionState extends State<CommentSection> {
                   controller: _responseController,
                   focusNode: _responseFocusNode,
                   categoryColor: widget.categoryColor,
-                  selectedImage: _controller.selectedResponseImage,
-                  existingImageUrl: _controller.existingImageUrl,
-                  isUploadingImage: _controller.isUploadingResponseImage,
-                  isSubmitting: _isSubmittingResponse,
+                  selectedImage: widget.viewModel.selectedResponseImage,
+                  existingImageUrl: widget.viewModel.existingImageUrl,
+                  isUploadingImage: widget.viewModel.isUploadingResponseImage,
+                  isSubmitting: widget.viewModel.isSubmittingResponse,
                   onPickImage: (File imageFile) {
-                    _controller.selectedResponseImage = imageFile;
-                    setState(() {
-                      _controller.selectedResponseImage = imageFile;
-                    });
+                    widget.viewModel.setSelectedResponseImage(imageFile);
                   },
                   onRemoveImage: () {
-                    _controller.removeResponseImage();
-                    setState(() {});
+                    widget.viewModel.removeResponseImage();
                   },
                   onCancel: () {
                     setState(() {
                       _respondingToCommentId = null;
                       _responseController.clear();
-                      _controller.removeResponseImage();
+                      widget.viewModel.removeResponseImage();
                     });
                   },
                   onSubmit: (commentId) => _saveResponse(commentId),
                 )
               : null,
-          formatTimeAgo: _controller.formatTimeAgo,
-          getUserProfile: _getUserProfile,
+          formatTimeAgo: widget.viewModel.formatTimeAgo,
         ),
       ),
     );

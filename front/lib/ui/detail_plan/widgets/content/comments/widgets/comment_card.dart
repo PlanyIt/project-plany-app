@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/comment.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/ui/detail_plan/widgets/content/comments/widgets/response_card.dart';
+import '../../../../../../domain/models/comment/comment.dart';
+import '../../../../../../domain/models/user/user.dart';
+import '../../../../view_models/comment_viewmodel.dart';
+import 'response_card.dart';
 
 class CommentCard extends StatefulWidget {
   final Comment comment;
@@ -18,7 +19,7 @@ class CommentCard extends StatefulWidget {
   final String? respondingToCommentId;
   final Widget? responseInputWidget;
   final String Function(DateTime) formatTimeAgo;
-  final Future<User?> Function(String userId) getUserProfile;
+  final CommentViewModel viewModel;
 
   const CommentCard({
     super.key,
@@ -36,7 +37,7 @@ class CommentCard extends StatefulWidget {
     required this.respondingToCommentId,
     this.responseInputWidget,
     required this.formatTimeAgo,
-    required this.getUserProfile,
+    required this.viewModel,
   });
 
   @override
@@ -55,7 +56,25 @@ class CommentCardState extends State<CommentCard> {
 
   Future<void> _loadUserProfile() async {
     try {
-      final userProfile = await widget.getUserProfile(widget.comment.userId!);
+      if (widget.comment.user?.id == null) {
+        setState(() {
+          _userProfile = User(
+            id: 'unknown',
+            username: 'Utilisateur inconnu',
+            email: '',
+            photoUrl: null,
+            description: null,
+            isPremium: false,
+            followers: [],
+            following: [],
+          );
+          _isLoadingProfile = false;
+        });
+        return;
+      }
+
+      final userProfile =
+          await widget.viewModel.getUserProfile(widget.comment.user!.id!);
 
       if (mounted) {
         setState(() {
@@ -64,9 +83,18 @@ class CommentCardState extends State<CommentCard> {
         });
       }
     } catch (e) {
-      print('Erreur lors du chargement du profil: $e');
       if (mounted) {
         setState(() {
+          _userProfile = User(
+            id: widget.comment.user?.id ?? 'unknown',
+            username: 'Utilisateur inconnu',
+            email: '',
+            photoUrl: null,
+            description: null,
+            isPremium: false,
+            followers: [],
+            following: [],
+          );
           _isLoadingProfile = false;
         });
       }
@@ -77,7 +105,7 @@ class CommentCardState extends State<CommentCard> {
   Widget build(BuildContext context) {
     final bool isLiked =
         widget.comment.likes?.contains(widget.currentUserId) ?? false;
-    final bool isOwner = widget.comment.userId == widget.currentUserId;
+    final bool isOwner = widget.comment.user?.id == widget.currentUserId;
 
     return Container(
       margin: EdgeInsets.only(
@@ -391,7 +419,7 @@ class CommentCardState extends State<CommentCard> {
             itemBuilder: (context, index) {
               final response = commentResponses[index];
               return ResponseCard(
-                key: ValueKey('${response.id}_${response.userId}'),
+                key: ValueKey('${response.id}_${response.user?.id}'),
                 parentComment: widget.comment,
                 response: response,
                 currentUserId: widget.currentUserId,
@@ -399,6 +427,7 @@ class CommentCardState extends State<CommentCard> {
                 onShowOptions: widget.onShowOptions,
                 onLikeToggle: widget.onLikeToggle,
                 formatTimeAgo: widget.formatTimeAgo,
+                viewModel: widget.viewModel,
               );
             },
           ),

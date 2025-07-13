@@ -32,12 +32,15 @@ class StepThreeContent extends StatelessWidget {
               valueListenable: viewModel.steps,
               builder: (_, steps, __) {
                 if (steps.isNotEmpty) {
-                  [
-                    _buildSectionTitle(context, 'Étapes'),
-                    const SizedBox(height: 16),
-                    _buildStepsList(steps),
-                    const SizedBox(height: 24),
-                  ];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle(context, 'Étapes'),
+                      const SizedBox(height: 16),
+                      _buildStepsList(steps),
+                      const SizedBox(height: 24),
+                    ],
+                  );
                 }
                 return const SizedBox();
               },

@@ -3,28 +3,25 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../../domain/models/plan/plan.dart';
 import '../../../../../domain/models/step/step.dart' as plan_steps;
-import '../../../../../domain/models/user.dart';
-import '../../../../../services/auth_service.dart';
-import '../../../../../services/plan_service.dart';
-import '../../../../../services/user_service.dart';
+import '../../../../../screens/profile/profile_screen.dart';
 import '../../../../../utils/helpers.dart';
 import '../../../../../utils/icon_utils.dart';
-import '../../../../../screens/profile/profile_screen.dart';
+import '../../../view_models/plan_details_viewmodel.dart';
 
 class PlanInfoSection extends StatefulWidget {
   final Plan plan;
-  final Color categoryColor;
   final String? categoryName;
   final String? categoryIcon;
   final List<plan_steps.Step>? steps;
+  final PlanDetailsViewModel viewModel;
 
   const PlanInfoSection({
     super.key,
     required this.plan,
-    required this.categoryColor,
     this.categoryName,
     this.categoryIcon,
     this.steps,
+    required this.viewModel,
   });
 
   @override
@@ -35,223 +32,164 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
   bool _isFavorite = false;
   bool _isProcessing = false;
   int _favoritesCount = 0;
-  bool _isLoadingAuthor = true;
   bool _isFollowing = false;
   bool _isLoadingFollow = false;
-  User? _authorProfile;
-  String? _currentUserId;
-  final PlanService _planService = PlanService();
-  final UserService _userService = UserService();
-  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
     _isFavorite = widget.plan.isFavorite;
     _favoritesCount = widget.plan.favorites?.length ?? 0;
-    _loadCurrentUserAndAuthor();
+
+    _initializeFollowStatus();
   }
 
-  Future<void> _loadCurrentUserAndAuthor() async {
-    try {
-      _currentUserId = await _authService.getCurrentUserId();
-      _loadAuthorProfile();
-    } catch (e) {
-      print('Erreur lors du chargement de l\'ID utilisateur: $e');
-      _loadAuthorProfile(); // Charger quand même le profil auteur
+  Future<void> _initializeFollowStatus() async {
+    if (widget.plan.user != null && !_isCurrentUserPlan) {
+      try {
+        final isFollowing =
+            await widget.viewModel.isFollowing(widget.plan.user!.id ?? '');
+        setState(() => _isFollowing = isFollowing);
+      } catch (e) {
+        print('Erreur lors de la vérification du statut de suivi: $e');
+      }
     }
   }
 
-  String get capitalizedTitle => widget.plan.title.isNotEmpty
+  bool get _isCurrentUserPlan =>
+      widget.viewModel.currentUser?.id == widget.plan.user?.id;
+
+  String get _capitalizedTitle => widget.plan.title.isNotEmpty
       ? widget.plan.title[0].toUpperCase() + widget.plan.title.substring(1)
       : widget.plan.title;
 
-  String get capitalizedDescription => widget.plan.description.isNotEmpty
+  String get _capitalizedDescription => widget.plan.description.isNotEmpty
       ? widget.plan.description[0].toUpperCase() +
           widget.plan.description.substring(1)
       : widget.plan.description;
 
-  double get totalCost {
-    final data = _calculatePlanDataSync();
-    return data['cost'] as double;
-  }
+  // Optimize: Calculate plan data only once
+  late final Map<String, dynamic> _planData = _calculatePlanData();
 
-  String get formattedDuration {
-    final data = _calculatePlanDataSync();
-    return data['duration'] as String;
+  Map<String, dynamic> _calculatePlanData() {
+    if (widget.steps == null || widget.steps!.isEmpty) {
+      return {'cost': 0.0, 'duration': "0 minutes"};
+    }
+
+    try {
+      final totalCost = calculateTotalStepsCost(widget.steps!);
+      final totalDuration =
+          formatDurationToString(widget.plan.totalDuration ?? 0);
+      return {'cost': totalCost, 'duration': totalDuration};
+    } catch (e) {
+      print("Erreur calcul données plan: $e");
+      return {'cost': 0.0, 'duration': "0 minutes"};
+    }
   }
 
   Future<void> _toggleFavorite() async {
     if (_isProcessing) return;
 
-    setState(() {
-      _isProcessing = true;
-    });
+    setState(() => _isProcessing = true);
 
     try {
       if (_isFavorite) {
-        await _planService.removeFromFavorites(widget.plan.id!);
+        widget.viewModel.removeFromFavorites();
         setState(() {
           _isFavorite = false;
           _favoritesCount--;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Plan retiré de vos favoris"),
-          backgroundColor: Colors.grey[800],
-          duration: const Duration(seconds: 2),
-        ));
+        _showSnackBar("Plan retiré de vos favoris", Colors.grey[800]!);
       } else {
-        await _planService.addToFavorites(widget.plan.id!);
+        widget.viewModel.addToFavorites();
         setState(() {
           _isFavorite = true;
           _favoritesCount++;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.star, color: Colors.amber, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text("Plan ajouté à vos favoris",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text("Retrouvez-le dans votre profil",
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey[300])),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.grey[850],
-          duration: const Duration(seconds: 3),
-          action: SnackBarAction(
-            label: 'VOIR',
-            textColor: Colors.amber,
-            onPressed: () async {
-              final userId = await _authService.getCurrentUserId();
-              if (userId != null && mounted) {
-                Navigator.of(context)
-                    .push(
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(
-                      userId: userId,
-                      isCurrentUser: true,
-                    ),
-                  ),
-                )
-                    .then((_) {
-                  Navigator.of(context)
-                      .push(PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) =>
-                        const SizedBox(),
-                    transitionDuration: Duration.zero,
-                    opaque: false,
-                    maintainState: true,
-                  ))
-                      .then((_) {
-                    Navigator.of(context).pop();
-                  });
-                });
-              }
-            },
-          ),
-        ));
+        _showFavoriteAddedSnackBar();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Erreur: $e")));
+      _showSnackBar("Erreur: $e", Colors.red);
     } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      setState(() => _isProcessing = false);
     }
   }
 
-  Future<void> _loadAuthorProfile() async {
-    if (widget.plan.user == null) {
-      setState(() => _isLoadingAuthor = false);
-      return;
-    }
+  void _showSnackBar(String message, Color backgroundColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: backgroundColor),
+    );
+  }
 
-    setState(() => _isLoadingAuthor = true);
-
-    try {
-      final author =
-          await _userService.getUserProfile(widget.plan.user?.id ?? '');
-
-      bool isFollowing = false;
-      if (_currentUserId != null &&
-          widget.plan.user != null &&
-          _currentUserId != widget.plan.user!.id) {
-        isFollowing = await _userService.isFollowing(author.id);
-      }
-
-      setState(() {
-        _authorProfile = author;
-        _isFollowing = isFollowing;
-        _isLoadingAuthor = false;
-      });
-    } catch (e) {
-      print('Erreur lors du chargement du profil de l\'auteur: $e');
-      setState(() => _isLoadingAuthor = false);
-    }
+  void _showFavoriteAddedSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.star, color: Colors.amber, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Plan ajouté à vos favoris",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text("Retrouvez-le dans votre profil",
+                      style: TextStyle(fontSize: 12, color: Colors.grey[300])),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.grey[850],
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'VOIR',
+          textColor: Colors.amber,
+          onPressed: () => _navigateToProfile(isCurrentUser: true),
+        ),
+      ),
+    );
   }
 
   Future<void> _toggleFollow() async {
-    if (_isLoadingFollow || _authorProfile == null) return;
+    if (_isLoadingFollow || widget.plan.user == null || _isCurrentUserPlan)
+      return;
 
     setState(() => _isLoadingFollow = true);
 
     try {
-      final success = _isFollowing
-          ? await _userService.unfollowUser(_authorProfile!.id)
-          : await _userService.followUser(_authorProfile!.id);
-
-      if (success) {
-        setState(() => _isFollowing = !_isFollowing);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isFollowing
-                ? 'Vous suivez maintenant ${_authorProfile!.username}'
-                : 'Vous ne suivez plus ${_authorProfile!.username}'),
-            backgroundColor: widget.categoryColor,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+      if (_isFollowing) {
+        await widget.viewModel.unfollowUser(widget.plan.user!.id ?? '');
+      } else {
+        await widget.viewModel.followUser(widget.plan.user!.id ?? '');
       }
-    } catch (e) {
-      print('Erreur lors de la mise à jour de l\'abonnement: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
-        ),
+
+      setState(() => _isFollowing = !_isFollowing);
+      _showSnackBar(
+        _isFollowing
+            ? 'Vous suivez maintenant ${widget.plan.user!.username}'
+            : 'Vous ne suivez plus ${widget.plan.user!.username}',
+        colorFromPlanCategory(widget.plan.category?.color) ?? Colors.blue,
       );
+    } catch (e) {
+      _showSnackBar('Erreur: $e', Colors.red);
     } finally {
       setState(() => _isLoadingFollow = false);
     }
   }
 
-  void _navigateToAuthorProfile(BuildContext context) {
-    if (_authorProfile == null) return;
-
-    // Utiliser directement _currentUserId au lieu de FirebaseAuth
-    final isOwnPlan =
-        _currentUserId != null && _currentUserId == widget.plan.user?.id;
+  void _navigateToProfile({bool isCurrentUser = false}) {
+    final userId =
+        isCurrentUser ? widget.viewModel.currentUser?.id : widget.plan.user?.id;
+    if (userId == null) return;
 
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ProfileScreen(
-          userId: _authorProfile!.id,
-          isCurrentUser: isOwnPlan,
+          userId: userId,
+          isCurrentUser: isCurrentUser,
         ),
       ),
     );
@@ -262,25 +200,27 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildPlanHeaderCard(context),
+        _buildPlanHeaderCard(),
         const SizedBox(height: 20),
-        _buildAuthorSection(context),
+        _buildAuthorSection(),
         const SizedBox(height: 20),
-        _buildPlanIndicators(context),
+        _buildPlanIndicators(),
         const SizedBox(height: 24),
-        _buildPlanDescription(context),
+        _buildPlanDescription(),
       ],
     );
   }
 
-  Widget _buildPlanHeaderCard(BuildContext context) {
+  Widget _buildPlanHeaderCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            widget.categoryColor.withValues(alpha: 0.6),
-            widget.categoryColor.withValues(alpha: 0.5),
+            colorFromPlanCategory(widget.plan.category?.color) ??
+                Colors.blue.withValues(alpha: 0.6),
+            colorFromPlanCategory(widget.plan.category?.color) ??
+                Colors.blue.withValues(alpha: 0.5),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -294,7 +234,7 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
             children: [
               Expanded(
                 child: Text(
-                  capitalizedTitle,
+                  _capitalizedTitle,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -360,44 +300,16 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
                 ),
               ),
               const Spacer(),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  onPressed: () => _sharePlan(context),
-                  icon: const Icon(Icons.share, color: Colors.white, size: 16),
-                  padding: const EdgeInsets.all(6),
-                  constraints: const BoxConstraints(),
-                ),
+              _buildActionButton(
+                icon: Icons.share,
+                onPressed: _sharePlan,
               ),
               const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: _isProcessing
-                    ? Container(
-                        padding: const EdgeInsets.all(8),
-                        width: 36,
-                        height: 36,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : IconButton(
-                        onPressed: _toggleFavorite,
-                        icon: Icon(
-                          _isFavorite ? Icons.star : Icons.star_border,
-                          color: _isFavorite ? Colors.amber : Colors.white,
-                          size: 22,
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        constraints: const BoxConstraints(),
-                      ),
+              _buildActionButton(
+                icon: _isFavorite ? Icons.star : Icons.star_border,
+                onPressed: _toggleFavorite,
+                isLoading: _isProcessing,
+                iconColor: _isFavorite ? Colors.amber : Colors.white,
               ),
             ],
           ),
@@ -406,73 +318,52 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
     );
   }
 
-  Widget _buildAuthorSection(BuildContext context) {
-    if (_isLoadingAuthor) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              spreadRadius: 1,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool isLoading = false,
+    Color? iconColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+      ),
+      child: isLoading
+          ? Container(
+              padding: const EdgeInsets.all(8),
+              width: 36,
+              height: 36,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : IconButton(
+              onPressed: onPressed,
+              icon: Icon(icon, color: iconColor ?? Colors.white, size: 20),
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
             ),
-          ],
-        ),
-        child: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      );
-    }
+    );
+  }
 
-    if (_authorProfile == null) {
+  Widget _buildAuthorSection() {
+    if (widget.plan.user == null) {
       return Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              spreadRadius: 1,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+        decoration: _cardDecoration(),
         child: const Center(
           child: Text("Informations sur l'auteur non disponibles"),
         ),
       );
     }
 
-    final String followers = "${_authorProfile!.followersCount ?? 0}";
-
-    final isOwnPlan =
-        _currentUserId != null && _currentUserId == widget.plan.user?.id;
-
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: _cardDecoration(),
       child: InkWell(
-        onTap: () => _navigateToAuthorProfile(context),
+        onTap: () => _navigateToProfile(),
         child: Row(
           children: [
             Container(
@@ -491,11 +382,10 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
                   ),
                 ],
               ),
-              child: _authorProfile!.photoUrl != null &&
-                      _authorProfile!.photoUrl!.isNotEmpty
+              child: widget.plan.user!.photoUrl?.isNotEmpty == true
                   ? ClipOval(
                       child: Image.network(
-                        _authorProfile!.photoUrl!,
+                        widget.plan.user!.photoUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.person,
@@ -513,47 +403,53 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
                     children: [
                       Flexible(
                         child: Text(
-                          _authorProfile?.username ?? "Auteur inconnu",
+                          widget.plan.user?.username ?? "Auteur inconnu",
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                           overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      if (_authorProfile != null &&
-                          _authorProfile!.isPremium == true)
+                      if (widget.plan.user?.isPremium == true) ...[
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: widget.categoryColor.withValues(alpha: 0.1),
+                            color: colorFromPlanCategory(
+                                    widget.plan.category?.color) ??
+                                Colors.blue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.verified,
-                                  size: 14, color: widget.categoryColor),
+                                  size: 14,
+                                  color: colorFromPlanCategory(
+                                          widget.plan.category?.color) ??
+                                      Colors.blue),
                               const SizedBox(width: 2),
                               Text(
                                 "Premium",
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: widget.categoryColor,
+                                  color: colorFromPlanCategory(
+                                          widget.plan.category?.color) ??
+                                      Colors.blue,
                                 ),
                               ),
                             ],
                           ),
                         ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "$followers abonnés",
+                    "${widget.plan.user!.followers.length} abonnés",
                     style: TextStyle(
                       color: Colors.grey[700],
                       fontWeight: FontWeight.w500,
@@ -563,57 +459,9 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
               ),
             ),
             const SizedBox(width: 12),
-            if (!isOwnPlan) ...{
-              Container(
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      widget.categoryColor,
-                      widget.categoryColor.withValues(alpha: 0.8),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.categoryColor.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _toggleFollow,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      child: _isLoadingFollow
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : Icon(
-                              _isFollowing
-                                  ? Icons.person_remove
-                                  : Icons.person_add_rounded,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-            } else ...{
+            if (!_isCurrentUserPlan)
+              _buildFollowButton()
+            else
               Container(
                 margin: const EdgeInsets.only(right: 16),
                 padding:
@@ -632,35 +480,73 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
                   ),
                 ),
               ),
-            },
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPlanIndicators(BuildContext context) {
-    String formattedDate = "Non défini";
-    if (widget.plan.createdAt != null) {
-      final DateTime createdAt = widget.plan.createdAt!;
-      formattedDate = "${createdAt.day}/${createdAt.month}/${createdAt.year}";
-    }
+  Widget _buildFollowButton() {
+    return Container(
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorFromPlanCategory(widget.plan.category?.color) ?? Colors.blue,
+            colorFromPlanCategory(widget.plan.category?.color) ??
+                Colors.blue.withValues(alpha: 0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: colorFromPlanCategory(widget.plan.category?.color) ??
+                Colors.blue.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _toggleFollow,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: _isLoadingFollow
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Icon(
+                    _isFollowing
+                        ? Icons.person_remove
+                        : Icons.person_add_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanIndicators() {
+    final formattedDate = widget.plan.createdAt != null
+        ? "${widget.plan.createdAt!.day}/${widget.plan.createdAt!.month}/${widget.plan.createdAt!.year}"
+        : "Non défini";
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        //TODO pour Premium
-        // _buildIndicatorBadge(
-        //   context: context,
-        //   icon: Icons.workspace_premium,
-        //   label: "Premium",
-        //   Tode public:
-        //   ignore: dead_code
-        //   value: isPublic ? "Oui" : "Non",
-        //   bgColor: Colors.amber.shade100,
-        //   iconColor: Colors.amber.shade800,
-        // ),
         _buildIndicatorBadge(
-          context: context,
           icon: Icons.calendar_today,
           label: "Ajouté le",
           value: formattedDate,
@@ -668,18 +554,16 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
           iconColor: Colors.purple.shade700,
         ),
         _buildIndicatorBadge(
-          context: context,
           icon: Icons.euro_rounded,
           label: "Coût total",
-          value: "${totalCost.toStringAsFixed(2)} €",
+          value: "${(_planData['cost'] as double).toStringAsFixed(2)} €",
           bgColor: Colors.green.shade50,
           iconColor: Colors.green.shade700,
         ),
         _buildIndicatorBadge(
-          context: context,
           icon: Icons.timelapse_rounded,
           label: "Durée",
-          value: formattedDuration,
+          value: _planData['duration'] as String,
           bgColor: Colors.blue.shade50,
           iconColor: Colors.blue.shade700,
         ),
@@ -688,7 +572,6 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
   }
 
   Widget _buildIndicatorBadge({
-    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
@@ -710,10 +593,7 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.grey[700],
-              fontSize: 12,
-            ),
+            style: TextStyle(color: Colors.grey[700], fontSize: 12),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 2),
@@ -734,17 +614,14 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
     );
   }
 
-  Widget _buildPlanDescription(BuildContext context) {
-    final String authorName = _authorProfile?.username ?? "Utilisateur Plany";
+  Widget _buildPlanDescription() {
+    final authorName = widget.plan.user?.username ?? "Utilisateur Plany";
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.white,
-            Colors.grey.shade50,
-          ],
+          colors: [Colors.white, Colors.grey.shade50],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -758,7 +635,8 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
           ),
         ],
         border: Border.all(
-          color: widget.categoryColor.withValues(alpha: 0.1),
+          color: colorFromPlanCategory(widget.plan.category?.color) ??
+              Colors.blue.withValues(alpha: 0.1),
           width: 1.5,
         ),
       ),
@@ -770,24 +648,18 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
             child: Icon(
               Icons.format_quote,
               size: 30,
-              color: widget.categoryColor.withValues(alpha: 0.3),
+              color: colorFromPlanCategory(widget.plan.category?.color) ??
+                  Colors.blue.withValues(alpha: 0.3),
             ),
           ),
           Text(
-            capitalizedDescription,
+            _capitalizedDescription,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[800],
               height: 1.8,
               letterSpacing: 0.3,
               fontStyle: FontStyle.italic,
-              shadows: [
-                Shadow(
-                  blurRadius: 0.5,
-                  color: Colors.black.withValues(alpha: 0.1),
-                  offset: const Offset(0, 0.5),
-                ),
-              ],
             ),
           ),
           Padding(
@@ -800,11 +672,10 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          widget.categoryColor.withValues(alpha: 0.2),
+                          colorFromPlanCategory(widget.plan.category?.color) ??
+                              Colors.blue.withValues(alpha: 0.2),
                           Colors.transparent,
                         ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
                       ),
                     ),
                   ),
@@ -828,51 +699,35 @@ class PlanInfoSectionState extends State<PlanInfoSection> {
     );
   }
 
-  Future<void> _sharePlan(BuildContext context) async {
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withValues(alpha: 0.1),
+          spreadRadius: 1,
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _sharePlan() async {
     try {
-      final String planUrl =
-          "https://plany.app/plans/${widget.plan!.id}"; // TODO: Remplacez par le vrai URL
+      final String planUrl = "https://plany.app/plans/${widget.plan.id}";
       final String shareText =
-          "🗺️ Découvrez ce plan \"${capitalizedTitle}\" sur Plany!\n\n"
+          "🗺️ Découvrez ce plan \"$_capitalizedTitle\" sur Plany!\n\n"
           "📍 ${widget.categoryName}\n"
-          "⏱️ 10 min\n"
-          "💰 10 €\n\n"
-          "${capitalizedDescription.length > 100 ? '${capitalizedDescription.substring(0, 100)}...' : capitalizedDescription}\n\n"
+          "⏱️ ${_planData['duration']}\n"
+          "💰 ${(_planData['cost'] as double).toStringAsFixed(2)} €\n\n"
+          "${_capitalizedDescription.length > 100 ? '${_capitalizedDescription.substring(0, 100)}...' : _capitalizedDescription}\n\n"
           "Voir le plan complet: $planUrl";
 
       await Share.share(shareText, subject: 'Découvrez ce plan Plany');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Ouverture des options de partage...")));
     } catch (e) {
-      print("Erreur lors du partage: $e");
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Erreur lors du partage: $e")));
-    }
-  }
-
-  Map<String, dynamic> _calculatePlanDataSync() {
-    if (widget.steps == null || widget.steps!.isEmpty) {
-      return {
-        'cost': 0.0,
-        'duration': "0 min",
-      };
-    }
-
-    try {
-      final totalCost = calculateTotalStepsCost(widget.steps!);
-      final totalDuration = formatDurationToString(widget.plan.totalDuration ?? 0);
-
-      return {
-        'cost': totalCost,
-        'duration': totalDuration,
-      };
-    } catch (e) {
-      print("_calculatePlanDataSync: Erreur - $e");
-      return {
-        'cost': 0.0,
-        'duration': "0 min",
-      };
+      _showSnackBar("Erreur lors du partage: $e", Colors.red);
     }
   }
 }

@@ -57,7 +57,7 @@ export class PlanService {
       })
       .populate({
         path: 'category',
-        select: 'name icon',
+        select: 'name icon color',
       })
       .populate({
         path: 'steps',

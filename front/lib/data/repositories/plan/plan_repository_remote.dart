@@ -54,6 +54,27 @@ class PlanRepositoryRemote implements PlanRepository {
   }
 
   @override
+  Future<Result<void>> addToFavorites(String planId) async {
+    try {
+      await _apiClient.addPlanToFavorites(planId);
+      return const Result.ok(null);
+    } catch (e) {
+      return Result.error(Exception('Failed to add plan to favorites: $e'));
+    }
+  }
+
+  @override
+  Future<Result<void>> removeFromFavorites(String planId) async {
+    try {
+      await _apiClient.removePlanFromFavorites(planId);
+      return const Result.ok(null);
+    } catch (e) {
+      return Result.error(
+          Exception('Failed to remove plan from favorites: $e'));
+    }
+  }
+
+  @override
   Future<void> clearCache() async {
     _cachedData = null; // ❌ Mettre à null, pas []
     print('🧹 Plan cache cleared'); // Debug

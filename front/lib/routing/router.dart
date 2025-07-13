@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/repositories/auth/auth_repository.dart';
+import '../domain/models/plan/plan.dart';
 import '../screens/profile/profile_screen.dart';
 import '../ui/auth/login/login_screen.dart';
 import '../ui/auth/login/view_models/login_viewmodel.dart';
@@ -13,6 +14,8 @@ import '../ui/create_plan/create_plan_screen.dart';
 import '../ui/create_plan/view_models/create_plan_view_model.dart';
 import '../ui/dashboard/dashboard_screen.dart';
 import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
+import '../ui/detail_plan/plan_details_screen.dart';
+import '../ui/detail_plan/view_models/plan_details_viewmodel.dart';
 import '../ui/home/home_screen.dart';
 import '../ui/search_plan/search_screen.dart';
 import '../ui/search_plan/view_models/search_view_model.dart';
@@ -104,6 +107,25 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           path: Routes.profile,
           builder: (context, state) {
             return ProfileScreen();
+          },
+        ),
+        GoRoute(
+          path: Routes.planDetails,
+          builder: (context, state) {
+            final plan = state.extra as Plan?;
+            if (plan == null) return const SizedBox.shrink();
+
+            final viewModel = PlanDetailsViewModel(
+              authRepository: context.read(),
+              userRepository: context.read(),
+              commentRepository: context.read(),
+              planRepository: context.read(),
+            );
+            viewModel.setPlan(plan);
+
+            return PlanDetailsScreen(
+              vm: viewModel,
+            );
           },
         ),
       ],

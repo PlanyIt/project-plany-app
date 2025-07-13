@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../domain/models/step/step.dart' as step_model;
@@ -177,4 +178,34 @@ double calculateDistanceBetweenLatLng(LatLng point1, LatLng point2) {
     point2.latitude,
     point2.longitude,
   );
+}
+
+Color? colorFromPlanCategory(String? hexColor) {
+  if (hexColor == null || hexColor.isEmpty) return null;
+  var hex = hexColor.replaceFirst('#', '');
+  if (hex.length == 6) hex = 'ff$hex';
+  if (hex.length != 8) return null;
+
+  try {
+    return Color(int.parse(hex, radix: 16));
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Returns a human-readable "time ago" string for a given [dateTime].
+String formatTimeAgo(DateTime dateTime) {
+  final difference = DateTime.now().difference(dateTime);
+
+  if (difference.inDays > 8) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  } else if (difference.inDays >= 1) {
+    return '${difference.inDays}j';
+  } else if (difference.inHours >= 1) {
+    return '${difference.inHours}h';
+  } else if (difference.inMinutes >= 1) {
+    return '${difference.inMinutes}m';
+  } else {
+    return 'À l\'instant';
+  }
 }

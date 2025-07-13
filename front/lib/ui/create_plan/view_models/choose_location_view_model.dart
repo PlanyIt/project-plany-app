@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
-import '../../../services/location_service.dart';
+import '../../../data/services/location_service.dart';
 
 class SearchResult {
   final String name;

@@ -22,8 +22,9 @@ export class CommentController {
 
   @Post()
   async createComment(@Body() createCommentDto: CommentDto, @Req() req) {
-    const commentData = { ...createCommentDto, userId: req.user._id };
-    return this.commentService.create(commentData);
+    const commentData = { ...createCommentDto, user: req.user._id };
+    const createdComment = await this.commentService.create(commentData);
+    return createdComment;
   }
 
   @Get('plan/:planId')
@@ -73,7 +74,10 @@ export class CommentController {
       throw new NotFoundException(`Response with ID ${responseId} not found`);
     }
 
-    if (response.userId !== req.user._id.toString()) {
+    const responseUserId =
+      typeof response.user === 'string' ? response.user : response.user._id;
+
+    if (responseUserId.toString() !== req.user._id.toString()) {
       throw new UnauthorizedException('You can only delete your own responses');
     }
 
@@ -88,7 +92,7 @@ export class CommentController {
   ) {
     return this.commentService.updateById(commentId, {
       ...updateCommentDto,
-      userId: req.user._id,
+      user: req.user._id,
     });
   }
 
@@ -108,7 +112,7 @@ export class CommentController {
     @Body() responseDto: CommentDto,
     @Req() req,
   ) {
-    const responseData = { ...responseDto, userId: req.user._id };
+    const responseData = { ...responseDto, user: req.user._id };
     return this.commentService.addResponse(commentId, responseData);
   }
 
@@ -125,7 +129,10 @@ export class CommentController {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    if (comment.userId !== req.user._id.toString()) {
+    const commentUserId =
+      typeof comment.user === 'string' ? comment.user : comment.user._id;
+
+    if (commentUserId.toString() !== req.user._id.toString()) {
       throw new UnauthorizedException('You can only delete your own comments');
     }
 

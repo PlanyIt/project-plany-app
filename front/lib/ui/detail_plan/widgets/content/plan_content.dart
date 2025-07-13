@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../../../../domain/models/category/category.dart';
-import '../../../../domain/models/plan/plan.dart';
-import '../../../../domain/models/step/step.dart' as plan_steps;
+import '../../view_models/plan_details_viewmodel.dart';
 import 'comments/comment_section.dart';
 import 'info_plan/plan_info_section.dart';
 import 'steps_carousel/steps_carousel.dart';
 
 class PlanContent extends StatelessWidget {
-  final Plan plan;
-  final Color categoryColor;
   final ScrollController scrollController;
-  final Category? category;
-  final List<plan_steps.Step>? steps;
+  final PlanDetailsViewModel planViewModel;
 
   const PlanContent({
     super.key,
-    required this.plan,
-    required this.categoryColor,
     required this.scrollController,
-    this.category,
-    this.steps,
+    required this.planViewModel,
   });
 
   @override
@@ -62,11 +54,12 @@ class PlanContent extends StatelessWidget {
               children: [
                 // Informations du plan
                 PlanInfoSection(
-                  plan: plan,
-                  categoryColor: categoryColor,
-                  categoryName: category?.name,
-                  categoryIcon: category?.icon,
-                  steps: steps,
+                  plan: planViewModel.plan,
+                  categoryName:
+                      planViewModel.plan.category?.name ?? 'Sans catégorie',
+                  categoryIcon: planViewModel.planCategoryIcon,
+                  steps: planViewModel.plan.steps,
+                  viewModel: planViewModel,
                 ),
 
                 // Séparateur
@@ -76,8 +69,9 @@ class PlanContent extends StatelessWidget {
                 SizedBox(
                   height: 400,
                   child: StepsCarousel(
-                    steps: steps,
-                    categoryColor: categoryColor,
+                    steps: planViewModel.plan.steps,
+                    categoryColor:
+                        planViewModel.planCategoryColor ?? Colors.grey,
                   ),
                 ),
 
@@ -86,12 +80,12 @@ class PlanContent extends StatelessWidget {
 
                 //Commentaires
                 CommentSection(
-                  planId: plan.id!,
+                  planId: planViewModel.plan.id!,
                   isEmbedded: true,
-                  categoryColor: categoryColor,
+                  categoryColor: planViewModel.planCategoryColor ?? Colors.grey,
+                  viewModel: planViewModel.commentViewModel,
                 ),
 
-                // Espace en bas pour éviter que le dernier élément soit coupé
                 const SizedBox(height: 40),
               ],
             ),
@@ -114,7 +108,8 @@ class PlanContent extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Colors.grey.shade200,
-                    categoryColor.withValues(alpha: 0.5),
+                    planViewModel.planCategoryColor?.withValues(alpha: 0.5) ??
+                        Colors.grey.shade200,
                   ],
                   begin: Alignment.centerLeft,
                   end: Alignment.center,
@@ -130,7 +125,9 @@ class PlanContent extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: categoryColor.withValues(alpha: 0.1),
+                    color: planViewModel.planCategoryColor
+                            ?.withValues(alpha: 0.1) ??
+                        Colors.grey.withValues(alpha: 0.1),
                     blurRadius: 8,
                     spreadRadius: 0,
                     offset: const Offset(0, 2),
@@ -139,7 +136,7 @@ class PlanContent extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                color: categoryColor,
+                color: planViewModel.planCategoryColor ?? Colors.grey.shade600,
                 size: 24,
               ),
             ),
@@ -149,7 +146,8 @@ class PlanContent extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    categoryColor.withValues(alpha: 0.5),
+                    planViewModel.planCategoryColor?.withValues(alpha: 0.5) ??
+                        Colors.grey.shade200,
                     Colors.grey.shade200,
                   ],
                   begin: Alignment.center,

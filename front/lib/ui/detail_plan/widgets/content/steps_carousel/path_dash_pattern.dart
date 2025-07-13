@@ -7,7 +7,7 @@ class PathDashPattern {
   PathDashPattern(this.dashWidth, this.dashSpace);
   
   Path dashPath(Path source) {
-    final Path dest = Path();
+    final dest = Path();
     final pathMetrics = source.computeMetrics();
     
     for (final metric in pathMetrics) {

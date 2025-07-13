@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/comment.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/services/user_service.dart';
+import '../../../../../../domain/models/comment/comment.dart';
+import '../../../../../../domain/models/user/user.dart';
+import '../../../../view_models/comment_viewmodel.dart';
 
 class ResponseCard extends StatefulWidget {
   final Comment parentComment;
@@ -11,6 +11,7 @@ class ResponseCard extends StatefulWidget {
   final Function(Comment) onShowOptions;
   final Function(Comment, bool) onLikeToggle;
   final String Function(DateTime) formatTimeAgo;
+  final CommentViewModel viewModel;
 
   const ResponseCard({
     super.key,
@@ -21,30 +22,44 @@ class ResponseCard extends StatefulWidget {
     required this.onShowOptions,
     required this.onLikeToggle,
     required this.formatTimeAgo,
+    required this.viewModel,
   });
 
   @override
-  _ResponseCardState createState() => _ResponseCardState();
+  ResponseCardState createState() => ResponseCardState();
 }
 
-class _ResponseCardState extends State<ResponseCard> {
-  final UserService _userService = UserService();
-  User? _userProfile;
-  bool _isLoadingProfile = true;
-
+class ResponseCardState extends State<ResponseCard> {
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
   }
 
+  User? _userProfile;
+  bool _isLoadingProfile = true;
+
   Future<void> _loadUserProfile() async {
     try {
-      if (widget.response.userId == null) {
-        throw Exception('User ID is null');
+      if (widget.response.user?.id == null) {
+        setState(() {
+          _userProfile = User(
+            id: 'unknown',
+            username: 'Utilisateur inconnu',
+            email: '',
+            photoUrl: null,
+            description: null,
+            isPremium: false,
+            followers: [],
+            following: [],
+          );
+          _isLoadingProfile = false;
+        });
+        return;
       }
+
       final userProfile =
-          await _userService.getUserProfile(widget.response.userId!);
+          await widget.viewModel.getUserProfile(widget.response.user!.id!);
 
       if (mounted) {
         setState(() {
@@ -53,9 +68,18 @@ class _ResponseCardState extends State<ResponseCard> {
         });
       }
     } catch (e) {
-      print('Erreur lors du chargement du profil: $e');
       if (mounted) {
         setState(() {
+          _userProfile = User(
+            id: widget.response.user?.id ?? 'unknown',
+            username: 'Utilisateur inconnu',
+            email: '',
+            photoUrl: null,
+            description: null,
+            isPremium: false,
+            followers: [],
+            following: [],
+          );
           _isLoadingProfile = false;
         });
       }
@@ -64,7 +88,7 @@ class _ResponseCardState extends State<ResponseCard> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isOwner = widget.response.userId == widget.currentUserId;
+    final bool isOwner = widget.response.user?.id == widget.currentUserId;
     final bool isLiked =
         widget.response.likes?.contains(widget.currentUserId) ?? false;
 

@@ -8,7 +8,7 @@ import 'config/dependencies.dart';
 import 'routing/router.dart';
 import 'ui/core/localization/applocalization.dart';
 import 'ui/core/themes/app_theme.dart';
-import 'services/location_service.dart';
+import 'data/services/location_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

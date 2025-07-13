@@ -1,4 +1,6 @@
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/category/category.dart';
@@ -43,7 +45,6 @@ class CompactPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('totalDuration: $totalDuration');
     return Material(
       color: Colors.white,
       borderRadius: borderRadius ?? BorderRadius.circular(16),
@@ -51,6 +52,7 @@ class CompactPlanCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        borderRadius: borderRadius ?? BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -83,12 +85,18 @@ class CompactPlanCard extends StatelessWidget {
 
   Widget _buildSingleImage(String url) {
     if (url.startsWith('http')) {
-      return Image.network(
-        url,
+      return CachedNetworkImage(
+        imageUrl: url,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+        placeholder: (context, url) => Container(
+          color: Colors.grey.shade200,
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildPlaceholderImage(),
       );
     } else {
       return Image.file(
@@ -244,10 +252,14 @@ class CompactPlanCard extends StatelessWidget {
       ),
       child: ClipOval(
         child: user!.photoUrl != null && user!.photoUrl!.isNotEmpty
-            ? Image.network(
-                user!.photoUrl!,
+            ? CachedNetworkImage(
+                imageUrl: user!.photoUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                placeholder: (context, url) => Container(
+                  color: AppTheme.primaryColor.withAlpha(25),
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                ),
+                errorWidget: (context, url, error) => Container(
                   color: AppTheme.primaryColor.withAlpha(25),
                   child: Icon(
                     Icons.person,

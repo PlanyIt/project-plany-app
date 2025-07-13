@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class EmptyCommentsMessage extends StatelessWidget {
-  const EmptyCommentsMessage({Key? key}) : super(key: key);
+  const EmptyCommentsMessage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class EmptyCommentsMessage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            "Les commentaires aident d'autres voyageurs à préparer leur sortie." ,
+            "Les commentaires aident d'autres voyageurs à préparer leur sortie.",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
