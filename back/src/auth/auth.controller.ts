@@ -6,10 +6,13 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('api/auth')
 export class AuthController {
@@ -58,5 +61,23 @@ export class AuthController {
       }
       throw new BadRequestException('Erreur lors de la création du compte');
     }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @Body('currentPassword') currentPassword: string,
+    @Body('newPassword') newPassword: string,
+    @Request() req,
+  ) {
+    const userId = req.user._id;
+    if (!userId) {
+      throw new HttpException(
+        'Utilisateur non authentifié',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+    await this.authService.changePassword(userId, currentPassword, newPassword);
+    return { message: 'Mot de passe modifié avec succès' };
   }
 }

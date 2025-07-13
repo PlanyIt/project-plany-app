@@ -161,4 +161,48 @@ export class AuthService {
       token: this.jwtService.sign(payload),
     };
   }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur non trouvé');
+    }
+
+    // Vérifier le mot de passe actuel
+    let isPasswordValid = false;
+    try {
+      isPasswordValid = await this.passwordService.verifyPassword(
+        currentPassword,
+        user.password,
+      );
+    } catch (e) {
+      isPasswordValid = await this.passwordService.verifyLegacyPassword(
+        currentPassword,
+        user.password,
+      );
+    }
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Mot de passe actuel incorrect');
+    }
+
+    // Vérifier la sécurité du nouveau mot de passe
+    if (
+      newPassword.length < 8 ||
+      !/[A-Z]/.test(newPassword) ||
+      !/[a-z]/.test(newPassword) ||
+      !/\d/.test(newPassword)
+    ) {
+      throw new BadRequestException(
+        'Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre',
+      );
+    }
+
+    // Hacher et enregistrer le nouveau mot de passe
+    const hashedPassword = await this.passwordService.hashPassword(newPassword);
+    await this.usersService.updateById(userId, { password: hashedPassword });
+  }
 }

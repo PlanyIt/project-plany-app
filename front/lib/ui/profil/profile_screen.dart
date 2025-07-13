@@ -7,17 +7,16 @@ import '../../../ui/profil/widgets/content/following_section.dart';
 import '../../../ui/profil/widgets/content/my_plans_section.dart';
 import '../../../ui/profil/widgets/content/settings_section.dart';
 import '../../../ui/profil/widgets/header/profile_header.dart';
+import '../core/ui/bottom_bar/bottom_bar.dart';
 import 'view_models/profile_viewmodel.dart';
 
 class ProfileScreen extends StatelessWidget {
   final String? userId;
-  final bool isCurrentUser;
   final ProfileViewModel viewModel;
 
   const ProfileScreen({
     super.key,
     this.userId,
-    this.isCurrentUser = true,
     required this.viewModel,
   });
 
@@ -53,7 +52,7 @@ class ProfileScreen extends StatelessWidget {
                       child: Icon(
                         Icons.error_outline,
                         size: 50,
-                        color: Color(0xFF3425B5).withValues(alpha: .7),
+                        color: Color(0xFF3425B5).withOpacity(.7),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -85,32 +84,35 @@ class ProfileScreen extends StatelessWidget {
             );
           }
 
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: SafeArea(
-              child: SingleChildScrollView(
-                controller: vm.scrollController,
-                child: Column(
-                  children: [
-                    ProfileHeader(
-                      viewModel: vm,
-                      userProfile: vm.userProfile!,
-                      onUpdatePhoto: vm.updatePhoto,
-                      onProfileUpdated: () =>
-                          vm.loadUserData(vm.userProfile!.id),
-                      onNavigationSelected: vm.selectSection,
-                      isCurrentUser: isCurrentUser,
-                      isFollowing: vm.isFollowing,
-                      loadingFollow: vm.loadingFollow,
-                      onToggleFollow: vm.toggleFollow,
-                      onShowPremiumPopup: () {},
-                      scrollController: vm.scrollController,
-                    ),
-                    _buildSection(vm),
-                  ],
-                ),
+          final body = SafeArea(
+            child: SingleChildScrollView(
+              controller: vm.scrollController,
+              child: Column(
+                children: [
+                  ProfileHeader(
+                    viewModel: vm,
+                    userProfile: vm.userProfile!,
+                    onUpdatePhoto: vm.updatePhoto,
+                    onProfileUpdated: () => vm.loadUserData(vm.userProfile!.id),
+                    onNavigationSelected: vm.selectSection,
+                    isCurrentUser: vm.isCurrentUser,
+                    isFollowing: vm.isFollowing,
+                    loadingFollow: vm.loadingFollow,
+                    onToggleFollow: vm.toggleFollow,
+                    onShowPremiumPopup: () {},
+                    scrollController: vm.scrollController,
+                  ),
+                  _buildSection(vm),
+                ],
               ),
             ),
+          );
+
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: body,
+            bottomNavigationBar:
+                vm.isCurrentUser ? const BottomBar(currentIndex: 2) : null,
           );
         },
       ),

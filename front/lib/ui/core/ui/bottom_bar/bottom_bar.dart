@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../data/repositories/auth/auth_repository.dart';
 import '../../../../routing/routes.dart';
 
 class BottomBar extends StatelessWidget {
@@ -20,7 +22,10 @@ class BottomBar extends StatelessWidget {
         context.go(Routes.createPlan);
         break;
       case 2:
-        context.go(Routes.profile);
+        final userId = context.read<AuthRepository>().currentUser?.id;
+        if (userId != null) {
+          context.go('${Routes.profile}?userId=$userId');
+        }
         break;
     }
   }

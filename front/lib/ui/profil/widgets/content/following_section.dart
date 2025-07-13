@@ -69,7 +69,6 @@ class FollowingSection extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => ProfileScreen(
                             userId: user.id,
-                            isCurrentUser: false,
                             viewModel: Provider.of(context, listen: false),
                           ),
                         ),

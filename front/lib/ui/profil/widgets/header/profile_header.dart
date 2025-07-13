@@ -101,17 +101,19 @@ class ProfileHeader extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildGlassIconButton(
-                    icon: Icons.arrow_back,
-                    onPressed: () {
-                      if (Navigator.of(context).canPop()) {
-                        Navigator.of(context).pop();
-                      } else {
-                        Navigator.of(context)
-                            .pushReplacementNamed('/dashboard');
-                      }
-                    },
-                  ),
+                  isCurrentUser
+                      ? const SizedBox()
+                      : _buildGlassIconButton(
+                          icon: Icons.arrow_back,
+                          onPressed: () {
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            } else {
+                              Navigator.of(context)
+                                  .pushReplacementNamed('/dashboard');
+                            }
+                          },
+                        ),
                   if (isCurrentUser)
                     Row(
                       children: [

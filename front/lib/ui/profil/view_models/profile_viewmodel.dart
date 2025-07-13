@@ -44,6 +44,10 @@ class ProfileViewModel extends ChangeNotifier {
   List<Category> userCategories = [];
   bool isLoadingCategories = false;
 
+  bool get isCurrentUser {
+    return userProfile?.id == authRepository.currentUser?.id;
+  }
+
   Future<void> loadUserData(String? userId) async {
     isLoading = true;
     notifyListeners();
@@ -104,7 +108,8 @@ class ProfileViewModel extends ChangeNotifier {
       final plansResult = await planRepository.getPlansByUser(userProfile!.id!);
       final categoryMap = <String, Category>{};
 
-      final userPlans = plansResult is Ok<List<Plan>> ? plansResult.value : <Plan>[];
+      final userPlans =
+          plansResult is Ok<List<Plan>> ? plansResult.value : <Plan>[];
 
       for (final plan in userPlans) {
         if (plan.category != null &&

@@ -20,6 +20,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanService } from 'src/plan/plan.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { AuthService } from '../auth/auth.service';
 @UseGuards(JwtAuthGuard)
 @Controller('api/users')
 export class UserController {
@@ -27,6 +28,7 @@ export class UserController {
     private readonly userService: UserService,
     @Inject(forwardRef(() => PlanService))
     private readonly planService: PlanService,
+    private readonly authService: AuthService, // Ajout injection AuthService
   ) {}
 
   @Get()
@@ -92,6 +94,7 @@ export class UserController {
   async updateEmail(
     @Param('id') id: string,
     @Body('email') email: string,
+    @Body('password') password: string,
     @Request() req,
   ) {
     // Vérifier que l'utilisateur ne modifie que son propre email
@@ -103,6 +106,12 @@ export class UserController {
     const existingUser = await this.userService.findOneByEmail(email);
     if (existingUser && existingUser._id.toString() !== id) {
       throw new UnauthorizedException('Cet email est déjà utilisé');
+    }
+
+    // Vérifier le mot de passe via AuthService
+    const user = await this.authService.validateUser(req.user.email, password);
+    if (!user) {
+      throw new UnauthorizedException('Mot de passe incorrect');
     }
 
     return this.userService.updateById(id, { email });

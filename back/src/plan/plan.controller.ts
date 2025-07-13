@@ -6,14 +6,12 @@ import {
   Param,
   Delete,
   Put,
-  Patch,
   UseGuards,
   Req,
   HttpException,
   HttpStatus,
   Inject,
   forwardRef,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { PlanService } from './plan.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -41,10 +39,9 @@ export class PlanController {
   @Post()
   async createPlan(@Body() createPlanDto: PlanDto, @Req() req) {
     try {
-      // Properly set the user field from the authenticated request
       const planData = {
         ...createPlanDto,
-        user: req.user._id, // Make sure this is correctly set
+        user: req.user._id,
       };
 
       console.log('📝 Creating plan with data:', planData);
@@ -99,18 +96,5 @@ export class PlanController {
   @Get('user/:userId/favorites')
   async findFavoritesByUserId(@Param('userId') userId: string) {
     return this.planService.findFavoritesByUserId(userId);
-  }
-
-  @Patch(':id/profile')
-  async updateUserProfile(
-    @Param('id') id: string,
-    @Body() updateUserDto: any,
-    @Req() req,
-  ) {
-    // Vérifier que l'utilisateur ne modifie que son propre profil
-    if (req.user._id.toString() !== id) {
-      throw new UnauthorizedException('Vous ne pouvez pas modifier ce profil');
-    }
-    return this.userService.updateById(id, updateUserDto);
   }
 }

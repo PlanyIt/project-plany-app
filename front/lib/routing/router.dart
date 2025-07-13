@@ -94,8 +94,6 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
           builder: (context, state) {
             return ProfileScreen(
               userId: state.uri.queryParameters['userId'],
-              isCurrentUser:
-                  state.uri.queryParameters['isCurrentUser'] == 'true',
               viewModel: ProfileViewModel(
                 authRepository: context.read(),
                 userRepository: context.read(),
