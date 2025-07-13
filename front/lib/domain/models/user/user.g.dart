@@ -25,6 +25,9 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
     );
 
 Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
@@ -39,4 +42,5 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'gender': instance.gender,
       'followers': instance.followers,
       'following': instance.following,
+      'createdAt': instance.createdAt?.toIso8601String(),
     };

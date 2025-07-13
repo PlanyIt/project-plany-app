@@ -16,6 +16,7 @@ abstract class User with _$User {
     String? gender,
     @Default([]) List<String> followers,
     @Default([]) List<String> following,
+    DateTime? createdAt,
   }) = _User;
 
   factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);

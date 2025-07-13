@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/services/user_service.dart';
+
+import '../../view_models/profile_viewmodel.dart';
 
 class PremiumPopup {
   static Future<void> show({
     required BuildContext context,
-    required User userProfile,
-    required Function onProfileUpdated,
+    required ProfileViewModel viewModel,
     required Function(String, String) showInfoCard,
     required Function(String) showErrorCard,
     Function(bool)? onLoadingChanged,
   }) async {
-    final bool isPremium = userProfile.isPremium;
-    final _userService = UserService();
+    final bool isPremium = viewModel.userProfile?.isPremium ?? false;
 
     await showDialog(
       context: context,
@@ -60,7 +58,7 @@ class PremiumPopup {
                       width: double.infinity,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.1),
+                        color: Colors.amber.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.amber),
                       ),
@@ -99,39 +97,35 @@ class PremiumPopup {
             ),
             onPressed: () async {
               Navigator.pop(context);
-
-              if (onLoadingChanged != null) {
-                onLoadingChanged(true);
-              }
-
+              if (onLoadingChanged != null) onLoadingChanged(true);
               try {
-                final success = isPremium
-                    ? await _userService.updatePremiumStatus(
-                        userProfile.id, false)
-                    : await _userService.updatePremiumStatus(
-                        userProfile.id, true);
+                await viewModel.updateProfile(
+                  username: viewModel.userProfile!.username,
+                  description: viewModel.userProfile!.description,
+                  birthDate: viewModel.userProfile!.birthDate,
+                  gender: viewModel.userProfile!.gender,
+                );
 
-                if (success) {
-                  userProfile.isPremium = !isPremium;
+                // Ici tu dois passer isPremium inverse car updateProfile remplace tout
+                viewModel.userProfile =
+                    viewModel.userProfile!.copyWith(isPremium: !isPremium);
+                await viewModel.updateProfile(
+                  username: viewModel.userProfile!.username,
+                  description: viewModel.userProfile!.description,
+                  birthDate: viewModel.userProfile!.birthDate,
+                  gender: viewModel.userProfile!.gender,
+                );
 
-                  if (onLoadingChanged != null) {
-                    onLoadingChanged(false);
-                  }
-                  onProfileUpdated();
+                if (onLoadingChanged != null) onLoadingChanged(false);
 
-                  showInfoCard(
-                    isPremium ? 'Premium désactivé' : 'Félicitations !',
-                    isPremium
-                        ? 'Votre abonnement Premium a été désactivé.'
-                        : 'Vous êtes maintenant un utilisateur Premium!',
-                  );
-                } else {
-                  throw Exception("Échec de la mise à jour du statut premium");
-                }
+                showInfoCard(
+                  isPremium ? 'Premium désactivé' : 'Félicitations !',
+                  isPremium
+                      ? 'Votre abonnement Premium a été désactivé.'
+                      : 'Vous êtes maintenant un utilisateur Premium !',
+                );
               } catch (e) {
-                if (onLoadingChanged != null) {
-                  onLoadingChanged(false);
-                }
+                if (onLoadingChanged != null) onLoadingChanged(false);
                 showErrorCard('Erreur: $e');
               }
             },

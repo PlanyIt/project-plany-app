@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
+import '../../../view_models/profile_viewmodel.dart';
 
 class ProfileUserInfo extends StatelessWidget {
-  final User userProfile;
+  final ProfileViewModel viewModel;
   final bool isCurrentUser;
   final bool isFollowing;
   final bool loadingFollow;
@@ -10,19 +10,17 @@ class ProfileUserInfo extends StatelessWidget {
   final VoidCallback onFollowTap;
 
   const ProfileUserInfo({
-    Key? key,
-    required this.userProfile,
+    super.key,
+    required this.viewModel,
     required this.isCurrentUser,
     required this.isFollowing,
     required this.loadingFollow,
     required this.onPremiumTap,
     required this.onFollowTap,
-  }) : super(key: key);
+  });
 
-//TODO: A Gérer par le backend
   String _getUserLevelEmoji() {
-    // Safely access plansCount with null fallback
-    final plansCount = userProfile.plansCount ?? 0;
+    final plansCount = viewModel.userStats?.plansCount ?? 0;
     if (plansCount >= 50) return "🏆";
     if (plansCount >= 20) return "⭐";
     if (plansCount >= 10) return "🎯";
@@ -30,7 +28,7 @@ class ProfileUserInfo extends StatelessWidget {
   }
 
   Color _getUserLevelColor() {
-    final plansCount = userProfile.plansCount ?? 0;
+    final plansCount = viewModel.userStats?.plansCount ?? 0;
     if (plansCount >= 50) return Colors.amber;
     if (plansCount >= 20) return Colors.lightBlue;
     if (plansCount >= 10) return Colors.orange;
@@ -38,7 +36,7 @@ class ProfileUserInfo extends StatelessWidget {
   }
 
   String _getUserLevelName() {
-    final plansCount = userProfile.plansCount ?? 0;
+    final plansCount = viewModel.userStats?.plansCount ?? 0;
     if (plansCount >= 50) return "Expert";
     if (plansCount >= 20) return "Avancé";
     if (plansCount >= 10) return "Intermédiaire";
@@ -47,6 +45,7 @@ class ProfileUserInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProfile = viewModel.userProfile!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -79,7 +78,7 @@ class ProfileUserInfo extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: _getUserLevelColor().withValues(alpha: 0.15),
+                color: _getUserLevelColor().withOpacity(0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -131,8 +130,8 @@ class ProfileUserInfo extends StatelessWidget {
                           boxShadow: [
                             BoxShadow(
                               color: (userProfile.isPremium)
-                                  ? Colors.amber.withValues(alpha: 0.4)
-                                  : Colors.grey.withValues(alpha: 0.3),
+                                  ? Colors.amber.withOpacity(0.4)
+                                  : Colors.grey.withOpacity(0.3),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -144,7 +143,7 @@ class ProfileUserInfo extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.3),
+                                color: Colors.white.withOpacity(0.3),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -194,7 +193,7 @@ class ProfileUserInfo extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.amber.withValues(alpha: 0.4),
+                              color: Colors.amber.withOpacity(0.4),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -206,7 +205,7 @@ class ProfileUserInfo extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.3),
+                                color: Colors.white.withOpacity(0.3),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -247,7 +246,7 @@ class ProfileUserInfo extends StatelessWidget {
                 boxShadow: [
                   if (!isFollowing)
                     BoxShadow(
-                      color: const Color(0xFF3425B5).withValues(alpha: 0.25),
+                      color: const Color(0xFF3425B5).withOpacity(0.25),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     )
@@ -283,9 +282,10 @@ class ProfileUserInfo extends StatelessWidget {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                    isFollowing
-                                        ? const Color(0xFF3425B5)
-                                        : Colors.white),
+                                  isFollowing
+                                      ? const Color(0xFF3425B5)
+                                      : Colors.white,
+                                ),
                               ),
                             ),
                           )

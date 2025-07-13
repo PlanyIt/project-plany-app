@@ -31,6 +31,7 @@ mixin _$User {
   String? get gender => throw _privateConstructorUsedError;
   List<String> get followers => throw _privateConstructorUsedError;
   List<String> get following => throw _privateConstructorUsedError;
+  DateTime? get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this User to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -56,7 +57,8 @@ abstract class $UserCopyWith<$Res> {
       DateTime? birthDate,
       String? gender,
       List<String> followers,
-      List<String> following});
+      List<String> following,
+      DateTime? createdAt});
 }
 
 /// @nodoc
@@ -84,6 +86,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? gender = freezed,
     Object? followers = null,
     Object? following = null,
+    Object? createdAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -126,6 +129,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.following
           : following // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -147,7 +154,8 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       DateTime? birthDate,
       String? gender,
       List<String> followers,
-      List<String> following});
+      List<String> following,
+      DateTime? createdAt});
 }
 
 /// @nodoc
@@ -172,6 +180,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? gender = freezed,
     Object? followers = null,
     Object? following = null,
+    Object? createdAt = freezed,
   }) {
     return _then(_$UserImpl(
       id: freezed == id
@@ -214,6 +223,10 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value._following
           : following // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -231,7 +244,8 @@ class _$UserImpl implements _User {
       this.birthDate,
       this.gender,
       final List<String> followers = const [],
-      final List<String> following = const []})
+      final List<String> following = const [],
+      this.createdAt})
       : _followers = followers,
         _following = following;
 
@@ -275,8 +289,11 @@ class _$UserImpl implements _User {
   }
 
   @override
+  final DateTime? createdAt;
+
+  @override
   String toString() {
-    return 'User(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following)';
+    return 'User(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following, createdAt: $createdAt)';
   }
 
   @override
@@ -300,7 +317,9 @@ class _$UserImpl implements _User {
             const DeepCollectionEquality()
                 .equals(other._followers, _followers) &&
             const DeepCollectionEquality()
-                .equals(other._following, _following));
+                .equals(other._following, _following) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -316,7 +335,8 @@ class _$UserImpl implements _User {
       birthDate,
       gender,
       const DeepCollectionEquality().hash(_followers),
-      const DeepCollectionEquality().hash(_following));
+      const DeepCollectionEquality().hash(_following),
+      createdAt);
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -345,7 +365,8 @@ abstract class _User implements User {
       final DateTime? birthDate,
       final String? gender,
       final List<String> followers,
-      final List<String> following}) = _$UserImpl;
+      final List<String> following,
+      final DateTime? createdAt}) = _$UserImpl;
 
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
@@ -370,6 +391,8 @@ abstract class _User implements User {
   List<String> get followers;
   @override
   List<String> get following;
+  @override
+  DateTime? get createdAt;
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.

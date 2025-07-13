@@ -79,4 +79,41 @@ class PlanRepositoryRemote implements PlanRepository {
     _cachedData = null; // ❌ Mettre à null, pas []
     print('🧹 Plan cache cleared'); // Debug
   }
+
+  @override
+  Future<Result<List<Plan>>> getPlansByUser(String userId) {
+    return _apiClient.getPlansByUser(userId).then((result) {
+      switch (result) {
+        case Ok<List<Plan>>():
+          return Result.ok(result.value);
+        case Error<List<Plan>>():
+          return Result.error(result.error);
+      }
+    });
+  }
+
+  @override
+  Future<Result<void>> deletePlan(String planId) {
+    return _apiClient.deletePlan(planId).then((result) {
+      switch (result) {
+        case Ok<void>():
+          _cachedData?.removeWhere((plan) => plan.id == planId);
+          return const Result.ok(null);
+        case Error<void>():
+          return Result.error(result.error);
+      }
+    });
+  }
+
+  @override
+  Future<Result<List<Plan>>> getFavoritesByUser(String userId) {
+    return _apiClient.getFavoritesByUser(userId).then((result) {
+      switch (result) {
+        case Ok<List<Plan>>():
+          return Result.ok(result.value);
+        case Error<List<Plan>>():
+          return Result.error(result.error);
+      }
+    });
+  }
 }

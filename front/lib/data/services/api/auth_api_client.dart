@@ -55,4 +55,31 @@ class AuthApiClient {
       client.close();
     }
   }
+
+  Future<Result<void>> changePassword(
+      String currentPassword, String newPassword) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.post(
+        _host,
+        _port,
+        '/api/auth/change-password',
+      );
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      }));
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        return const Result.ok(null);
+      } else {
+        return const Result.error(HttpException("Change password error"));
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
 }

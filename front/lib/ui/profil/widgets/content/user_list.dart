@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
+import '../../../../domain/models/user/user.dart';
+import '../../../../domain/models/user/user_stats.dart';
 
 class UserListItem extends StatelessWidget {
   final User user;
+  final UserStats? userStats;
   final VoidCallback onTap;
   final bool showFollowButton;
   final bool isFollowing;
@@ -12,6 +14,7 @@ class UserListItem extends StatelessWidget {
   const UserListItem({
     super.key,
     required this.user,
+    this.userStats,
     required this.onTap,
     this.showFollowButton = false,
     this.isFollowing = false,
@@ -20,7 +23,7 @@ class UserListItem extends StatelessWidget {
   });
 
   String _getUserLevelEmoji() {
-    final plansCount = user.plansCount ?? 0;
+    final plansCount = userStats?.plansCount ?? 0;
     if (plansCount >= 50) return "🏆";
     if (plansCount >= 20) return "⭐";
     if (plansCount >= 10) return "🎯";
@@ -28,7 +31,7 @@ class UserListItem extends StatelessWidget {
   }
 
   Color _getUserLevelColor() {
-    final plansCount = user.plansCount ?? 0;
+    final plansCount = userStats?.plansCount ?? 0;
     if (plansCount >= 50) return Colors.amber;
     if (plansCount >= 20) return Colors.lightBlue;
     if (plansCount >= 10) return Colors.orange;
@@ -37,13 +40,23 @@ class UserListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final avatar = user.photoUrl != null && user.photoUrl!.isNotEmpty
+        ? ClipOval(
+            child: Image.network(
+              user.photoUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  Icon(Icons.person, color: Colors.grey[600]),
+            ),
+          )
+        : Icon(Icons.person, size: 30, color: Colors.grey[600]);
+
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         child: Row(
           children: [
-            // Avatar
             Container(
               width: 50,
               height: 50,
@@ -53,101 +66,75 @@ class UserListItem extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: user.photoUrl != null
-                  ? ClipOval(
-                      child: Image.network(
-                        user.photoUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                            Icons.person,
-                            size: 30,
-                            color: Colors.grey[600]),
-                      ),
-                    )
-                  : Icon(Icons.person, size: 30, color: Colors.grey[600]),
+              child: avatar,
             ),
             const SizedBox(width: 16),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          user.username,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (user.isPremium == true)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.workspace_premium,
-                                  size: 12, color: Colors.white),
-                              const SizedBox(width: 2),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _getUserLevelColor().withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _getUserLevelEmoji(),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          "${user.followersCount ?? 0} abonnés",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
+            Expanded(child: _buildUserInfo()),
             if (showFollowButton) _buildFollowButton(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildUserInfo() {
+    final followersCount = userStats?.followersCount ?? 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Flexible(
+              child: Text(
+                user.username,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (user.isPremium == true)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.workspace_premium,
+                    size: 12, color: Colors.white),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: _getUserLevelColor().withOpacity(0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_getUserLevelEmoji(), style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 4),
+              Text(
+                "$followersCount abonnés",
+                style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -158,17 +145,14 @@ class UserListItem extends StatelessWidget {
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            categoryColor,
-            categoryColor.withValues(alpha: 0.8),
-          ],
+          colors: [categoryColor, categoryColor.withOpacity(0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: categoryColor.withValues(alpha: 0.3),
+            color: categoryColor.withOpacity(0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

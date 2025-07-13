@@ -1,222 +1,93 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/ui/profil/profile_screen.dart';
-import 'package:front/ui/profil/widgets/common/section_header.dart';
-import 'package:front/ui/profil/widgets/content/user_list.dart';
-import 'package:front/services/user_service.dart';
+import 'package:provider/provider.dart';
 
-class FollowersSection extends StatefulWidget {
-  final String userId;
-  final Function()? onFollowChanged;
+import '../../profile_screen.dart';
+import '../../view_models/followers_viewmodel.dart';
+import '../common/section_header.dart';
+import 'user_list.dart';
+
+class FollowersSection extends StatelessWidget {
+  final FollowersViewModel viewModel;
+  final VoidCallback? onFollowChanged;
 
   const FollowersSection({
     super.key,
-    required this.userId,
+    required this.viewModel,
     this.onFollowChanged,
   });
 
   @override
-  FollowersSectionState createState() => FollowersSectionState();
-}
-
-class FollowersSectionState extends State<FollowersSection> {
-  final UserService _userService = UserService();
-  late Future<List<User>> _followersFuture;
-  Map<String, bool> followingStatus = {};
-  bool _isLoading = false;
-  Set<String> loadingUserIds = {};
-  List<User> _followersList = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _followersFuture = _loadFollowers();
-  }
-
-  Future<List<User>> _loadFollowers() async {
-    setState(() => _isLoading = true);
-    try {
-      final followers = await _userService.getUserFollowers(widget.userId);
-
-      setState(() {
-        _followersList = followers;
-      });
-
-      for (var follower in followers) {
-        final isFollowing = await _userService.isFollowing(follower.id);
-        if (mounted) {
-          setState(() {
-            followingStatus[follower.id] = isFollowing;
-          });
-        }
-      }
-
-      return followers;
-    } catch (e) {
-      print('Erreur lors du chargement des abonnés: $e');
-      return [];
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Widget _buildHeader(List<User> followers) {
-    return SectionHeader(
-      title: "Abonnés",
-      subtitle:
-          "${followers.length} personne${followers.length > 1 ? 's' : ''} vous sui${followers.length > 1 ? 'vent' : 't'}",
-      icon: Icons.people_outline_rounded,
-      gradientColors: const [Colors.blue, Colors.blueAccent],
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: _buildHeader(_followersList),
-        ),
-        FutureBuilder<List<User>>(
-          future: _followersFuture,
-          builder: (context, snapshot) {
-            if (_isLoading) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: CircularProgressIndicator(),
+    return ChangeNotifierProvider.value(
+      value: viewModel..loadFollowers(),
+      child: Consumer<FollowersViewModel>(
+        builder: (context, vm, _) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SectionHeader(
+                  title: "Abonnés",
+                  subtitle:
+                      "${vm.followers.length} personne${vm.followers.length > 1 ? 's' : ''} vous sui${vm.followers.length > 1 ? 'vent' : 't'}",
+                  icon: Icons.people_outline_rounded,
+                  gradientColors: const [Colors.blue, Colors.blueAccent],
                 ),
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.error_outline,
-                          size: 48, color: Colors.red[300]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Erreur lors du chargement des abonnés',
-                        style: TextStyle(color: Colors.grey[700]),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _followersFuture = _loadFollowers();
-                          });
-                        },
-                        child: const Text('Réessayer'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            final followers = snapshot.data ?? [];
-            if (followers.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.person_off, size: 48, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Aucun abonné pour le moment',
-                        style: TextStyle(color: Colors.grey[700]),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: followers.map((follower) {
-                  return Column(
-                    children: [
-                      UserListItem(
-                        user: follower,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProfileScreen(
-                                userId: follower.id,
-                                isCurrentUser: false,
-                              ),
-                            ),
-                          );
-                        },
-                        showFollowButton: true,
-                        isFollowing: followingStatus[follower.id] ?? false,
-                        isLoading: loadingUserIds.contains(follower.id),
-                        onFollowChanged: (isFollowing) async {
-                          try {
-                            setState(() {
-                              loadingUserIds.add(follower.id);
-                            });
-
-                            bool success;
-                            if (isFollowing) {
-                              success =
-                                  await _userService.followUser(follower.id);
-                            } else {
-                              success =
-                                  await _userService.unfollowUser(follower.id);
-                            }
-
-                            if (success && mounted) {
-                              setState(() {
-                                followingStatus[follower.id] = isFollowing;
-                              });
-                              if (widget.onFollowChanged != null) {
-                                widget.onFollowChanged!();
-                              }
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(isFollowing
-                                      ? 'Vous suivez maintenant ${follower.username}'
-                                      : 'Vous ne suivez plus ${follower.username}'),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            print(
-                                'Erreur lors de la mise à jour de l\'abonnement: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('Erreur: $e'),
-                                  backgroundColor: Colors.red),
-                            );
-                          } finally {
-                            if (mounted) {
-                              setState(() {
-                                loadingUserIds.remove(follower.id);
-                              });
-                            }
-                          }
-                        },
-                      ),
-                    ],
-                  );
-                }).toList(),
               ),
-            );
-          },
-        ),
-      ],
+              if (vm.isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              if (!vm.isLoading && vm.followers.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Icon(Icons.person_off,
+                            size: 48, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text('Aucun abonné pour le moment',
+                            style: TextStyle(color: Colors.grey[700])),
+                      ],
+                    ),
+                  ),
+                ),
+              ...vm.followers.map((user) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: UserListItem(
+                    user: user,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfileScreen(
+                            userId: user.id,
+                            isCurrentUser: false,
+                            viewModel: Provider.of(context, listen: false),
+                          ),
+                        ),
+                      );
+                    },
+                    showFollowButton: true,
+                    isFollowing: vm.followingStatus[user.id] ?? false,
+                    isLoading: vm.loadingIds.contains(user.id),
+                    onFollowChanged: (isFollowing) {
+                      vm.toggleFollow(user);
+                      onFollowChanged?.call();
+                    },
+                  ),
+                );
+              }).toList(),
+            ],
+          );
+        },
+      ),
     );
   }
 }

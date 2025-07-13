@@ -25,4 +25,10 @@ abstract class AuthRepository extends ChangeNotifier {
 
   /// Get the current user
   Future<Result<User>> getCurrentUser();
+
+  /// Update the current user's password
+  Future<Result<void>> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }

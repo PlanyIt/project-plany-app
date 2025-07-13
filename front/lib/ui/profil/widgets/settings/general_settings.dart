@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../domain/models/user/user.dart';
+import '../../view_models/profile_viewmodel.dart';
 
 class GeneralSettings extends StatefulWidget {
   final User userProfile;
   final Function(String, String) showInfoCard;
   final Function(String) showErrorCard;
+  final ProfileViewModel viewModel;
 
   const GeneralSettings({
     super.key,
     required this.userProfile,
     required this.showInfoCard,
     required this.showErrorCard,
+    required this.viewModel,
   });
 
   @override
@@ -51,10 +54,8 @@ class GeneralSettingsState extends State<GeneralSettings> {
   }
 
   void _toggleDarkMode(bool value) async {
-    // TODO: Implémenter le mode sombre
     widget.showInfoCard('Développement en cours',
         'Le mode sombre sera disponible prochainement.');
-
     await _savePreference('darkMode', value);
     setState(() {
       _darkMode = value;
@@ -62,10 +63,8 @@ class GeneralSettingsState extends State<GeneralSettings> {
   }
 
   void _toggleNotifications(bool value) async {
-    // TODO: Implémenter les notifications
     widget.showInfoCard('Développement en cours',
         'La gestion des notifications sera disponible prochainement.');
-
     await _savePreference('notifications', value);
     setState(() {
       _notifications = value;
@@ -82,7 +81,7 @@ class GeneralSettingsState extends State<GeneralSettings> {
   }
 
   Future<void> _showLogoutConfirmation() async {
-    final bool? confirm = await showDialog<bool>(
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Row(
@@ -123,8 +122,8 @@ class GeneralSettingsState extends State<GeneralSettings> {
 
   Future<void> _logout() async {
     try {
-      final AuthService authService = AuthService();
-      await authService.logout();
+      await widget.viewModel.logout();
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       widget.showErrorCard('Erreur lors de la déconnexion: $e');
@@ -176,7 +175,7 @@ class GeneralSettingsState extends State<GeneralSettings> {
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.red.withValues(alpha: 0.3),
+                  color: Colors.red.withAlpha(80),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -229,18 +228,9 @@ class GeneralSettingsState extends State<GeneralSettings> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: Colors.grey[700],
-          ),
+          Icon(icon, size: 18, color: Colors.grey[700]),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 15),
-            ),
-          ),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
           Switch(
             value: value,
             onChanged: onChanged,
@@ -263,23 +253,10 @@ class GeneralSettingsState extends State<GeneralSettings> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 18,
-              color: Colors.grey[700],
-            ),
+            Icon(icon, size: 18, color: Colors.grey[700]),
             const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(fontSize: 15),
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: Colors.grey[400],
-            ),
+            Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
+            Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey[400]),
           ],
         ),
       ),

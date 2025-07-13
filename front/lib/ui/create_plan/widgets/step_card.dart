@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../widgets/tag/info_chip.dart';
+import 'info_chip.dart';
 
 class StepCard extends StatelessWidget {
   final String title;

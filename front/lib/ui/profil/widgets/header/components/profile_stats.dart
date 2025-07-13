@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:front/domain/models/user.dart';
+import '../../../view_models/profile_viewmodel.dart';
 
 class ProfileStats extends StatelessWidget {
-  final User userProfile;
-  final bool isCurrentUser;
+  final ProfileViewModel viewModel;
   final Function(String) onNavigationSelected;
 
   const ProfileStats({
     super.key,
-    required this.userProfile,
-    required this.isCurrentUser,
+    required this.viewModel,
     required this.onNavigationSelected,
   });
 
   @override
   Widget build(BuildContext context) {
+    final user = viewModel.userProfile;
+    final isCurrentUser = user?.id == viewModel.authRepository.currentUser?.id;
+
+    if (user == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -41,54 +43,43 @@ class ProfileStats extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 _buildEnhancedStatCard(
-                  userProfile.plansCount?.toString() ?? '0',
+                  (viewModel.userStats?.plansCount ?? 0).toString(),
                   'Plans créés',
                   Icons.map,
                   Colors.purple,
-                  flex: 1,
-                  isFirstInRow: true,
-                  navigationKey: 'plans',
+                  'plans',
                 ),
                 _buildVerticalDivider(),
                 _buildEnhancedStatCard(
-                  userProfile.favoritesCount?.toString() ?? '0',
+                  (viewModel.userStats?.plansCount ?? 0).toString(),
                   'Favoris',
                   Icons.favorite,
                   Colors.red[400] ?? Colors.red,
-                  flex: 1,
-                  isFirstInRow: false,
-                  navigationKey: 'favorites',
+                  'favorites',
                 ),
               ],
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Container(
-                height: 1,
-                color: Colors.grey[200],
-              ),
+              child: Container(height: 1, color: Colors.grey[200]),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 _buildEnhancedStatCard(
-                  userProfile.followingCount?.toString() ?? '0',
+                  (viewModel.userStats?.plansCount ?? 0).toString(),
                   'Abonnements',
                   Icons.people,
                   Colors.green,
-                  flex: 1,
-                  isFirstInRow: true,
-                  navigationKey: 'subscriptions',
+                  'subscriptions',
                 ),
                 _buildVerticalDivider(),
                 _buildEnhancedStatCard(
-                  userProfile.followersCount?.toString() ?? '0',
+                  (viewModel.userStats?.plansCount ?? 0).toString(),
                   'Abonnés',
                   Icons.person_add,
                   Colors.blue,
-                  flex: 1,
-                  isFirstInRow: false,
-                  navigationKey: 'followers',
+                  'followers',
                 ),
               ],
             ),
@@ -97,23 +88,19 @@ class ProfileStats extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 _buildEnhancedStatCard(
-                  userProfile.plansCount?.toString() ?? '0',
+                  (viewModel.userStats?.plansCount ?? 0).toString(),
                   'Plans créés',
                   Icons.map,
                   Colors.purple,
-                  flex: 1,
-                  isFirstInRow: true,
-                  navigationKey: 'plans',
+                  'plans',
                 ),
                 _buildVerticalDivider(),
                 _buildEnhancedStatCard(
-                  userProfile.followersCount?.toString() ?? '0',
+                  (viewModel.userStats?.plansCount ?? 0).toString(),
                   'Abonnés',
                   Icons.person_add,
                   Colors.blue,
-                  flex: 1,
-                  isFirstInRow: false,
-                  navigationKey: 'followers',
+                  'followers',
                 ),
               ],
             ),
@@ -128,33 +115,33 @@ class ProfileStats extends StatelessWidget {
       height: 40,
       width: 1,
       margin: const EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.grey.withValues(alpha: 0.2),
+      color: Colors.grey.withOpacity(0.2),
     );
   }
 
   Widget _buildEnhancedStatCard(
-      String value, String label, IconData icon, Color color,
-      {required int flex, required bool isFirstInRow, String? navigationKey}) {
+    String value,
+    String label,
+    IconData icon,
+    Color color,
+    String navigationKey,
+  ) {
     return Expanded(
-      flex: flex,
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
-          if (navigationKey != null) {
-            onNavigationSelected(navigationKey);
-          }
+          onNavigationSelected(navigationKey);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 18),
@@ -188,7 +175,7 @@ class ProfileStats extends StatelessWidget {
                         Icon(
                           Icons.arrow_forward_ios,
                           size: 10,
-                          color: color.withValues(alpha: 0.7),
+                          color: color.withOpacity(0.7),
                         ),
                       ],
                     ),

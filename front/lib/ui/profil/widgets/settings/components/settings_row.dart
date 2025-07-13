@@ -9,14 +9,14 @@ class InfoRow extends StatelessWidget {
   final Widget? trailing;
 
   const InfoRow({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.icon,
     this.multiline = false,
     this.onEdit,
     this.trailing,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +76,11 @@ class ActionRow extends StatelessWidget {
   final VoidCallback onTap;
 
   const ActionRow({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -122,12 +122,12 @@ class SwitchRow extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   const SwitchRow({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.icon,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -163,10 +163,10 @@ class PremiumStatusRow extends StatelessWidget {
   final VoidCallback onTap;
 
   const PremiumStatusRow({
-    Key? key,
+    super.key,
     required this.isPremium,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

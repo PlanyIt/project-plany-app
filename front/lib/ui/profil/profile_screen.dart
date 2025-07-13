@@ -1,236 +1,148 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/ui/profil/widgets/content/favorites_section.dart';
-import 'package:front/ui/profil/widgets/content/followers_section.dart';
-import 'package:front/ui/profil/widgets/content/following_section.dart'
-    show FollowingSection;
-import 'package:front/ui/profil/widgets/content/my_plans_section.dart';
-import 'package:front/ui/profil/widgets/content/settings_section.dart';
-import 'package:front/ui/profil/widgets/header/profile_header.dart';
-import 'package:front/services/auth_service.dart';
-import 'package:front/services/user_service.dart';
+import 'package:provider/provider.dart';
 
-class ProfileScreen extends StatefulWidget {
+import '../../../ui/profil/widgets/content/favorites_section.dart';
+import '../../../ui/profil/widgets/content/followers_section.dart';
+import '../../../ui/profil/widgets/content/following_section.dart';
+import '../../../ui/profil/widgets/content/my_plans_section.dart';
+import '../../../ui/profil/widgets/content/settings_section.dart';
+import '../../../ui/profil/widgets/header/profile_header.dart';
+import 'view_models/profile_viewmodel.dart';
+
+class ProfileScreen extends StatelessWidget {
   final String? userId;
   final bool isCurrentUser;
+  final ProfileViewModel viewModel;
 
   const ProfileScreen({
     super.key,
     this.userId,
     this.isCurrentUser = true,
+    required this.viewModel,
   });
 
   @override
-  ProfileScreenState createState() => ProfileScreenState();
-}
-
-class ProfileScreenState extends State<ProfileScreen> {
-  bool _isLoading = true;
-  User? _userProfile;
-  String _selectedSection = '';
-  final UserService _userService = UserService();
-  final AuthService _authService = AuthService();
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedSection = 'plans';
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    try {
-      setState(() => _isLoading = true);
-
-      final userProfile = await _userService.getUserProfile(
-          widget.userId ?? _authService.getCurrentUserId().toString(),
-          forceRefresh: true);
-
-      final stats = await _userService.getUserStats(
-          widget.userId ?? _authService.getCurrentUserId().toString());
-
-      userProfile.followersCount = stats['followersCount'];
-      userProfile.followingCount = stats['followingCount'];
-      userProfile.plansCount = stats['plansCount'];
-      userProfile.favoritesCount = stats['favoritesCount'];
-
-      setState(() {
-        _userProfile = userProfile;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Erreur lors du chargement du profil: $e');
-      setState(() => _isLoading = false);
-    }
-  }
-
-  void _updateUserPhoto(String newPhotoUrl) {
-    setState(() {
-      _userProfile = User(
-        id: _userProfile!.id,
-        username: _userProfile!.username,
-        email: _userProfile!.email,
-        photoUrl: newPhotoUrl,
-      );
-    });
-  }
-
-  Future<void> _refreshProfileStats() async {
-    try {
-      final stats = await _userService.getUserStats(_userProfile!.id);
-
-      setState(() {
-        if (_userProfile != null) {
-          _userProfile!.followingCount = stats['followingCount'];
-          _userProfile!.followersCount = stats['followersCount'];
-          _userProfile!.plansCount = stats['plansCount'];
-          _userProfile!.favoritesCount = stats['favoritesCount'];
-        }
-      });
-    } catch (e) {
-      print('Erreur lors du rafraîchissement des statistiques: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF3425B5)),
-          ),
-        ),
-      );
-    }
+    return ChangeNotifierProvider.value(
+      value: viewModel..loadUserData(userId),
+      child: Consumer<ProfileViewModel>(
+        builder: (context, vm, _) {
+          if (vm.isLoading) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3425B5)),
+                ),
+              ),
+            );
+          }
 
-    if (_userProfile == null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0EEFF),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.error_outline,
-                  size: 50,
-                  color: const Color(0xFF3425B5).withValues(alpha: 0.7),
+          if (vm.userProfile == null) {
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF0EEFF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.error_outline,
+                        size: 50,
+                        color: Color(0xFF3425B5).withValues(alpha: .7),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Erreur de chargement du profil',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => vm.loadUserData(vm.userProfile?.id),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3425B5),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              Text(
-                'Erreur de chargement du profil',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadUserData,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3425B5),
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Réessayer'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+            );
+          }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: Column(
-            children: [
-              ProfileHeader(
-                userProfile: _userProfile!,
-                onUpdatePhoto: _updateUserPhoto,
-                onProfileUpdated: _loadUserData,
-                onNavigationSelected: _handleNavigation,
-                isCurrentUser: widget.isCurrentUser,
-                onFollowChanged: () {
-                  _refreshProfileStats();
-                },
-                scrollController: _scrollController,
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              child: SingleChildScrollView(
+                controller: vm.scrollController,
+                child: Column(
+                  children: [
+                    ProfileHeader(
+                      viewModel: vm,
+                      userProfile: vm.userProfile!,
+                      onUpdatePhoto: vm.updatePhoto,
+                      onProfileUpdated: () =>
+                          vm.loadUserData(vm.userProfile!.id),
+                      onNavigationSelected: vm.selectSection,
+                      isCurrentUser: isCurrentUser,
+                      isFollowing: vm.isFollowing,
+                      loadingFollow: vm.loadingFollow,
+                      onToggleFollow: vm.toggleFollow,
+                      onShowPremiumPopup: () {},
+                      scrollController: vm.scrollController,
+                    ),
+                    _buildSection(vm),
+                  ],
+                ),
               ),
-              _getSelectedSection(),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  void _handleNavigation(String section) {
-    setState(() {
-      _selectedSection = section;
-    });
+  Widget _buildSection(ProfileViewModel vm) {
+    final user = vm.userProfile!;
 
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          420,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  Widget _getSelectedSection() {
-    switch (_selectedSection) {
+    switch (vm.selectedSection) {
       case 'plans':
-        return MyPlansSection(
-          userId: _userProfile!.id,
-          onPlansUpdated: () {
-            _refreshProfileStats();
-          },
-        );
+        return MyPlansSection(viewModel: vm.myPlansViewModel);
       case 'favorites':
-        return widget.isCurrentUser
-            ? FavoritesSection(userId: _userProfile!.id)
-            : const Center(child: Text('Section non disponible'));
+        return FavoritesSection(viewModel: vm.favoritesViewModel);
       case 'subscriptions':
-        return widget.isCurrentUser
-            ? FollowingSection(
-                userId: _userProfile!.id, onFollowChanged: _refreshProfileStats)
-            : const Center(child: Text('Section non disponible'));
+        return FollowingSection(
+          viewModel: vm.followingViewModel,
+          userId: user.id ?? '',
+          onFollowChanged: vm.refreshStats,
+        );
       case 'followers':
         return FollowersSection(
-            userId: _userProfile!.id, onFollowChanged: _refreshProfileStats);
+          onFollowChanged: vm.refreshStats,
+          viewModel: vm.followersViewModel!,
+        );
       case 'settings':
-        return widget.isCurrentUser
-            ? SettingsSection(
-                onProfileUpdated: _loadUserData,
-                userProfile: _userProfile!,
-              )
-            : const Center(child: Text('Section non disponible'));
+        return SettingsSection(
+          viewModel: vm,
+          onProfileUpdated: () => vm.loadUserData(user.id),
+        );
       default:
-        return MyPlansSection(userId: _userProfile!.id);
+        return MyPlansSection(viewModel: vm.myPlansViewModel);
     }
   }
 }

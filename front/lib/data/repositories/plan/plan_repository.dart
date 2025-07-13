@@ -16,4 +16,13 @@ abstract class PlanRepository {
 
   /// Clears the cache of plans.
   Future<void> clearCache();
+
+  /// Returns the list of [Plan] for a specific user.
+  Future<Result<List<Plan>>> getPlansByUser(String userId);
+
+  /// Deletes a plan by its ID.
+  Future<Result<void>> deletePlan(String planId);
+
+  /// Returns the list of favorite plans for a specific user.
+  Future<Result<List<Plan>>> getFavoritesByUser(String userId);
 }

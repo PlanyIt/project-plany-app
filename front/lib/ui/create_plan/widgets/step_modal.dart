@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../widgets/card/image_picker_card.dart';
+import 'image_picker_card.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_step_viewmodel.dart';
 import 'choose_location.dart';

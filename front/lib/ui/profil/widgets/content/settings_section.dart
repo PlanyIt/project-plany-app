@@ -1,34 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/ui/profil/widgets/common/section_header.dart';
-import 'package:front/ui/profil/widgets/settings/account_settings.dart';
-import 'package:front/ui/profil/widgets/settings/components/settings_card.dart';
-import 'package:front/ui/profil/widgets/settings/general_settings.dart';
-import 'package:front/ui/profil/widgets/settings/profile_settings.dart';
+import '../../view_models/profile_viewmodel.dart';
+import '../common/section_header.dart';
+import '../settings/account_settings.dart';
+import '../settings/components/settings_card.dart';
+import '../settings/general_settings.dart';
+import '../settings/profile_settings.dart';
 
-class SettingsSection extends StatefulWidget {
-  final User userProfile;
-  final Function onProfileUpdated;
+class SettingsSection extends StatelessWidget {
+  final ProfileViewModel viewModel;
+  final VoidCallback onProfileUpdated;
 
   const SettingsSection({
     super.key,
-    required this.userProfile,
+    required this.viewModel,
     required this.onProfileUpdated,
   });
 
-  @override
-  SettingsSectionState createState() => SettingsSectionState();
-}
-
-class SettingsSectionState extends State<SettingsSection> {
-  final bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  void _showInfoCard(String title, String message) {
+  void _showInfoCard(BuildContext context, String title, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Column(
@@ -37,10 +25,7 @@ class SettingsSectionState extends State<SettingsSection> {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
             Text(message),
@@ -57,7 +42,7 @@ class SettingsSectionState extends State<SettingsSection> {
     );
   }
 
-  void _showErrorCard(String message) {
+  void _showErrorCard(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -74,92 +59,86 @@ class SettingsSectionState extends State<SettingsSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SectionHeader(
-                  title: "Réglages",
-                  subtitle: "Gérez votre profil et vos préférences",
-                  icon: Icons.settings,
-                  gradientColors: const [Color(0xFF3425B5), Color(0xFF5C49D6)],
-                ),
-              ),
+    final userProfile = viewModel.userProfile;
+    if (userProfile == null) return const SizedBox.shrink();
 
-              // Section Profil
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SettingsCard(
-                  title: 'Profil',
-                  icon: Icons.person,
-                  children: [
-                    ProfileSettings(
-                      userProfile: widget.userProfile,
-                      onProfileUpdated: widget.onProfileUpdated,
-                      showInfoCard: _showInfoCard,
-                      showErrorCard: _showErrorCard,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Section Compte
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SettingsCard(
-                  title: 'Compte',
-                  icon: Icons.account_circle,
-                  children: [
-                    AccountSettings(
-                      userProfile: widget.userProfile,
-                      onProfileUpdated: widget.onProfileUpdated,
-                      showInfoCard: _showInfoCard,
-                      showErrorCard: _showErrorCard,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Section Général
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SettingsCard(
-                  title: 'Général',
-                  icon: Icons.settings,
-                  children: [
-                    GeneralSettings(
-                      userProfile: widget.userProfile,
-                      showInfoCard: _showInfoCard,
-                      showErrorCard: _showErrorCard,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-
-        // Indicateur de chargement
-        if (_isLoading)
-          Container(
-            color: Colors.black.withValues(alpha: 0.3),
-            child: const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3425B5)),
-              ),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SectionHeader(
+              title: "Réglages",
+              subtitle: "Gérez votre profil et vos préférences",
+              icon: Icons.settings,
+              gradientColors: const [Color(0xFF3425B5), Color(0xFF5C49D6)],
             ),
           ),
-      ],
+
+          const SizedBox(height: 16),
+
+          /// --- Section Profil
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SettingsCard(
+              title: 'Profil',
+              icon: Icons.person,
+              children: [
+                ProfileSettings(
+                  viewModel: viewModel,
+                  showInfoCard: (title, message) =>
+                      _showInfoCard(context, title, message),
+                  showErrorCard: (message) => _showErrorCard(context, message),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          /// --- Section Compte
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SettingsCard(
+              title: 'Compte',
+              icon: Icons.account_circle,
+              children: [
+                AccountSettings(
+                  viewModel: viewModel,
+                  userProfile: userProfile,
+                  onProfileUpdated: onProfileUpdated,
+                  showInfoCard: (title, message) =>
+                      _showInfoCard(context, title, message),
+                  showErrorCard: (message) => _showErrorCard(context, message),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          /// --- Section Général
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SettingsCard(
+              title: 'Général',
+              icon: Icons.settings,
+              children: [
+                GeneralSettings(
+                  viewModel: viewModel,
+                  userProfile: userProfile,
+                  showInfoCard: (title, message) =>
+                      _showInfoCard(context, title, message),
+                  showErrorCard: (message) => _showErrorCard(context, message),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 32),
+        ],
+      ),
     );
   }
 }

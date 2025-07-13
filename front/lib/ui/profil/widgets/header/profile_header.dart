@@ -1,158 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/user.dart';
-import 'package:front/ui/profil/widgets/header/components/profile_user_info.dart';
-import 'package:front/services/auth_service.dart';
-import 'package:front/services/user_service.dart';
-import 'package:front/ui/profil/widgets/content/premium_popup.dart';
-import 'components/profile_avatar.dart';
-import 'components/profile_stats.dart';
-import 'components/profile_categories.dart';
 
-class ProfileHeader extends StatefulWidget {
+import '../../../../domain/models/user/user.dart';
+import '../../view_models/profile_viewmodel.dart';
+import 'components/profile_avatar.dart';
+import 'components/profile_categories.dart';
+import 'components/profile_stats.dart';
+import 'components/profile_user_info.dart';
+
+class ProfileHeader extends StatelessWidget {
   final User userProfile;
   final Function onProfileUpdated;
   final Function(String) onUpdatePhoto;
   final Function(String) onNavigationSelected;
   final bool isCurrentUser;
-  final Function()? onFollowChanged;
+  final bool isFollowing;
+  final bool loadingFollow;
+  final VoidCallback? onFollowChanged;
+  final VoidCallback? onToggleFollow;
+  final VoidCallback? onShowPremiumPopup;
   final ScrollController scrollController;
+  final ProfileViewModel viewModel;
 
   const ProfileHeader({
     super.key,
     required this.userProfile,
+    required this.viewModel,
     required this.onUpdatePhoto,
     required this.onProfileUpdated,
     required this.onNavigationSelected,
     required this.isCurrentUser,
-    this.onFollowChanged,
     required this.scrollController,
+    this.isFollowing = false,
+    this.loadingFollow = false,
+    this.onFollowChanged,
+    this.onToggleFollow,
+    this.onShowPremiumPopup,
   });
-
-  @override
-  _ProfileHeaderState createState() => _ProfileHeaderState();
-}
-
-class _ProfileHeaderState extends State<ProfileHeader> {
-  final UserService _userService = UserService();
-  final AuthService _authService = AuthService();
-  bool _isFollowing = false;
-  bool _loadingFollow = false;
-
-  @override
-  void initState() {
-    super.initState();
-
-    if (!widget.isCurrentUser) {
-      _checkFollowStatus();
-    }
-  }
-
-  Future<void> _checkFollowStatus() async {
-    if (!widget.isCurrentUser) {
-      try {
-        _isFollowing = await _userService.isFollowing(widget.userProfile.id);
-        setState(() {});
-      } catch (e) {
-        print('Erreur lors de la vérification du statut de suivi: $e');
-      }
-    }
-  }
-
-  void _showInfoCard(String title, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(message),
-          ],
-        ),
-        backgroundColor: const Color(0xFF3425B5),
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: const EdgeInsets.all(10),
-      ),
-    );
-  }
-
-  void _showErrorCard(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: const EdgeInsets.all(10),
-      ),
-    );
-  }
-
-  void _showPremiumPopup() {
-    PremiumPopup.show(
-      context: context,
-      userProfile: widget.userProfile,
-      onProfileUpdated: widget.onProfileUpdated,
-      showInfoCard: _showInfoCard,
-      showErrorCard: _showErrorCard,
-    );
-  }
-
-  Future<void> _toggleFollow() async {
-    if (_loadingFollow) return;
-
-    setState(() {
-      _loadingFollow = true;
-    });
-
-    try {
-      bool success;
-      if (_isFollowing) {
-        success = await _userService.unfollowUser(widget.userProfile.id);
-        if (success) {
-          _showInfoCard('Désabonnement',
-              'Vous ne suivez plus ${widget.userProfile.username}');
-        }
-      } else {
-        success = await _userService.followUser(widget.userProfile.id);
-        if (success) {
-          _showInfoCard('Abonnement',
-              'Vous suivez maintenant ${widget.userProfile.username}');
-        }
-      }
-
-      if (success) {
-        await _checkFollowStatus();
-        widget.onProfileUpdated();
-        widget.onFollowChanged?.call();
-      }
-    } catch (e) {
-      _showErrorCard('Erreur: $e');
-    } finally {
-      setState(() {
-        _loadingFollow = false;
-      });
-    }
-  }
-
-  void _handleNavigation(String section) {
-    setState(() {});
-    widget.onNavigationSelected(section);
-  }
 
   Widget _buildGlassIconButton({
     required IconData icon,
@@ -164,7 +47,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -184,6 +67,10 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     );
   }
 
+  void _handleNavigation(String section) {
+    onNavigationSelected(section);
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = const Color(0xFF3425B5);
@@ -199,7 +86,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -225,13 +112,13 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                       }
                     },
                   ),
-                  if (widget.isCurrentUser)
+                  if (isCurrentUser)
                     Row(
                       children: [
                         _buildGlassIconButton(
                           icon: Icons.settings,
                           onPressed: () {
-                            widget.onNavigationSelected('settings');
+                            onNavigationSelected('settings');
                           },
                         ),
                         const SizedBox(width: 8),
@@ -260,20 +147,21 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ProfileAvatar(
-                    userProfile: widget.userProfile,
-                    onUpdatePhoto: widget.onUpdatePhoto,
-                    onProfileUpdated: widget.onProfileUpdated,
-                    isCurrentUser: widget.isCurrentUser,
+                    userProfile: userProfile,
+                    isCurrentUser: isCurrentUser,
+                    onPickPhoto: (file) async {
+                      await viewModel.updateProfilePhoto(file);
+                    },
                   ),
                   const SizedBox(width: 20),
                   Expanded(
                     child: ProfileUserInfo(
-                      userProfile: widget.userProfile,
-                      isCurrentUser: widget.isCurrentUser,
-                      isFollowing: _isFollowing,
-                      loadingFollow: _loadingFollow,
-                      onPremiumTap: _showPremiumPopup,
-                      onFollowTap: _toggleFollow,
+                      viewModel: viewModel,
+                      isCurrentUser: isCurrentUser,
+                      isFollowing: isFollowing,
+                      loadingFollow: loadingFollow,
+                      onPremiumTap: onShowPremiumPopup ?? () {},
+                      onFollowTap: onToggleFollow ?? () {},
                     ),
                   ),
                 ],
@@ -287,10 +175,10 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.05),
+                  color: primaryColor.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: primaryColor.withValues(alpha: 0.1),
+                    color: primaryColor.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
@@ -300,7 +188,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.1),
+                        color: primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -311,23 +199,18 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.userProfile.description?.isNotEmpty == true
-                                ? widget.userProfile.description!
-                                : "Bonjour ! Je suis ${widget.userProfile.username} et j'adore explorer de nouveaux endroits.",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[800],
-                              height: 1.5,
-                              fontStyle: FontStyle.italic,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                      child: Text(
+                        userProfile.description?.isNotEmpty == true
+                            ? userProfile.description!
+                            : "Bonjour ! Je suis ${userProfile.username} et j'adore explorer de nouveaux endroits.",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[800],
+                          height: 1.5,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -339,7 +222,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: ProfileCategories(userId: widget.userProfile.id),
+              child: ProfileCategories(viewModel: viewModel),
             ),
 
             const SizedBox(height: 24),
@@ -347,8 +230,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ProfileStats(
-                userProfile: widget.userProfile,
-                isCurrentUser: widget.isCurrentUser,
+                viewModel: viewModel,
                 onNavigationSelected: _handleNavigation,
               ),
             ),

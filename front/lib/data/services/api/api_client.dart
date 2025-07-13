@@ -4,6 +4,8 @@ import 'dart:io';
 import '../../../domain/models/comment/comment.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart';
+import '../../../domain/models/user/user.dart';
+import '../../../domain/models/user/user_stats.dart';
 import '../../../utils/result.dart';
 import 'model/category/category_api_model.dart';
 import 'model/step/step_api_model.dart';
@@ -124,6 +126,29 @@ class ApiClient {
     }
   }
 
+  Future<Result<List<Plan>>> getPlansByUser(String userId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.get(_host, _port, '/api/plans/user/$userId');
+      await _authHeader(request.headers);
+      final response = await request.close();
+
+      if (response.statusCode == 200) {
+        final stringData = await response.transform(utf8.decoder).join();
+        final json = jsonDecode(stringData) as List<dynamic>;
+        return Result.ok(
+          json.map((element) => Plan.fromJson(element)).toList(),
+        );
+      } else {
+        return const Result.error(HttpException("Invalid response"));
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
   Future<Result<Plan>> createPlan({required Map<String, dynamic> body}) async {
     final client = _clientFactory();
     try {
@@ -224,6 +249,30 @@ class ApiClient {
     }
   }
 
+  Future<Result<void>> deletePlan(String planId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.delete(_host, _port, '/api/plans/$planId');
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final response = await request.close();
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return const Result.ok(null);
+      } else {
+        final errorBody = await response.transform(utf8.decoder).join();
+        return Result.error(
+          HttpException(
+              'Failed to delete plan: ${response.statusCode} - $errorBody'),
+        );
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
   // Step endpoints
   Future<Result<List<StepApiModel>>> getStepsByPlan(String planId) async {
     final client = _clientFactory();
@@ -294,6 +343,173 @@ class ApiClient {
   }
 
   /// User endpoints
+
+  Future<Result<UserApiModel>> updateUserProfile(User user) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.patch(
+        _host,
+        _port,
+        '/api/users/${user.id}/profile',
+      );
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final body = jsonEncode({
+        'username': user.username,
+        'email': user.email,
+        'description': user.description,
+        'isPremium': user.isPremium,
+        'photoUrl': user.photoUrl,
+        'birthDate': user.birthDate,
+        'gender': user.gender
+      });
+
+      request.write(body);
+
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        final stringData = await response.transform(utf8.decoder).join();
+        return Result.ok(UserApiModel.fromJson(jsonDecode(stringData)));
+      } else {
+        return const Result.error(HttpException("Invalid response"));
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<void>> updateEmail(
+      String email, String password, String userId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.put(
+        _host,
+        _port,
+        '/api/users/$userId/email',
+      );
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final body = jsonEncode({
+        'email': email,
+        'password': password,
+      });
+      request.write(body);
+
+      final response = await request.close();
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return const Result.ok(null);
+      } else {
+        final errorBody = await response.transform(utf8.decoder).join();
+        return Result.error(
+          HttpException(
+              'Failed to update email: ${response.statusCode} - $errorBody'),
+        );
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<List<Plan>>> getFavoritesByUser(String userId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.get(
+        _host,
+        _port,
+        '/api/users/$userId/favorites',
+      );
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final response = await request.close();
+      return await _handleResponse(
+        response,
+        (json) =>
+            (json as List<dynamic>).map((plan) => Plan.fromJson(plan)).toList(),
+      );
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<List<User>>> getFollowers(String userId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.get(
+        _host,
+        _port,
+        '/api/users/$userId/followers',
+      );
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final response = await request.close();
+      return await _handleResponse(
+        response,
+        (json) =>
+            (json as List<dynamic>).map((user) => User.fromJson(user)).toList(),
+      );
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<List<User>>> getFollowing(String userId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.get(
+        _host,
+        _port,
+        '/api/users/$userId/following',
+      );
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final response = await request.close();
+      return await _handleResponse(
+        response,
+        (json) =>
+            (json as List<dynamic>).map((user) => User.fromJson(user)).toList(),
+      );
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<UserStats>> getUserStats(String userId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.get(
+        _host,
+        _port,
+        '/api/users/$userId/stats',
+      );
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+
+      final response = await request.close();
+      return await _handleResponse(
+        response,
+        (json) => UserStats.fromJson(json as Map<String, dynamic>),
+      );
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
 
   Future<Result<UserApiModel>> getUserById(String userId) async {
     final client = _clientFactory();

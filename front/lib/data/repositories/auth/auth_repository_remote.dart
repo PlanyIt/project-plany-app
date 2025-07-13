@@ -228,4 +228,21 @@ class AuthRepositoryRemote extends AuthRepository {
 
     return Result.error(Exception('No current user loaded'));
   }
+
+  @override
+  Future<Result<void>> updatePassword(
+      {required String currentPassword, required String newPassword}) {
+    return _authApiClient
+        .changePassword(currentPassword, newPassword)
+        .then((result) {
+      switch (result) {
+        case Ok<void>():
+          _log.info('Password updated successfully');
+          return const Result.ok(null);
+        case Error<void>():
+          _log.warning('Error updating password: ${result.error}');
+          return Result.error(result.error);
+      }
+    });
+  }
 }

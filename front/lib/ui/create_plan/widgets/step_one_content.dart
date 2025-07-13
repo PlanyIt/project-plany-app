@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/models/category/category.dart';
 import '../../../utils/icon_utils.dart';
-import '../../../widgets/modal/grid_selector_modal.dart';
+import 'grid_selector_modal.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_plan_view_model.dart';
 

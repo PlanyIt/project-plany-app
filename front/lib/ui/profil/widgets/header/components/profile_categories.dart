@@ -1,70 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:front/domain/models/category/category.dart';
-import 'package:front/services/categorie_service.dart';
-import 'package:front/services/user_service.dart';
-import 'package:front/utils/icon_utils.dart';
 
-class ProfileCategories extends StatefulWidget {
-  final String userId;
+import '../../../../../utils/icon_utils.dart';
+import '../../../view_models/profile_viewmodel.dart';
 
-  const ProfileCategories({
-    super.key,
-    required this.userId,
-  });
-
-  @override
-  State<ProfileCategories> createState() => _ProfileCategoriesState();
-}
-
-class _ProfileCategoriesState extends State<ProfileCategories> {
-  final CategorieService _categorieService = CategorieService();
-  final UserService _userService = UserService();
-  Future<List<Category>>? _userCategoriesFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCategories();
-  }
-
-  void _loadCategories() {
-    setState(() {
-      _userCategoriesFuture = _loadUserCategories();
-    });
-  }
-
-  Future<List<Category>> _loadUserCategories() async {
-    try {
-      final userPlans = await _userService.getUserPlans(widget.userId);
-      if (userPlans.isEmpty) {
-        print('Aucun plan trouvé pour l\'utilisateur');
-        return [];
-      }
-      final categoryIds = userPlans
-          .where((plan) => plan.category != null)
-          .map((plan) => plan.category)
-          .toSet()
-          .toList();
-
-      if (categoryIds.isEmpty) {
-        return [];
-      }
-
-      final allCategories = await _categorieService.getCategories();
-
-      final userCategories = allCategories
-          .where((category) => categoryIds.contains(category.id))
-          .toList();
-
-      return userCategories;
-    } catch (e) {
-      print('Erreur lors du chargement des catégories: $e');
-      return [];
-    }
-  }
+class ProfileCategories extends StatelessWidget {
+  final ProfileViewModel viewModel;
+  const ProfileCategories({super.key, required this.viewModel});
 
   @override
   Widget build(BuildContext context) {
+    final categories = viewModel.userCategories;
+    final isLoading = viewModel.isLoadingCategories;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -97,54 +44,34 @@ class _ProfileCategoriesState extends State<ProfileCategories> {
             ],
           ),
           const SizedBox(height: 12),
-          FutureBuilder<List<Category>>(
-            future: _userCategoriesFuture ?? Future.value([]),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: SizedBox(
-                    height: 30,
-                    width: 30,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  ),
+          if (isLoading)
+            const Center(
+              child: SizedBox(
+                height: 30,
+                width: 30,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (categories.isEmpty)
+            Text(
+              "Aucune catégorie utilisée pour l'instant",
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: categories.map((category) {
+                return _buildActivityTagWithIcon(
+                  category.name,
+                  category.icon,
                 );
-              }
-
-              if (snapshot.hasError || !snapshot.hasData) {
-                return Text(
-                  "Impossible de charger les catégories",
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                );
-              }
-
-              final categories = snapshot.data!;
-
-              if (categories.isEmpty) {
-                return Text(
-                  "Aucune catégorie utilisée pour l'instant",
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                  ),
-                );
-              }
-
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: categories.map((category) {
-                  return _buildActivityTagWithIcon(
-                      category.name, category.icon);
-                }).toList(),
-              );
-            },
-          ),
+              }).toList(),
+            ),
         ],
       ),
     );
@@ -154,7 +81,7 @@ class _ProfileCategoriesState extends State<ProfileCategories> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF3425B5).withValues(alpha: 0.08),
+        color: const Color(0xFF3425B5).withValues(alpha: .08),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -168,10 +95,10 @@ class _ProfileCategoriesState extends State<ProfileCategories> {
           const SizedBox(width: 6),
           Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF3425B5),
+              color: Color(0xFF3425B5),
             ),
           ),
         ],

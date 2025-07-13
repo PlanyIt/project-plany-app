@@ -6,11 +6,11 @@ class SettingsCard extends StatelessWidget {
   final List<Widget> children;
 
   const SettingsCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     required this.children,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
