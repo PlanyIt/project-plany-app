@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -20,7 +19,7 @@ class ResponseInput extends StatelessWidget {
   final Function(String) onSubmit;
 
   const ResponseInput({
-    Key? key,
+    super.key,
     required this.parentComment,
     required this.controller,
     required this.focusNode,
@@ -33,7 +32,7 @@ class ResponseInput extends StatelessWidget {
     required this.onRemoveImage,
     required this.onCancel,
     required this.onSubmit,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,10 +42,10 @@ class ResponseInput extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: categoryColor.withValues(alpha: 0.1)),
+        border: Border.all(color: categoryColor.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -55,80 +54,9 @@ class ResponseInput extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (selectedImage != null)
-            Stack(
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: 100,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: DecorationImage(
-                      image: FileImage(selectedImage!),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: GestureDetector(
-                    onTap: onRemoveImage,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          if (selectedImage != null) _buildSelectedImage(),
           if (selectedImage == null && existingImageUrl != null)
-            Stack(
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: 100,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: DecorationImage(
-                      image: NetworkImage(existingImageUrl!),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: GestureDetector(
-                    onTap: () {
-                      onRemoveImage();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            _buildExistingImage(),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -150,89 +78,160 @@ class ResponseInput extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: categoryColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.camera_alt,
-                        color: categoryColor,
-                        size: 16,
-                      ),
-                      onPressed: isUploadingImage
+                  _buildIconButton(Icons.camera_alt,
+                      onTap: isUploadingImage
                           ? null
-                          : () => _directImagePicker(context),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      splashRadius: 16,
-                    ),
-                  ),
+                          : () => _directImagePicker(context)),
                   isUploadingImage
-                      ? Container(
-                          width: 32,
-                          height: 32,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: categoryColor.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: categoryColor,
-                          ),
-                        )
-                      : Container(
-                          width: 32,
-                          height: 32,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          decoration: BoxDecoration(
-                            color:
-                                isSubmitting ? Colors.grey[400] : categoryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.send,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            onPressed: isSubmitting
-                                ? null
-                                : () => onSubmit(parentComment.id!),
-                            padding: EdgeInsets.zero,
-                            splashRadius: 16,
-                          ),
-                        ),
-                  Container(
-                    width: 32,
-                    height: 32,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.grey,
-                        size: 16,
-                      ),
-                      onPressed: onCancel,
-                      padding: EdgeInsets.zero,
-                      splashRadius: 16,
-                    ),
-                  ),
+                      ? _buildLoadingIndicator()
+                      : _buildSubmitButton(),
+                  _buildCancelButton(),
                 ],
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedImage() {
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: 100,
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            image: DecorationImage(
+              image: FileImage(selectedImage!),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: onRemoveImage,
+            child: _buildCloseIcon(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExistingImage() {
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: 100,
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            image: DecorationImage(
+              image: NetworkImage(existingImageUrl!),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: onRemoveImage,
+            child: _buildCloseIcon(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCloseIcon() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.close,
+        color: Colors.white,
+        size: 16,
+      ),
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, {VoidCallback? onTap}) {
+    return Container(
+      width: 32,
+      height: 32,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: categoryColor.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: categoryColor, size: 16),
+        onPressed: onTap,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        splashRadius: 16,
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      width: 32,
+      height: 32,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: categoryColor.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        color: categoryColor,
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return Container(
+      width: 32,
+      height: 32,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: isSubmitting ? Colors.grey[400] : categoryColor,
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: const Icon(Icons.send, color: Colors.white, size: 16),
+        onPressed: isSubmitting ? null : () => onSubmit(parentComment.id!),
+        padding: EdgeInsets.zero,
+        splashRadius: 16,
+      ),
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return Container(
+      width: 32,
+      height: 32,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: const Icon(Icons.close, color: Colors.grey, size: 16),
+        onPressed: onCancel,
+        padding: EdgeInsets.zero,
+        splashRadius: 16,
       ),
     );
   }
@@ -250,7 +249,7 @@ class ResponseInput extends StatelessWidget {
         onPickImage(imageFile);
       }
     } catch (e) {
-      print('Erreur lors de la sélection d\'image pour la réponse: $e');
+      debugPrint('Erreur lors de la sélection d\'image pour la réponse: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors de la sélection: $e')),
       );

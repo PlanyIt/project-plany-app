@@ -1,24 +1,22 @@
 import 'dart:io';
-
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:android_intent_plus/android_intent.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/comment/comment_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
 import '../../../data/repositories/user/user_repository.dart';
 import '../../../data/services/location_service.dart';
-import '../../../data/services/navigation_service.dart';
-import '../../../domain/models/category/category.dart' as custom_category;
 import '../../../domain/models/plan/plan.dart';
-import '../../../domain/models/step/step.dart' as custom_step;
+import '../../../domain/models/step/step.dart' as custom;
 import '../../../domain/models/user/user.dart';
-import '../../../utils/command.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/result.dart';
-import 'comment_viewmodel.dart';
+import 'comment/comment_input_viewmodel.dart';
+import 'comment/comment_list_viewmodel.dart';
+import 'comment/comment_section_viewmodel.dart';
 
 class PlanDetailsViewModel extends ChangeNotifier {
   PlanDetailsViewModel({
@@ -26,98 +24,163 @@ class PlanDetailsViewModel extends ChangeNotifier {
     required UserRepository userRepository,
     required CommentRepository commentRepository,
     required PlanRepository planRepository,
-  })  : _commentRepository = commentRepository,
-        _authRepository = authRepository,
+    required LocationService locationService,
+  })  : _authRepository = authRepository,
+        _userRepository = userRepository,
+        _commentRepository = commentRepository,
         _planRepository = planRepository,
-        _userRepository = userRepository {
-    _commentViewModel = CommentViewModel(
-      commentRepository: _commentRepository,
-      authRepository: _authRepository,
-      userRepository: _userRepository,
-      planId: '',
-      currentUserId: _authRepository.currentUser,
-    );
+        _locationService = locationService;
 
-    load = Command0(_load)..execute();
-  }
-
-  Plan? _plan;
-  int _currentStepIndex = 0;
-  bool _showStepInfo = false;
-  double? _distanceToStep;
-  bool _isCalculatingDistance = false;
-  late CommentViewModel _commentViewModel;
-  late Command0 load;
-
-  final CommentRepository _commentRepository;
   final AuthRepository _authRepository;
   final UserRepository _userRepository;
+  final CommentRepository _commentRepository;
   final PlanRepository _planRepository;
+  final LocationService _locationService;
 
-  // === Getters ===
-  bool get isPlanInitialized => _plan != null;
-  CommentViewModel get commentViewModel => _commentViewModel;
+  Plan? _plan;
   User? get currentUser => _authRepository.currentUser;
-  int get currentStepIndex => _currentStepIndex;
-  bool get showStepInfo => _showStepInfo;
-  bool get isCalculatingDistance => _isCalculatingDistance;
-  double? get distanceToSelectedStep => _distanceToStep;
 
-  Plan get plan {
-    if (_plan == null) {
-      throw StateError('Plan not set in PlanDetailsViewModel');
+  late final CommentListViewModel commentListViewModel;
+  late final CommentInputViewModel commentInputViewModel;
+  late final CommentSectionViewModel commentSectionViewModel;
+
+  bool _isFavorite = false;
+  bool _isFollowing = false;
+  int _favoritesCount = 0;
+  bool _isLoadingFollow = false;
+
+  int _currentStepIndex = 0;
+  bool _showStepInfo = false;
+  String? _distanceToStep;
+  bool _isCalculatingDistance = false;
+
+  Plan? get plan => _plan;
+  bool get isFavorite => _isFavorite;
+  bool get isFollowing => _isFollowing;
+  bool get isLoadingFollow => _isLoadingFollow;
+  int get favoritesCount => _favoritesCount;
+  bool get isCurrentUserPlan => currentUser?.id == _plan?.user?.id;
+  Color? get planCategoryColor =>
+      colorFromPlanCategory(_plan?.category?.color ?? '');
+  bool get isPlanInitialized => _plan != null;
+
+  List<custom.Step> get steps => _plan?.steps ?? <custom.Step>[];
+  int get currentStepIndex => _currentStepIndex;
+  bool get isCalculatingDistance => _isCalculatingDistance;
+  String? get distanceToSelectedStep => _distanceToStep;
+  bool get showStepInfo => _showStepInfo;
+
+  custom.Step? get selectedStep {
+    if (_currentStepIndex >= 0 && _currentStepIndex < steps.length) {
+      return steps[_currentStepIndex];
     }
-    return _plan!;
+    return null;
   }
 
-  List<custom_step.Step> get steps => plan.steps;
-  String get planTitle => plan.title;
-  String get planDescription => plan.description;
-  custom_category.Category? get planCategory => plan.category;
-  String? get planCategoryIcon => plan.category?.icon;
-  String get planId => plan.id ?? '';
-  Color? get planCategoryColor =>
-      colorFromPlanCategory(plan.category?.color ?? '');
-
-  custom_step.Step? get selectedStep =>
-      (_currentStepIndex >= 0 && _currentStepIndex < steps.length)
-          ? steps[_currentStepIndex]
-          : null;
-
-  // === Setter ===
   void setPlan(Plan newPlan) {
     _plan = newPlan;
-    _commentViewModel = CommentViewModel(
-      commentRepository: _commentRepository,
+    _isFavorite = newPlan.isFavorite;
+    _favoritesCount = newPlan.favorites?.length ?? 0;
+
+    commentListViewModel = CommentListViewModel(
       authRepository: _authRepository,
       userRepository: _userRepository,
-      planId: newPlan.id ?? '',
-      currentUserId: _authRepository.currentUser,
+      commentRepository: _commentRepository,
+      planId: newPlan.id!,
     );
+
+    commentInputViewModel = CommentInputViewModel(
+      authRepository: _authRepository,
+      commentRepository: _commentRepository,
+      planId: newPlan.id!,
+    );
+
+    commentSectionViewModel = CommentSectionViewModel(
+      commentListViewModel: commentListViewModel,
+      commentInputViewModel: commentInputViewModel,
+    );
+
+    commentListViewModel.loadComments(reset: true);
+
+    _initializeFollowing();
     notifyListeners();
   }
 
-  Future<Result> _load() async {
+  Future<void> _initializeFollowing() async {
+    if (_plan?.user == null || isCurrentUserPlan) return;
     try {
-      if (_plan == null) {
-        throw StateError('Plan not set in PlanDetailsViewModel');
+      final isFollowed =
+          await _userRepository.isFollowing(_plan!.user!.id ?? '');
+      _isFollowing = isFollowed is Ok<bool> ? isFollowed.value : false;
+    } catch (_) {
+      _isFollowing = false;
+    }
+    notifyListeners();
+  }
+
+  Future<void> toggleFavorite() async {
+    if (_plan == null) return;
+    try {
+      if (_isFavorite) {
+        await _planRepository.removeFromFavorites(_plan!.id!);
+        _isFavorite = false;
+        _favoritesCount--;
+      } else {
+        await _planRepository.addToFavorites(_plan!.id!);
+        _isFavorite = true;
+        _favoritesCount++;
       }
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> toggleFollow() async {
+    if (_plan?.user == null || isCurrentUserPlan || _isLoadingFollow) return;
+    _isLoadingFollow = true;
+    notifyListeners();
+    try {
+      if (_isFollowing) {
+        await _userRepository.unfollowUser(_plan!.user!.id!);
+        _isFollowing = false;
+      } else {
+        await _userRepository.followUser(_plan!.user!.id!);
+        _isFollowing = true;
+      }
+    } catch (_) {
+    } finally {
+      _isLoadingFollow = false;
       notifyListeners();
-      return Result.ok(null);
-    } catch (e) {
-      return Result.error(Exception('Failed to load plan details: $e'));
     }
   }
 
-  // === Step Selection Logic ===
+  Future<void> sharePlan() async {
+    final planUrl = "https://plany.app/plans/${_plan!.id}";
+    final shareText = """
+🗺️ Découvrez ce plan "${capitalize(_plan!.title)}" sur Plany !
+
+📍 ${_plan!.category?.name ?? 'Sans catégorie'}
+⏱️ ${formatDurationToString(_plan!.totalDuration ?? 0)}
+💰 ${(calculateTotalStepsCost(_plan!.steps)).toStringAsFixed(2)} €
+
+${_plan!.description.length > 100 ? '${_plan!.description.substring(0, 100)}...' : _plan!.description}
+
+Voir le plan complet : $planUrl
+""";
+    await Share.share(shareText, subject: 'Découvrez ce plan Plany');
+  }
+
+  Future<void> navigateToUserProfile(
+      BuildContext context, String? userId) async {
+    if (userId == null) return;
+    Navigator.of(context).pushNamed('/profile', arguments: {'userId': userId});
+  }
+
   Future<void> selectStep(int index) async {
     if (index < 0 || index >= steps.length) return;
-
     _currentStepIndex = index;
     _showStepInfo = true;
     _distanceToStep = null;
     notifyListeners();
-
     await _calculateDistanceToStep(steps[index]);
   }
 
@@ -126,48 +189,50 @@ class PlanDetailsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _calculateDistanceToStep(custom_step.Step step) async {
-    if (step.position == null) return;
-
+  Future<void> _calculateDistanceToStep(custom.Step step) async {
+    if (step.latitude == null || step.longitude == null) return;
     _isCalculatingDistance = true;
     notifyListeners();
-
     try {
-      final distance = LocationService().calculateDistanceToPoint(
-        step.position!.latitude,
-        step.position!.longitude,
-      );
-      _distanceToStep = distance;
+      final userPosition = _locationService.currentPosition;
+      _distanceToStep = formatDistance(calculateDistanceBetween(
+        userPosition?.latitude ?? 0.0,
+        userPosition?.longitude ?? 0.0,
+        step.latitude!,
+        step.longitude!,
+      ));
     } catch (e) {
-      if (kDebugMode) {
-        print("Erreur lors du calcul de distance : $e");
-      }
+      debugPrint("Erreur lors du calcul de distance : $e");
     } finally {
       _isCalculatingDistance = false;
       notifyListeners();
     }
   }
 
-  // === Navigation Logic ===
   Future<void> openDirections(BuildContext context) async {
-    if (steps.isEmpty) {
-      _showSnackBar(context, "Aucune étape disponible pour la navigation");
+    if (_plan?.steps.isEmpty ?? true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Aucune étape disponible pour la navigation")),
+      );
       return;
     }
 
-    final validSteps = steps
+    final validSteps = _plan!.steps
         .where((step) => step.latitude != null && step.longitude != null)
         .toList();
 
     if (validSteps.isEmpty) {
-      _showSnackBar(context, "Aucune étape avec des coordonnées valides");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Aucune étape avec des coordonnées valides")),
+      );
       return;
     }
 
-    NavigationService.navigateToStep(context, validSteps.first);
+    // NavigationService.navigateToStep(context, validSteps.first);
   }
 
-  // === Calendar Integration ===
   Future<void> addToCalendar(BuildContext context) async {
     try {
       final start = DateTime.now().add(const Duration(days: 1));
@@ -178,8 +243,8 @@ class PlanDetailsViewModel extends ChangeNotifier {
           action: 'android.intent.action.INSERT',
           data: 'content://com.android.calendar/events',
           arguments: {
-            'title': 'Plany: $planTitle',
-            'description': planDescription,
+            'title': 'Plany: ${_plan?.title}',
+            'description': _plan?.description ?? '',
             'beginTime': start.millisecondsSinceEpoch,
             'endTime': end.millisecondsSinceEpoch,
             'eventLocation': 'Voir itinéraire dans l\'application Plany',
@@ -189,8 +254,8 @@ class PlanDetailsViewModel extends ChangeNotifier {
         await intent.launch();
       } else {
         final event = Event(
-          title: 'Plany: $planTitle',
-          description: planDescription,
+          title: 'Plany: ${_plan?.title}',
+          description: _plan?.description ?? '',
           location: 'Voir itinéraire dans l\'application Plany',
           startDate: start,
           endDate: end,
@@ -201,84 +266,19 @@ class PlanDetailsViewModel extends ChangeNotifier {
         if (!success) {
           throw Exception("Impossible d'ajouter l'événement");
         }
+      }
 
-        if (context.mounted) {
-          _showSnackBar(context, "Événement ajouté au calendrier");
-        }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Événement ajouté au calendrier")),
+        );
       }
     } catch (e) {
       if (context.mounted) {
-        _showSnackBar(context, "Erreur lors de l'ajout au calendrier : $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erreur lors de l'ajout au calendrier : $e")),
+        );
       }
     }
-  }
-
-  // === User Operations ===
-  Future<User> getUserProfile(String userId) async {
-    try {
-      final result = await _userRepository.getUserById(userId);
-      if (result is Error) {
-        throw Exception('Failed to get user profile: $result');
-      }
-      return result as User;
-    } catch (e) {
-      throw Exception(
-          'Erreur lors de la récupération du profil utilisateur : $e');
-    }
-  }
-
-  Future<bool> isFollowing(String userId) async {
-    try {
-      final result = await _userRepository.isFollowing(userId);
-      if (result is Error) {
-        throw Exception('Failed to check following status: $result');
-      }
-      return result is Ok<bool> ? result.value : false;
-    } catch (e) {
-      throw Exception('Failed to check following status: $e');
-    }
-  }
-
-  Future<void> followUser(String userId) async {
-    final result = await _userRepository.followUser(userId);
-    if (result is Error) {
-      throw Exception('Failed to follow user: ${result.error}');
-    }
-    notifyListeners();
-  }
-
-  Future<void> unfollowUser(String userId) async {
-    final result = await _userRepository.unfollowUser(userId);
-    if (result is Error) {
-      throw Exception('Failed to unfollow user: ${result.error}');
-    }
-    notifyListeners();
-  }
-
-  // === Favorites Operations ===
-  Future<void> addToFavorites() async {
-    if (_plan == null) return;
-
-    final result = await _planRepository.addToFavorites(_plan!.id!);
-    if (result is Error) {
-      throw Exception('Failed to add to favorites: ${result.error}');
-    }
-    notifyListeners();
-  }
-
-  Future<void> removeFromFavorites() async {
-    if (_plan == null) return;
-
-    final result = await _planRepository.removeFromFavorites(_plan!.id!);
-    if (result is Error) {
-      throw Exception('Failed to remove from favorites: ${result.error}');
-    }
-    notifyListeners();
-  }
-
-  // === Helper Methods ===
-  void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
   }
 }

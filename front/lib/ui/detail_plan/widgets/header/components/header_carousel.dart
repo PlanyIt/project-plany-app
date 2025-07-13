@@ -3,12 +3,12 @@ import '../../../../../domain/models/step/step.dart' as custom;
 import '../../../view_models/plan_details_viewmodel.dart';
 
 class HeaderCarousel extends StatelessWidget {
-  final PageController pageController;
+  final ScrollController scrollController;
   final PlanDetailsViewModel viewModel;
 
   const HeaderCarousel({
     super.key,
-    required this.pageController,
+    required this.scrollController,
     required this.viewModel,
   });
 
@@ -27,7 +27,7 @@ class HeaderCarousel extends StatelessWidget {
         children: [
           Expanded(
             child: ListView.builder(
-              controller: pageController,
+              controller: scrollController,
               scrollDirection: Axis.vertical,
               physics: const BouncingScrollPhysics(),
               itemCount: steps.length,

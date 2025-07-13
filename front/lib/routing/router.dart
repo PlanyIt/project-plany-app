@@ -115,16 +115,23 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
             final plan = state.extra as Plan?;
             if (plan == null) return const SizedBox.shrink();
 
-            final viewModel = PlanDetailsViewModel(
-              authRepository: context.read(),
-              userRepository: context.read(),
-              commentRepository: context.read(),
-              planRepository: context.read(),
-            );
-            viewModel.setPlan(plan);
-
-            return PlanDetailsScreen(
-              vm: viewModel,
+            return ChangeNotifierProvider(
+              create: (_) {
+                final vm = PlanDetailsViewModel(
+                  authRepository: context.read(),
+                  userRepository: context.read(),
+                  planRepository: context.read(),
+                  locationService: context.read(),
+                  commentRepository: context.read(),
+                );
+                vm.setPlan(plan);
+                return vm;
+              },
+              child: Consumer<PlanDetailsViewModel>(
+                builder: (context, vm, _) {
+                  return PlanDetailsScreen(vm: vm);
+                },
+              ),
             );
           },
         ),

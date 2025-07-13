@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../view_models/plan_details_viewmodel.dart';
 
 class HeaderControls extends StatelessWidget {
@@ -62,15 +61,16 @@ class HeaderControls extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(25),
         onTap: onPressed,
-        splashColor: Colors.white.withValues(alpha: .15),
-        highlightColor: Colors.white.withValues(alpha: .1),
+        splashColor: Colors.white.withOpacity(0.15),
+        highlightColor: Colors.white.withOpacity(0.1),
         child: Container(
+          alignment: Alignment.center,
           width: 50,
           height: 50,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withValues(alpha: .2),
+              color: Colors.white.withOpacity(0.2),
               width: 1.5,
             ),
           ),

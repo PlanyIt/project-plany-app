@@ -20,7 +20,7 @@ class DetailsHeader extends StatefulWidget {
 
 class DetailsHeaderState extends State<DetailsHeader> {
   final GlobalKey<MapViewState> _mapKey = GlobalKey<MapViewState>();
-  final PageController _stepPageController = PageController();
+  final ScrollController _stepScrollController = ScrollController();
 
   List<custom.Step> get _steps => widget.viewModel.steps;
 
@@ -75,7 +75,7 @@ class DetailsHeaderState extends State<DetailsHeader> {
               width: 110,
               height: 180,
               child: HeaderCarousel(
-                pageController: _stepPageController,
+                scrollController: _stepScrollController,
                 viewModel: widget.viewModel,
               ),
             ),

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../../../../../domain/models/comment/comment.dart';
 import '../../../../../../domain/models/user/user.dart';
-import '../../../../view_models/comment_viewmodel.dart';
-import 'response_card.dart';
+import '../../../../view_models/comment/comment_input_viewmodel.dart';
+import '../../../../view_models/comment/comment_list_viewmodel.dart';
 
-class CommentCard extends StatefulWidget {
+class CommentCard extends StatelessWidget {
   final Comment comment;
-  final String? currentUserId;
   final Color categoryColor;
   final bool isResponse;
   final Function(Comment) onShowOptions;
-  final Function(Comment, bool) onLikeToggle;
+  final Function(Comment) onLikeToggle;
   final Function(String) onReplyTap;
   final Function(String) loadResponses;
   final Map<String, List<Comment>> responses;
@@ -19,12 +18,12 @@ class CommentCard extends StatefulWidget {
   final String? respondingToCommentId;
   final Widget? responseInputWidget;
   final String Function(DateTime) formatTimeAgo;
-  final CommentViewModel viewModel;
+  final CommentListViewModel listViewModel;
+  final CommentInputViewModel inputViewModel;
 
   const CommentCard({
     super.key,
     required this.comment,
-    required this.currentUserId,
     required this.categoryColor,
     this.isResponse = false,
     required this.onShowOptions,
@@ -37,431 +36,190 @@ class CommentCard extends StatefulWidget {
     required this.respondingToCommentId,
     this.responseInputWidget,
     required this.formatTimeAgo,
-    required this.viewModel,
+    required this.listViewModel,
+    required this.inputViewModel,
   });
 
   @override
-  CommentCardState createState() => CommentCardState();
-}
-
-class CommentCardState extends State<CommentCard> {
-  User? _userProfile;
-  bool _isLoadingProfile = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserProfile();
-  }
-
-  Future<void> _loadUserProfile() async {
-    try {
-      if (widget.comment.user?.id == null) {
-        setState(() {
-          _userProfile = User(
-            id: 'unknown',
-            username: 'Utilisateur inconnu',
-            email: '',
-            photoUrl: null,
-            description: null,
-            isPremium: false,
-            followers: [],
-            following: [],
-          );
-          _isLoadingProfile = false;
-        });
-        return;
-      }
-
-      final userProfile =
-          await widget.viewModel.getUserProfile(widget.comment.user!.id!);
-
-      if (mounted) {
-        setState(() {
-          _userProfile = userProfile;
-          _isLoadingProfile = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _userProfile = User(
-            id: widget.comment.user?.id ?? 'unknown',
-            username: 'Utilisateur inconnu',
-            email: '',
-            photoUrl: null,
-            description: null,
-            isPremium: false,
-            followers: [],
-            following: [],
-          );
-          _isLoadingProfile = false;
-        });
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final bool isLiked =
-        widget.comment.likes?.contains(widget.currentUserId) ?? false;
-    final bool isOwner = widget.comment.user?.id == widget.currentUserId;
+    final isOwner = comment.user?.id == listViewModel.currentUser?.id;
+    final isLiked =
+        comment.likes?.contains(listViewModel.currentUser?.id) ?? false;
+    final user = comment.user;
+    final hasImage = comment.imageUrl?.isNotEmpty ?? false;
 
     return Container(
-      margin: EdgeInsets.only(
-        bottom: 8,
-        left: widget.isResponse ? 32 : 0,
-      ),
+      margin: EdgeInsets.only(bottom: 8, left: isResponse ? 32 : 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildCommentHeader(isOwner),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              widget.comment.content,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
-          if (widget.comment.imageUrl != null &&
-              widget.comment.imageUrl!.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(top: 8, bottom: 10),
-              height: 150,
-              width: double.infinity,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  widget.comment.imageUrl!,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                        color: widget.categoryColor,
-                        strokeWidth: 2,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    print("Erreur de chargement d'image: $error");
-                    return Container(
-                      color: Colors.grey[200],
-                      child: Icon(
-                        Icons.broken_image,
-                        color: Colors.grey[400],
-                        size: 40,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          _buildCommentActions(isLiked),
-          _buildResponsesSection(),
-          if (widget.respondingToCommentId == widget.comment.id &&
-              widget.responseInputWidget != null)
-            widget.responseInputWidget!,
+          _buildHeader(user, isOwner),
+          if (comment.content.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(comment.content, style: const TextStyle(fontSize: 14)),
+          ],
+          if (hasImage) _buildImage(comment.imageUrl!),
+          _buildActions(isLiked),
+          _buildResponses(),
+          if (responseInputWidget != null) ...[
+            const SizedBox(height: 8),
+            responseInputWidget!,
+          ]
         ],
       ),
     );
   }
 
-  Widget _buildCommentHeader(bool isOwner) {
+  Widget _buildHeader(User? user, bool isOwner) {
     return Row(
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey[300],
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: _isLoadingProfile
-              ? const Center(
-                  child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2)),
-                )
-              : (_userProfile?.photoUrl != null &&
-                      _userProfile!.photoUrl!.isNotEmpty
-                  ? ClipOval(
-                      child: Image.network(
-                        _userProfile!.photoUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          print("Erreur de chargement de photo: $error");
-                          return Icon(Icons.person,
-                              size: 22, color: Colors.grey[600]);
-                        },
-                        headers: const {"cache-control": "no-cache"},
-                      ),
-                    )
-                  : Icon(Icons.person, size: 22, color: Colors.grey[600])),
+        CircleAvatar(
+          backgroundColor: Colors.grey[300],
+          radius: 20,
+          backgroundImage:
+              user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
+          child: user?.photoUrl == null
+              ? const Icon(Icons.person, color: Colors.grey)
+              : null,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _isLoadingProfile
-                          ? 'Chargement...'
-                          : (_userProfile?.username ?? 'Utilisateur inconnu'),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    widget.comment.createdAt != null
-                        ? widget.formatTimeAgo(widget.comment.createdAt!)
-                        : 'Il y a 2h',
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              if (isOwner)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: widget.categoryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Vous',
-                    style: TextStyle(
-                      color: widget.categoryColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
+              Text(user?.username ?? "Utilisateur inconnu",
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(formatTimeAgo(comment.createdAt ?? DateTime.now()),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
         ),
         if (isOwner)
-          GestureDetector(
-            onTap: () => widget.onShowOptions(widget.comment),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: widget.categoryColor.withValues(alpha: 0.05),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.more_vert,
-                color: widget.categoryColor.withValues(alpha: 0.8),
-                size: 20,
-              ),
-            ),
+          IconButton(
+            icon: Icon(Icons.more_vert, color: categoryColor),
+            onPressed: () => onShowOptions(comment),
           )
-        else
-          SizedBox(width: 36),
       ],
     );
   }
 
-  Widget _buildCommentActions(bool isLiked) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12.0),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: () => widget.onLikeToggle(widget.comment, isLiked),
-            child: Row(
-              children: [
-                Icon(
-                  isLiked ? Icons.favorite : Icons.favorite_border,
-                  size: 16,
-                  color: isLiked ? Colors.red : Colors.grey[600],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  (widget.comment.likes?.length ?? 0).toString(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isLiked ? Colors.red : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          TextButton(
-            onPressed: () => widget.onReplyTap(widget.comment.id!),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              backgroundColor: widget.respondingToCommentId == widget.comment.id
-                  ? widget.categoryColor.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.chat_bubble_outline,
-                  size: 16,
-                  color: widget.respondingToCommentId == widget.comment.id
-                      ? widget.categoryColor
-                      : Colors.grey[600],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Répondre',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: widget.respondingToCommentId == widget.comment.id
-                        ? widget.categoryColor
-                        : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+  Widget _buildImage(String url) {
+    return Container(
+      margin: const EdgeInsets.only(top: 12, bottom: 10),
+      height: 150,
+      width: double.infinity,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+      clipBehavior: Clip.hardEdge,
+      child: Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, _) => Container(
+          color: Colors.grey[200],
+          child:
+              const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+        ),
       ),
     );
   }
 
-  Widget _buildResponsesSection() {
-    if (!widget.responses.containsKey(widget.comment.id) ||
-        widget.responses[widget.comment.id]!.isEmpty) {
-      return Container();
-    }
+  Widget _buildActions(bool isLiked) {
+    return Row(
+      children: [
+        IconButton(
+          icon: Icon(isLiked ? Icons.favorite : Icons.favorite_border,
+              size: 16, color: isLiked ? Colors.red : Colors.grey),
+          onPressed: () => onLikeToggle(comment),
+        ),
+        Text('${comment.likes?.length ?? 0}',
+            style: const TextStyle(fontSize: 12)),
+        const SizedBox(width: 12),
+        if (!isResponse)
+          TextButton.icon(
+            onPressed: () => onReplyTap(comment.id!),
+            icon:
+                Icon(Icons.chat_bubble_outline, size: 16, color: categoryColor),
+            label: const Text('Répondre', style: TextStyle(fontSize: 12)),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+      ],
+    );
+  }
 
-    final commentResponses = widget.responses[widget.comment.id]!;
-    final showAll = widget.showAllResponsesMap[widget.comment.id] ?? false;
+  Widget _buildResponses() {
+    final responsesList = responses[comment.id];
+    final showAll = showAllResponsesMap[comment.id] ?? false;
+    final nbResponses = comment.responses.length;
 
-    if (widget.comment.responses.isNotEmpty &&
-        (!widget.responses.containsKey(widget.comment.id) ||
-            widget.responses[widget.comment.id]!.isEmpty)) {
-      return TextButton.icon(
-        onPressed: () => widget.loadResponses(widget.comment.id!),
-        icon: Icon(Icons.forum_outlined, size: 14, color: widget.categoryColor),
-        label: Text(
-          "Voir ${widget.comment.responses.length} réponses",
-          style: TextStyle(color: widget.categoryColor),
+    if (nbResponses == 0) return const SizedBox();
+
+    if (responsesList == null || responsesList.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: TextButton(
+          onPressed: () async {
+            await loadResponses(comment.id!);
+            onToggleResponses(comment.id!);
+          },
+          child: Text(
+            'Voir $nbResponses réponse${nbResponses > 1 ? "s" : ""}',
+            style: const TextStyle(fontSize: 12),
+          ),
         ),
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.only(top: 12.0),
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final responsesToShow = showAll ? responsesList : [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...responsesToShow.map((response) => CommentCard(
+              key: ValueKey(response.id),
+              comment: response,
+              categoryColor: categoryColor,
+              isResponse: true,
+              onShowOptions: onShowOptions,
+              onLikeToggle: onLikeToggle,
+              onReplyTap: onReplyTap,
+              loadResponses: loadResponses,
+              responses: responses,
+              showAllResponsesMap: showAllResponsesMap,
+              onToggleResponses: onToggleResponses,
+              respondingToCommentId: respondingToCommentId,
+              responseInputWidget: null,
+              formatTimeAgo: formatTimeAgo,
+              listViewModel: listViewModel,
+              inputViewModel: inputViewModel,
+            )),
+        if (!isResponse)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              children: [
-                Icon(Icons.forum_outlined,
-                    size: 14, color: widget.categoryColor),
-                const SizedBox(width: 4),
-                Text(
-                  "Réponses (${commentResponses.length})",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: widget.categoryColor,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: commentResponses.length,
-            itemBuilder: (context, index) {
-              final response = commentResponses[index];
-              return ResponseCard(
-                key: ValueKey('${response.id}_${response.user?.id}'),
-                parentComment: widget.comment,
-                response: response,
-                currentUserId: widget.currentUserId,
-                categoryColor: widget.categoryColor,
-                onShowOptions: widget.onShowOptions,
-                onLikeToggle: widget.onLikeToggle,
-                formatTimeAgo: widget.formatTimeAgo,
-                viewModel: widget.viewModel,
-              );
-            },
-          ),
-          if (commentResponses.length > 1)
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: GestureDetector(
-                onTap: () => widget.onToggleResponses(widget.comment.id!),
-                child: Row(
-                  children: [
-                    Icon(
-                      showAll
-                          ? Icons.keyboard_arrow_up
-                          : Icons.subdirectory_arrow_right,
-                      size: 14,
-                      color: widget.categoryColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      showAll
-                          ? 'Réduire les réponses'
-                          : 'Voir ${commentResponses.length - 1} réponses de plus',
-                      style: TextStyle(
-                        color: widget.categoryColor,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+            padding: const EdgeInsets.only(top: 4),
+            child: TextButton(
+              onPressed: () => onToggleResponses(comment.id!),
+              child: Text(
+                showAll
+                    ? 'Réduire'
+                    : 'Voir ${responsesList.length} réponse${responsesList.length > 1 ? "s" : ""}',
+                style: const TextStyle(fontSize: 12),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }

@@ -22,10 +22,10 @@ class StepInfoCard extends StatelessWidget {
     return Container(
       width: screenWidth - 180,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .9),
+        color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
-        border: Border.all(color: Colors.white.withValues(alpha: .5)),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
+        border: Border.all(color: Colors.white.withOpacity(0.5)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -69,7 +69,7 @@ class StepInfoCard extends StatelessWidget {
                         viewModel.isCalculatingDistance
                             ? "..."
                             : viewModel.distanceToSelectedStep != null
-                                ? "${viewModel.distanceToSelectedStep!.toStringAsFixed(1)} km"
+                                ? "${viewModel.distanceToSelectedStep}"
                                 : "Inconnue",
                         color,
                         loading: viewModel.isCalculatingDistance,
@@ -109,13 +109,13 @@ class StepInfoCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color.withValues(alpha: .7)),
+        Icon(icon, size: 14, color: color.withOpacity(0.7)),
         const SizedBox(width: 4),
         loading
-            ? SizedBox(
+            ? const SizedBox(
                 width: 12,
                 height: 12,
-                child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                child: CircularProgressIndicator(strokeWidth: 2),
               )
             : Text(text, style: const TextStyle(fontSize: 12)),
       ],

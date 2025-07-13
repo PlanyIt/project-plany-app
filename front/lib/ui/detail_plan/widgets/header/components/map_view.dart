@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-
 import '../../../../../domain/models/step/step.dart' as custom;
 import '../../../view_models/plan_details_viewmodel.dart';
 
@@ -29,6 +28,9 @@ class MapViewState extends State<MapView> {
   List<custom.Step> get _steps => widget.viewModel.steps;
   Color get _categoryColor => widget.viewModel.planCategoryColor ?? Colors.grey;
 
+  LatLng _latLngOf(custom.Step step) =>
+      LatLng(step.latitude ?? 0.0, step.longitude ?? 0.0);
+
   void _fitBounds() {
     if (_steps.isEmpty || _hasCenteredMap) return;
 
@@ -36,7 +38,7 @@ class MapViewState extends State<MapView> {
 
     final points = _steps
         .where((s) => s.latitude != null && s.longitude != null)
-        .map((s) => LatLng(s.latitude!, s.longitude!))
+        .map(_latLngOf)
         .toList();
 
     if (points.isEmpty) return;
@@ -53,21 +55,14 @@ class MapViewState extends State<MapView> {
       );
     } catch (e) {
       debugPrint("Erreur lors du centrage de la carte: $e");
-      final fallback = _steps.first;
-      _mapController.move(
-        LatLng(fallback.latitude ?? 0.0, fallback.longitude ?? 0.0),
-        14.0,
-      );
+      final fallback = points.isNotEmpty ? points.first : LatLng(0.0, 0.0);
+      _mapController.move(fallback, 14.0);
     }
   }
 
   void _zoomToStep(int index) {
     final step = _steps[index];
-    final lat = step.latitude ?? 0.0;
-    final lng = step.longitude ?? 0.0;
-
-    _mapController.move(LatLng(lat, lng), 15.0);
-
+    _mapController.move(_latLngOf(step), 15.0);
     setState(() => _currentStepIndex = index);
   }
 
@@ -80,7 +75,6 @@ class MapViewState extends State<MapView> {
     final index = _steps.indexWhere((s) => s.id == stepId);
     if (index != -1) {
       _zoomToStep(index);
-      // Don't call widget.onStepSelected here to avoid circular calls
     }
   }
 
@@ -106,10 +100,7 @@ class MapViewState extends State<MapView> {
             mapController: _mapController,
             options: MapOptions(
               initialZoom: 13,
-              initialCenter: LatLng(
-                _steps.first.latitude ?? 0.0,
-                _steps.first.longitude ?? 0.0,
-              ),
+              initialCenter: _latLngOf(_steps.first),
               onMapReady: () => Future.delayed(
                 const Duration(milliseconds: 500),
                 _fitBounds,
@@ -132,7 +123,7 @@ class MapViewState extends State<MapView> {
                   return Marker(
                     width: 40,
                     height: 40,
-                    point: LatLng(step.latitude ?? 0.0, step.longitude ?? 0.0),
+                    point: _latLngOf(step),
                     child: GestureDetector(
                       onTap: () => updateSelectedStep(index),
                       child: AnimatedContainer(
@@ -142,7 +133,7 @@ class MapViewState extends State<MapView> {
                           size: isSelected ? 45 : 35,
                           color: isSelected
                               ? _categoryColor
-                              : _categoryColor.withValues(alpha: .7),
+                              : _categoryColor.withOpacity(0.7),
                         ),
                       ),
                     ),
@@ -153,10 +144,7 @@ class MapViewState extends State<MapView> {
                 PolylineLayer(
                   polylines: [
                     Polyline(
-                      points: _steps
-                          .map((s) =>
-                              LatLng(s.latitude ?? 0.0, s.longitude ?? 0.0))
-                          .toList(),
+                      points: _steps.map(_latLngOf).toList(),
                       color: _categoryColor,
                       strokeWidth: 4,
                     ),

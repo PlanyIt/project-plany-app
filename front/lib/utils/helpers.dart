@@ -209,3 +209,13 @@ String formatTimeAgo(DateTime dateTime) {
     return 'À l\'instant';
   }
 }
+
+/// Affiche un SnackBar avec le message donné dans le contexte fourni.
+void showSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+String capitalize(String text) {
+  if (text.isEmpty) return text;
+  return text[0].toUpperCase() + text.substring(1);
+}

@@ -23,10 +23,10 @@ class CommentOptionSheet extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -77,7 +77,7 @@ class CommentOptionSheet extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
+          color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -106,7 +106,7 @@ void showCommentOptions({
   required Function(String) onEdit,
   required Function(String, String?) onDelete,
 }) {
-  bool isResponse = comment.parentId != null;
+  final bool isResponse = comment.parentId != null;
 
   showModalBottomSheet(
     context: context,
