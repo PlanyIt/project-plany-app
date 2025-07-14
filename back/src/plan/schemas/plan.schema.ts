@@ -21,6 +21,9 @@ export class Plan {
   @Prop({ default: true })
   isPublic: boolean;
 
+  @Prop({ default: false })
+  isAccessible: boolean;
+
   @Prop({
     type: Types.ObjectId,
     ref: 'Category',

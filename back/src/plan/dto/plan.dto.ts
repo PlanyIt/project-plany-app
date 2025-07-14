@@ -12,6 +12,10 @@ export class PlanDto {
   @IsOptional()
   isPublic?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  isAccessible?: boolean;
+
   @IsString()
   category: string;
 

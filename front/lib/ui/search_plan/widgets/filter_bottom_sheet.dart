@@ -144,10 +144,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                     const SizedBox(height: 32),
                     _buildDistanceSection(),
                     const SizedBox(height: 32),
+                    _buildPmrSection(),
+                    const SizedBox(height: 24),
                     _buildCostSection(),
                     const SizedBox(height: 32),
                     _buildDurationSection(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -425,6 +427,27 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
           ],
         );
       },
+    );
+  }
+
+  Widget _buildPmrSection() {
+    return FilterSection(
+      title: 'Accessibilité',
+      icon: Icons.accessible,
+      color: Colors.teal,
+      child: AnimatedBuilder(
+        animation: widget.viewModel,
+        builder: (context, _) {
+          return SwitchListTile.adaptive(
+            value: widget.viewModel.tempPmrOnly ?? false,
+            onChanged: (value) {
+              widget.viewModel.updateTempPmrOnly(value ? true : null);
+            },
+            activeColor: Colors.teal,
+            title: const Text('Plans accessibles PMR uniquement'),
+          );
+        },
+      ),
     );
   }
 

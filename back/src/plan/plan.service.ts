@@ -66,6 +66,8 @@ export class PlanService {
         select:
           'title description image order duration cost longitude latitude',
       })
+      .where({ isPublic: true })
+      .sort({ favorites: -1 })
       .exec();
 
     // Calculate totals for each plan

@@ -42,6 +42,10 @@ class CreatePlanViewModel extends ChangeNotifier {
   final ValueNotifier<List<StepData>> steps = ValueNotifier([]);
   final ValueNotifier<int> currentStep = ValueNotifier(1);
 
+  /// 🔥 Nouveaux ValueNotifier pour switches
+  final ValueNotifier<bool> isPublic = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> isAccessible = ValueNotifier<bool>(false);
+
   List<Category> _categories = [];
   Category? _selectedCategory;
   bool _isLoading = false;
@@ -150,7 +154,8 @@ class CreatePlanViewModel extends ChangeNotifier {
         category: _selectedCategory!,
         user: _user!,
         steps: const [],
-        isPublic: true,
+        isPublic: isPublic.value,
+        isAccessible: isAccessible.value,
       );
 
       final result = await _createPlanUseCase(
@@ -179,6 +184,8 @@ class CreatePlanViewModel extends ChangeNotifier {
     description.value = '';
     _selectedCategory = null;
     steps.value = [];
+    isPublic.value = true;
+    isAccessible.value = false;
     notifyListeners();
   }
 
@@ -255,6 +262,8 @@ class CreatePlanViewModel extends ChangeNotifier {
     description.dispose();
     steps.dispose();
     currentStep.dispose();
+    isPublic.dispose();
+    isAccessible.dispose();
     _animationController?.dispose();
     super.dispose();
   }

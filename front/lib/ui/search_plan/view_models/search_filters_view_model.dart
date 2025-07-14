@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../utils/validation_utils.dart';
 
-/// Critères de tri disponibles
 enum SortOption { cost, duration, favorites, recent }
 
-/// ViewModel pour la gestion des filtres de recherche
 class SearchFiltersViewModel extends ChangeNotifier {
   // --- Filtres actifs ---
   String? selectedCategory;
   String? searchQuery;
-  RangeValues? distanceRange; // en mètres
-  RangeValues? costRange; // unités monétaires
-  RangeValues? durationRange; // en secondes
-  int? favoritesThreshold; // nb minimum de favoris
+  RangeValues? distanceRange;
+  RangeValues? costRange;
+  RangeValues? durationRange;
+  int? favoritesThreshold;
   SortOption sortBy = SortOption.recent;
+  bool? pmrOnly; // Ajout PMR
 
-  // --- Valeurs temporaires pour le formulaire ---
+  // --- Valeurs temporaires ---
   RangeValues? _tempDistanceRange;
   String? _tempSelectedCategory;
   String _tempMinCost = '';
@@ -25,8 +24,8 @@ class SearchFiltersViewModel extends ChangeNotifier {
   String _tempDurationUnit = 'h';
   int? _tempFavoritesThreshold;
   SortOption _tempSortBy = SortOption.recent;
+  bool? _tempPmrOnly; // Ajout PMR temporaire
 
-  // Getters pour les valeurs temporaires
   RangeValues? get tempDistanceRange => _tempDistanceRange;
   String? get tempSelectedCategory => _tempSelectedCategory;
   String get tempMinCost => _tempMinCost;
@@ -36,14 +35,13 @@ class SearchFiltersViewModel extends ChangeNotifier {
   String get tempDurationUnit => _tempDurationUnit;
   int? get tempFavoritesThreshold => _tempFavoritesThreshold;
   SortOption get tempSortBy => _tempSortBy;
+  bool? get tempPmrOnly => _tempPmrOnly; // Getter PMR
 
-  /// Définit la catégorie sélectionnée
   void setSelectedCategory(String? categoryId) {
     selectedCategory = categoryId;
     notifyListeners();
   }
 
-  /// Définit la requête de recherche
   void setSearchQuery(String? query) {
     final newQuery = query?.trim().isEmpty == true ? null : query?.trim();
     if (searchQuery != newQuery) {
@@ -52,14 +50,13 @@ class SearchFiltersViewModel extends ChangeNotifier {
     }
   }
 
-  /// Initialise les valeurs temporaires avec les valeurs actuelles
   void initializeTempValues() {
     _tempDistanceRange = distanceRange;
     _tempSortBy = sortBy;
     _tempSelectedCategory = selectedCategory;
     _tempDurationUnit = 'h';
+    _tempPmrOnly = pmrOnly;
 
-    // Cost
     if (costRange != null) {
       _tempMinCost = costRange!.start.toInt().toString();
       _tempMaxCost = costRange!.end.toInt().toString();
@@ -68,7 +65,6 @@ class SearchFiltersViewModel extends ChangeNotifier {
       _tempMaxCost = '';
     }
 
-    // Duration
     if (durationRange != null) {
       final startMinutes = (durationRange!.start / 60).round();
       final endMinutes = (durationRange!.end / 60).round();
@@ -80,12 +76,8 @@ class SearchFiltersViewModel extends ChangeNotifier {
     }
 
     _tempFavoritesThreshold = favoritesThreshold;
-
-    // Ne pas notifier ici pour éviter les cycles
-    // notifyListeners();
   }
 
-  /// Met à jour les valeurs temporaires
   void updateTempDistanceRange(RangeValues? values) {
     _tempDistanceRange = values;
     notifyListeners();
@@ -123,7 +115,11 @@ class SearchFiltersViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Validation
+  void updateTempPmrOnly(bool? value) {
+    _tempPmrOnly = value;
+    notifyListeners();
+  }
+
   String? validateCostRange(String? minValue, String? maxValue) {
     return ValidationUtils.validateRange(
       minValue: minValue,
@@ -159,14 +155,13 @@ class SearchFiltersViewModel extends ChangeNotifier {
     }
   }
 
-  /// Applique les valeurs temporaires comme filtres définitifs
   bool applyTempFilters() {
     if (hasTempValidationErrors) return false;
 
     distanceRange = _tempDistanceRange;
     selectedCategory = _tempSelectedCategory;
+    pmrOnly = _tempPmrOnly;
 
-    // Cost range - support pour min ou max seul
     if (_tempMinCost.isNotEmpty || _tempMaxCost.isNotEmpty) {
       final minCostValue =
           _tempMinCost.isNotEmpty ? int.tryParse(_tempMinCost) : null;
@@ -174,7 +169,6 @@ class SearchFiltersViewModel extends ChangeNotifier {
           _tempMaxCost.isNotEmpty ? int.tryParse(_tempMaxCost) : null;
 
       if (minCostValue != null || maxCostValue != null) {
-        // Utiliser 0 comme minimum par défaut et une valeur très élevée comme maximum par défaut
         final minCost = minCostValue?.toDouble() ?? 0.0;
         final maxCost = maxCostValue?.toDouble() ?? 999999.0;
         costRange = RangeValues(minCost, maxCost);
@@ -183,7 +177,6 @@ class SearchFiltersViewModel extends ChangeNotifier {
       costRange = null;
     }
 
-    // Duration range - support pour min ou max seul
     if (_tempMinDuration.isNotEmpty || _tempMaxDuration.isNotEmpty) {
       final minDurationValue =
           _tempMinDuration.isNotEmpty ? int.tryParse(_tempMinDuration) : null;
@@ -197,7 +190,6 @@ class SearchFiltersViewModel extends ChangeNotifier {
         final maxMinutes = maxDurationValue != null
             ? _convertToMinutes(maxDurationValue, _tempDurationUnit)
             : 999999;
-        // Stocker en secondes comme avant
         durationRange = RangeValues(
             (minMinutes * 60).toDouble(), (maxMinutes * 60).toDouble());
       }
@@ -212,7 +204,6 @@ class SearchFiltersViewModel extends ChangeNotifier {
     return true;
   }
 
-  /// Convertit une valeur vers des minutes selon l'unité
   int _convertToMinutes(int value, String unit) {
     switch (unit.toLowerCase()) {
       case 'min':
@@ -226,7 +217,6 @@ class SearchFiltersViewModel extends ChangeNotifier {
     }
   }
 
-  /// Remet à zéro tous les filtres
   void clearAllFilters() {
     selectedCategory = null;
     searchQuery = null;
@@ -235,10 +225,10 @@ class SearchFiltersViewModel extends ChangeNotifier {
     durationRange = null;
     favoritesThreshold = null;
     sortBy = SortOption.recent;
+    pmrOnly = null;
     notifyListeners();
   }
 
-  /// Remet à zéro les valeurs temporaires
   void resetTempValues() {
     _tempDistanceRange = null;
     _tempSelectedCategory = null;
@@ -249,6 +239,7 @@ class SearchFiltersViewModel extends ChangeNotifier {
     _tempDurationUnit = 'h';
     _tempFavoritesThreshold = null;
     _tempSortBy = SortOption.recent;
+    _tempPmrOnly = null;
     notifyListeners();
   }
 }

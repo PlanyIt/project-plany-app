@@ -16,6 +16,7 @@ class Plan with _$Plan {
     Category? category,
     User? user,
     @Default(true) bool isPublic,
+    @Default(false) bool isAccessible,
     DateTime? createdAt,
     DateTime? updatedAt,
     @Default([]) List<Step> steps,

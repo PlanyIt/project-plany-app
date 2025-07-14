@@ -27,6 +27,7 @@ mixin _$Plan {
   Category? get category => throw _privateConstructorUsedError;
   User? get user => throw _privateConstructorUsedError;
   bool get isPublic => throw _privateConstructorUsedError;
+  bool get isAccessible => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
   List<Step> get steps => throw _privateConstructorUsedError;
@@ -56,6 +57,7 @@ abstract class $PlanCopyWith<$Res> {
       Category? category,
       User? user,
       bool isPublic,
+      bool isAccessible,
       DateTime? createdAt,
       DateTime? updatedAt,
       List<Step> steps,
@@ -89,6 +91,7 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
     Object? category = freezed,
     Object? user = freezed,
     Object? isPublic = null,
+    Object? isAccessible = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? steps = null,
@@ -121,6 +124,10 @@ class _$PlanCopyWithImpl<$Res, $Val extends Plan>
       isPublic: null == isPublic
           ? _value.isPublic
           : isPublic // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isAccessible: null == isAccessible
+          ? _value.isAccessible
+          : isAccessible // ignore: cast_nullable_to_non_nullable
               as bool,
       createdAt: freezed == createdAt
           ? _value.createdAt
@@ -196,6 +203,7 @@ abstract class _$$PlanImplCopyWith<$Res> implements $PlanCopyWith<$Res> {
       Category? category,
       User? user,
       bool isPublic,
+      bool isAccessible,
       DateTime? createdAt,
       DateTime? updatedAt,
       List<Step> steps,
@@ -228,6 +236,7 @@ class __$$PlanImplCopyWithImpl<$Res>
     Object? category = freezed,
     Object? user = freezed,
     Object? isPublic = null,
+    Object? isAccessible = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? steps = null,
@@ -260,6 +269,10 @@ class __$$PlanImplCopyWithImpl<$Res>
       isPublic: null == isPublic
           ? _value.isPublic
           : isPublic // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isAccessible: null == isAccessible
+          ? _value.isAccessible
+          : isAccessible // ignore: cast_nullable_to_non_nullable
               as bool,
       createdAt: freezed == createdAt
           ? _value.createdAt
@@ -303,6 +316,7 @@ class _$PlanImpl implements _Plan {
       this.category,
       this.user,
       this.isPublic = true,
+      this.isAccessible = false,
       this.createdAt,
       this.updatedAt,
       final List<Step> steps = const [],
@@ -330,6 +344,9 @@ class _$PlanImpl implements _Plan {
   @override
   @JsonKey()
   final bool isPublic;
+  @override
+  @JsonKey()
+  final bool isAccessible;
   @override
   final DateTime? createdAt;
   @override
@@ -364,7 +381,7 @@ class _$PlanImpl implements _Plan {
 
   @override
   String toString() {
-    return 'Plan(id: $id, title: $title, description: $description, category: $category, user: $user, isPublic: $isPublic, createdAt: $createdAt, updatedAt: $updatedAt, steps: $steps, favorites: $favorites, isFavorite: $isFavorite, totalCost: $totalCost, totalDuration: $totalDuration)';
+    return 'Plan(id: $id, title: $title, description: $description, category: $category, user: $user, isPublic: $isPublic, isAccessible: $isAccessible, createdAt: $createdAt, updatedAt: $updatedAt, steps: $steps, favorites: $favorites, isFavorite: $isFavorite, totalCost: $totalCost, totalDuration: $totalDuration)';
   }
 
   @override
@@ -381,6 +398,8 @@ class _$PlanImpl implements _Plan {
             (identical(other.user, user) || other.user == user) &&
             (identical(other.isPublic, isPublic) ||
                 other.isPublic == isPublic) &&
+            (identical(other.isAccessible, isAccessible) ||
+                other.isAccessible == isAccessible) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -406,6 +425,7 @@ class _$PlanImpl implements _Plan {
       category,
       user,
       isPublic,
+      isAccessible,
       createdAt,
       updatedAt,
       const DeepCollectionEquality().hash(_steps),
@@ -438,6 +458,7 @@ abstract class _Plan implements Plan {
       final Category? category,
       final User? user,
       final bool isPublic,
+      final bool isAccessible,
       final DateTime? createdAt,
       final DateTime? updatedAt,
       final List<Step> steps,
@@ -461,6 +482,8 @@ abstract class _Plan implements Plan {
   User? get user;
   @override
   bool get isPublic;
+  @override
+  bool get isAccessible;
   @override
   DateTime? get createdAt;
   @override

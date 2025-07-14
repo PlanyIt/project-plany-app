@@ -45,6 +45,31 @@ class StepThreeContent extends StatelessWidget {
                 return const SizedBox();
               },
             ),
+            _buildSectionTitle(context, 'Options du plan'),
+            const SizedBox(height: 16),
+            ValueListenableBuilder<bool>(
+              valueListenable: viewModel.isPublic,
+              builder: (_, isPublic, __) {
+                return _buildSwitchRow(
+                  title: 'Plan public',
+                  icon: Icons.public,
+                  value: isPublic,
+                  onChanged: (value) => viewModel.isPublic.value = value,
+                );
+              },
+            ),
+            ValueListenableBuilder<bool>(
+              valueListenable: viewModel.isAccessible,
+              builder: (_, isAccessible, __) {
+                return _buildSwitchRow(
+                  title: 'Adapté PMR (mobilité réduite)',
+                  icon: Icons.accessible,
+                  value: isAccessible,
+                  onChanged: (value) => viewModel.isAccessible.value = value,
+                );
+              },
+            ),
+            const SizedBox(height: 24),
             _buildPublishCard(),
             const SizedBox(height: 100),
           ],
@@ -155,145 +180,153 @@ class StepThreeContent extends StatelessWidget {
   }
 
   Widget _buildInfoCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.accentColor,
-            const Color(0xFFFF5A85),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.check_circle_outline,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Presque terminé !',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Vérifiez les détails de votre plan avant de le publier. Vous pourrez le modifier ultérieurement.',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: viewModel.isAccessible,
+      builder: (_, isAccessible, __) {
+        final infoText = isAccessible
+            ? 'Votre plan sera identifié comme accessible aux personnes à mobilité réduite.'
+            : 'Vous pouvez indiquer si votre plan est accessible aux personnes à mobilité réduite.';
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.accentColor,
+                const Color(0xFFFF5A85),
               ],
             ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Presque terminé !',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      infoText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildPublishCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: AppTheme.accentColor.withValues(alpha: .3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.accentColor.withValues(alpha: .1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.public,
-                  color: AppTheme.accentColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Prêt à publier ?',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: viewModel.isPublic,
+      builder: (_, isPublic, __) {
+        final publishTitle = isPublic ? 'Prêt à publier ?' : 'Plan privé';
+        final publishDescription = isPublic
+            ? 'En publiant ce plan, vous le rendez visible par tous les utilisateurs. Vous pourrez le supprimer plus tard.'
+            : 'Ce plan restera privé et ne sera visible que par vous.';
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'En publiant ce plan, vous le rendez visible par tous les utilisateurs. Vous pourrez le modifier ou le supprimer plus tard.',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 14,
+            border: Border.all(
+              color: AppTheme.accentColor.withValues(alpha: .3),
             ),
           ),
-          const SizedBox(height: 16),
-          const Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 16),
-              SizedBox(width: 8),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentColor.withValues(alpha: .1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isPublic ? Icons.public : Icons.lock_outline,
+                      color: AppTheme.accentColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    publishTitle,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Text(
-                'Vos coordonnées ne sont pas partagées',
-                style: TextStyle(fontSize: 13, color: Colors.black87),
+                publishDescription,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    'Vos coordonnées ne sont pas partagées',
+                    style: TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 16),
-              SizedBox(width: 8),
-              Text(
-                'Vous pouvez modifier ce plan à tout moment',
-                style: TextStyle(fontSize: 13, color: Colors.black87),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -304,6 +337,29 @@ class StepThreeContent extends StatelessWidget {
         fontSize: 16,
         fontWeight: FontWeight.bold,
         color: Colors.black87,
+      ),
+    );
+  }
+
+  Widget _buildSwitchRow({
+    required String title,
+    required bool value,
+    required IconData icon,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey[700]),
+          const SizedBox(width: 8),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: const Color(0xFF3425B5),
+          ),
+        ],
       ),
     );
   }

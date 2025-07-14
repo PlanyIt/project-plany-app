@@ -33,6 +33,7 @@ class PlanRepositoryRemote implements PlanRepository {
       "user": plan.user?.id,
       "steps": plan.steps.map((step) => step.id).toList(),
       "isPublic": plan.isPublic,
+      "isAccessible": plan.isAccessible,
     };
 
     print('🚀 Creating plan with payload: $payload'); // Debug

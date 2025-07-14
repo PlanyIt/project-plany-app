@@ -42,12 +42,12 @@ class SearchViewModel extends ChangeNotifier {
     search = Command0(_search);
 
     // Écouter les changements de filtres pour relancer la recherche
-    bool _isFilterListenerActive = false;
+    var isFilterListenerActive = false;
     filtersViewModel.addListener(() {
-      if (_isFilterListenerActive) return;
-      _isFilterListenerActive = true;
+      if (isFilterListenerActive) return;
+      isFilterListenerActive = true;
       search.execute();
-      _isFilterListenerActive = false;
+      isFilterListenerActive = false;
     });
   }
 
@@ -78,6 +78,7 @@ class SearchViewModel extends ChangeNotifier {
 
   /// Getters pour l'accès aux données
   List<Category> get fullCategories => _categories;
+  bool? get tempPmrOnly => filtersViewModel.tempPmrOnly;
 
   /// Obtient le nom d'une catégorie par son ID
   String getCategoryName(String categoryId) {
@@ -100,6 +101,9 @@ class SearchViewModel extends ChangeNotifier {
       filtersViewModel.selectedCategory = categoryId;
     }
   }
+
+  void updateTempPmrOnly(bool? value) =>
+      filtersViewModel.updateTempPmrOnly(value);
 
   // Getters pour accéder aux filtres
   String? get searchQuery => filtersViewModel.searchQuery;
@@ -211,7 +215,7 @@ class SearchViewModel extends ChangeNotifier {
       if (filtersViewModel.searchQuery != null &&
           filtersViewModel.searchQuery!.isNotEmpty) {
         final query = filtersViewModel.searchQuery!.toLowerCase();
-        bool matchesSearch = false;
+        var matchesSearch = false;
 
         // Recherche dans le titre et description du plan
         if (plan.title.toLowerCase().contains(query) ||
@@ -299,9 +303,13 @@ class SearchViewModel extends ChangeNotifier {
           m.favoritesCount < filtersViewModel.favoritesThreshold!) {
         return false;
       }
+      // Filtre accessibilité PMR
+      if (filtersViewModel.pmrOnly == true) {
+        if (m.plan.isAccessible != true) return false;
+      }
+
       return true;
     }).toList();
-
     // Tri avec support pour la distance
     switch (filtersViewModel.sortBy) {
       case SortOption.cost:

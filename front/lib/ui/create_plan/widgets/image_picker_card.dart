@@ -1,6 +1,4 @@
 import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class ImagePickerCard extends StatelessWidget {
@@ -70,25 +68,11 @@ class ImagePickerCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: CachedNetworkImage(
-                imageUrl: selectedImage!.path,
+              child: Image.file(
+                selectedImage!,
                 width: double.infinity,
                 height: 200,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
-                  child: Icon(
-                    Icons.broken_image,
-                    color: Colors.grey[400],
-                    size: 40,
-                  ),
-                ),
               ),
             ),
             if (onRemoveImage != null)

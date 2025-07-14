@@ -17,6 +17,7 @@ _$PlanImpl _$$PlanImplFromJson(Map<String, dynamic> json) => _$PlanImpl(
           ? null
           : User.fromJson(json['user'] as Map<String, dynamic>),
       isPublic: json['isPublic'] as bool? ?? true,
+      isAccessible: json['isAccessible'] as bool? ?? false,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -44,6 +45,7 @@ Map<String, dynamic> _$$PlanImplToJson(_$PlanImpl instance) =>
       'category': instance.category,
       'user': instance.user,
       'isPublic': instance.isPublic,
+      'isAccessible': instance.isAccessible,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
       'steps': instance.steps,

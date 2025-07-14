@@ -34,7 +34,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     widget.viewModel.addListener(_onViewModelChanged);
 
-    // Forcer une vérification initiale de l'état de la localisation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final locationService = context.read<LocationService>();
       if (!locationService.hasLocation && !locationService.isLoading) {
@@ -50,7 +49,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _onViewModelChanged() {
-    // Gestion des erreurs via SnackBar
     if (widget.viewModel.hasError && widget.viewModel.errorMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -105,17 +103,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 slivers: [
                   _buildSearchBar(context),
                   _buildLocationStatus(context),
-                  _buildSectionHeader(context, title: 'Catégories'),
+                  _buildSectionHeader(context,
+                      title: 'Catégories',
+                      seeAll: true,
+                      onSeeAll: () => {
+                            context.go('/search'),
+                          }),
                   _buildCategoryCardsSection(
                     context,
                     categories: widget.viewModel.categories,
                     isLoading: isLoading,
                   ),
                   _buildSectionHeader(context,
-                      title: 'À proximité', seeAll: true, onSeeAll: () => {}),
+                      title: 'À proximité',
+                      seeAll: true,
+                      onSeeAll: () => {
+                            context.go('/search'),
+                          }),
                   _buildNearbyPlansSection(context, isLoading: isLoading),
                   _buildSectionHeader(context,
-                      title: 'Populaire', seeAll: true, onSeeAll: () => {}),
+                      title: 'Populaire',
+                      seeAll: true,
+                      onSeeAll: () => {
+                            context.go('/search'),
+                          }),
                   _buildPlanListSection(
                     context,
                     plans: widget.viewModel.discoveryPlans,
