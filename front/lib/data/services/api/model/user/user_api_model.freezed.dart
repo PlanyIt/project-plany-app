@@ -20,7 +20,7 @@ UserApiModel _$UserApiModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UserApiModel {
-  @JsonKey(required: false, name: "_id")
+  @JsonKey(required: false)
   String? get id => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
@@ -53,7 +53,7 @@ abstract class $UserApiModelCopyWith<$Res> {
       _$UserApiModelCopyWithImpl<$Res, UserApiModel>;
   @useResult
   $Res call(
-      {@JsonKey(required: false, name: "_id") String? id,
+      {@JsonKey(required: false) String? id,
       String username,
       String email,
       String? description,
@@ -169,7 +169,7 @@ abstract class _$$UserApiModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(required: false, name: "_id") String? id,
+      {@JsonKey(required: false) String? id,
       String username,
       String email,
       String? description,
@@ -278,7 +278,7 @@ class __$$UserApiModelImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UserApiModelImpl implements _UserApiModel {
   const _$UserApiModelImpl(
-      {@JsonKey(required: false, name: "_id") this.id,
+      {@JsonKey(required: false) this.id,
       required this.username,
       required this.email,
       this.description,
@@ -299,7 +299,7 @@ class _$UserApiModelImpl implements _UserApiModel {
       _$$UserApiModelImplFromJson(json);
 
   @override
-  @JsonKey(required: false, name: "_id")
+  @JsonKey(required: false)
   final String? id;
   @override
   final String username;
@@ -417,7 +417,7 @@ class _$UserApiModelImpl implements _UserApiModel {
 
 abstract class _UserApiModel implements UserApiModel {
   const factory _UserApiModel(
-      {@JsonKey(required: false, name: "_id") final String? id,
+      {@JsonKey(required: false) final String? id,
       required final String username,
       required final String email,
       final String? description,
@@ -436,7 +436,7 @@ abstract class _UserApiModel implements UserApiModel {
       _$UserApiModelImpl.fromJson;
 
   @override
-  @JsonKey(required: false, name: "_id")
+  @JsonKey(required: false)
   String? get id;
   @override
   String get username;

@@ -17,6 +17,7 @@ class FavoriteViewModel extends ChangeNotifier {
   Future<void> initFavoriteStatus(String planId) async {
     final user = _authRepository.currentUser;
     if (user == null) return;
+    print(user);
 
     final favoritesResult = await _planRepository.getFavoritesByUser(user.id!);
     if (favoritesResult is Ok<List<Plan>>) {

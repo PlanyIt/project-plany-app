@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
@@ -54,37 +53,24 @@ class ProfileViewModel extends ChangeNotifier {
 
     final isCurrent =
         userId == null || userId == authRepository.currentUser?.id;
+    final idToFetch = isCurrent ? authRepository.currentUser!.id! : userId!;
 
-    if (isCurrent) {
-      final userResult =
-          await userRepository.getUserById(authRepository.currentUser!.id!);
-      if (userResult is Ok<User>) {
-        userProfile = userResult.value;
+    final userResult = await userRepository.getUserById(idToFetch);
+    userProfile = userResult is Ok<User> ? userResult.value : null;
 
-        if (isCurrent) {
-          userProfile = userProfile!.copyWith(
-            id: authRepository.currentUser!.id,
-          );
-        }
-        authRepository.updateCurrentUser(userProfile!);
-      }
-    } else {
-      print('Loading user data for userId: $userId');
-
-      final userResult = await userRepository.getUserById(userId);
-
-      print(userResult);
-      userProfile = userResult is Ok<User> ? userResult.value : null;
+    if (isCurrent && userProfile != null) {
+      authRepository.updateCurrentUser(userProfile!);
     }
 
     if (userProfile != null) {
       userListViewModel = UserListViewModel(
         userRepository: userRepository,
-        userId: userProfile!.id ?? '',
+        userId: userProfile!.id!,
       );
+
       await Future.wait([
-        myPlansViewModel.loadPlans(userProfile!.id ?? ''),
-        favoritesViewModel.loadFavorites(userProfile!.id ?? ''),
+        myPlansViewModel.loadPlans(userProfile!.id!),
+        favoritesViewModel.loadFavorites(userProfile!.id!),
         userListViewModel!.loadFollowers(),
         userListViewModel!.loadFollowing(),
         _loadStats(),
@@ -105,14 +91,12 @@ class ProfileViewModel extends ChangeNotifier {
       notifyListeners();
 
       final plansResult = await planRepository.getPlansByUser(userProfile!.id!);
-      final categoryMap = <String, Category>{};
-
       final userPlans =
           plansResult is Ok<List<Plan>> ? plansResult.value : <Plan>[];
 
+      final categoryMap = <String, Category>{};
       for (final plan in userPlans) {
-        if (plan.category != null &&
-            !categoryMap.containsKey(plan.category!.id)) {
+        if (plan.category != null) {
           categoryMap[plan.category!.id] = plan.category!;
         }
       }
@@ -133,8 +117,7 @@ class ProfileViewModel extends ChangeNotifier {
 
   Future<void> _checkFollowStatus() async {
     if (userProfile == null || isCurrentUser) return;
-    final followResult =
-        await userRepository.isFollowing(userProfile?.id ?? '');
+    final followResult = await userRepository.isFollowing(userProfile!.id!);
     if (followResult is Ok<bool>) {
       isFollowing = followResult.value;
     }
@@ -148,7 +131,7 @@ class ProfileViewModel extends ChangeNotifier {
 
     try {
       if (isFollowing) {
-        final result = await userRepository.unfollowUser(userProfile?.id ?? '');
+        final result = await userRepository.unfollowUser(userProfile!.id!);
         if (result is Ok<void>) {
           isFollowing = false;
           userStats = userStats?.copyWith(
@@ -156,7 +139,7 @@ class ProfileViewModel extends ChangeNotifier {
           );
         }
       } else {
-        final result = await userRepository.followUser(userProfile?.id ?? '');
+        final result = await userRepository.followUser(userProfile!.id!);
         if (result is Ok<void>) {
           isFollowing = true;
           userStats = userStats?.copyWith(
@@ -237,7 +220,7 @@ class ProfileViewModel extends ChangeNotifier {
 
   Future<Result<void>> updateEmail(String email, String password) async {
     try {
-      await userRepository.updateEmail(email, password, userProfile?.id ?? '');
+      await userRepository.updateEmail(email, password, userProfile!.id!);
       userProfile = userProfile!.copyWith(email: email);
       authRepository.updateCurrentUser(userProfile!);
       notifyListeners();

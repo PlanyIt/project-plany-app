@@ -98,7 +98,16 @@ class ProfileHeader extends StatelessWidget {
                       : _buildGlassIconButton(
                           icon: Icons.arrow_back,
                           onPressed: () {
-                            context.go(Routes.dashboard);
+                            final uri = GoRouter.of(context)
+                                .routerDelegate
+                                .currentConfiguration
+                                .uri;
+
+                            if (uri.path == Routes.profile) {
+                              context.go(Routes.home);
+                            } else {
+                              context.pop();
+                            }
                           },
                         ),
                   if (isCurrentUser)

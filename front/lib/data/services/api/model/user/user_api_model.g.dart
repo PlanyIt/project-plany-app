@@ -8,7 +8,7 @@ part of 'user_api_model.dart';
 
 _$UserApiModelImpl _$$UserApiModelImplFromJson(Map<String, dynamic> json) =>
     _$UserApiModelImpl(
-      id: json['_id'] as String?,
+      id: json['id'] as String?,
       username: json['username'] as String,
       email: json['email'] as String,
       description: json['description'] as String?,
@@ -34,7 +34,7 @@ _$UserApiModelImpl _$$UserApiModelImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$UserApiModelImplToJson(_$UserApiModelImpl instance) =>
     <String, dynamic>{
-      '_id': instance.id,
+      'id': instance.id,
       'username': instance.username,
       'email': instance.email,
       'description': instance.description,

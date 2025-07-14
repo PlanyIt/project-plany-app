@@ -113,7 +113,11 @@ class PlanDetailsViewModel extends ChangeNotifier {
 
   void navigateToUserProfile(BuildContext context, String? userId) {
     if (userId == null) return;
-    context.push(Routes.profile, extra: userId);
+    if (currentUser?.id == plan?.user?.id) {
+      context.go(Routes.profile);
+    } else {
+      context.push('${Routes.profile}?userId=$userId');
+    }
   }
 
   void updateFollowersList({required bool isFollowing}) {
