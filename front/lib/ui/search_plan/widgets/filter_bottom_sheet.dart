@@ -27,6 +27,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
   final _minDurationController = TextEditingController();
   final _maxDurationController = TextEditingController();
   final _favoritesController = TextEditingController();
+  final _keywordsController = TextEditingController();
 
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
@@ -44,6 +45,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
     _maxCostController.text = widget.viewModel.tempMaxCost;
     _minDurationController.text = widget.viewModel.tempMinDuration;
     _maxDurationController.text = widget.viewModel.tempMaxDuration;
+    _keywordsController.text = widget.viewModel.keywordQuery ?? '';
     _favoritesController.text =
         widget.viewModel.tempFavoritesThreshold?.toString() ?? '';
 
@@ -62,6 +64,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
       widget.viewModel
           .updateTempDuration(maxDuration: _maxDurationController.text);
     });
+    widget.viewModel.filtersViewModel.setKeywordQuery(_keywordsController.text);
   }
 
   void _initializeAnimation() {
@@ -87,6 +90,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
     _minDurationController.dispose();
     _maxDurationController.dispose();
     _favoritesController.dispose();
+    _keywordsController.dispose();
     super.dispose();
   }
 
@@ -138,6 +142,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildKeywordsSearchBar(),
+                    const SizedBox(height: 32),
                     _buildSortSection(),
                     const SizedBox(height: 32),
                     _buildCategorySection(),
@@ -187,6 +193,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
     );
   }
 
+  Widget _buildKeywordsSearchBar() {
+    return TextField(
+      controller: _keywordsController,
+      onChanged: (value) {
+        widget.viewModel.filtersViewModel.setKeywordQuery(value);
+      },
+      decoration: InputDecoration(
+        prefixIcon: const Icon(Icons.search),
+        hintText: 'Recherche par mots-clés (titre, description)...',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+    );
+  }
+
   Widget _buildCategorySelector() {
     final theme = Theme.of(context);
     final categories = widget.viewModel.fullCategories;
@@ -197,7 +221,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Option "Toutes les catégories"
             GestureDetector(
               onTap: () => widget.viewModel.updateTempSelectedCategory(null),
               child: Container(

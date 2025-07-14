@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../data/services/location_service.dart';
 import '../../routing/routes.dart';
 import '../core/ui/list/vertical_plan_list.dart';
 import '../core/ui/search_bar/search_bar.dart';
@@ -12,6 +13,7 @@ import 'widgets/filter_chips_section.dart';
 class SearchScreen extends StatefulWidget {
   final String? initialQuery;
   final String? initialCategory;
+  final SearchViewModel viewModel;
 
   const SearchScreen({
     super.key,
@@ -19,8 +21,6 @@ class SearchScreen extends StatefulWidget {
     this.initialCategory,
     required this.viewModel,
   });
-
-  final SearchViewModel viewModel;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -38,10 +38,7 @@ class _SearchScreenState extends State<SearchScreen> {
       _searchController.text = widget.initialQuery!;
     }
 
-    // Appliquer les filtres initiaux
     widget.viewModel.setInitialFilters(categoryId: widget.initialCategory);
-
-    // Écouter les changements du viewModel pour synchroniser le controller
     widget.viewModel.addListener(_syncSearchController);
   }
 
@@ -64,19 +61,12 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  void _onSearchChanged(String query) {
-    if (!_isUpdatingController) {
-      widget.viewModel.setSearchQuery(query);
-    }
-  }
-
   void _syncSearchController() {
-    // Éviter les cycles de notifications
     if (_isUpdatingController) return;
 
-    final currentQuery = widget.viewModel.searchQuery ?? '';
+    final currentQuery =
+        widget.viewModel.filtersViewModel.locationSearchQuery ?? '';
     if (currentQuery != _searchController.text) {
-      // Différer la mise à jour pour éviter setState during build
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_isUpdatingController) {
           _isUpdatingController = true;
@@ -100,7 +90,6 @@ class _SearchScreenState extends State<SearchScreen> {
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
-          // Search bar and filter button
           Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: Row(
@@ -109,9 +98,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: DashboardSearchBar(
                     controller: _searchController,
                     focusNode: _searchFocusNode,
-                    hintText: 'Rechercher des plans...',
-                    onChanged: _onSearchChanged,
-                    onSubmitted: _onSearchChanged,
+                    hintText: 'Rechercher un lieu...',
                     autofocus: true,
                   ),
                 ),
@@ -126,13 +113,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: InkWell(
                       onTap: () => _showFilterBottomSheet(context),
                       borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Icon(
-                          Icons.tune,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: Icon(Icons.tune, color: Colors.white, size: 20),
                       ),
                     ),
                   ),
@@ -140,24 +123,18 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
           ),
-
-          // Filter chips section
           AnimatedBuilder(
             animation: widget.viewModel,
             builder: (context, _) {
               return FilterChipsSection(viewModel: widget.viewModel);
             },
           ),
-
-          // Results section
           Expanded(
             child: AnimatedBuilder(
               animation: widget.viewModel,
               builder: (context, _) {
                 if (widget.viewModel.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (widget.viewModel.errorMessage != null) {
@@ -165,11 +142,8 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
+                        Icon(Icons.error_outline,
+                            size: 64, color: Colors.grey[400]),
                         const SizedBox(height: 16),
                         Text(
                           'Erreur de chargement',

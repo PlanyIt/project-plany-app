@@ -12,7 +12,6 @@ import '../../../utils/result.dart';
 import 'search_chips_view_model.dart';
 import 'search_filters_view_model.dart';
 
-/// Association d'un Plan avec ses métriques calculées
 class PlanWithMetrics {
   final Plan plan;
   final double totalDistance;
@@ -29,7 +28,6 @@ class PlanWithMetrics {
   });
 }
 
-/// ViewModel principal pour la recherche de plans
 class SearchViewModel extends ChangeNotifier {
   SearchViewModel({
     required PlanRepository planRepository,
@@ -41,13 +39,8 @@ class SearchViewModel extends ChangeNotifier {
     load = Command0(_load)..execute();
     search = Command0(_search);
 
-    // Écouter les changements de filtres pour relancer la recherche
-    var isFilterListenerActive = false;
     filtersViewModel.addListener(() {
-      if (isFilterListenerActive) return;
-      isFilterListenerActive = true;
       search.execute();
-      isFilterListenerActive = false;
     });
   }
 
@@ -56,31 +49,23 @@ class SearchViewModel extends ChangeNotifier {
   final CategoryRepository _categoryRepository;
   final LocationService _locationService;
 
-  /// ViewModel pour la gestion des filtres
   final SearchFiltersViewModel filtersViewModel;
-
-  /// ViewModel pour la gestion des chips (sera initialisé après le chargement des catégories)
   SearchChipsViewModel? chipsViewModel;
 
-  /// Indicateurs d'état
   bool isLoading = false;
   bool isSearching = false;
   String? errorMessage;
 
-  /// Données
   List<Plan> _allPlans = [];
   List<PlanWithMetrics> results = [];
   List<Category> _categories = [];
 
-  /// Commandes
   late final Command0 load;
   late final Command0 search;
 
-  /// Getters pour l'accès aux données
   List<Category> get fullCategories => _categories;
   bool? get tempPmrOnly => filtersViewModel.tempPmrOnly;
 
-  /// Obtient le nom d'une catégorie par son ID
   String getCategoryName(String categoryId) {
     final category = _categories.firstWhere(
       (cat) => cat.id == categoryId,
@@ -90,23 +75,27 @@ class SearchViewModel extends ChangeNotifier {
     return category.name;
   }
 
-  /// Délégation vers les sous-ViewModels
-  void setSearchQuery(String? query) => filtersViewModel.setSearchQuery(query);
-  void setSelectedCategory(String? categoryId) =>
-      filtersViewModel.setSelectedCategory(categoryId);
+  void setSearchQuery(String? query) {
+    filtersViewModel.setKeywordQuery(query);
+    search.execute();
+  }
 
-  /// Définit les filtres initiaux (utilisé lors de l'arrivée depuis le dashboard)
+  void setSelectedCategory(String? categoryId) {
+    filtersViewModel.setSelectedCategory(categoryId);
+    search.execute();
+  }
+
   void setInitialFilters({String? categoryId}) {
     if (categoryId != null && categoryId.isNotEmpty) {
       filtersViewModel.selectedCategory = categoryId;
     }
   }
 
-  void updateTempPmrOnly(bool? value) =>
-      filtersViewModel.updateTempPmrOnly(value);
+  void updateTempPmrOnly(bool? value) {
+    filtersViewModel.updateTempPmrOnly(value);
+  }
 
-  // Getters pour accéder aux filtres
-  String? get searchQuery => filtersViewModel.searchQuery;
+  String? get keywordQuery => filtersViewModel.keywordQuery;
   String? get selectedCategory => filtersViewModel.selectedCategory;
   RangeValues? get distanceRange => filtersViewModel.distanceRange;
   RangeValues? get costRange => filtersViewModel.costRange;
@@ -114,22 +103,27 @@ class SearchViewModel extends ChangeNotifier {
   int? get favoritesThreshold => filtersViewModel.favoritesThreshold;
   SortOption get sortBy => filtersViewModel.sortBy;
 
-  // Délégation vers le chips ViewModel
   List<Map<String, dynamic>> getActiveFilters() =>
       chipsViewModel?.getActiveFilters() ?? [];
   bool get hasActiveFilters => chipsViewModel?.hasActiveFilters ?? false;
   int get activeFiltersCount => chipsViewModel?.activeFiltersCount ?? 0;
-  void clearAllFilters() => filtersViewModel.clearAllFilters();
+  void clearAllFilters() {
+    filtersViewModel.clearAllFilters();
+    search.execute();
+  }
 
-  // Délégation pour la validation et les valeurs temporaires
   void initializeTempValues() => filtersViewModel.initializeTempValues();
-  bool applyTempFilters() => filtersViewModel.applyTempFilters();
+  bool applyTempFilters() {
+    final result = filtersViewModel.applyTempFilters();
+    if (result) search.execute();
+    return result;
+  }
+
   void resetTempValues() => filtersViewModel.resetTempValues();
   bool get hasTempValidationErrors => filtersViewModel.hasTempValidationErrors;
   String? getFieldError(String fieldName) =>
       filtersViewModel.getFieldError(fieldName);
 
-  // Getters pour les valeurs temporaires
   RangeValues? get tempDistanceRange => filtersViewModel.tempDistanceRange;
   String? get tempSelectedCategory => filtersViewModel.tempSelectedCategory;
   String get tempMinCost => filtersViewModel.tempMinCost;
@@ -140,7 +134,6 @@ class SearchViewModel extends ChangeNotifier {
   int? get tempFavoritesThreshold => filtersViewModel.tempFavoritesThreshold;
   SortOption get tempSortBy => filtersViewModel.tempSortBy;
 
-  // Méthodes pour mettre à jour les valeurs temporaires
   void updateTempDistanceRange(RangeValues? values) =>
       filtersViewModel.updateTempDistanceRange(values);
   void updateTempSelectedCategory(String? categoryId) =>
@@ -157,19 +150,15 @@ class SearchViewModel extends ChangeNotifier {
   void updateTempSortBy(SortOption sortOption) =>
       filtersViewModel.updateTempSortBy(sortOption);
 
-  /// Charge catégories et plans
   Future<Result<void>> _load() async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
     try {
-      // Charger catégories
       final catRes = await _categoryRepository.getCategoriesList();
       if (catRes is Ok<List<Category>>) {
         _categories = catRes.value;
-
-        // Initialiser le chips ViewModel maintenant que nous avons les catégories
         chipsViewModel = SearchChipsViewModel(
           filtersViewModel: filtersViewModel,
           categories: _categories,
@@ -179,7 +168,6 @@ class SearchViewModel extends ChangeNotifier {
             'Impossible de charger les catégories', (catRes as Error).error);
       }
 
-      // Charger plans
       final res = await _planRepository.getPlanList();
       if (res is Error) {
         errorMessage = (res).toString();
@@ -198,32 +186,27 @@ class SearchViewModel extends ChangeNotifier {
     }
   }
 
-  /// Applique filtres, catégorie et tris sur [_allPlans]
   Future<Result<void>> _search() async {
     isSearching = true;
     errorMessage = null;
     notifyListeners();
 
     final futures = _allPlans.map((plan) async {
-      // Filtre catégorie
       if (filtersViewModel.selectedCategory != null &&
           plan.category?.id != filtersViewModel.selectedCategory) {
         return null;
       }
 
-      // Filtre de recherche par texte
-      if (filtersViewModel.searchQuery != null &&
-          filtersViewModel.searchQuery!.isNotEmpty) {
-        final query = filtersViewModel.searchQuery!.toLowerCase();
+      if (filtersViewModel.keywordQuery != null &&
+          filtersViewModel.keywordQuery!.isNotEmpty) {
+        final query = filtersViewModel.keywordQuery!.toLowerCase();
         var matchesSearch = false;
 
-        // Recherche dans le titre et description du plan
         if (plan.title.toLowerCase().contains(query) ||
             plan.description.toLowerCase().contains(query)) {
           matchesSearch = true;
         }
 
-        // Recherche dans les étapes si pas encore trouvé
         if (!matchesSearch) {
           for (final step in plan.steps) {
             if (step.title.toLowerCase().contains(query) ||
@@ -237,7 +220,6 @@ class SearchViewModel extends ChangeNotifier {
         if (!matchesSearch) return null;
       }
 
-      // Calculer la distance réelle au plan
       double totalDistance = 0;
       if (plan.steps.isNotEmpty) {
         final firstStep = plan.steps.first;
@@ -262,9 +244,7 @@ class SearchViewModel extends ChangeNotifier {
     final metricsList =
         (await Future.wait(futures)).whereType<PlanWithMetrics>().toList();
 
-    // Appliquer filtres numériques
     final filtered = metricsList.where((m) {
-      // Filtre distance
       if (filtersViewModel.distanceRange != null) {
         final range = filtersViewModel.distanceRange!;
         if (m.totalDistance < range.start || m.totalDistance > range.end) {
@@ -272,28 +252,22 @@ class SearchViewModel extends ChangeNotifier {
         }
       }
 
-      // Filtre coût avec support pour min ou max seul
       if (filtersViewModel.costRange != null) {
         final range = filtersViewModel.costRange!;
-        // Seulement vérifier le minimum si ce n'est pas la valeur par défaut
         if (range.start > 0.0 && m.totalCost < range.start) {
           return false;
         }
-        // Seulement vérifier le maximum si ce n'est pas la valeur par défaut
         if (range.end < 999999.0 && m.totalCost > range.end) {
           return false;
         }
       }
 
-      // Filtre durée avec support pour min ou max seul
       if (filtersViewModel.durationRange != null) {
         final range = filtersViewModel.durationRange!;
         final durSec = m.totalDuration.inSeconds.toDouble();
-        // Seulement vérifier le minimum si ce n'est pas la valeur par défaut
         if (range.start > 0.0 && durSec < range.start) {
           return false;
         }
-        // Seulement vérifier le maximum si ce n'est pas la valeur par défaut
         if (range.end < (999999 * 60) && durSec > range.end) {
           return false;
         }
@@ -303,14 +277,14 @@ class SearchViewModel extends ChangeNotifier {
           m.favoritesCount < filtersViewModel.favoritesThreshold!) {
         return false;
       }
-      // Filtre accessibilité PMR
+
       if (filtersViewModel.pmrOnly == true) {
         if (m.plan.isAccessible != true) return false;
       }
 
       return true;
     }).toList();
-    // Tri avec support pour la distance
+
     switch (filtersViewModel.sortBy) {
       case SortOption.cost:
         filtered.sort((a, b) => a.totalCost.compareTo(b.totalCost));

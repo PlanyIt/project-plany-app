@@ -131,6 +131,31 @@ class SearchChipsViewModel extends ChangeNotifier {
       });
     }
 
+    if (filtersViewModel.selectedLocationName != null) {
+      filters.add({
+        'type': 'location',
+        'label': filtersViewModel.selectedLocationName!,
+        'onRemove': () {
+          filtersViewModel.setSelectedLocation(null, null);
+        },
+        'icon': Icons.location_on,
+        'color': Colors.blue,
+      });
+    }
+
+    if (filtersViewModel.keywordQuery != null &&
+        filtersViewModel.keywordQuery!.isNotEmpty) {
+      filters.add({
+        'type': 'keyword',
+        'label': filtersViewModel.keywordQuery!,
+        'onRemove': () {
+          filtersViewModel.setKeywordQuery(null);
+        },
+        'icon': Icons.search,
+        'color': Colors.deepOrange,
+      });
+    }
+
     // --- Chip Tri ---
     if (filtersViewModel.sortBy != SortOption.recent) {
       String label;

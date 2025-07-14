@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 
 class LocationService extends ChangeNotifier {
@@ -64,6 +69,46 @@ class LocationService extends ChangeNotifier {
     _serviceDisabled = !serviceEnabled;
     notifyListeners();
     return serviceEnabled;
+  }
+
+  Future<List<LocationResult>> searchLocationByName(String query) async {
+    print(query);
+    if (query.isEmpty) return [];
+
+    final encodedQuery = Uri.encodeComponent(query);
+    final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?format=json&q=$encodedQuery&limit=5&countrycodes=FR&addressdetails=1');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'User-Agent': 'Plany-App/1.0.0',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((item) {
+        final lat = double.parse(item['lat']);
+        final lon = double.parse(item['lon']);
+        final displayName = item['display_name'] as String;
+
+        final parts = displayName.split(', ');
+        final name = parts.first;
+        final description = parts.length > 1
+            ? parts.sublist(1, parts.length.clamp(0, 3)).join(', ')
+            : '';
+
+        return LocationResult(
+          name: name,
+          description: description,
+          location: LatLng(lat, lon),
+        );
+      }).toList();
+    } else {
+      return [];
+    }
   }
 
   /// Récupère la position actuelle de l'utilisateur
@@ -172,4 +217,16 @@ class LocationService extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+}
+
+class LocationResult {
+  final String name;
+  final String description;
+  final LatLng location;
+
+  LocationResult({
+    required this.name,
+    required this.description,
+    required this.location,
+  });
 }

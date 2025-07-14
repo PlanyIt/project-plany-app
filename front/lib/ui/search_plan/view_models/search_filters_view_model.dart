@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../utils/validation_utils.dart';
 
 enum SortOption { cost, duration, favorites, recent }
@@ -6,13 +7,16 @@ enum SortOption { cost, duration, favorites, recent }
 class SearchFiltersViewModel extends ChangeNotifier {
   // --- Filtres actifs ---
   String? selectedCategory;
-  String? searchQuery;
   RangeValues? distanceRange;
   RangeValues? costRange;
   RangeValues? durationRange;
   int? favoritesThreshold;
   SortOption sortBy = SortOption.recent;
-  bool? pmrOnly; // Ajout PMR
+  bool? pmrOnly;
+  LatLng? selectedLocation;
+  String? selectedLocationName;
+  String? keywordQuery;
+  String? locationSearchQuery;
 
   // --- Valeurs temporaires ---
   RangeValues? _tempDistanceRange;
@@ -24,7 +28,7 @@ class SearchFiltersViewModel extends ChangeNotifier {
   String _tempDurationUnit = 'h';
   int? _tempFavoritesThreshold;
   SortOption _tempSortBy = SortOption.recent;
-  bool? _tempPmrOnly; // Ajout PMR temporaire
+  bool? _tempPmrOnly;
 
   RangeValues? get tempDistanceRange => _tempDistanceRange;
   String? get tempSelectedCategory => _tempSelectedCategory;
@@ -35,19 +39,30 @@ class SearchFiltersViewModel extends ChangeNotifier {
   String get tempDurationUnit => _tempDurationUnit;
   int? get tempFavoritesThreshold => _tempFavoritesThreshold;
   SortOption get tempSortBy => _tempSortBy;
-  bool? get tempPmrOnly => _tempPmrOnly; // Getter PMR
+  bool? get tempPmrOnly => _tempPmrOnly;
 
   void setSelectedCategory(String? categoryId) {
     selectedCategory = categoryId;
     notifyListeners();
   }
 
-  void setSearchQuery(String? query) {
+  void setKeywordQuery(String? query) {
     final newQuery = query?.trim().isEmpty == true ? null : query?.trim();
-    if (searchQuery != newQuery) {
-      searchQuery = newQuery;
+    if (keywordQuery != newQuery) {
+      keywordQuery = newQuery;
       notifyListeners();
     }
+  }
+
+  void setSelectedLocation(LatLng? location, String? name) {
+    selectedLocation = location;
+    selectedLocationName = name;
+    notifyListeners();
+  }
+
+  void setLocationSearchQuery(String? query) {
+    locationSearchQuery = query;
+    notifyListeners();
   }
 
   void initializeTempValues() {
@@ -219,7 +234,7 @@ class SearchFiltersViewModel extends ChangeNotifier {
 
   void clearAllFilters() {
     selectedCategory = null;
-    searchQuery = null;
+    keywordQuery = null;
     distanceRange = null;
     costRange = null;
     durationRange = null;
