@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
 export type StepDocument = HydratedDocument<Step>;
 
@@ -23,14 +23,11 @@ export class Step {
   @Prop({ type: String, required: true })
   image: string;
 
-  @Prop({ type: String, required: false })
-  duration?: string;
+  @Prop({ type: Number, required: true })
+  duration: number;
 
-  @Prop({ type: Number, required: false })
-  cost?: number;
-
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: string;
+  @Prop({ type: Number, required: true })
+  cost: number;
 }
 
 export const StepSchema = SchemaFactory.createForClass(Step);

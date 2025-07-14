@@ -2,11 +2,12 @@ import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
 
 export class CommentDto {
   @IsString()
+  @IsNotEmpty()
   content: string;
 
   @IsOptional()
   @IsString()
-  userId: string;
+  user?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -15,7 +16,7 @@ export class CommentDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  likes: string[];
+  likes?: string[];
 
   @IsOptional()
   @IsArray()
@@ -28,5 +29,5 @@ export class CommentDto {
 
   @IsOptional()
   @IsString()
-  parentId: string;
+  parentId?: string;
 }

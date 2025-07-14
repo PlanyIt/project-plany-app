@@ -12,11 +12,16 @@ export class PlanDto {
   @IsOptional()
   isPublic?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  isAccessible?: boolean;
+
   @IsString()
   category: string;
 
   @IsString()
-  userId: string;
+  @IsOptional()
+  user?: string;
 
   @IsArray()
   @Type(() => String)

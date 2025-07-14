@@ -8,11 +8,9 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.gms:google-services:4.4.0' 
     }
 
     ext {
-        // Update these lines if they exist or add them if they don't
         javaVersion = JavaVersion.VERSION_11
     }
 }
@@ -23,7 +21,6 @@ allprojects {
         mavenCentral()
     }
     
-    // Apply consistent Kotlin settings for all projects
     plugins.withId('kotlin-android') {
         kotlin {
             jvmToolchain(17)

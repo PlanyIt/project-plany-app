@@ -1,39 +1,51 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
 export class User {
   @Prop({ required: true, unique: true })
-  firebaseUid: string;
+  username: string;
 
   @Prop({ required: true, unique: true })
   email: string;
 
   @Prop({ required: true })
-  username: string;
+  password: string;
 
   @Prop()
-  photoUrl?: string;
-
-  @Prop()
-  description?: string;
+  description: string;
 
   @Prop({ default: false })
   isPremium: boolean;
 
   @Prop()
-  birthDate?: Date;
+  photoUrl: string;
+
+  @Prop({ type: Date })
+  birthDate: Date;
 
   @Prop()
-  gender?: string;
+  gender: string;
 
-  @Prop({ type: [String], default: [] })
-  followers: string[];
+  @Prop({ default: 'user' })
+  role: string;
 
-  @Prop({ type: [String], default: [] })
-  following: string[];
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    default: [],
+  })
+  followers: mongoose.Types.ObjectId[];
+
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    default: [],
+  })
+  following: mongoose.Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

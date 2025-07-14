@@ -7,7 +7,7 @@ IconData getIconData(String? iconName) {
   }
 
   // Map des noms d'icônes vers les IconData
-  final Map<String, IconData> iconMap = {
+  final iconMap = <String, IconData>{
     // Icônes de base
     'flight': Icons.flight,
     'sports_soccer': Icons.sports_soccer,

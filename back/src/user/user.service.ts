@@ -1,11 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
-import { Model, Connection, isValidObjectId } from 'mongoose';
+import { Model, Connection, isValidObjectId, Types } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from '../plan/schemas/plan.schema';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -15,35 +20,64 @@ export class UserService {
     @InjectConnection() private connection: Connection,
   ) {}
 
+  // Vérifier si le mot de passe est sécurisé
+  private isPasswordSecure(password: string): boolean {
+    // Au moins 8 caractères, une majuscule, une minuscule et un chiffre
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    return passwordRegex.test(password);
+  }
+
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
-    const createdUser = new this.userModel(createUserDto);
-    return createdUser.save();
+    // Vérifier si le mot de passe est sécurisé
+    if (!this.isPasswordSecure(createUserDto.password)) {
+      throw new BadRequestException(
+        'Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule et un chiffre',
+      );
+    }
+
+    try {
+      const createdUser = new this.userModel(createUserDto);
+      return await createdUser.save();
+    } catch (error) {
+      // Gérer les erreurs de duplication de MongoDB
+      if (error.code === 11000) {
+        const field = Object.keys(error.keyPattern)[0];
+        if (field === 'email') {
+          throw new BadRequestException('Cet email est déjà utilisé');
+        } else if (field === 'username') {
+          throw new BadRequestException("Ce nom d'utilisateur est déjà pris");
+        }
+        throw new BadRequestException('Cette valeur est déjà utilisée');
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();
   }
 
-  async findOneByFirebaseUid(
-    firebaseUid: string,
-  ): Promise<UserDocument | undefined> {
-    return this.userModel.findOne({ firebaseUid }).exec();
-  }
-
-  async removeByFirebaseUid(firebaseUid: string): Promise<UserDocument> {
-    return this.userModel.findOneAndDelete({ firebaseUid }).exec();
-  }
-
-  async findOneByUsername(username: string): Promise<UserDocument | undefined> {
-    return this.userModel.findOne({ username }).exec();
+  async findById(id: string): Promise<UserDocument | null> {
+    if (!isValidObjectId(id)) {
+      return null;
+    }
+    return this.userModel.findById(id).exec();
   }
 
   async findOneByEmail(email: string): Promise<UserDocument | undefined> {
     return this.userModel.findOne({ email }).exec();
   }
 
-  async updateByFirebaseUid(
-    firebaseUid: string,
+  async removeById(id: string): Promise<UserDocument> {
+    return this.userModel.findByIdAndDelete(id).exec();
+  }
+
+  async findOneByUsername(username: string): Promise<UserDocument | undefined> {
+    return this.userModel.findOne({ username }).exec();
+  }
+
+  async updateById(
+    id: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UserDocument> {
     if (updateUserDto.birthDate) {
@@ -60,39 +94,38 @@ export class UserService {
       );
     }
 
+    // Si le mot de passe est mis à jour, on le hache
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 12);
+    }
+
     const updatedUser = await this.userModel
-      .findOneAndUpdate({ firebaseUid }, { $set: updateUserDto }, { new: true })
+      .findByIdAndUpdate(id, { $set: updateUserDto }, { new: true })
       .exec();
 
     if (!updatedUser) {
-      throw new NotFoundException(
-        `User with Firebase UID ${firebaseUid} not found`,
-      );
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
     return updatedUser;
   }
 
-  async getUserPlans(firebaseUid: string) {
-    const user = await this.findOneByFirebaseUid(firebaseUid);
+  async getUserPlans(userId: string) {
+    const user = await this.findById(userId);
     if (!user) {
-      throw new NotFoundException(
-        `User with Firebase UID ${firebaseUid} not found`,
-      );
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     return this.planModel
-      .find({ userId: user.id })
+      .find({ user: user.id })
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async getUserFavorites(firebaseUid: string) {
-    const user = await this.findOneByFirebaseUid(firebaseUid);
+  async getUserFavorites(userId: string) {
+    const user = await this.findById(userId);
     if (!user) {
-      throw new NotFoundException(
-        `User with Firebase UID ${firebaseUid} not found`,
-      );
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     return this.planModel
@@ -101,21 +134,17 @@ export class UserService {
       .exec();
   }
 
-  async getPremiumStatus(firebaseUid: string): Promise<boolean> {
-    const user = await this.findOneByFirebaseUid(firebaseUid);
+  async getPremiumStatus(userId: string): Promise<boolean> {
+    const user = await this.findById(userId);
     return user?.isPremium || false;
-  }
-
-  async findById(id: string): Promise<UserDocument | null> {
-    return this.userModel.findById(id).exec();
   }
 
   async followUser(followerId: string, targetUserId: string) {
     const followerExists = await this.userModel.exists({
-      firebaseUid: followerId,
+      _id: followerId,
     });
     const targetExists = await this.userModel.exists({
-      firebaseUid: targetUserId,
+      _id: targetUserId,
     });
 
     if (!followerExists) {
@@ -131,7 +160,7 @@ export class UserService {
     }
 
     const alreadyFollowing = await this.userModel.exists({
-      firebaseUid: followerId,
+      _id: followerId,
       following: targetUserId,
     });
 
@@ -140,12 +169,12 @@ export class UserService {
     }
 
     await this.userModel.updateOne(
-      { firebaseUid: followerId },
+      { _id: followerId },
       { $addToSet: { following: targetUserId } },
     );
 
     await this.userModel.updateOne(
-      { firebaseUid: targetUserId },
+      { _id: targetUserId },
       { $addToSet: { followers: followerId } },
     );
 
@@ -154,10 +183,10 @@ export class UserService {
 
   async unfollowUser(followerId: string, targetUserId: string) {
     const followerExists = await this.userModel.exists({
-      firebaseUid: followerId,
+      _id: followerId,
     });
     const targetExists = await this.userModel.exists({
-      firebaseUid: targetUserId,
+      _id: targetUserId,
     });
 
     if (!followerExists) {
@@ -173,12 +202,12 @@ export class UserService {
     }
 
     await this.userModel.updateOne(
-      { firebaseUid: followerId },
+      { _id: followerId },
       { $pull: { following: targetUserId } },
     );
 
     await this.userModel.updateOne(
-      { firebaseUid: targetUserId },
+      { _id: targetUserId },
       { $pull: { followers: followerId } },
     );
 
@@ -186,13 +215,7 @@ export class UserService {
   }
 
   async getUserFollowers(userId: string) {
-    let user;
-
-    if (isValidObjectId(userId)) {
-      user = await this.findById(userId);
-    } else {
-      user = await this.findOneByFirebaseUid(userId);
-    }
+    const user = await this.findById(userId);
 
     if (!user) {
       throw new NotFoundException(`Utilisateur avec ID ${userId} non trouvé`);
@@ -200,52 +223,29 @@ export class UserService {
 
     const populatedUser = await this.userModel
       .findById(user._id)
-      .populate('followers', 'username photoUrl firebaseUid')
+      .populate('followers', 'username email photoUrl')
       .exec();
 
     return populatedUser.followers;
   }
 
   async getUserFollowing(userId: string) {
-    const user = await this.userModel.findOne({ firebaseUid: userId });
+    const user = await this.userModel.findOne({ _id: userId });
 
     if (!user) {
       throw new NotFoundException(`Utilisateur ${userId} non trouvé`);
     }
+    const populatedUser = await this.userModel
+      .findById(user._id)
+      .populate('following', 'username email photoUrl')
+      .exec();
 
-    const followingUsers = await this.userModel
-      .find({
-        firebaseUid: { $in: user.following },
-      })
-      .select('username photoUrl firebaseUid isPremium followers following');
-
-    const formattedUsers = followingUsers.map((user) => ({
-      id: user.firebaseUid,
-      username: user.username,
-      photoUrl: user.photoUrl,
-      isPremium: user.isPremium || false,
-      followersCount: user.followers?.length || 0,
-      followingCount: user.following?.length || 0,
-    }));
-
-    return formattedUsers;
+    return populatedUser.following;
   }
 
   async checkIfFollowing(userId: string, targetId: string) {
-    let follower;
-    let target;
-
-    if (isValidObjectId(userId)) {
-      follower = await this.findById(userId);
-    } else {
-      follower = await this.findOneByFirebaseUid(userId);
-    }
-
-    if (isValidObjectId(targetId)) {
-      target = await this.findById(targetId);
-    } else {
-      target = await this.findOneByFirebaseUid(targetId);
-    }
+    const follower = await this.findById(userId);
+    const target = await this.findById(targetId);
 
     if (!follower || !target) {
       throw new NotFoundException('Utilisateur non trouvé');
@@ -259,14 +259,14 @@ export class UserService {
   }
 
   async getUserFollowersDetails(userId: string) {
-    const user = await this.findOneByFirebaseUid(userId);
+    const user = await this.findById(userId);
     if (!user) {
       throw new NotFoundException(`Utilisateur avec ID ${userId} non trouvé`);
     }
 
     const followers = await this.userModel
-      .find({ firebaseUid: { $in: user.followers } })
-      .select('username photoUrl firebaseUid')
+      .find({ _id: { $in: user.followers } })
+      .select('username photoUrl')
       .exec();
 
     return followers;
@@ -275,7 +275,7 @@ export class UserService {
   async isFollowing(followerId: string, targetId: string): Promise<boolean> {
     const followerUser = await this.userModel
       .findOne({
-        firebaseUid: followerId,
+        _id: followerId,
         following: targetId,
       })
       .exec();
@@ -284,22 +284,19 @@ export class UserService {
   }
 
   async getUserStats(userId: string) {
-    const user = await this.userModel.findOne({ firebaseUid: userId });
+    const user = await this.findById(userId);
     if (!user) {
       throw new NotFoundException(`Utilisateur ${userId} non trouvé`);
     }
-
+    const userObjectId = new Types.ObjectId(userId);
     const plansCount = await this.planModel.countDocuments({
-      userId: userId,
+      user: userObjectId,
     });
-
     const favoritesCount = await this.planModel.countDocuments({
-      favorites: userId,
+      favorites: userObjectId,
     });
-
     const followersCount = user.followers?.length || 0;
     const followingCount = user.following?.length || 0;
-
     return {
       plansCount,
       favoritesCount,

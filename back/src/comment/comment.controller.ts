@@ -14,17 +14,17 @@ import {
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CommentDto } from './dto/comment.dto';
-import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
-
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+@UseGuards(JwtAuthGuard)
 @Controller('api/comments')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
-  @UseGuards(FirebaseAuthGuard)
   @Post()
   async createComment(@Body() createCommentDto: CommentDto, @Req() req) {
-    const commentData = { ...createCommentDto, userId: req.userId };
-    return this.commentService.create(commentData);
+    const commentData = { ...createCommentDto, user: req.user._id };
+    const createdComment = await this.commentService.create(commentData);
+    return createdComment;
   }
 
   @Get('plan/:planId')
@@ -62,7 +62,6 @@ export class CommentController {
     return this.commentService.findAllByUserId(userId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Delete(':commentId/response/:responseId')
   async removeResponse(
     @Param('commentId') commentId: string,
@@ -75,14 +74,16 @@ export class CommentController {
       throw new NotFoundException(`Response with ID ${responseId} not found`);
     }
 
-    if (response.userId !== req.userId) {
+    const responseUserId =
+      typeof response.user === 'string' ? response.user : response.user._id;
+
+    if (responseUserId.toString() !== req.user._id.toString()) {
       throw new UnauthorizedException('You can only delete your own responses');
     }
 
     return this.commentService.removeResponse(commentId, responseId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Put(':commentId')
   async updateComment(
     @Param('commentId') commentId: string,
@@ -91,30 +92,27 @@ export class CommentController {
   ) {
     return this.commentService.updateById(commentId, {
       ...updateCommentDto,
-      userId: req.userId,
+      user: req.user._id,
     });
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Put(':commentId/like')
   async likeComment(@Param('commentId') commentId: string, @Req() req) {
-    return this.commentService.likeComment(commentId, req.userId);
+    return this.commentService.likeComment(commentId, req.user._id);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Put(':commentId/unlike')
   async unlikeComment(@Param('commentId') commentId: string, @Req() req) {
-    return this.commentService.unlikeComment(commentId, req.userId);
+    return this.commentService.unlikeComment(commentId, req.user._id);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Post(':commentId/response')
   async addResponse(
     @Param('commentId') commentId: string,
     @Body() responseDto: CommentDto,
     @Req() req,
   ) {
-    const responseData = { ...responseDto, userId: req.userId };
+    const responseData = { ...responseDto, user: req.user._id };
     return this.commentService.addResponse(commentId, responseData);
   }
 
@@ -123,7 +121,6 @@ export class CommentController {
     return this.commentService.findAllResponses(commentId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Delete(':commentId')
   async removeComment(@Param('commentId') commentId: string, @Req() req) {
     const comment = await this.commentService.findById(commentId);
@@ -132,7 +129,10 @@ export class CommentController {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    if (comment.userId !== req.userId) {
+    const commentUserId =
+      typeof comment.user === 'string' ? comment.user : comment.user._id;
+
+    if (commentUserId.toString() !== req.user._id.toString()) {
       throw new UnauthorizedException('You can only delete your own comments');
     }
 

@@ -12,7 +12,13 @@ export class CommentService {
 
   async create(createCommentDto: CommentDto): Promise<CommentDocument> {
     const newComment = new this.commentModel(createCommentDto);
-    return newComment.save();
+    const savedComment = await newComment.save();
+
+    // Populate user information
+    return this.commentModel
+      .findById(savedComment._id)
+      .populate('user', 'username email password photoUrl ')
+      .exec();
   }
 
   async likeComment(
@@ -25,6 +31,7 @@ export class CommentService {
         { $push: { likes: userId } },
         { new: true },
       )
+      .populate('user', 'username email password photoUrl ')
       .exec();
   }
 
@@ -38,6 +45,7 @@ export class CommentService {
         { $pull: { likes: userId } },
         { new: true },
       )
+      .populate('user', 'username email password photoUrl ')
       .exec();
   }
 
@@ -60,7 +68,11 @@ export class CommentService {
       { $push: { responses: savedResponse.id } },
     );
 
-    return savedResponse;
+    // Populate user information before returning
+    return this.commentModel
+      .findById(savedResponse._id)
+      .populate('user', 'username email password photoUrl')
+      .exec();
   }
 
   async findAllByPlanId(
@@ -73,12 +85,19 @@ export class CommentService {
     return this.commentModel
       .find({
         planId,
-        parentId: { $exists: false },
+        $or: [{ parentId: { $exists: false } }, { parentId: null }],
       })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('responses')
+      .populate('user', 'username email password photoUrl ')
+      .populate({
+        path: 'responses',
+        populate: {
+          path: 'user',
+          select: 'username email password photoUrl',
+        },
+      })
       .exec();
   }
   async removeResponse(
@@ -109,20 +128,38 @@ export class CommentService {
   }
 
   async countByPlanId(planId: string): Promise<number> {
-    return this.commentModel.countDocuments({ planId }).exec();
+    return this.commentModel
+      .countDocuments({
+        planId,
+        $or: [{ parentId: { $exists: false } }, { parentId: null }],
+      })
+      .exec();
   }
   async findAllResponses(commentId: string): Promise<Comment[]> {
-    return this.commentModel.find({ parentId: commentId }).exec();
+    return this.commentModel
+      .find({ parentId: commentId })
+      .populate('user', 'username email password photoUrl')
+      .exec();
   }
 
   async findAllByUserId(userId: string): Promise<CommentDocument[]> {
-    return this.commentModel.find({ userId }).exec();
+    return this.commentModel
+      .find({ user: userId })
+      .populate('user', 'username email password photoUrl')
+      .exec();
   }
 
   async findById(commentId: string): Promise<CommentDocument | undefined> {
     const comment = await this.commentModel
       .findOne({ _id: commentId })
-      .populate('responses')
+      .populate('user', 'username email password photoUrl')
+      .populate({
+        path: 'responses',
+        populate: {
+          path: 'user',
+          select: 'username email password photoUrl',
+        },
+      })
       .exec();
     return comment;
   }
@@ -140,7 +177,10 @@ export class CommentService {
         .exec();
     }
 
-    return this.commentModel.findByIdAndDelete(commentId).exec();
+    return this.commentModel
+      .findByIdAndDelete(commentId)
+      .populate('user', 'username email password photoUrl')
+      .exec();
   }
 
   async updateById(
@@ -151,6 +191,7 @@ export class CommentService {
       .findOneAndUpdate({ _id: commentId }, updateCommentDto, {
         new: true,
       })
+      .populate('user', 'username email password photoUrl')
       .exec();
   }
 }

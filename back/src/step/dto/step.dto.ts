@@ -6,7 +6,6 @@ import {
   IsOptional,
   IsLatitude,
   IsLongitude,
-  IsNotEmpty,
 } from 'class-validator';
 
 export class StepDto {
@@ -31,15 +30,10 @@ export class StepDto {
   @IsUrl()
   image: string;
 
-  @IsOptional()
-  @IsString()
-  duration?: string;
-
-  @IsOptional()
+  @IsPositive()
   @IsNumber()
-  cost?: number;
+  duration: number;
 
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
+  @IsNumber()
+  cost: number;
 }

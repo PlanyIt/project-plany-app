@@ -4,15 +4,13 @@ import { PlanService } from './plan.service';
 import { PlanController } from './plan.controller';
 import { Plan, PlanSchema } from './schemas/plan.schema';
 import { UserModule } from '../user/user.module';
-import { User, UserSchema } from '../user/schemas/user.schema';
+import { StepModule } from 'src/step/step.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Plan.name, schema: PlanSchema },
-      { name: User.name, schema: UserSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Plan.name, schema: PlanSchema }]),
     forwardRef(() => UserModule),
+    forwardRef(() => StepModule),
   ],
   controllers: [PlanController],
   providers: [PlanService],

@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   Put,
-  Patch,
   UseGuards,
   Req,
   HttpException,
@@ -15,11 +14,10 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PlanService } from './plan.service';
-import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanDto } from './dto/plan.dto';
 import { UserService } from '../user/user.service';
-import { UpdateUserDto } from '../user/dto/update-user.dto';
-
+@UseGuards(JwtAuthGuard)
 @Controller('api/plans')
 export class PlanController {
   constructor(
@@ -38,14 +36,23 @@ export class PlanController {
     return this.planService.findById(planId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Post()
   async createPlan(@Body() createPlanDto: PlanDto, @Req() req) {
     try {
-      const planData = { ...createPlanDto, userId: req.userId };
-      return await this.planService.createPlan(planData);
+      const planData = {
+        ...createPlanDto,
+        user: req.user._id,
+      };
+
+      console.log('📝 Creating plan with data:', planData);
+
+      const createdPlan = await this.planService.createPlan(planData);
+
+      console.log('✅ Plan created successfully:', createdPlan._id);
+
+      return createdPlan;
     } catch (error) {
-      console.error('Erreur lors de la création du plan :', error);
+      console.error('❌ Error creating plan:', error);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -66,22 +73,19 @@ export class PlanController {
     return this.planService.updateById(planId, updatePlanDto, userId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Delete(':planId')
   removePlan(@Param('planId') planId: string, @Req() req) {
-    return this.planService.removeById(planId, req.userId);
+    return this.planService.removeById(planId, req.user._id);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Put(':planId/favorite')
   async addToFavorites(@Param('planId') planId: string, @Req() req) {
-    return this.planService.addToFavorites(planId, req.userId);
+    return this.planService.addToFavorites(planId, req.user._id);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Put(':planId/unfavorite')
   async removeFromFavorites(@Param('planId') planId: string, @Req() req) {
-    return this.planService.removeFromFavorites(planId, req.userId);
+    return this.planService.removeFromFavorites(planId, req.user._id);
   }
 
   @Get('user/:userId')
@@ -92,13 +96,5 @@ export class PlanController {
   @Get('user/:userId/favorites')
   async findFavoritesByUserId(@Param('userId') userId: string) {
     return this.planService.findFavoritesByUserId(userId);
-  }
-
-  @Patch(':firebaseUid/profile')
-  async updateUserProfile(
-    @Param('firebaseUid') firebaseUid: string,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
-    return this.userService.updateByFirebaseUid(firebaseUid, updateUserDto);
   }
 }

@@ -9,14 +9,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
-import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CategoryDto } from './dto/category.dto';
-
+@UseGuards(JwtAuthGuard)
 @Controller('api/categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
-  @UseGuards(FirebaseAuthGuard)
   @Post()
   async createCategory(@Body() createCategoryDto: CategoryDto) {
     return this.categoryService.create(createCategoryDto);
@@ -37,7 +36,6 @@ export class CategoryController {
     return this.categoryService.findById(categoryId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Put(':categoryId')
   async updateCategory(
     @Param('categoryId') categoryId: string,
@@ -46,7 +44,6 @@ export class CategoryController {
     return this.categoryService.updateById(categoryId, updateCategoryDto);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Delete(':categoryId')
   async removeCategory(@Param('categoryId') categoryId: string) {
     return this.categoryService.removeById(categoryId);

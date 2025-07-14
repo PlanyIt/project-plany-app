@@ -10,18 +10,22 @@ import {
   Req,
 } from '@nestjs/common';
 import { StepService } from './step.service';
-import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { StepDto } from './dto/step.dto';
-
+@UseGuards(JwtAuthGuard)
 @Controller('api/steps')
 export class StepController {
   constructor(private readonly stepService: StepService) {}
 
-  @UseGuards(FirebaseAuthGuard)
   @Post()
   async createStep(@Body() createStepDto: StepDto, @Req() req) {
-    const stepData = { ...createStepDto, userId: req.userId };
+    const stepData = { ...createStepDto, userId: req.user._id };
     return this.stepService.create(stepData);
+  }
+
+  @Post('batch')
+  async findByIds(@Body('stepIds') stepIds: string[]) {
+    return this.stepService.findByIds(stepIds);
   }
 
   @Get()
@@ -34,25 +38,17 @@ export class StepController {
     return this.stepService.findById(stepId);
   }
 
-  @UseGuards(FirebaseAuthGuard)
   @Delete(':stepId')
   async removeStep(@Param('stepId') stepId: string) {
     return this.stepService.removeById(stepId);
   }
 
-  @Get('plan/:planId')
-  async findAllByPlanId(@Param('planId') planId: string) {
-    return this.stepService.findAllByPlanId(planId);
-  }
-
-  @UseGuards(FirebaseAuthGuard)
   @Put(':stepId')
   async updateStep(
     @Param('stepId') stepId: string,
     @Body() updateStepDto: StepDto,
-    @Body('userId') userId: string,
-    @Body('planId') planId: string,
+    @Req() req,
   ) {
-    return this.stepService.updateById(stepId, updateStepDto, userId, planId);
+    return this.stepService.updateById(stepId, updateStepDto, req.user._id);
   }
 }

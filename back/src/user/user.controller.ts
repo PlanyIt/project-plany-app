@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
@@ -13,21 +12,23 @@ import {
   NotFoundException,
   Request,
   UnauthorizedException,
+  Post,
+  BadRequestException,
 } from '@nestjs/common';
-import { UserService as UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { FirebaseAuthGuard } from '../auth/guards/firebase-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanService } from 'src/plan/plan.service';
-import { isValidObjectId } from 'mongoose';
-
+import { CreateUserDto } from './dto/create-user.dto';
+import { AuthService } from '../auth/auth.service';
+@UseGuards(JwtAuthGuard)
 @Controller('api/users')
 export class UserController {
-  userModel: any;
   constructor(
     private readonly userService: UserService,
     @Inject(forwardRef(() => PlanService))
     private readonly planService: PlanService,
+    private readonly authService: AuthService,
   ) {}
 
   @Get()
@@ -35,30 +36,49 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  @Get(':firebaseUid')
-  findOneByFirebaseUid(@Param('firebaseUid') firebaseUid: string) {
-    return this.userService.findOneByFirebaseUid(firebaseUid);
+  @Get(':id')
+  async findOne(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    return user;
   }
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto).catch((error) => {
+    try {
+      return await this.userService.create(createUserDto);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       console.error("Erreur lors de la création de l'utilisateur :", error);
       throw new InternalServerErrorException();
-    });
+    }
   }
 
-  @Patch(':firebaseUid/profile')
-  updateByFirebaseUid(
-    @Param('firebaseUid') firebaseUid: string,
+  @Patch(':id/profile')
+  updateProfile(
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @Request() req,
   ) {
-    return this.userService.updateByFirebaseUid(firebaseUid, updateUserDto);
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
+      throw new UnauthorizedException('Vous ne pouvez pas modifier ce profil');
+    }
+    return this.userService.updateById(userId, updateUserDto);
   }
 
-  @Delete(':firebaseUid')
-  removeByFirebaseUid(@Param('firebaseUid') firebaseUid: string) {
-    return this.userService.removeByFirebaseUid(firebaseUid);
+  @Delete(':id')
+  removeById(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
+      throw new UnauthorizedException('Vous ne pouvez pas supprimer ce compte');
+    }
+    return this.userService.removeById(userId);
   }
 
   @Get('username/:username')
@@ -71,17 +91,57 @@ export class UserController {
     return this.userService.findOneByEmail(email);
   }
 
-  @UseGuards(FirebaseAuthGuard)
-  @Patch(':firebaseUid/photo')
-  updateUserPhoto(
-    @Param('firebaseUid') firebaseUid: string,
-    @Body('photoUrl') photoUrl: string,
+  @Patch(':id/email')
+  async updateEmail(
+    @Param('id') id: string,
+    @Body('email') email: string,
+    @Body('password') password: string,
+    @Request() req,
   ) {
-    return this.userService.updateByFirebaseUid(firebaseUid, { photoUrl });
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
+      throw new UnauthorizedException('Vous ne pouvez pas modifier cet email');
+    }
+    const existingUser = await this.userService.findOneByEmail(email);
+    if (existingUser && existingUser._id.toString() !== userId.toString()) {
+      throw new UnauthorizedException('Cet email est déjà utilisé');
+    }
+    const user = await this.authService.validateUser(req.user.email, password);
+    if (!user) {
+      throw new UnauthorizedException('Mot de passe incorrect');
+    }
+    return this.userService.updateById(userId, { email });
   }
 
-  @Get(':firebaseUid/stats')
-  async getUserStats(@Param('firebaseUid') userId: string) {
+  @Patch(':id/photo')
+  updateUserPhoto(
+    @Param('id') id: string,
+    @Body('photoUrl') photoUrl: string,
+    @Request() req,
+  ) {
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
+      throw new UnauthorizedException(
+        'Vous ne pouvez pas modifier cette photo',
+      );
+    }
+    return this.userService.updateById(userId, { photoUrl });
+  }
+
+  @Delete(':id/photo')
+  deleteUserPhoto(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
+      throw new UnauthorizedException(
+        'Vous ne pouvez pas supprimer cette photo',
+      );
+    }
+    return this.userService.updateById(userId, { photoUrl: null });
+  }
+
+  @Get(':id/stats')
+  async getUserStats(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     try {
       return await this.userService.getUserStats(userId);
     } catch (error) {
@@ -90,10 +150,11 @@ export class UserController {
     }
   }
 
-  @Get(':firebaseUid/plans')
-  async getUserPlans(@Param('firebaseUid') firebaseUid: string) {
+  @Get(':id/plans')
+  async getUserPlans(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     try {
-      const plans = await this.planService.findAllByUserId(firebaseUid);
+      const plans = await this.planService.findAllByUserId(userId);
       return plans;
     } catch (error) {
       console.error(`Error getting plans: ${error.message}`);
@@ -101,11 +162,11 @@ export class UserController {
     }
   }
 
-  @Get(':firebaseUid/favorites')
-  async getUserFavorites(@Param('firebaseUid') firebaseUid: string) {
+  @Get(':id/favorites')
+  async getUserFavorites(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     try {
-      const favorites =
-        await this.planService.findFavoritesByUserId(firebaseUid);
+      const favorites = await this.planService.findFavoritesByUserId(userId);
       return favorites;
     } catch (error) {
       console.error(`Error getting favorites: ${error.message}`);
@@ -113,48 +174,33 @@ export class UserController {
     }
   }
 
-  @UseGuards(FirebaseAuthGuard)
-  @Patch(':firebaseUid/premium')
+  @Patch(':id/premium')
   async updatePremiumStatus(
-    @Param('firebaseUid') firebaseUid: string,
+    @Param('id') id: string,
     @Body('isPremium') isPremium: boolean,
+    @Request() req,
   ) {
-    return this.userService.updateByFirebaseUid(firebaseUid, { isPremium });
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    let user;
-
-    if (isValidObjectId(id)) {
-      user = await this.userService.findById(id);
+    const userId = id === 'me' ? req.user._id : id;
+    if (
+      req.user._id.toString() !== userId.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      throw new UnauthorizedException('Opération non autorisée');
     }
-
-    if (!user) {
-      user = await this.userService.findOneByFirebaseUid(id);
-    }
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-
-    return user;
+    return this.userService.updateById(userId, { isPremium });
   }
 
   // Suivre un utilisateur
-  @UseGuards(FirebaseAuthGuard)
   @Post(':id/follow')
-  async followUser(@Param('id') targetUserId: string, @Request() req) {
+  async followUser(@Param('id') id: string, @Request() req) {
+    const targetUserId = id === 'me' ? req.user._id : id;
     if (!req.user) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-
-    const followerId = req.user.uid || req.user.id;
-
+    const followerId = req.user._id;
     if (!followerId) {
       throw new UnauthorizedException('ID utilisateur manquant');
     }
-
     try {
       return await this.userService.followUser(followerId, targetUserId);
     } catch (error) {
@@ -164,26 +210,27 @@ export class UserController {
   }
 
   // Ne plus suivre un utilisateur
-  @UseGuards(FirebaseAuthGuard)
   @Delete(':id/follow')
-  async unfollowUser(@Param('id') targetUserId: string, @Request() req) {
+  async unfollowUser(@Param('id') id: string, @Request() req) {
+    const targetUserId = id === 'me' ? req.user._id : id;
     if (!req.user) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-
-    const followerId = req.user.uid;
+    const followerId = req.user._id;
     return this.userService.unfollowUser(followerId, targetUserId);
   }
 
   // Récupérer les abonnés d'un utilisateur
   @Get(':id/followers')
-  async getUserFollowers(@Param('id') userId: string) {
+  async getUserFollowers(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     return this.userService.getUserFollowers(userId);
   }
 
   // Récupérer les abonnements d'un utilisateur
   @Get(':id/following')
-  async getUserFollowing(@Param('id') userId: string) {
+  async getUserFollowing(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     try {
       return await this.userService.getUserFollowing(userId);
     } catch (error) {
@@ -195,9 +242,11 @@ export class UserController {
   // Vérifier si un utilisateur suit un autre utilisateur
   @Get(':id/following/:targetId')
   async checkFollowing(
-    @Param('id') followerId: string,
+    @Param('id') id: string,
     @Param('targetId') targetId: string,
+    @Request() req,
   ) {
+    const followerId = id === 'me' ? req.user._id : id;
     const isFollowing = await this.userService.isFollowing(
       followerId,
       targetId,
@@ -209,15 +258,19 @@ export class UserController {
   async explicitFollowUser(
     @Param('followerId') followerId: string,
     @Param('targetId') targetId: string,
+    @Request() req,
   ) {
-    return this.userService.followUser(followerId, targetId);
+    const resolvedFollowerId = followerId === 'me' ? req.user._id : followerId;
+    return this.userService.followUser(resolvedFollowerId, targetId);
   }
 
   @Delete(':followerId/unfollow/:targetId')
   async explicitUnfollowUser(
     @Param('followerId') followerId: string,
     @Param('targetId') targetId: string,
+    @Request() req,
   ) {
-    return this.userService.unfollowUser(followerId, targetId);
+    const resolvedFollowerId = followerId === 'me' ? req.user._id : followerId;
+    return this.userService.unfollowUser(resolvedFollowerId, targetId);
   }
 }
