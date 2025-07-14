@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 
 import '../../../data/repositories/category/category_repository.dart';
@@ -75,16 +76,6 @@ class SearchViewModel extends ChangeNotifier {
     return category.name;
   }
 
-  void setSearchQuery(String? query) {
-    filtersViewModel.setKeywordQuery(query);
-    search.execute();
-  }
-
-  void setSelectedCategory(String? categoryId) {
-    filtersViewModel.setSelectedCategory(categoryId);
-    search.execute();
-  }
-
   void setInitialFilters({String? categoryId}) {
     if (categoryId != null && categoryId.isNotEmpty) {
       filtersViewModel.selectedCategory = categoryId;
@@ -97,7 +88,6 @@ class SearchViewModel extends ChangeNotifier {
 
   String? get keywordQuery => filtersViewModel.keywordQuery;
   String? get selectedCategory => filtersViewModel.selectedCategory;
-  RangeValues? get distanceRange => filtersViewModel.distanceRange;
   RangeValues? get costRange => filtersViewModel.costRange;
   RangeValues? get durationRange => filtersViewModel.durationRange;
   int? get favoritesThreshold => filtersViewModel.favoritesThreshold;
@@ -186,6 +176,21 @@ class SearchViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> initializeWithCurrentLocation() async {
+    final position = await _locationService.getCurrentLocation();
+    if (position == null) return;
+
+    final selectedLocation = LatLng(position.latitude, position.longitude);
+    final addressName = await _locationService.reverseGeocode(selectedLocation);
+
+    filtersViewModel.setSelectedLocationWithDefaultDistance(
+      selectedLocation,
+      addressName ?? 'Ma position actuelle',
+    );
+
+    search.execute();
+  }
+
   Future<Result<void>> _search() async {
     isSearching = true;
     errorMessage = null;
@@ -224,11 +229,21 @@ class SearchViewModel extends ChangeNotifier {
       if (plan.steps.isNotEmpty) {
         final firstStep = plan.steps.first;
         if (firstStep.position != null) {
-          final distanceInMeters = _locationService.calculateDistanceToPoint(
-            firstStep.position!.latitude,
-            firstStep.position!.longitude,
-          );
-          totalDistance = distanceInMeters ?? 0;
+          final selectedLocation = filtersViewModel.selectedLocation;
+          if (selectedLocation != null) {
+            totalDistance = const Distance().as(
+              LengthUnit.Meter,
+              LatLng(
+                  firstStep.position!.latitude, firstStep.position!.longitude),
+              selectedLocation,
+            );
+          } else {
+            final distanceInMeters = _locationService.calculateDistanceToPoint(
+              firstStep.position!.latitude,
+              firstStep.position!.longitude,
+            );
+            totalDistance = distanceInMeters ?? 0;
+          }
         }
       }
 
@@ -245,8 +260,8 @@ class SearchViewModel extends ChangeNotifier {
         (await Future.wait(futures)).whereType<PlanWithMetrics>().toList();
 
     final filtered = metricsList.where((m) {
-      if (filtersViewModel.distanceRange != null) {
-        final range = filtersViewModel.distanceRange!;
+      if (filtersViewModel.effectiveDistanceRange != null) {
+        final range = filtersViewModel.effectiveDistanceRange!;
         if (m.totalDistance < range.start || m.totalDistance > range.end) {
           return false;
         }

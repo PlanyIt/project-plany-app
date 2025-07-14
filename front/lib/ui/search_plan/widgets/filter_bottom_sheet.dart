@@ -144,11 +144,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                   children: [
                     _buildKeywordsSearchBar(),
                     const SizedBox(height: 32),
+                    _buildDistanceSection(),
+                    const SizedBox(height: 32),
                     _buildSortSection(),
                     const SizedBox(height: 32),
                     _buildCategorySection(),
-                    const SizedBox(height: 32),
-                    _buildDistanceSection(),
                     const SizedBox(height: 32),
                     _buildPmrSection(),
                     const SizedBox(height: 24),
@@ -321,19 +321,33 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
   }
 
   Widget _buildDistanceSection() {
+    final location = widget.viewModel.filtersViewModel.selectedLocation;
+
     return FilterSection(
       title: 'Rayon de recherche',
       icon: Icons.location_on_rounded,
       color: Colors.blue,
-      child: AnimatedBuilder(
-        animation: widget.viewModel,
-        builder: (context, _) {
-          return DistanceSlider(
-            values: widget.viewModel.tempDistanceRange,
-            onChanged: widget.viewModel.updateTempDistanceRange,
-          );
-        },
-      ),
+      child: location != null
+          ? AnimatedBuilder(
+              animation: widget.viewModel,
+              builder: (context, _) {
+                return DistanceSlider(
+                  values: widget.viewModel.tempDistanceRange,
+                  onChanged: widget.viewModel.updateTempDistanceRange,
+                );
+              },
+            )
+          : Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Sélectionnez un lieu pour filtrer par distance.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
     );
   }
 

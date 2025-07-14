@@ -27,10 +27,8 @@ class DistanceSlider extends StatelessWidget {
           divisions: 200,
           activeColor: Colors.blue,
           labels: RangeLabels(
-            formatDistance(currentValues.start * 1000) ??
-                '${currentValues.start.toInt()} km',
-            formatDistance(currentValues.end * 1000) ??
-                '${currentValues.end.toInt()} km',
+            formatDistance(currentValues.start * 1000),
+            formatDistance(currentValues.end * 1000),
           ),
           onChanged: (values) {
             onChanged(RangeValues(values.start * 1000, values.end * 1000));

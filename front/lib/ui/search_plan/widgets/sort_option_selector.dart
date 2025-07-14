@@ -57,10 +57,11 @@ class SortOptionSelector extends StatelessWidget {
         return 'Prix croissant';
       case SortOption.duration:
         return 'Durée croissante';
-      case SortOption.favorites:
-        return 'Plus populaires';
+
       case SortOption.recent:
         return 'Plus récents';
+      case SortOption.favorites:
+        return 'Plus populaires';
     }
   }
 }

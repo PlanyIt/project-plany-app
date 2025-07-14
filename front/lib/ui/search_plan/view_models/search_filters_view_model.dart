@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../utils/validation_utils.dart';
 
-enum SortOption { cost, duration, favorites, recent }
+enum SortOption { cost, duration, recent, favorites }
 
 class SearchFiltersViewModel extends ChangeNotifier {
   // --- Filtres actifs ---
@@ -11,7 +11,7 @@ class SearchFiltersViewModel extends ChangeNotifier {
   RangeValues? costRange;
   RangeValues? durationRange;
   int? favoritesThreshold;
-  SortOption sortBy = SortOption.recent;
+  SortOption sortBy = SortOption.favorites;
   bool? pmrOnly;
   LatLng? selectedLocation;
   String? selectedLocationName;
@@ -27,7 +27,7 @@ class SearchFiltersViewModel extends ChangeNotifier {
   String _tempMaxDuration = '';
   String _tempDurationUnit = 'h';
   int? _tempFavoritesThreshold;
-  SortOption _tempSortBy = SortOption.recent;
+  SortOption _tempSortBy = SortOption.favorites;
   bool? _tempPmrOnly;
 
   RangeValues? get tempDistanceRange => _tempDistanceRange;
@@ -57,7 +57,19 @@ class SearchFiltersViewModel extends ChangeNotifier {
   void setSelectedLocation(LatLng? location, String? name) {
     selectedLocation = location;
     selectedLocationName = name;
+
+    if (location == null) {
+      distanceRange = null;
+    }
+
     notifyListeners();
+  }
+
+  RangeValues? get effectiveDistanceRange {
+    if (selectedLocation != null) {
+      return distanceRange ?? const RangeValues(0, 5000);
+    }
+    return null;
   }
 
   void setLocationSearchQuery(String? query) {
@@ -170,6 +182,13 @@ class SearchFiltersViewModel extends ChangeNotifier {
     }
   }
 
+  void setSelectedLocationWithDefaultDistance(LatLng location, String name) {
+    selectedLocation = location;
+    selectedLocationName = name;
+    distanceRange = const RangeValues(0, 5000);
+    notifyListeners();
+  }
+
   bool applyTempFilters() {
     if (hasTempValidationErrors) return false;
 
@@ -239,7 +258,7 @@ class SearchFiltersViewModel extends ChangeNotifier {
     costRange = null;
     durationRange = null;
     favoritesThreshold = null;
-    sortBy = SortOption.recent;
+    sortBy = SortOption.favorites;
     pmrOnly = null;
     notifyListeners();
   }
@@ -253,7 +272,7 @@ class SearchFiltersViewModel extends ChangeNotifier {
     _tempMaxDuration = '';
     _tempDurationUnit = 'h';
     _tempFavoritesThreshold = null;
-    _tempSortBy = SortOption.recent;
+    _tempSortBy = SortOption.favorites;
     _tempPmrOnly = null;
     notifyListeners();
   }
