@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../view_models/plan_details_viewmodel.dart';
+
+import '../../view_models/detail/favorite_viewmodel.dart';
+import '../../view_models/detail/follow_user_viewmodel.dart';
+import '../../view_models/detail/plan_details_viewmodel.dart';
 import 'comments/comment_section.dart';
 import 'info_plan/plan_info_section.dart';
 import 'steps_carousel/steps_carousel.dart';
@@ -7,17 +10,20 @@ import 'steps_carousel/steps_carousel.dart';
 class PlanContent extends StatelessWidget {
   final ScrollController scrollController;
   final PlanDetailsViewModel planViewModel;
+  final FavoriteViewModel favoriteViewModel;
+  final FollowUserViewModel followViewModel;
 
   const PlanContent({
     super.key,
     required this.scrollController,
     required this.planViewModel,
+    required this.favoriteViewModel,
+    required this.followViewModel,
   });
 
   @override
   Widget build(BuildContext context) {
     final plan = planViewModel.plan!;
-    final steps = plan.steps;
 
     return Container(
       decoration: BoxDecoration(
@@ -28,7 +34,7 @@ class PlanContent extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(25),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -36,24 +42,22 @@ class PlanContent extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _BottomSheetHandle(),
+          const _BottomSheetHandle(),
           Expanded(
             child: ListView(
               controller: scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 PlanInfoSection(
-                  plan: plan,
-                  categoryName: plan.category?.name ?? 'Sans catégorie',
-                  categoryIcon: plan.category?.icon,
-                  steps: steps,
                   viewModel: planViewModel,
+                  favoriteViewModel: favoriteViewModel,
+                  followViewModel: followViewModel,
                 ),
                 _buildElegantDivider(icon: Icons.map_outlined),
                 SizedBox(
                   height: 400,
                   child: StepsCarousel(
-                    steps: steps,
+                    steps: plan.steps,
                     categoryColor:
                         planViewModel.planCategoryColor ?? Colors.grey,
                   ),
@@ -61,8 +65,8 @@ class PlanContent extends StatelessWidget {
                 _buildElegantDivider(icon: Icons.chat_bubble_outline),
                 CommentSection(
                   isEmbedded: true,
-                  planDetailsViewModel: planViewModel,
                   viewModel: planViewModel.commentSectionViewModel,
+                  categoryColor: planViewModel.planCategoryColor ?? Colors.grey,
                 ),
                 const SizedBox(height: 40),
               ],
@@ -84,7 +88,7 @@ class PlanContent extends StatelessWidget {
               height: 1.5,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.grey.shade200, color.withOpacity(0.5)],
+                  colors: [Colors.grey.shade200, color.withAlpha(80)],
                 ),
               ),
             ),
@@ -97,7 +101,7 @@ class PlanContent extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.1),
+                    color: color.withAlpha(25),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -110,7 +114,7 @@ class PlanContent extends StatelessWidget {
               height: 1.5,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color.withOpacity(0.5), Colors.grey.shade200],
+                  colors: [color.withAlpha(80), Colors.grey.shade200],
                 ),
               ),
             ),
@@ -122,6 +126,8 @@ class PlanContent extends StatelessWidget {
 }
 
 class _BottomSheetHandle extends StatelessWidget {
+  const _BottomSheetHandle();
+
   @override
   Widget build(BuildContext context) {
     return Container(

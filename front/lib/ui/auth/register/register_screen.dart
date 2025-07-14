@@ -27,13 +27,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void initState() {
     super.initState();
     widget.viewModel.register.addListener(_onRegisterResult);
+    widget.viewModel.snackbarMessage.addListener(_showSnackbarIfNeeded);
   }
 
   @override
   void didUpdateWidget(covariant RegisterScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     oldWidget.viewModel.register.removeListener(_onRegisterResult);
+    oldWidget.viewModel.snackbarMessage.removeListener(_showSnackbarIfNeeded);
     widget.viewModel.register.addListener(_onRegisterResult);
+    widget.viewModel.snackbarMessage.addListener(_showSnackbarIfNeeded);
   }
 
   @override
@@ -42,7 +45,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _username.dispose();
     _password.dispose();
     widget.viewModel.register.removeListener(_onRegisterResult);
+    widget.viewModel.snackbarMessage.removeListener(_showSnackbarIfNeeded);
     super.dispose();
+  }
+
+  void _onRegisterResult() {
+    if (widget.viewModel.register.completed) {
+      widget.viewModel.register.clearResult();
+      context.go(Routes.dashboard);
+    }
+  }
+
+  void _showSnackbarIfNeeded() {
+    final message = widget.viewModel.snackbarMessage.value;
+    if (message != null) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      widget.viewModel.clearSnackbar();
+    }
+  }
+
+  void _handleRegister() {
+    widget.viewModel.register.execute(
+      (_email.text, _username.text, _password.text),
+    );
   }
 
   @override
@@ -109,16 +141,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildPasswordField() {
-    return CustomTextField(
-      controller: _password,
-      labelText: 'Mot de passe',
-      hintText: 'Entrez votre mot de passe',
-      prefixIcon: Icons.lock_outline,
-      obscureText: widget.viewModel.obscurePassword,
-      suffixIcon: widget.viewModel.obscurePassword
-          ? Icons.visibility_off
-          : Icons.visibility,
-      onSuffixIconPressed: widget.viewModel.togglePasswordVisibility,
+    return ValueListenableBuilder<String?>(
+      valueListenable: widget.viewModel.passwordErrorMessage,
+      builder: (context, errorText, _) {
+        return CustomTextField(
+          controller: _password,
+          labelText: 'Mot de passe',
+          hintText: 'Entrez votre mot de passe',
+          prefixIcon: Icons.lock_outline,
+          obscureText: widget.viewModel.obscurePassword,
+          suffixIcon: widget.viewModel.obscurePassword
+              ? Icons.visibility_off
+              : Icons.visibility,
+          onSuffixIconPressed: widget.viewModel.togglePasswordVisibility,
+          errorText: errorText,
+        );
+      },
     );
   }
 
@@ -187,39 +225,5 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ],
       ),
     );
-  }
-
-  void _handleRegister() {
-    widget.viewModel.clearError();
-    widget.viewModel.register.execute(
-      (_email.text, _username.text, _password.text),
-    );
-  }
-
-  void _onRegisterResult() {
-    if (widget.viewModel.register.completed) {
-      widget.viewModel.register.clearResult();
-      context.go(Routes.dashboard);
-      return;
-    }
-
-    if (widget.viewModel.register.error) {
-      widget.viewModel.register.clearResult();
-
-      // Afficher l'erreur via SnackBar
-      if (widget.viewModel.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.viewModel.errorMessage!),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            action: SnackBarAction(
-              label: AppLocalization.of(context).tryAgain,
-              textColor: Colors.white,
-              onPressed: _handleRegister,
-            ),
-          ),
-        );
-      }
-    }
   }
 }

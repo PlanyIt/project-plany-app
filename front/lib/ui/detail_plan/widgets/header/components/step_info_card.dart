@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../../../data/services/navigation_service.dart';
-import '../../../view_models/plan_details_viewmodel.dart';
+import '../../../../../utils/helpers.dart';
+import '../../../view_models/detail/plan_details_viewmodel.dart';
 
 class StepInfoCard extends StatelessWidget {
   final Color color;
   final PlanDetailsViewModel viewModel;
+  final VoidCallback onClose;
 
   const StepInfoCard({
     super.key,
     required this.color,
     required this.viewModel,
+    required this.onClose,
   });
 
   @override
@@ -61,16 +64,15 @@ class StepInfoCard extends StatelessWidget {
                     spacing: 12,
                     children: [
                       if (step.cost != null)
-                        _iconText(Icons.euro, "${step.cost}€", color),
+                        _iconText(Icons.euro, "${step.cost}", color),
                       if (step.duration != null)
-                        _iconText(Icons.schedule, "${step.duration}", color),
+                        _iconText(Icons.schedule,
+                            formatDurationToString(step.duration ?? 0), color),
                       _iconText(
                         Icons.place,
                         viewModel.isCalculatingDistance
                             ? "..."
-                            : viewModel.distanceToSelectedStep != null
-                                ? "${viewModel.distanceToSelectedStep}"
-                                : "Inconnue",
+                            : viewModel.distanceToStep ?? "Inconnue",
                         color,
                         loading: viewModel.isCalculatingDistance,
                       ),
@@ -94,7 +96,7 @@ class StepInfoCard extends StatelessWidget {
                   icon: Icons.close,
                   color: Colors.grey.shade300,
                   iconColor: Colors.grey.shade800,
-                  onTap: () => viewModel.closeStepInfo(),
+                  onTap: onClose,
                 ),
               ],
             ),

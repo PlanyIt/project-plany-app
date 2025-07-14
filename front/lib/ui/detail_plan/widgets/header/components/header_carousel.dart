@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../../../domain/models/step/step.dart' as custom;
-import '../../../view_models/plan_details_viewmodel.dart';
+import '../../../view_models/detail/plan_details_viewmodel.dart';
 
 class HeaderCarousel extends StatelessWidget {
   final ScrollController scrollController;
   final PlanDetailsViewModel viewModel;
+  final void Function(int) onStepSelected;
 
   const HeaderCarousel({
     super.key,
     required this.scrollController,
     required this.viewModel,
+    required this.onStepSelected,
   });
 
   @override
@@ -38,7 +40,7 @@ class HeaderCarousel extends StatelessWidget {
                 final isSelected = index == currentIndex;
 
                 return GestureDetector(
-                  onTap: () => vm.selectStep(index),
+                  onTap: () => onStepSelected(index),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.fromLTRB(8, 4, 8, 4),

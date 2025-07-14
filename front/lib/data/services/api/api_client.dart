@@ -126,6 +126,27 @@ class ApiClient {
     }
   }
 
+  Future<Result<Plan>> getPlan(String planId) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.get(_host, _port, '/api/plans/$planId');
+      await _authHeader(request.headers);
+      final response = await request.close();
+
+      if (response.statusCode == 200) {
+        final stringData = await response.transform(utf8.decoder).join();
+        final json = jsonDecode(stringData);
+        return Result.ok(Plan.fromJson(json));
+      } else {
+        return const Result.error(HttpException("Invalid response"));
+      }
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
   Future<Result<List<Plan>>> getPlansByUser(String userId) async {
     final client = _clientFactory();
     try {

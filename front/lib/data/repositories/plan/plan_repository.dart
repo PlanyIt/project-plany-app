@@ -5,6 +5,9 @@ abstract class PlanRepository {
   /// Returns the list of [Plan].
   Future<Result<List<Plan>>> getPlanList();
 
+  /// Returns a specific [Plan] by its ID.
+  Future<Result<Plan>> getPlan(String planId);
+
   /// Creates a new [Plan].
   Future<Result<Plan>> createPlan(Plan plan);
 

@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
-
 import '../../../../data/services/session_manager.dart';
 import '../../../../utils/command.dart';
 import '../../../../utils/result.dart';
@@ -17,10 +16,9 @@ class LoginViewModel extends ChangeNotifier {
 
   late Command1 login;
 
-  String? _errorMessage;
-  bool _obscurePassword = true;
+  final ValueNotifier<String?> snackbarMessage = ValueNotifier(null);
 
-  String? get errorMessage => _errorMessage;
+  bool _obscurePassword = true;
   bool get obscurePassword => _obscurePassword;
 
   void togglePasswordVisibility() {
@@ -28,9 +26,8 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
+  void clearSnackbar() {
+    snackbarMessage.value = null;
   }
 
   String? validateCredentials(String email, String password) {
@@ -42,12 +39,9 @@ class LoginViewModel extends ChangeNotifier {
 
     final validationError = validateCredentials(email, password);
     if (validationError != null) {
-      _errorMessage = validationError;
-      notifyListeners();
+      snackbarMessage.value = validationError;
       return Result.error(Exception(validationError));
     }
-
-    clearError();
 
     final result = await _sessionManager.login(
       email: email.trim(),
@@ -56,8 +50,8 @@ class LoginViewModel extends ChangeNotifier {
 
     if (result is Error<void>) {
       _log.warning('Login failed! ${result.error}');
-      _errorMessage = 'Échec de la connexion. Vérifiez vos identifiants.';
-      notifyListeners();
+      snackbarMessage.value =
+          'Échec de la connexion. Vérifiez vos identifiants.';
     }
 
     return result;

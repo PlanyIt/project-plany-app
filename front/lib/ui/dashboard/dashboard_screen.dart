@@ -464,25 +464,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return SliverToBoxAdapter(
       child: HorizontalPlanList(
-          isLoading: isLoading,
-          cards: plans
-              .map((plan) => CompactPlanCard(
-                    title: plan.title,
-                    description: plan.description,
-                    category: plan.category,
-                    user: plan.user,
-                    imageUrl:
-                        plan.steps.isNotEmpty ? plan.steps.first.image : null,
-                    stepsCount: plan.steps.length,
-                    totalCost: plan.totalCost,
-                    totalDuration: plan.totalDuration,
-                    distance: showDistance
-                        ? widget.viewModel.getFormattedDistanceForPlan(plan)
-                        : null,
-                  ))
-              .toList(),
-          onPressed: (index) =>
-              context.push(Routes.planDetails, extra: plans[index])),
+        isLoading: isLoading,
+        cards: plans
+            .map((plan) => CompactPlanCard(
+                  title: plan.title,
+                  description: plan.description,
+                  category: plan.category,
+                  user: plan.user,
+                  imageUrl:
+                      plan.steps.isNotEmpty ? plan.steps.first.image : null,
+                  stepsCount: plan.steps.length,
+                  totalCost: plan.totalCost,
+                  totalDuration: plan.totalDuration,
+                  distance: showDistance
+                      ? widget.viewModel.getFormattedDistanceForPlan(plan)
+                      : null,
+                ))
+            .toList(),
+        onPressed: (index) =>
+            context.push('${Routes.planDetails}?id=${plans[index].id}'),
+      ),
     );
   }
 }

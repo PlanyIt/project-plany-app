@@ -77,8 +77,8 @@ class FavoritesSection extends StatelessWidget {
                                 (total, step) => total! + (step.cost ?? 0)),
                             totalDuration: plan.steps.fold(0,
                                 (total, step) => total! + (step.duration ?? 0)),
-                            onTap: () =>
-                                context.push(Routes.planDetails, extra: plan),
+                            onTap: () => context
+                                .push('${Routes.planDetails}?id=${plan.id}'),
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),

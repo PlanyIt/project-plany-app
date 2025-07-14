@@ -34,60 +34,84 @@ class ResponseInput extends StatelessWidget {
     required this.onSubmit,
   });
 
+  Future<void> _pickImage(BuildContext context) async {
+    final picker = ImagePicker();
+    try {
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        final imageFile = File(pickedFile.path);
+        onPickImage(imageFile);
+      }
+    } catch (e) {
+      debugPrint('Erreur image: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la sélection: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final borderColor = categoryColor.withOpacity(0.6);
+
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: categoryColor.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, -1),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (selectedImage != null) _buildSelectedImage(),
-          if (selectedImage == null && existingImageUrl != null)
-            _buildExistingImage(),
+          if (selectedImage != null)
+            _buildImagePreview(FileImage(selectedImage!), onRemoveImage)
+          else if (existingImageUrl != null)
+            _buildImagePreview(NetworkImage(existingImageUrl!), onRemoveImage),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              IconButton(
+                icon: Icon(Icons.camera_alt, color: categoryColor),
+                onPressed: isUploadingImage ? null : () => _pickImage(context),
+                splashRadius: 20,
+              ),
               Expanded(
                 child: TextField(
                   controller: controller,
                   focusNode: focusNode,
+                  cursorColor: categoryColor,
                   decoration: InputDecoration(
+                    isCollapsed: true,
+                    fillColor: Colors.white,
                     hintText: 'Répondre à ce commentaire...',
-                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                    hintStyle: TextStyle(color: Colors.grey[400]),
                     border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: categoryColor),
+                    ),
                   ),
-                  maxLines: 2,
                   minLines: 1,
+                  maxLines: 5,
+                  style: const TextStyle(fontSize: 14),
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildIconButton(Icons.camera_alt,
-                      onTap: isUploadingImage
-                          ? null
-                          : () => _directImagePicker(context)),
-                  isUploadingImage
-                      ? _buildLoadingIndicator()
-                      : _buildSubmitButton(),
-                  _buildCancelButton(),
-                ],
-              ),
+              const SizedBox(width: 8),
+              _buildSubmitButton(),
+              const SizedBox(width: 4),
+              _buildCancelButton(),
             ],
           ),
         ],
@@ -95,164 +119,73 @@ class ResponseInput extends StatelessWidget {
     );
   }
 
-  Widget _buildSelectedImage() {
+  Widget _buildImagePreview(
+      ImageProvider imageProvider, VoidCallback onRemove) {
     return Stack(
       children: [
         Container(
           width: double.infinity,
-          height: 100,
+          height: 140,
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            image: DecorationImage(
-              image: FileImage(selectedImage!),
-              fit: BoxFit.cover,
-            ),
+            borderRadius: BorderRadius.circular(14),
+            image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
           ),
         ),
         Positioned(
           top: 4,
           right: 4,
           child: GestureDetector(
-            onTap: onRemoveImage,
-            child: _buildCloseIcon(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExistingImage() {
-    return Stack(
-      children: [
-        Container(
-          width: double.infinity,
-          height: 100,
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            image: DecorationImage(
-              image: NetworkImage(existingImageUrl!),
-              fit: BoxFit.cover,
+            onTap: onRemove,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, color: Colors.white, size: 16),
             ),
           ),
         ),
-        Positioned(
-          top: 4,
-          right: 4,
-          child: GestureDetector(
-            onTap: onRemoveImage,
-            child: _buildCloseIcon(),
-          ),
-        ),
       ],
-    );
-  }
-
-  Widget _buildCloseIcon() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(
-        Icons.close,
-        color: Colors.white,
-        size: 16,
-      ),
-    );
-  }
-
-  Widget _buildIconButton(IconData icon, {VoidCallback? onTap}) {
-    return Container(
-      width: 32,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: categoryColor, size: 16),
-        onPressed: onTap,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
-        splashRadius: 16,
-      ),
-    );
-  }
-
-  Widget _buildLoadingIndicator() {
-    return Container(
-      width: 32,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        color: categoryColor,
-      ),
     );
   }
 
   Widget _buildSubmitButton() {
+    final color = isSubmitting ? Colors.grey : categoryColor;
     return Container(
-      width: 32,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        color: isSubmitting ? Colors.grey[400] : categoryColor,
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.send, color: Colors.white, size: 16),
-        onPressed: isSubmitting ? null : () => onSubmit(parentComment.id!),
-        padding: EdgeInsets.zero,
-        splashRadius: 16,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      width: 36,
+      height: 36,
+      child: isSubmitting
+          ? const Padding(
+              padding: EdgeInsets.all(8),
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white),
+            )
+          : IconButton(
+              icon: const Icon(Icons.send, color: Colors.white, size: 18),
+              onPressed: () => onSubmit(parentComment.id!),
+              padding: EdgeInsets.zero,
+              splashRadius: 18,
+            ),
     );
   }
 
   Widget _buildCancelButton() {
     return Container(
-      width: 32,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
+      decoration: const BoxDecoration(
+        color: Color(0xFFE0E0E0),
         shape: BoxShape.circle,
       ),
+      width: 36,
+      height: 36,
       child: IconButton(
-        icon: const Icon(Icons.close, color: Colors.grey, size: 16),
+        icon: const Icon(Icons.close, color: Colors.grey, size: 18),
         onPressed: onCancel,
         padding: EdgeInsets.zero,
-        splashRadius: 16,
+        splashRadius: 18,
       ),
     );
-  }
-
-  Future<void> _directImagePicker(BuildContext context) async {
-    final ImagePicker picker = ImagePicker();
-    try {
-      final XFile? pickedFile = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-      );
-
-      if (pickedFile != null) {
-        final imageFile = File(pickedFile.path);
-        onPickImage(imageFile);
-      }
-    } catch (e) {
-      debugPrint('Erreur lors de la sélection d\'image pour la réponse: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la sélection: $e')),
-      );
-    }
   }
 }

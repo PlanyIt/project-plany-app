@@ -30,7 +30,7 @@ export class PlanService {
       .findById(savedPlan._id)
       .populate({
         path: 'user',
-        select: 'username email photoUrl',
+        select: 'username email photoUrl followers',
       })
       .populate({
         path: 'category',
@@ -54,7 +54,7 @@ export class PlanService {
       .find()
       .populate({
         path: 'user',
-        select: 'username email photoUrl',
+        select: 'username email photoUrl followers',
       })
       .populate({
         path: 'category',
@@ -114,7 +114,7 @@ export class PlanService {
       .findOne({ _id: planId })
       .populate({
         path: 'user',
-        select: 'username email photoUrl',
+        select: 'username email photoUrl followers',
       })
       .populate({
         path: 'category',
@@ -150,7 +150,7 @@ export class PlanService {
       )
       .populate({
         path: 'user',
-        select: 'username email photoUrl',
+        select: 'username email photoUrl followers',
       })
       .populate({
         path: 'category',
@@ -221,7 +221,7 @@ export class PlanService {
       .find()
       .populate({
         path: 'user',
-        select: 'username email photoUrl',
+        select: 'username email photoUrl followers',
       })
       .populate({
         path: 'category',
@@ -254,7 +254,7 @@ export class PlanService {
       .find({ favorites: userId })
       .populate({
         path: 'user',
-        select: 'username email photoUrl',
+        select: 'username email photoUrl followers',
       })
       .populate({
         path: 'category',

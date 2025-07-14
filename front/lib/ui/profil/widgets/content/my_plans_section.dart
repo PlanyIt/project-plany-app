@@ -74,8 +74,8 @@ class MyPlansSection extends StatelessWidget {
                           stepsCount: plan.steps.length,
                           totalCost: plan.totalCost,
                           totalDuration: plan.totalDuration,
-                          onTap: () =>
-                              context.push(Routes.planDetails, extra: plan),
+                          onTap: () => context
+                              .push('${Routes.planDetails}?id=${plan.id}'),
                         ),
                         Positioned(
                           top: 8,

@@ -28,6 +28,7 @@ class CommentSectionViewModel extends ChangeNotifier {
     required this.commentInputViewModel,
   });
 
+  @override
   void dispose() {
     parentController.dispose();
     parentFocusNode.dispose();
@@ -50,7 +51,7 @@ class CommentSectionViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveComment(dynamic planDetailsViewModel) async {
+  Future<void> saveComment() async {
     if (parentController.text.trim().isEmpty && parentImage == null) return;
 
     isParentSubmitting = true;
@@ -104,7 +105,6 @@ class CommentSectionViewModel extends ChangeNotifier {
 
   Widget buildResponseInput(
     BuildContext context,
-    dynamic planDetailsViewModel,
     Comment comment,
     Color categoryColor,
   ) {

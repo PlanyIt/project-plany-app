@@ -1,46 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
+import '../../../../../data/services/share_service.dart';
 import '../../../../../domain/models/plan/plan.dart';
 import '../../../../../domain/models/step/step.dart' as plan_steps;
 import '../../../../../utils/helpers.dart';
 import '../../../../../utils/icon_utils.dart';
-import '../../../view_models/plan_details_viewmodel.dart';
+import '../../../view_models/detail/favorite_viewmodel.dart';
+import '../../../view_models/detail/follow_user_viewmodel.dart';
+import '../../../view_models/detail/plan_details_viewmodel.dart';
 
 class PlanInfoSection extends StatelessWidget {
-  final Plan plan;
-  final String? categoryName;
-  final String? categoryIcon;
-  final List<plan_steps.Step>? steps;
-
   final PlanDetailsViewModel viewModel;
+  final FavoriteViewModel favoriteViewModel;
+  final FollowUserViewModel followViewModel;
 
   const PlanInfoSection({
     super.key,
-    required this.plan,
-    this.categoryName,
-    this.categoryIcon,
-    this.steps,
     required this.viewModel,
+    required this.favoriteViewModel,
+    required this.followViewModel,
   });
 
   @override
   Widget build(BuildContext context) {
-    final planData = _calculatePlanData(steps, plan.totalDuration);
-    final formattedDate = plan.createdAt != null
-        ? "${plan.createdAt!.day}/${plan.createdAt!.month}/${plan.createdAt!.year}"
+    final planData =
+        _calculatePlanData(viewModel.steps, viewModel.plan!.totalDuration);
+    final formattedDate = viewModel.plan!.createdAt != null
+        ? "${viewModel.plan!.createdAt!.day}/${viewModel.plan!.createdAt!.month}/${viewModel.plan!.createdAt!.year}"
         : "Non défini";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildPlanHeader(context, viewModel, plan, planData),
+        _buildPlanHeader(context, viewModel.plan!, planData),
         const SizedBox(height: 20),
-        _buildAuthorSection(context, viewModel, plan),
+        _buildAuthorSection(context, viewModel.plan!),
         const SizedBox(height: 20),
         _buildIndicators(formattedDate, planData),
         const SizedBox(height: 24),
-        _buildDescription(plan),
+        _buildDescription(viewModel.plan!),
       ],
     );
   }
@@ -55,8 +53,10 @@ class PlanInfoSection extends StatelessWidget {
     return {'cost': totalCost, 'duration': duration};
   }
 
-  Widget _buildPlanHeader(BuildContext context, PlanDetailsViewModel viewModel,
-      Plan plan, Map<String, dynamic> planData) {
+  Widget _buildPlanHeader(
+      BuildContext context, Plan plan, Map<String, dynamic> planData) {
+    final isFavorite = favoriteViewModel.isFavorite;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -87,21 +87,26 @@ class PlanInfoSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              _favoritesBadge(viewModel.favoritesCount),
+              _favoritesBadge(plan.favorites?.length ?? 0),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _categoryChip(plan.category?.id, categoryName, categoryIcon),
+              _categoryChip(
+                  plan.category?.id, plan.category?.name, plan.category?.icon),
               const Spacer(),
               _actionButton(
-                  icon: Icons.share, onPressed: () => viewModel.sharePlan()),
+                icon: Icons.share,
+                onPressed: () =>
+                    ShareService.sharePlan(plan, plan.favorites?.length ?? 0),
+              ),
               const SizedBox(width: 8),
               _actionButton(
-                icon: viewModel.isFavorite ? Icons.star : Icons.star_border,
-                onPressed: () => viewModel.toggleFavorite(),
-                iconColor: viewModel.isFavorite ? Colors.amber : Colors.white,
+                icon: isFavorite ? Icons.star : Icons.star_border,
+                onPressed: () =>
+                    favoriteViewModel.toggleFavorite(plan, viewModel),
+                iconColor: isFavorite ? Colors.amber : Colors.white,
               ),
             ],
           ),
@@ -152,10 +157,11 @@ class PlanInfoSection extends StatelessWidget {
     );
   }
 
-  Widget _actionButton(
-      {required IconData icon,
-      required VoidCallback onPressed,
-      Color? iconColor}) {
+  Widget _actionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    Color? iconColor,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.15),
@@ -170,14 +176,15 @@ class PlanInfoSection extends StatelessWidget {
     );
   }
 
-  Widget _buildAuthorSection(
-      BuildContext context, PlanDetailsViewModel viewModel, Plan plan) {
+  Widget _buildAuthorSection(BuildContext context, Plan plan) {
     final user = plan.user;
     if (user == null) {
       return _infoCard("Informations sur l'auteur non disponibles");
     }
 
-    final isFollowing = viewModel.isFollowing;
+    final isFollowing = followViewModel.isFollowing;
+    final isLoading = followViewModel.isLoading;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: _cardDecoration(),
@@ -210,7 +217,9 @@ class PlanInfoSection extends StatelessWidget {
             const SizedBox(width: 12),
             viewModel.isCurrentUserPlan
                 ? _userPlanChip()
-                : _followButton(viewModel, isFollowing),
+                : _followButton(isFollowing, isLoading, () {
+                    followViewModel.toggleFollow(plan.user, viewModel);
+                  }),
           ],
         ),
       ),
@@ -254,24 +263,19 @@ class PlanInfoSection extends StatelessWidget {
     );
   }
 
-  Widget _followButton(PlanDetailsViewModel viewModel, bool isFollowing) {
+  Widget _followButton(bool isFollowing, bool isLoading, VoidCallback onTap) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            colorFromPlanCategory(viewModel.plan?.category?.color) ??
-                Colors.blue,
-            colorFromPlanCategory(viewModel.plan?.category?.color) ??
-                Colors.blue.withOpacity(0.8),
-          ],
+          colors: [Colors.blue, Colors.blue.withOpacity(0.8)],
         ),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: viewModel.toggleFollow,
+          onTap: isLoading ? null : onTap,
           borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

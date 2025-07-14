@@ -3,7 +3,6 @@ import '../../../../../domain/models/comment/comment.dart';
 import '../../../../../utils/helpers.dart';
 import '../../../view_models/comment/comment_list_viewmodel.dart';
 import '../../../view_models/comment/comment_section_viewmodel.dart';
-import '../../../view_models/plan_details_viewmodel.dart';
 import 'widgets/comment_card.dart';
 import 'widgets/comment_input.dart';
 import 'widgets/edit_comment_dialog.dart';
@@ -11,24 +10,21 @@ import 'widgets/empty_state.dart';
 import 'widgets/option_sheet.dart';
 
 class CommentSection extends StatelessWidget {
-  final PlanDetailsViewModel planDetailsViewModel;
   final CommentSectionViewModel viewModel;
+  final Color categoryColor;
   final bool isEmbedded;
 
   const CommentSection({
     super.key,
-    required this.planDetailsViewModel,
     required this.viewModel,
+    required this.categoryColor,
     this.isEmbedded = false,
   });
 
-  Color get categoryColor =>
-      planDetailsViewModel.planCategoryColor ?? Colors.grey;
-
   @override
   Widget build(BuildContext context) {
-    final listVM = planDetailsViewModel.commentListViewModel;
-    final inputVM = planDetailsViewModel.commentInputViewModel;
+    final listVM = viewModel.commentListViewModel;
+    final inputVM = viewModel.commentInputViewModel;
 
     return AnimatedBuilder(
       animation: viewModel,
@@ -37,6 +33,7 @@ class CommentSection extends StatelessWidget {
           valueListenable: listVM.state,
           builder: (context, state, _) {
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildCommentInput(),
                 if (inputVM.state.value.errorMessage != null)
@@ -50,19 +47,21 @@ class CommentSection extends StatelessWidget {
                 if (state.isLoading)
                   const Padding(
                     padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator(),
+                    child: Center(child: CircularProgressIndicator()),
                   ),
                 if (!state.isLoading && state.comments.isEmpty)
                   const EmptyCommentsMessage(),
                 if (!state.isLoading && state.comments.isNotEmpty)
                   ..._buildCommentList(
-                      context, state, viewModel.respondingToCommentId.value),
+                    context,
+                    state,
+                    viewModel.respondingToCommentId.value,
+                  ),
                 if (!state.isLoading && state.hasMoreComments)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: TextButton(
-                      onPressed: () => planDetailsViewModel.commentListViewModel
-                          .loadMoreComments(),
+                      onPressed: () => listVM.loadMoreComments(),
                       child: const Text('Charger plus de commentaires'),
                     ),
                   ),
@@ -75,7 +74,7 @@ class CommentSection extends StatelessWidget {
   }
 
   Widget _buildCommentInput() {
-    final inputVM = planDetailsViewModel.commentInputViewModel;
+    final inputVM = viewModel.commentInputViewModel;
 
     return ValueListenableBuilder(
       valueListenable: inputVM.state,
@@ -91,17 +90,21 @@ class CommentSection extends StatelessWidget {
           onPickImage: viewModel.setParentImage,
           onRemoveImage: viewModel.clearParentImage,
           onClearExistingImage: () {},
-          onSubmit: () => viewModel.saveComment(planDetailsViewModel),
+          onSubmit: () => viewModel.saveComment(),
         );
       },
     );
   }
 
   List<Widget> _buildCommentList(
-      BuildContext context, CommentListState state, String? respondingId) {
-    final displayComments = state.comments;
+    BuildContext context,
+    CommentListState state,
+    String? respondingId,
+  ) {
+    final listVM = viewModel.commentListViewModel;
+    final inputVM = viewModel.commentInputViewModel;
 
-    return displayComments
+    return state.comments
         .map(
           (comment) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -114,28 +117,23 @@ class CommentSection extends StatelessWidget {
                   categoryColor: categoryColor,
                   onShowOptions: (comment) =>
                       _showCommentOptions(context, comment),
-                  onLikeToggle: (comment) => planDetailsViewModel
-                      .commentListViewModel
-                      .toggleLike(comment),
+                  onLikeToggle: (comment) => listVM.toggleLike(comment),
                   onReplyTap: viewModel.startRespondingTo,
-                  loadResponses:
-                      planDetailsViewModel.commentListViewModel.loadResponses,
+                  loadResponses: listVM.loadResponses,
                   responses: state.responses,
                   respondingToCommentId: state.respondingToCommentId,
                   responseInputWidget: null,
                   formatTimeAgo: (dt) => formatTimeAgo(dt),
-                  listViewModel: planDetailsViewModel.commentListViewModel,
-                  inputViewModel: planDetailsViewModel.commentInputViewModel,
+                  listViewModel: listVM,
+                  inputViewModel: inputVM,
                   showAllResponsesMap: state.showAllResponsesMap,
-                  onToggleResponses: planDetailsViewModel
-                      .commentListViewModel.toggleShowAllResponses,
+                  onToggleResponses: listVM.toggleShowAllResponses,
                 ),
                 if (respondingId == comment.id)
                   Padding(
                     padding: const EdgeInsets.only(left: 32, top: 8),
                     child: viewModel.buildResponseInput(
                       context,
-                      planDetailsViewModel,
                       comment,
                       categoryColor,
                     ),
@@ -148,7 +146,9 @@ class CommentSection extends StatelessWidget {
   }
 
   void _showCommentOptions(BuildContext context, Comment comment) {
-    final listVM = planDetailsViewModel.commentListViewModel;
+    final listVM = viewModel.commentListViewModel;
+    final inputVM = viewModel.commentInputViewModel;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -163,7 +163,7 @@ class CommentSection extends StatelessWidget {
               builder: (context) {
                 return EditCommentDialog(
                   comment: comment,
-                  inputViewModel: planDetailsViewModel.commentInputViewModel,
+                  inputViewModel: inputVM,
                   categoryColor: categoryColor,
                   onSuccess: () async {
                     if (comment.parentId != null) {

@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/repositories/auth/auth_repository.dart';
-import '../domain/models/plan/plan.dart';
 import '../ui/auth/login/login_screen.dart';
 import '../ui/auth/login/view_models/login_viewmodel.dart';
 import '../ui/auth/register/register_screen.dart';
@@ -14,7 +13,9 @@ import '../ui/create_plan/view_models/create_plan_view_model.dart';
 import '../ui/dashboard/dashboard_screen.dart';
 import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
 import '../ui/detail_plan/plan_details_screen.dart';
-import '../ui/detail_plan/view_models/plan_details_viewmodel.dart';
+import '../ui/detail_plan/view_models/detail/favorite_viewmodel.dart';
+import '../ui/detail_plan/view_models/detail/follow_user_viewmodel.dart';
+import '../ui/detail_plan/view_models/detail/plan_details_viewmodel.dart';
 import '../ui/home/home_screen.dart';
 import '../ui/profil/profile_screen.dart';
 import '../ui/profil/view_models/profile_viewmodel.dart';
@@ -105,26 +106,48 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
         GoRoute(
           path: Routes.planDetails,
           builder: (context, state) {
-            final plan = state.extra as Plan?;
-            if (plan == null) {
-              context.go(Routes.dashboard);
-              return const SizedBox.shrink();
+            final planId = state.uri.queryParameters['id'];
+
+            if (planId == null) {
+              return const SizedBox
+                  .shrink(); // ou redirige, mais pas dans le builder
             }
 
-            return ChangeNotifierProvider(
-              create: (_) {
-                final vm = PlanDetailsViewModel(
-                  authRepository: context.read(),
-                  userRepository: context.read(),
-                  planRepository: context.read(),
-                  locationService: context.read(),
-                  commentRepository: context.read(),
-                );
-                vm.setPlan(plan);
-                return vm;
-              },
-              child: Consumer<PlanDetailsViewModel>(
-                builder: (context, vm, _) => PlanDetailsScreen(vm: vm),
+            return MultiProvider(
+              providers: [
+                ChangeNotifierProvider(
+                  create: (context) => PlanDetailsViewModel(
+                    planRepository: context.read(),
+                    locationService: context.read(),
+                    authRepository: context.read(),
+                    planId: planId,
+                    commentRepository: context.read(),
+                    userRepository: context.read(),
+                  )..loadPlan(planId),
+                ),
+                ChangeNotifierProvider(
+                  create: (context) => FavoriteViewModel(
+                    context.read(),
+                    context.read(),
+                  )..initFavoriteStatus(planId),
+                ),
+                ChangeNotifierProvider(
+                  create: (context) => FollowUserViewModel(
+                    context.read(),
+                    context.read(),
+                  ),
+                ),
+              ],
+              child: Consumer3<PlanDetailsViewModel, FavoriteViewModel,
+                  FollowUserViewModel>(
+                builder: (context, planVM, favoriteVM, followVM, _) {
+                  return PlanDetailsScreen(
+                    planId: planId,
+                    planVM: planVM,
+                    favoriteVM: favoriteVM,
+                    followVM: followVM,
+                  );
+                },
               ),
             );
           },

@@ -83,7 +83,10 @@ class CommentListViewModel {
 
     if (reset) {
       _currentPage = 1;
-      state.value = state.value.copyWith(comments: []);
+      state.value = state.value.copyWith(
+        comments: [],
+        hasMoreComments: true, // toujours remettre true au reset
+      );
     }
 
     state.value = state.value.copyWith(isLoading: true, errorMessage: null);
@@ -202,6 +205,8 @@ class CommentListViewModel {
         responses: updatedResponses,
         showAllResponsesMap: updatedShowMap,
       );
+
+      await loadComments(reset: true);
     }
   }
 

@@ -67,10 +67,7 @@ class VerticalPlanList extends StatelessWidget {
             distance: distance,
             aspectRatio: 2.5,
             onTap: () {
-              context.push(
-                Routes.planDetails,
-                extra: plan,
-              );
+              context.push('${Routes.planDetails}?id=${plan.id}');
             },
           ),
         );

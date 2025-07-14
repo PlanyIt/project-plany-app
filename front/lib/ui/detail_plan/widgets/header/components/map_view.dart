@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../../domain/models/step/step.dart' as custom;
-import '../../../view_models/plan_details_viewmodel.dart';
+import '../../../view_models/detail/plan_details_viewmodel.dart';
 
 class MapView extends StatefulWidget {
   final PlanDetailsViewModel viewModel;
   final double height;
-  final Function(int)? onStepSelected;
+  final Future<void> Function(int)? onStepSelected;
 
   const MapView({
     super.key,
@@ -23,7 +23,6 @@ class MapView extends StatefulWidget {
 class MapViewState extends State<MapView> {
   final MapController _mapController = MapController();
   bool _hasCenteredMap = false;
-  int _currentStepIndex = 0;
 
   List<custom.Step> get _steps => widget.viewModel.steps;
   Color get _categoryColor => widget.viewModel.planCategoryColor ?? Colors.grey;
@@ -63,12 +62,13 @@ class MapViewState extends State<MapView> {
   void _zoomToStep(int index) {
     final step = _steps[index];
     _mapController.move(_latLngOf(step), 15.0);
-    setState(() => _currentStepIndex = index);
   }
 
-  void updateSelectedStep(int index) {
+  Future<void> onMarkerTap(int index) async {
     _zoomToStep(index);
-    widget.onStepSelected?.call(index);
+    if (widget.onStepSelected != null) {
+      await widget.onStepSelected!(index);
+    }
   }
 
   void centerOnStep(String stepId) {
@@ -118,14 +118,14 @@ class MapViewState extends State<MapView> {
                 markers: _steps.asMap().entries.map((entry) {
                   final index = entry.key;
                   final step = entry.value;
-                  final isSelected = index == _currentStepIndex;
+                  final isSelected = index == widget.viewModel.currentStepIndex;
 
                   return Marker(
                     width: 40,
                     height: 40,
                     point: _latLngOf(step),
                     child: GestureDetector(
-                      onTap: () => updateSelectedStep(index),
+                      onTap: () => onMarkerTap(index),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         child: Icon(

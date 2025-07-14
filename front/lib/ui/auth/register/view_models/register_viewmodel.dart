@@ -18,10 +18,10 @@ class RegisterViewModel extends ChangeNotifier {
 
   late Command1 register;
 
-  String? _errorMessage;
-  bool _obscurePassword = true;
+  final ValueNotifier<String?> snackbarMessage = ValueNotifier(null);
+  final ValueNotifier<String?> passwordErrorMessage = ValueNotifier(null);
 
-  String? get errorMessage => _errorMessage;
+  bool _obscurePassword = true;
   bool get obscurePassword => _obscurePassword;
 
   void togglePasswordVisibility() {
@@ -29,14 +29,21 @@ class RegisterViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
+  void clearSnackbar() {
+    snackbarMessage.value = null;
+    passwordErrorMessage.value = null;
   }
 
   String? validateCredentials(String email, String username, String password) {
-    return ValidationUtils.validateRegisterCredentials(
-        email, username, password);
+    final error =
+        ValidationUtils.validateRegisterCredentials(email, username, password);
+    passwordErrorMessage.value = null;
+
+    if (error != null && error.toLowerCase().contains('mot de passe')) {
+      passwordErrorMessage.value = error;
+    }
+
+    return error;
   }
 
   Future<Result<void>> _register((String, String, String) credentials) async {
@@ -44,12 +51,9 @@ class RegisterViewModel extends ChangeNotifier {
 
     final validationError = validateCredentials(email, username, password);
     if (validationError != null) {
-      _errorMessage = validationError;
-      notifyListeners();
+      snackbarMessage.value = validationError;
       return Result.error(Exception(validationError));
     }
-
-    clearError();
 
     final result = await _sessionManager.register(
       email: email.trim(),
@@ -58,9 +62,9 @@ class RegisterViewModel extends ChangeNotifier {
     );
 
     if (result is Error<void>) {
-      _log.warning('register failed! ${result.error}');
-      _errorMessage = 'Échec de l\'inscription. Vérifiez vos informations.';
-      notifyListeners();
+      _log.warning('Register failed! ${result.error}');
+      snackbarMessage.value =
+          'Échec de l\'inscription. Vérifiez vos informations.';
     }
 
     return result;

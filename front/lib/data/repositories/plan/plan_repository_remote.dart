@@ -116,4 +116,16 @@ class PlanRepositoryRemote implements PlanRepository {
       }
     });
   }
+
+  @override
+  Future<Result<Plan>> getPlan(String planId) {
+    return _apiClient.getPlan(planId).then((result) {
+      switch (result) {
+        case Ok<Plan>():
+          return Result.ok(result.value);
+        case Error<Plan>():
+          return Result.error(result.error);
+      }
+    });
+  }
 }

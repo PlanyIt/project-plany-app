@@ -3,10 +3,10 @@ import 'package:logging/logging.dart';
 
 import '../../../data/repositories/category/category_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
+import '../../../data/services/location_service.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart';
-import '../../../data/services/location_service.dart';
 import '../../../utils/command.dart';
 import '../../../utils/result.dart';
 import 'search_chips_view_model.dart';
@@ -42,7 +42,13 @@ class SearchViewModel extends ChangeNotifier {
     search = Command0(_search);
 
     // Écouter les changements de filtres pour relancer la recherche
-    filtersViewModel.addListener(() => search.execute());
+    bool _isFilterListenerActive = false;
+    filtersViewModel.addListener(() {
+      if (_isFilterListenerActive) return;
+      _isFilterListenerActive = true;
+      search.execute();
+      _isFilterListenerActive = false;
+    });
   }
 
   final _log = Logger('SearchViewModel');

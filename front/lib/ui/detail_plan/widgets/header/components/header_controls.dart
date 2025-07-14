@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../view_models/plan_details_viewmodel.dart';
+
+import '../../../../../data/services/calendar_service.dart';
+import '../../../../../data/services/navigation_service.dart';
+import '../../../view_models/detail/plan_details_viewmodel.dart';
 
 class HeaderControls extends StatelessWidget {
   final Color categoryColor;
   final VoidCallback onCenterMap;
   final bool showBackButton;
   final VoidCallback? onBackPressed;
-  final PlanDetailsViewModel viewModel;
+  final PlanDetailsViewModel planViewModel;
 
   const HeaderControls({
     super.key,
@@ -15,7 +18,7 @@ class HeaderControls extends StatelessWidget {
     required this.onCenterMap,
     this.showBackButton = false,
     this.onBackPressed,
-    required this.viewModel,
+    required this.planViewModel,
   });
 
   @override
@@ -38,13 +41,27 @@ class HeaderControls extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             _buildGlassIconButton(
-              icon: Icons.directions,
-              onPressed: () => viewModel.openDirections(context),
-            ),
+                icon: Icons.directions,
+                onPressed: () {
+                  final steps = planViewModel.plan?.steps
+                      .where((s) => s.latitude != null && s.longitude != null)
+                      .toList();
+
+                  if (steps != null && steps.isNotEmpty) {
+                    NavigationService.navigateToStep(context, steps.first);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content:
+                              Text("Aucune étape valide pour la navigation.")),
+                    );
+                  }
+                }),
             const SizedBox(width: 8),
             _buildGlassIconButton(
               icon: Icons.calendar_today,
-              onPressed: () => viewModel.addToCalendar(context),
+              onPressed: () => CalendarService.addPlanToCalendar(
+                  context, planViewModel.plan),
             ),
           ],
         ),
@@ -54,7 +71,8 @@ class HeaderControls extends StatelessWidget {
 
   Widget _buildGlassIconButton({
     required IconData icon,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
+    Color? iconColor,
   }) {
     return Material(
       color: Colors.transparent,
@@ -76,7 +94,7 @@ class HeaderControls extends StatelessWidget {
           ),
           child: Icon(
             icon,
-            color: categoryColor,
+            color: iconColor ?? categoryColor,
             size: 24,
             shadows: const [
               Shadow(

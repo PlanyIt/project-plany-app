@@ -11,7 +11,6 @@ import 'view_models/login_viewmodel.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.viewModel});
-
   final LoginViewModel viewModel;
 
   @override
@@ -26,13 +25,16 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     widget.viewModel.login.addListener(_onLoginResult);
+    widget.viewModel.snackbarMessage.addListener(_showSnackbarIfNeeded);
   }
 
   @override
   void didUpdateWidget(covariant LoginScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     oldWidget.viewModel.login.removeListener(_onLoginResult);
+    oldWidget.viewModel.snackbarMessage.removeListener(_showSnackbarIfNeeded);
     widget.viewModel.login.addListener(_onLoginResult);
+    widget.viewModel.snackbarMessage.addListener(_showSnackbarIfNeeded);
   }
 
   @override
@@ -40,7 +42,36 @@ class _LoginScreenState extends State<LoginScreen> {
     _email.dispose();
     _password.dispose();
     widget.viewModel.login.removeListener(_onLoginResult);
+    widget.viewModel.snackbarMessage.removeListener(_showSnackbarIfNeeded);
     super.dispose();
+  }
+
+  void _onLoginResult() {
+    if (widget.viewModel.login.completed) {
+      widget.viewModel.login.clearResult();
+      context.go(Routes.dashboard);
+    }
+  }
+
+  void _showSnackbarIfNeeded() {
+    final message = widget.viewModel.snackbarMessage.value;
+    if (message != null) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      widget.viewModel.clearSnackbar();
+    }
+  }
+
+  void _handleLogin() {
+    widget.viewModel.login.execute(
+      (_email.text, _password.text),
+    );
   }
 
   @override
@@ -182,39 +213,5 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ],
     );
-  }
-
-  void _handleLogin() {
-    widget.viewModel.clearError();
-    widget.viewModel.login.execute(
-      (_email.text, _password.text),
-    );
-  }
-
-  void _onLoginResult() {
-    if (widget.viewModel.login.completed) {
-      widget.viewModel.login.clearResult();
-      context.go(Routes.dashboard);
-      return;
-    }
-
-    if (widget.viewModel.login.error) {
-      widget.viewModel.login.clearResult();
-
-      // Afficher l'erreur via SnackBar
-      if (widget.viewModel.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.viewModel.errorMessage!),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            action: SnackBarAction(
-              label: AppLocalization.of(context).tryAgain,
-              textColor: Colors.white,
-              onPressed: _handleLogin,
-            ),
-          ),
-        );
-      }
-    }
   }
 }

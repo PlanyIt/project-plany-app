@@ -11,6 +11,7 @@ class CustomTextField extends StatefulWidget {
   final VoidCallback? onSuffixIconPressed;
   final FocusNode? focusNode;
   final Function(bool)? onFocusChange;
+  final String? errorText; // Ajouté ici
 
   const CustomTextField({
     super.key,
@@ -23,6 +24,7 @@ class CustomTextField extends StatefulWidget {
     this.onSuffixIconPressed,
     this.focusNode,
     this.onFocusChange,
+    this.errorText, // Ajouté ici
   });
 
   @override
@@ -35,7 +37,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
   @override
   void initState() {
     super.initState();
-    // Use the provided focusNode or create a new one
     _focusNode = widget.focusNode ?? FocusNode();
 
     if (widget.onFocusChange != null) {
@@ -47,13 +48,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
   void didUpdateWidget(CustomTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
-      // If the focus node has changed, update listeners
       if (oldWidget.onFocusChange != null) {
         _focusNode.removeListener(_handleFocusChange);
       }
-
       _focusNode = widget.focusNode ?? _focusNode;
-
       if (widget.onFocusChange != null) {
         _focusNode.addListener(_handleFocusChange);
       }
@@ -68,11 +66,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   void dispose() {
-    // Only dispose the focus node if we created it internally
     if (widget.focusNode == null) {
       _focusNode.dispose();
     } else if (widget.onFocusChange != null) {
-      // Otherwise just remove our listener
       _focusNode.removeListener(_handleFocusChange);
     }
     super.dispose();
@@ -85,18 +81,17 @@ class _CustomTextFieldState extends State<CustomTextField> {
         borderRadius: BorderRadius.circular(AppTheme.radiusXL),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: Colors.grey.withValues(alpha: .1),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      // Use a ConstrainedBox to limit the height and avoid overflow
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           minHeight: 56.0,
-          maxHeight: 150.0, // Maximum height for multiline fields
+          maxHeight: 150.0,
         ),
         child: TextFormField(
           controller: widget.controller,
@@ -113,6 +108,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     onPressed: widget.onSuffixIconPressed,
                   )
                 : null,
+            errorText: widget.errorText, // Ajouté ici pour l'erreur
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusXL),
               borderSide: BorderSide.none,
@@ -123,8 +119,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-              borderSide:
-                  BorderSide(color: Theme.of(context).primaryColor, width: 2),
+              borderSide: BorderSide(
+                color: Theme.of(context).primaryColor,
+                width: 2,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               vertical: 16.0,
@@ -132,9 +130,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
           ),
           obscureText: widget.obscureText,
-          // Use TextInputAction.done for the last field
           textInputAction: TextInputAction.done,
-          // Enable scrolling for multiline text fields
           maxLines: widget.obscureText ? 1 : null,
         ),
       ),

@@ -19,6 +19,11 @@ class ValidationUtils {
     }
     if (password.length < 6) {
       return 'Le mot de passe doit contenir au moins 6 caractères';
+    } else if (password.length > 20) {
+      return 'Le mot de passe ne doit pas dépasser 20 caractères';
+    } else if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$')
+        .hasMatch(password)) {
+      return 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre';
     }
     return null;
   }
