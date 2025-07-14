@@ -23,7 +23,6 @@ class BottomBar extends StatelessWidget {
         break;
       case 2:
         final userId = context.read<AuthRepository>().currentUser?.id;
-        print('Navigating to profile with userId: $userId');
         if (userId != null) {
           context.go('${Routes.profile}?userId=$userId');
         }

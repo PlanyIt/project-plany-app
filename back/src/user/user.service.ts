@@ -11,7 +11,6 @@ import { Model, Connection, isValidObjectId, Types } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from '../plan/schemas/plan.schema';
 import * as bcrypt from 'bcrypt';
-import e from 'express';
 
 @Injectable()
 export class UserService {
@@ -236,24 +235,12 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`Utilisateur ${userId} non trouvé`);
     }
+    const populatedUser = await this.userModel
+      .findById(user._id)
+      .populate('following', 'username email photoUrl')
+      .exec();
 
-    const followingUsers = await this.userModel
-      .find({
-        _id: { $in: user.following },
-      })
-      .select('username email photoUrl isPremium followers following');
-
-    const formattedUsers = followingUsers.map((user) => ({
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      photoUrl: user.photoUrl,
-      isPremium: user.isPremium || false,
-      followersCount: user.followers?.length || 0,
-      followingCount: user.following?.length || 0,
-    }));
-
-    return formattedUsers;
+    return populatedUser.following;
   }
 
   async checkIfFollowing(userId: string, targetId: string) {

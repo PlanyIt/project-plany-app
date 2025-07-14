@@ -41,8 +41,11 @@ export class User {
   })
   followers: mongoose.Types.ObjectId[];
 
-  @Prop({ type: [String], default: [] })
-  following: string[];
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    default: [],
+  })
+  following: mongoose.Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

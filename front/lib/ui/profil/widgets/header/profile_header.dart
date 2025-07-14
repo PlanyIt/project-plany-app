@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../routing/routes.dart';
 import '../../view_models/profile_viewmodel.dart';
 import 'components/profile_avatar.dart';
 import 'components/profile_categories.dart';
@@ -7,7 +9,6 @@ import 'components/profile_user_info.dart';
 
 class ProfileHeader extends StatelessWidget {
   final ProfileViewModel viewModel;
-  final Function(String) onUpdatePhoto;
   final Function onProfileUpdated;
   final Function(String) onNavigationSelected;
   final bool isFollowing;
@@ -18,7 +19,6 @@ class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
     super.key,
     required this.viewModel,
-    required this.onUpdatePhoto,
     required this.onProfileUpdated,
     required this.onNavigationSelected,
     required this.scrollController,
@@ -98,12 +98,7 @@ class ProfileHeader extends StatelessWidget {
                       : _buildGlassIconButton(
                           icon: Icons.arrow_back,
                           onPressed: () {
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                            } else {
-                              Navigator.of(context)
-                                  .pushReplacementNamed('/dashboard');
-                            }
+                            context.go(Routes.dashboard);
                           },
                         ),
                   if (isCurrentUser)
@@ -113,19 +108,6 @@ class ProfileHeader extends StatelessWidget {
                           icon: Icons.settings,
                           onPressed: () {
                             onNavigationSelected('settings');
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _buildGlassIconButton(
-                          icon: Icons.notifications,
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Notifications à venir prochainement'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
                           },
                         ),
                       ],
@@ -210,12 +192,16 @@ class ProfileHeader extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: ProfileStats(
-                viewModel: viewModel,
-                onNavigationSelected: _handleNavigation,
-              ),
-            ),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: ListenableBuilder(
+                  listenable: viewModel,
+                  builder: (context, _) {
+                    return ProfileStats(
+                      viewModel: viewModel,
+                      onNavigationSelected: _handleNavigation,
+                    );
+                  },
+                )),
             const SizedBox(height: 24),
           ],
         ),

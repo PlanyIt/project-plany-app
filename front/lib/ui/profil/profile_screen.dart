@@ -11,7 +11,7 @@ import 'view_models/my_plan_viewmodel.dart';
 import 'view_models/profile_viewmodel.dart';
 import 'widgets/header/profile_header.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final String? userId;
   final ProfileViewModel viewModel;
 
@@ -22,9 +22,20 @@ class ProfileScreen extends StatelessWidget {
   });
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.loadUserData(widget.userId);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
-      value: viewModel..loadUserData(userId),
+      value: widget.viewModel,
       child: Consumer<ProfileViewModel>(
         builder: (context, vm, _) {
           if (vm.isLoading) {
@@ -48,8 +59,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   ProfileHeader(
                     viewModel: vm,
-                    onUpdatePhoto: vm.updatePhoto,
-                    onProfileUpdated: () => vm.loadUserData(vm.userProfile!.id),
+                    onProfileUpdated: vm.refreshProfile,
                     onNavigationSelected: vm.selectSection,
                     isFollowing: vm.isFollowing,
                     loadingFollow: vm.loadingFollow,
@@ -90,14 +100,13 @@ class ProfileScreen extends StatelessWidget {
         return FavoritesSection(viewModel: vm.favoritesViewModel);
       case 'subscriptions':
         return FollowingSection(
-          viewModel: vm.followingViewModel,
-          userId: user.id ?? '',
-          onFollowChanged: vm.refreshStats,
+          viewModel: vm.userListViewModel!,
+          onFollowChanged: vm.refreshProfile,
         );
       case 'followers':
         return FollowersSection(
-          onFollowChanged: vm.refreshStats,
-          viewModel: vm.followersViewModel!,
+          onFollowChanged: vm.refreshProfile,
+          viewModel: vm.userListViewModel!,
         );
       case 'settings':
         return SettingsSection(
@@ -146,7 +155,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => viewModel.loadUserData(userId),
+              onPressed: () => widget.viewModel.loadUserData(widget.userId),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3425B5),
                 foregroundColor: Colors.white,

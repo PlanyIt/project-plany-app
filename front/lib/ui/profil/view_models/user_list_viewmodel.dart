@@ -3,16 +3,18 @@ import '../../../../data/repositories/user/user_repository.dart';
 import '../../../../domain/models/user/user.dart';
 import '../../../../utils/result.dart';
 
-class FollowersViewModel extends ChangeNotifier {
+class UserListViewModel extends ChangeNotifier {
   final UserRepository userRepository;
   final String userId;
 
-  FollowersViewModel({
+  UserListViewModel({
     required this.userRepository,
     required this.userId,
   });
 
   List<User> followers = [];
+  List<User> following = [];
+
   bool isLoading = true;
   Set<String> loadingIds = {};
   Map<String, bool> followingStatus = {};
@@ -25,6 +27,25 @@ class FollowersViewModel extends ChangeNotifier {
     if (result is Ok<List<User>>) {
       followers = result.value;
       for (final user in followers) {
+        final status = await userRepository.isFollowing(user.id ?? '');
+        if (status is Ok<bool>) {
+          followingStatus[user.id ?? ''] = status.value;
+        }
+      }
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadFollowing() async {
+    isLoading = true;
+    notifyListeners();
+
+    final result = await userRepository.getFollowing(userId);
+    if (result is Ok<List<User>>) {
+      following = result.value;
+      for (final user in following) {
         final status = await userRepository.isFollowing(user.id ?? '');
         if (status is Ok<bool>) {
           followingStatus[user.id ?? ''] = status.value;

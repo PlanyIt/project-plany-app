@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../routing/routes.dart';
 import '../../profile_screen.dart';
-import '../../view_models/followers_viewmodel.dart';
+import '../../view_models/user_list_viewmodel.dart';
 import '../common/section_header.dart';
 import 'user_list.dart';
 
 class FollowersSection extends StatelessWidget {
-  final FollowersViewModel viewModel;
+  final UserListViewModel viewModel;
   final VoidCallback? onFollowChanged;
 
   const FollowersSection({
@@ -20,7 +22,7 @@ class FollowersSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: viewModel..loadFollowers(),
-      child: Consumer<FollowersViewModel>(
+      child: Consumer<UserListViewModel>(
         builder: (context, vm, _) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,17 +65,9 @@ class FollowersSection extends StatelessWidget {
                   child: UserListItem(
                     user: user,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProfileScreen(
-                            userId: user.id,
-                            viewModel: Provider.of(context, listen: false),
-                          ),
-                        ),
-                      );
+                      context.push('${Routes.profile}?userId=${user.id}');
                     },
-                    showFollowButton: true,
+                    showFollowButton: false,
                     isFollowing: vm.followingStatus[user.id] ?? false,
                     isLoading: vm.loadingIds.contains(user.id),
                     onFollowChanged: (isFollowing) {
@@ -82,7 +76,7 @@ class FollowersSection extends StatelessWidget {
                     },
                   ),
                 );
-              }).toList(),
+              }),
             ],
           );
         },

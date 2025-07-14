@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../profile_screen.dart';
-import '../../view_models/following_viewmodel.dart';
+import '../../../../routing/routes.dart';
+import '../../view_models/user_list_viewmodel.dart';
 import '../common/section_header.dart';
 import 'user_list.dart';
 
 class FollowingSection extends StatelessWidget {
-  final FollowingViewModel viewModel;
-  final String userId;
+  final UserListViewModel viewModel;
   final VoidCallback? onFollowChanged;
 
   const FollowingSection({
     super.key,
     required this.viewModel,
-    required this.userId,
     this.onFollowChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
-      value: viewModel..loadFollowing(userId),
-      child: Consumer<FollowingViewModel>(
+      value: viewModel..loadFollowing(),
+      child: Consumer<UserListViewModel>(
         builder: (context, vm, _) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,28 +63,18 @@ class FollowingSection extends StatelessWidget {
                   child: UserListItem(
                     user: user,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProfileScreen(
-                            userId: user.id,
-                            viewModel: Provider.of(context, listen: false),
-                          ),
-                        ),
-                      );
+                      context.push('${Routes.profile}?userId=${user.id}');
                     },
                     showFollowButton: true,
-                    isFollowing: true,
+                    isFollowing: vm.followingStatus[user.id] ?? false,
                     isLoading: vm.loadingIds.contains(user.id),
                     onFollowChanged: (isFollowing) {
-                      if (!isFollowing) {
-                        vm.unfollowUser(user.id ?? '');
-                        onFollowChanged?.call();
-                      }
+                      vm.toggleFollow(user);
+                      onFollowChanged?.call();
                     },
                   ),
                 );
-              }).toList(),
+              }),
             ],
           );
         },

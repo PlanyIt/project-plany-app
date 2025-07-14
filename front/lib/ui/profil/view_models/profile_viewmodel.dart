@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
 import '../../../data/repositories/user/user_repository.dart';
@@ -9,9 +11,8 @@ import '../../../domain/models/user/user.dart';
 import '../../../domain/models/user/user_stats.dart';
 import '../../../utils/result.dart';
 import 'favorites_viewmodel.dart';
-import 'followers_viewmodel.dart';
-import 'following_viewmodel.dart';
 import 'my_plan_viewmodel.dart';
+import 'user_list_viewmodel.dart';
 
 class ProfileViewModel extends ChangeNotifier {
   final AuthRepository authRepository;
@@ -21,8 +22,7 @@ class ProfileViewModel extends ChangeNotifier {
 
   late final MyPlansViewModel myPlansViewModel;
   late final FavoritesViewModel favoritesViewModel;
-  late final FollowingViewModel followingViewModel;
-  FollowersViewModel? followersViewModel;
+  UserListViewModel? userListViewModel;
 
   ProfileViewModel({
     required this.authRepository,
@@ -31,7 +31,6 @@ class ProfileViewModel extends ChangeNotifier {
   }) {
     myPlansViewModel = MyPlansViewModel(planRepository: planRepository);
     favoritesViewModel = FavoritesViewModel(planRepository: planRepository);
-    followingViewModel = FollowingViewModel(userRepository: userRepository);
   }
 
   bool isLoading = true;
@@ -60,37 +59,34 @@ class ProfileViewModel extends ChangeNotifier {
       final userResult =
           await userRepository.getUserById(authRepository.currentUser!.id!);
       if (userResult is Ok<User>) {
-        userProfile = User(
-          id: authRepository.currentUser?.id,
-          username: userResult.value.username,
-          email: userResult.value.email,
-          description: userResult.value.description,
-          isPremium: userResult.value.isPremium,
-          photoUrl: userResult.value.photoUrl,
-          birthDate: userResult.value.birthDate,
-          gender: userResult.value.gender,
-          followers: userResult.value.followers,
-          following: userResult.value.following,
-          createdAt: userResult.value.createdAt,
-        );
+        userProfile = userResult.value;
+
+        if (isCurrent) {
+          userProfile = userProfile!.copyWith(
+            id: authRepository.currentUser!.id,
+          );
+        }
         authRepository.updateCurrentUser(userProfile!);
       }
     } else {
+      print('Loading user data for userId: $userId');
+
       final userResult = await userRepository.getUserById(userId);
+
+      print(userResult);
       userProfile = userResult is Ok<User> ? userResult.value : null;
     }
 
     if (userProfile != null) {
-      followersViewModel = FollowersViewModel(
+      userListViewModel = UserListViewModel(
         userRepository: userRepository,
         userId: userProfile!.id ?? '',
       );
-
       await Future.wait([
         myPlansViewModel.loadPlans(userProfile!.id ?? ''),
         favoritesViewModel.loadFavorites(userProfile!.id ?? ''),
-        followingViewModel.loadFollowing(userProfile!.id ?? ''),
-        followersViewModel!.loadFollowers(),
+        userListViewModel!.loadFollowers(),
+        userListViewModel!.loadFollowing(),
         _loadStats(),
         _checkFollowStatus(),
         loadUserCategories(),
@@ -101,24 +97,9 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _loadStats() async {
-    final statsResult = await userRepository.getUserStats(userProfile!.id);
-    userStats = statsResult is Ok<UserStats> ? statsResult.value : null;
-  }
-
-  Future<void> _checkFollowStatus() async {
-    if (userProfile == null) return;
-    if (userProfile!.id == authRepository.currentUser?.id) return;
-
-    final followResult =
-        await userRepository.isFollowing(userProfile?.id ?? '');
-    if (followResult is Ok<bool>) {
-      isFollowing = followResult.value;
-    }
-  }
-
   Future<void> loadUserCategories() async {
     if (userProfile == null) return;
+
     try {
       isLoadingCategories = true;
       notifyListeners();
@@ -145,6 +126,20 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _loadStats() async {
+    final statsResult = await userRepository.getUserStats(userProfile!.id);
+    userStats = statsResult is Ok<UserStats> ? statsResult.value : null;
+  }
+
+  Future<void> _checkFollowStatus() async {
+    if (userProfile == null || isCurrentUser) return;
+    final followResult =
+        await userRepository.isFollowing(userProfile?.id ?? '');
+    if (followResult is Ok<bool>) {
+      isFollowing = followResult.value;
+    }
+  }
+
   Future<void> toggleFollow() async {
     if (userProfile == null || loadingFollow) return;
 
@@ -154,12 +149,21 @@ class ProfileViewModel extends ChangeNotifier {
     try {
       if (isFollowing) {
         final result = await userRepository.unfollowUser(userProfile?.id ?? '');
-        if (result is Ok<void>) isFollowing = false;
+        if (result is Ok<void>) {
+          isFollowing = false;
+          userStats = userStats?.copyWith(
+            followersCount: (userStats?.followersCount ?? 0) - 1,
+          );
+        }
       } else {
         final result = await userRepository.followUser(userProfile?.id ?? '');
-        if (result is Ok<void>) isFollowing = true;
+        if (result is Ok<void>) {
+          isFollowing = true;
+          userStats = userStats?.copyWith(
+            followersCount: (userStats?.followersCount ?? 0) + 1,
+          );
+        }
       }
-      await _loadStats();
     } finally {
       loadingFollow = false;
       notifyListeners();
@@ -181,16 +185,31 @@ class ProfileViewModel extends ChangeNotifier {
     });
   }
 
-  Future<void> refreshStats() async {
-    if (userProfile == null) return;
-    await _loadStats();
+  Future<void> updateProfilePhoto(File file) async {
+    isUploadingAvatar = true;
+    notifyListeners();
+
+    final result = await userRepository.uploadImage(file);
+    if (result is Ok<String>) {
+      final imageUrl = result.value;
+      await userRepository
+          .updateUserProfile(userProfile!.copyWith(photoUrl: imageUrl));
+      authRepository
+          .updateCurrentUser(userProfile!.copyWith(photoUrl: imageUrl));
+      userProfile = userProfile!.copyWith(photoUrl: imageUrl);
+      await myPlansViewModel.loadPlans(userProfile!.id!);
+    }
+
+    isUploadingAvatar = false;
     notifyListeners();
   }
 
-  void updatePhoto(String url) {
-    if (userProfile == null) return;
-    userProfile = userProfile!.copyWith(photoUrl: url);
-    authRepository.updateCurrentUser(userProfile!);
+  Future<void> removeProfilePhoto() async {
+    await userRepository
+        .updateUserProfile(userProfile!.copyWith(photoUrl: null));
+    authRepository.updateCurrentUser(userProfile!.copyWith(photoUrl: null));
+    userProfile = userProfile!.copyWith(photoUrl: null);
+    await myPlansViewModel.loadPlans(userProfile!.id!);
     notifyListeners();
   }
 
@@ -213,39 +232,7 @@ class ProfileViewModel extends ChangeNotifier {
 
     await userRepository.updateUserProfile(userProfile!);
     authRepository.updateCurrentUser(userProfile!);
-
     notifyListeners();
-  }
-
-  Future<void> updateProfilePhoto(File file) async {
-    isUploadingAvatar = true;
-    notifyListeners();
-
-    final result = await userRepository.uploadImage(file);
-    String? imageUrl;
-    if (result is Ok<String>) {
-      imageUrl = result.value;
-      await userRepository.updateUserProfile(
-        userProfile!.copyWith(photoUrl: imageUrl),
-      );
-      authRepository
-          .updateCurrentUser(userProfile!.copyWith(photoUrl: imageUrl));
-      updatePhoto(imageUrl);
-
-      // Refresh plans with updated avatar
-      await myPlansViewModel.loadPlans(userProfile!.id!);
-    }
-
-    isUploadingAvatar = false;
-    notifyListeners();
-  }
-
-  Future<void> removeProfilePhoto() async {
-    await userRepository
-        .updateUserProfile(userProfile!.copyWith(photoUrl: null));
-    authRepository.updateCurrentUser(userProfile!.copyWith(photoUrl: null));
-    updatePhoto('');
-    await myPlansViewModel.loadPlans(userProfile!.id!);
   }
 
   Future<Result<void>> updateEmail(String email, String password) async {
@@ -269,6 +256,11 @@ class ProfileViewModel extends ChangeNotifier {
     } catch (e) {
       return Result.error(Exception(e));
     }
+  }
+
+  Future<void> refreshProfile() async {
+    if (userProfile == null) return;
+    await loadUserData(userProfile!.id);
   }
 
   Future<void> logout() async {

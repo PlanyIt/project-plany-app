@@ -77,27 +77,28 @@ class MyPlansSection extends StatelessWidget {
                           onTap: () => context
                               .push('${Routes.planDetails}?id=${plan.id}'),
                         ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: .5),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.delete_outline,
-                                  color: Colors.white, size: 20),
-                              onPressed: () async {
-                                await viewModel.deletePlan(context, plan.id!);
-                                await profileViewModel.refreshStats();
-                              },
-                              tooltip: 'Supprimer ce plan',
-                              constraints: BoxConstraints.tight(Size(36, 36)),
-                              padding: EdgeInsets.zero,
+                        if (profileViewModel.isCurrentUser)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: .5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.delete_outline,
+                                    color: Colors.white, size: 20),
+                                onPressed: () async {
+                                  await viewModel.deletePlan(context, plan.id!);
+                                  await profileViewModel.refreshProfile();
+                                },
+                                tooltip: 'Supprimer ce plan',
+                                constraints: BoxConstraints.tight(Size(36, 36)),
+                                padding: EdgeInsets.zero,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),

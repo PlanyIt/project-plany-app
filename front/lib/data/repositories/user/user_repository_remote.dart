@@ -17,22 +17,11 @@ class UserRepositoryRemote implements UserRepository {
   @override
   Future<Result<User>> getUserById(String userId) {
     return _apiClient.getUserById(userId).then((result) {
+      print('getUserById result: $result');
       switch (result) {
-        case Ok<UserApiModel>():
-          final user = User(
-            id: result.value.id,
-            username: result.value.username,
-            email: result.value.email,
-            description: result.value.description,
-            isPremium: result.value.isPremium,
-            photoUrl: result.value.photoUrl,
-            birthDate: result.value.birthDate,
-            gender: result.value.gender,
-            followers: result.value.followers,
-            following: result.value.following,
-          );
-          return Result.ok(user);
-        case Error<UserApiModel>():
+        case Ok<User>():
+          return Result.ok(result.value);
+        case Error<User>():
           return Result.error(result.error);
       }
     });
@@ -45,7 +34,6 @@ class UserRepositoryRemote implements UserRepository {
 
   @override
   Future<Result<void>> unfollowUser(String userId) async {
-    print('Unfollowing user: $userId');
     return _apiClient.unfollowUser(userId);
   }
 
