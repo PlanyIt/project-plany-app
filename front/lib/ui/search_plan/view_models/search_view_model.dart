@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
-
 import '../../../data/repositories/category/category_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
 import '../../../data/services/location_service.dart';
@@ -64,81 +63,33 @@ class SearchViewModel extends ChangeNotifier {
   late final Command0 load;
   late final Command0 search;
 
-  List<Category> get fullCategories => _categories;
-  bool? get tempPmrOnly => filtersViewModel.tempPmrOnly;
-
-  String getCategoryName(String categoryId) {
-    final category = _categories.firstWhere(
-      (cat) => cat.id == categoryId,
-      orElse: () =>
-          Category(id: categoryId, name: categoryId, icon: '', color: ''),
-    );
-    return category.name;
+  List<Map<String, dynamic>> getActiveFilters() {
+    return chipsViewModel?.getActiveFilters() ?? [];
   }
 
-  void setInitialFilters({String? categoryId}) {
-    if (categoryId != null && categoryId.isNotEmpty) {
-      filtersViewModel.selectedCategory = categoryId;
-    }
-  }
-
-  void updateTempPmrOnly(bool? value) {
-    filtersViewModel.updateTempPmrOnly(value);
-  }
-
-  String? get keywordQuery => filtersViewModel.keywordQuery;
-  String? get selectedCategory => filtersViewModel.selectedCategory;
-  RangeValues? get costRange => filtersViewModel.costRange;
-  RangeValues? get durationRange => filtersViewModel.durationRange;
-  int? get favoritesThreshold => filtersViewModel.favoritesThreshold;
-  SortOption get sortBy => filtersViewModel.sortBy;
-
-  List<Map<String, dynamic>> getActiveFilters() =>
-      chipsViewModel?.getActiveFilters() ?? [];
   bool get hasActiveFilters => chipsViewModel?.hasActiveFilters ?? false;
+
   int get activeFiltersCount => chipsViewModel?.activeFiltersCount ?? 0;
-  void clearAllFilters() {
-    filtersViewModel.clearAllFilters();
+
+  List<Category> get fullCategories => _categories;
+  String? getFieldError(String fieldName) {
+    return filtersViewModel.getFieldError(fieldName);
+  }
+
+  Future<void> initializeWithCurrentLocation() async {
+    final position = await _locationService.getCurrentLocation();
+    if (position == null) return;
+
+    final selectedLocation = LatLng(position.latitude, position.longitude);
+    final addressName = await _locationService.reverseGeocode(selectedLocation);
+
+    filtersViewModel.setSelectedLocationWithDefaultDistance(
+      selectedLocation,
+      addressName ?? 'Ma position actuelle',
+    );
+
     search.execute();
   }
-
-  void initializeTempValues() => filtersViewModel.initializeTempValues();
-  bool applyTempFilters() {
-    final result = filtersViewModel.applyTempFilters();
-    if (result) search.execute();
-    return result;
-  }
-
-  void resetTempValues() => filtersViewModel.resetTempValues();
-  bool get hasTempValidationErrors => filtersViewModel.hasTempValidationErrors;
-  String? getFieldError(String fieldName) =>
-      filtersViewModel.getFieldError(fieldName);
-
-  RangeValues? get tempDistanceRange => filtersViewModel.tempDistanceRange;
-  String? get tempSelectedCategory => filtersViewModel.tempSelectedCategory;
-  String get tempMinCost => filtersViewModel.tempMinCost;
-  String get tempMaxCost => filtersViewModel.tempMaxCost;
-  String get tempMinDuration => filtersViewModel.tempMinDuration;
-  String get tempMaxDuration => filtersViewModel.tempMaxDuration;
-  String get tempDurationUnit => filtersViewModel.tempDurationUnit;
-  int? get tempFavoritesThreshold => filtersViewModel.tempFavoritesThreshold;
-  SortOption get tempSortBy => filtersViewModel.tempSortBy;
-
-  void updateTempDistanceRange(RangeValues? values) =>
-      filtersViewModel.updateTempDistanceRange(values);
-  void updateTempSelectedCategory(String? categoryId) =>
-      filtersViewModel.updateTempSelectedCategory(categoryId);
-  void updateTempCost({String? minCost, String? maxCost}) =>
-      filtersViewModel.updateTempCost(minCost: minCost, maxCost: maxCost);
-  void updateTempDuration({String? minDuration, String? maxDuration}) =>
-      filtersViewModel.updateTempDuration(
-          minDuration: minDuration, maxDuration: maxDuration);
-  void updateTempDurationUnit(String unit) =>
-      filtersViewModel.updateTempDurationUnit(unit);
-  void updateTempFavoritesThreshold(int? threshold) =>
-      filtersViewModel.updateTempFavoritesThreshold(threshold);
-  void updateTempSortBy(SortOption sortOption) =>
-      filtersViewModel.updateTempSortBy(sortOption);
 
   Future<Result<void>> _load() async {
     isLoading = true;
@@ -176,21 +127,6 @@ class SearchViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> initializeWithCurrentLocation() async {
-    final position = await _locationService.getCurrentLocation();
-    if (position == null) return;
-
-    final selectedLocation = LatLng(position.latitude, position.longitude);
-    final addressName = await _locationService.reverseGeocode(selectedLocation);
-
-    filtersViewModel.setSelectedLocationWithDefaultDistance(
-      selectedLocation,
-      addressName ?? 'Ma position actuelle',
-    );
-
-    search.execute();
-  }
-
   Future<Result<void>> _search() async {
     isSearching = true;
     errorMessage = null;
@@ -205,23 +141,7 @@ class SearchViewModel extends ChangeNotifier {
       if (filtersViewModel.keywordQuery != null &&
           filtersViewModel.keywordQuery!.isNotEmpty) {
         final query = filtersViewModel.keywordQuery!.toLowerCase();
-        var matchesSearch = false;
-
-        if (plan.title.toLowerCase().contains(query) ||
-            plan.description.toLowerCase().contains(query)) {
-          matchesSearch = true;
-        }
-
-        if (!matchesSearch) {
-          for (final step in plan.steps) {
-            if (step.title.toLowerCase().contains(query) ||
-                step.description.toLowerCase().contains(query)) {
-              matchesSearch = true;
-              break;
-            }
-          }
-        }
-
+        final matchesSearch = _matchesQuery(plan, query);
         if (!matchesSearch) return null;
       }
 
@@ -238,11 +158,11 @@ class SearchViewModel extends ChangeNotifier {
               selectedLocation,
             );
           } else {
-            final distanceInMeters = _locationService.calculateDistanceToPoint(
-              firstStep.position!.latitude,
-              firstStep.position!.longitude,
-            );
-            totalDistance = distanceInMeters ?? 0;
+            totalDistance = _locationService.calculateDistanceToPoint(
+                  firstStep.position!.latitude,
+                  firstStep.position!.longitude,
+                ) ??
+                0;
           }
         }
       }
@@ -258,32 +178,49 @@ class SearchViewModel extends ChangeNotifier {
 
     final metricsList =
         (await Future.wait(futures)).whereType<PlanWithMetrics>().toList();
+    final filtered = _applyFilters(metricsList);
 
-    final filtered = metricsList.where((m) {
-      if (filtersViewModel.effectiveDistanceRange != null) {
-        final range = filtersViewModel.effectiveDistanceRange!;
-        if (m.totalDistance < range.start || m.totalDistance > range.end) {
-          return false;
-        }
+    results = filtered;
+    isSearching = false;
+    notifyListeners();
+    return const Result.ok(null);
+  }
+
+  bool _matchesQuery(Plan plan, String query) {
+    if (plan.title.toLowerCase().contains(query) ||
+        plan.description.toLowerCase().contains(query)) {
+      return true;
+    }
+    for (final step in plan.steps) {
+      if (step.title.toLowerCase().contains(query) ||
+          step.description.toLowerCase().contains(query)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  List<PlanWithMetrics> _applyFilters(List<PlanWithMetrics> metricsList) {
+    return metricsList.where((m) {
+      final distanceRange = filtersViewModel.effectiveDistanceRange;
+      if (distanceRange != null &&
+          (m.totalDistance < distanceRange.start ||
+              m.totalDistance > distanceRange.end)) {
+        return false;
       }
 
-      if (filtersViewModel.costRange != null) {
-        final range = filtersViewModel.costRange!;
-        if (range.start > 0.0 && m.totalCost < range.start) {
-          return false;
-        }
-        if (range.end < 999999.0 && m.totalCost > range.end) {
-          return false;
-        }
+      final costRange = filtersViewModel.costRange;
+      if (costRange != null &&
+          ((costRange.start > 0.0 && m.totalCost < costRange.start) ||
+              (costRange.end < 999999.0 && m.totalCost > costRange.end))) {
+        return false;
       }
 
-      if (filtersViewModel.durationRange != null) {
-        final range = filtersViewModel.durationRange!;
+      final durationRange = filtersViewModel.durationRange;
+      if (durationRange != null) {
         final durSec = m.totalDuration.inSeconds.toDouble();
-        if (range.start > 0.0 && durSec < range.start) {
-          return false;
-        }
-        if (range.end < (999999 * 60) && durSec > range.end) {
+        if ((durationRange.start > 0.0 && durSec < durationRange.start) ||
+            (durationRange.end < (999999 * 60) && durSec > durationRange.end)) {
           return false;
         }
       }
@@ -293,39 +230,31 @@ class SearchViewModel extends ChangeNotifier {
         return false;
       }
 
-      if (filtersViewModel.pmrOnly == true) {
-        if (m.plan.isAccessible != true) return false;
+      if (filtersViewModel.pmrOnly == true && m.plan.isAccessible != true) {
+        return false;
       }
 
       return true;
-    }).toList();
+    }).toList()
+      ..sort((a, b) {
+        switch (filtersViewModel.sortBy) {
+          case SortOption.cost:
+            return a.totalCost.compareTo(b.totalCost);
+          case SortOption.duration:
+            return a.totalDuration.compareTo(b.totalDuration);
+          case SortOption.favorites:
+            return b.favoritesCount.compareTo(a.favoritesCount);
+          case SortOption.recent:
+            final da = a.plan.createdAt;
+            final db = b.plan.createdAt;
+            return (da == null || db == null) ? 0 : db.compareTo(da);
+        }
+      });
+  }
 
-    switch (filtersViewModel.sortBy) {
-      case SortOption.cost:
-        filtered.sort((a, b) => a.totalCost.compareTo(b.totalCost));
-        break;
-      case SortOption.duration:
-        filtered.sort((a, b) => a.totalDuration.compareTo(b.totalDuration));
-        break;
-      case SortOption.favorites:
-        filtered.sort((a, b) => b.favoritesCount.compareTo(a.favoritesCount));
-        break;
-      case SortOption.recent:
-        filtered.sort((a, b) {
-          final da = a.plan.createdAt;
-          final db = b.plan.createdAt;
-          if (da == null || db == null) return 0;
-          return db.compareTo(da);
-        });
-        break;
-    }
-
-    results = filtered;
-    _log.fine('Recherche terminée : ${results.length} plans trouvés');
-
-    isSearching = false;
-    notifyListeners();
-    return const Result.ok(null);
+  void clearAllFilters() {
+    filtersViewModel.clearAllFilters();
+    search.execute();
   }
 
   @override

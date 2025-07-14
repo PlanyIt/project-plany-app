@@ -47,7 +47,10 @@ class _SearchScreenState extends State<SearchScreen> {
       _searchController.text = widget.initialQuery!;
     }
 
-    widget.viewModel.setInitialFilters(categoryId: widget.initialCategory);
+    if (widget.initialCategory != null) {
+      widget.viewModel.filtersViewModel
+          .setSelectedCategory(widget.initialCategory);
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshCurrentLocation();

@@ -35,33 +35,39 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
   @override
   void initState() {
     super.initState();
-    widget.viewModel.initializeTempValues();
+    widget.viewModel.filtersViewModel.initializeTempValues();
     _initializeControllers();
     _initializeAnimation();
   }
 
   void _initializeControllers() {
-    _minCostController.text = widget.viewModel.tempMinCost;
-    _maxCostController.text = widget.viewModel.tempMaxCost;
-    _minDurationController.text = widget.viewModel.tempMinDuration;
-    _maxDurationController.text = widget.viewModel.tempMaxDuration;
-    _keywordsController.text = widget.viewModel.keywordQuery ?? '';
+    _minCostController.text = widget.viewModel.filtersViewModel.tempMinCost;
+    _maxCostController.text = widget.viewModel.filtersViewModel.tempMaxCost;
+    _minDurationController.text =
+        widget.viewModel.filtersViewModel.tempMinDuration;
+    _maxDurationController.text =
+        widget.viewModel.filtersViewModel.tempMaxDuration;
+    _keywordsController.text =
+        widget.viewModel.filtersViewModel.keywordQuery ?? '';
     _favoritesController.text =
-        widget.viewModel.tempFavoritesThreshold?.toString() ?? '';
+        widget.viewModel.filtersViewModel.tempFavoritesThreshold?.toString() ??
+            '';
 
     // Écouter les changements des controllers
     _minCostController.addListener(() {
-      widget.viewModel.updateTempCost(minCost: _minCostController.text);
+      widget.viewModel.filtersViewModel
+          .updateTempCost(minCost: _minCostController.text);
     });
     _maxCostController.addListener(() {
-      widget.viewModel.updateTempCost(maxCost: _maxCostController.text);
+      widget.viewModel.filtersViewModel
+          .updateTempCost(maxCost: _maxCostController.text);
     });
     _minDurationController.addListener(() {
-      widget.viewModel
+      widget.viewModel.filtersViewModel
           .updateTempDuration(minDuration: _minDurationController.text);
     });
     _maxDurationController.addListener(() {
-      widget.viewModel
+      widget.viewModel.filtersViewModel
           .updateTempDuration(maxDuration: _maxDurationController.text);
     });
     widget.viewModel.filtersViewModel.setKeywordQuery(_keywordsController.text);
@@ -95,7 +101,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
   }
 
   void _applyFilters() async {
-    final success = widget.viewModel.applyTempFilters();
+    final success = widget.viewModel.filtersViewModel.applyTempFilters();
     if (success && mounted) {
       Navigator.of(context).pop();
     }
@@ -103,7 +109,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
 
   void _resetFilters() {
     widget.viewModel.clearAllFilters();
-    widget.viewModel.resetTempValues();
+    widget.viewModel.filtersViewModel.resetTempValues();
 
     // Réinitialiser les controllers
     _minCostController.clear();
@@ -176,8 +182,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
         animation: widget.viewModel,
         builder: (context, _) {
           return SortOptionSelector(
-            selectedOption: widget.viewModel.tempSortBy,
-            onChanged: widget.viewModel.updateTempSortBy,
+            selectedOption: widget.viewModel.filtersViewModel.tempSortBy,
+            onChanged: widget.viewModel.filtersViewModel.updateTempSortBy,
           );
         },
       ),
@@ -222,15 +228,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             GestureDetector(
-              onTap: () => widget.viewModel.updateTempSelectedCategory(null),
+              onTap: () => widget.viewModel.filtersViewModel
+                  .updateTempSelectedCategory(null),
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: widget.viewModel.tempSelectedCategory == null
-                      ? Colors.indigo.withValues(alpha: .1)
-                      : Colors.transparent,
+                  color:
+                      widget.viewModel.filtersViewModel.tempSelectedCategory ==
+                              null
+                          ? Colors.indigo.withValues(alpha: .1)
+                          : Colors.transparent,
                   border: Border.all(
-                    color: widget.viewModel.tempSelectedCategory == null
+                    color: widget.viewModel.filtersViewModel
+                                .tempSelectedCategory ==
+                            null
                         ? Colors.indigo
                         : theme.dividerColor.withValues(alpha: .3),
                   ),
@@ -240,7 +251,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                   children: [
                     Icon(
                       Icons.all_inclusive_rounded,
-                      color: widget.viewModel.tempSelectedCategory == null
+                      color: widget.viewModel.filtersViewModel
+                                  .tempSelectedCategory ==
+                              null
                           ? Colors.indigo
                           : theme.textTheme.bodyMedium?.color,
                       size: 20,
@@ -249,13 +262,16 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                     Text(
                       'Toutes les catégories',
                       style: TextStyle(
-                        color: widget.viewModel.tempSelectedCategory == null
+                        color: widget.viewModel.filtersViewModel
+                                    .tempSelectedCategory ==
+                                null
                             ? Colors.indigo
                             : theme.textTheme.bodyMedium?.color,
-                        fontWeight:
-                            widget.viewModel.tempSelectedCategory == null
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                        fontWeight: widget.viewModel.filtersViewModel
+                                    .tempSelectedCategory ==
+                                null
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -267,17 +283,19 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
             ...categories.map((category) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: GestureDetector(
-                    onTap: () => widget.viewModel
+                    onTap: () => widget.viewModel.filtersViewModel
                         .updateTempSelectedCategory(category.id),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color:
-                            widget.viewModel.tempSelectedCategory == category.id
-                                ? Colors.indigo.withValues(alpha: .1)
-                                : Colors.transparent,
+                        color: widget.viewModel.filtersViewModel
+                                    .tempSelectedCategory ==
+                                category.id
+                            ? Colors.indigo.withValues(alpha: .1)
+                            : Colors.transparent,
                         border: Border.all(
-                          color: widget.viewModel.tempSelectedCategory ==
+                          color: widget.viewModel.filtersViewModel
+                                      .tempSelectedCategory ==
                                   category.id
                               ? Colors.indigo
                               : theme.dividerColor.withValues(alpha: .3),
@@ -288,7 +306,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                         children: [
                           Icon(
                             getIconData(category.icon),
-                            color: widget.viewModel.tempSelectedCategory ==
+                            color: widget.viewModel.filtersViewModel
+                                        .tempSelectedCategory ==
                                     category.id
                                 ? Colors.indigo
                                 : theme.textTheme.bodyMedium?.color,
@@ -298,15 +317,16 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                           Text(
                             category.name,
                             style: TextStyle(
-                              color: widget.viewModel.tempSelectedCategory ==
+                              color: widget.viewModel.filtersViewModel
+                                          .tempSelectedCategory ==
                                       category.id
                                   ? Colors.indigo
                                   : theme.textTheme.bodyMedium?.color,
-                              fontWeight:
-                                  widget.viewModel.tempSelectedCategory ==
-                                          category.id
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
+                              fontWeight: widget.viewModel.filtersViewModel
+                                          .tempSelectedCategory ==
+                                      category.id
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                           ),
                         ],
@@ -332,8 +352,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
               animation: widget.viewModel,
               builder: (context, _) {
                 return DistanceSlider(
-                  values: widget.viewModel.tempDistanceRange,
-                  onChanged: widget.viewModel.updateTempDistanceRange,
+                  values: widget.viewModel.filtersViewModel.tempDistanceRange,
+                  onChanged:
+                      widget.viewModel.filtersViewModel.updateTempDistanceRange,
                 );
               },
             )
@@ -383,7 +404,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
             maxController: _maxDurationController,
             minLabel: 'Durée minimum',
             maxLabel: 'Durée maximum',
-            suffix: widget.viewModel.tempDurationUnit,
+            suffix: widget.viewModel.filtersViewModel.tempDurationUnit,
             color: Colors.orange,
             fieldName: 'durée',
           ),
@@ -420,15 +441,16 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
             const SizedBox(height: 8),
             Row(
               children: units.map((unit) {
-                final isSelected = widget.viewModel.tempDurationUnit == unit;
+                final isSelected =
+                    widget.viewModel.filtersViewModel.tempDurationUnit == unit;
                 return Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(
                       right: unit != units.last ? 8 : 0,
                     ),
                     child: GestureDetector(
-                      onTap: () =>
-                          widget.viewModel.updateTempDurationUnit(unit),
+                      onTap: () => widget.viewModel.filtersViewModel
+                          .updateTempDurationUnit(unit),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
@@ -476,9 +498,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
         animation: widget.viewModel,
         builder: (context, _) {
           return SwitchListTile.adaptive(
-            value: widget.viewModel.tempPmrOnly ?? false,
+            value: widget.viewModel.filtersViewModel.tempPmrOnly ?? false,
             onChanged: (value) {
-              widget.viewModel.updateTempPmrOnly(value ? true : null);
+              widget.viewModel.filtersViewModel
+                  .updateTempPmrOnly(value ? true : null);
             },
             activeColor: Colors.teal,
             title: const Text('Plans accessibles PMR uniquement'),
@@ -526,7 +549,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
             child: AnimatedBuilder(
               animation: widget.viewModel,
               builder: (context, _) {
-                final hasErrors = widget.viewModel.hasTempValidationErrors;
+                final hasErrors =
+                    widget.viewModel.filtersViewModel.hasTempValidationErrors;
 
                 return ElevatedButton(
                   onPressed: hasErrors ? null : _applyFilters,
