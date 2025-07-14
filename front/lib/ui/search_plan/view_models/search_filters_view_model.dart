@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../utils/validation_utils.dart';
 
-enum SortOption { cost, duration, favorites, recent }
+enum SortOption { cost, duration, recent, favorites }
 
 class SearchFiltersViewModel extends ChangeNotifier {
   // --- Filtres actifs ---
   String? selectedCategory;
-  String? searchQuery;
   RangeValues? distanceRange;
   RangeValues? costRange;
   RangeValues? durationRange;
   int? favoritesThreshold;
-  SortOption sortBy = SortOption.recent;
-  bool? pmrOnly; // Ajout PMR
+  SortOption sortBy = SortOption.favorites;
+  bool? pmrOnly;
+  LatLng? selectedLocation;
+  String? selectedLocationName;
+  String? keywordQuery;
+  String? locationSearchQuery;
 
   // --- Valeurs temporaires ---
   RangeValues? _tempDistanceRange;
@@ -23,8 +27,8 @@ class SearchFiltersViewModel extends ChangeNotifier {
   String _tempMaxDuration = '';
   String _tempDurationUnit = 'h';
   int? _tempFavoritesThreshold;
-  SortOption _tempSortBy = SortOption.recent;
-  bool? _tempPmrOnly; // Ajout PMR temporaire
+  SortOption _tempSortBy = SortOption.favorites;
+  bool? _tempPmrOnly;
 
   RangeValues? get tempDistanceRange => _tempDistanceRange;
   String? get tempSelectedCategory => _tempSelectedCategory;
@@ -35,19 +39,42 @@ class SearchFiltersViewModel extends ChangeNotifier {
   String get tempDurationUnit => _tempDurationUnit;
   int? get tempFavoritesThreshold => _tempFavoritesThreshold;
   SortOption get tempSortBy => _tempSortBy;
-  bool? get tempPmrOnly => _tempPmrOnly; // Getter PMR
+  bool? get tempPmrOnly => _tempPmrOnly;
 
   void setSelectedCategory(String? categoryId) {
     selectedCategory = categoryId;
     notifyListeners();
   }
 
-  void setSearchQuery(String? query) {
+  void setKeywordQuery(String? query) {
     final newQuery = query?.trim().isEmpty == true ? null : query?.trim();
-    if (searchQuery != newQuery) {
-      searchQuery = newQuery;
+    if (keywordQuery != newQuery) {
+      keywordQuery = newQuery;
       notifyListeners();
     }
+  }
+
+  void setSelectedLocation(LatLng? location, String? name) {
+    selectedLocation = location;
+    selectedLocationName = name;
+
+    if (location == null) {
+      distanceRange = null;
+    }
+
+    notifyListeners();
+  }
+
+  RangeValues? get effectiveDistanceRange {
+    if (selectedLocation != null) {
+      return distanceRange ?? const RangeValues(0, 5000);
+    }
+    return null;
+  }
+
+  void setLocationSearchQuery(String? query) {
+    locationSearchQuery = query;
+    notifyListeners();
   }
 
   void initializeTempValues() {
@@ -155,6 +182,13 @@ class SearchFiltersViewModel extends ChangeNotifier {
     }
   }
 
+  void setSelectedLocationWithDefaultDistance(LatLng location, String name) {
+    selectedLocation = location;
+    selectedLocationName = name;
+    distanceRange = const RangeValues(0, 5000);
+    notifyListeners();
+  }
+
   bool applyTempFilters() {
     if (hasTempValidationErrors) return false;
 
@@ -219,12 +253,12 @@ class SearchFiltersViewModel extends ChangeNotifier {
 
   void clearAllFilters() {
     selectedCategory = null;
-    searchQuery = null;
+    keywordQuery = null;
     distanceRange = null;
     costRange = null;
     durationRange = null;
     favoritesThreshold = null;
-    sortBy = SortOption.recent;
+    sortBy = SortOption.favorites;
     pmrOnly = null;
     notifyListeners();
   }
@@ -238,7 +272,7 @@ class SearchFiltersViewModel extends ChangeNotifier {
     _tempMaxDuration = '';
     _tempDurationUnit = 'h';
     _tempFavoritesThreshold = null;
-    _tempSortBy = SortOption.recent;
+    _tempSortBy = SortOption.favorites;
     _tempPmrOnly = null;
     notifyListeners();
   }

@@ -131,8 +131,33 @@ class SearchChipsViewModel extends ChangeNotifier {
       });
     }
 
+    if (filtersViewModel.selectedLocationName != null) {
+      filters.add({
+        'type': 'location',
+        'label': filtersViewModel.selectedLocationName!,
+        'onRemove': () {
+          filtersViewModel.setSelectedLocation(null, null);
+        },
+        'icon': Icons.location_on,
+        'color': Colors.blue,
+      });
+    }
+
+    if (filtersViewModel.keywordQuery != null &&
+        filtersViewModel.keywordQuery!.isNotEmpty) {
+      filters.add({
+        'type': 'keyword',
+        'label': filtersViewModel.keywordQuery!,
+        'onRemove': () {
+          filtersViewModel.setKeywordQuery(null);
+        },
+        'icon': Icons.search,
+        'color': Colors.deepOrange,
+      });
+    }
+
     // --- Chip Tri ---
-    if (filtersViewModel.sortBy != SortOption.recent) {
+    if (filtersViewModel.sortBy != SortOption.favorites) {
       String label;
       switch (filtersViewModel.sortBy) {
         case SortOption.cost:
@@ -141,18 +166,18 @@ class SearchChipsViewModel extends ChangeNotifier {
         case SortOption.duration:
           label = 'Trier: Durée croissante';
           break;
-        case SortOption.favorites:
-          label = 'Trier: Populaires';
+        case SortOption.recent:
+          label = 'Trier: Récent';
           break;
         default:
-          label = 'Trier: Récent';
+          label = 'Trier: Populaires';
       }
 
       filters.add({
         'type': 'sort',
         'label': label,
         'onRemove': () {
-          filtersViewModel.updateTempSortBy(SortOption.recent);
+          filtersViewModel.updateTempSortBy(SortOption.favorites);
           filtersViewModel.applyTempFilters();
         },
         'icon': Icons.sort,

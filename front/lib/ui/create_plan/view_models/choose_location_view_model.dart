@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -31,6 +32,8 @@ class ChooseLocationViewModel extends ChangeNotifier {
   List<SearchResult> _searchResults = [];
   String? _errorMessage;
 
+  Timer? _debounce;
+
   // Getters
   LatLng? get selectedLocation => _selectedLocation;
   String get selectedLocationName => _selectedLocationName;
@@ -43,6 +46,7 @@ class ChooseLocationViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -80,7 +84,6 @@ class ChooseLocationViewModel extends ChangeNotifier {
         _selectedLocationName = 'Localisation en cours...';
         _safeNotifyListeners();
 
-        // Fetch the actual location name
         await _updateLocationName(latLng);
       } else {
         _setFallbackLocation();
@@ -110,7 +113,6 @@ class ChooseLocationViewModel extends ChangeNotifier {
     _selectedLocationName = 'Localisation en cours...';
     _safeNotifyListeners();
 
-    // Fetch the actual location name
     await _updateLocationName(point);
   }
 
@@ -157,11 +159,9 @@ class ChooseLocationViewModel extends ChangeNotifier {
           final displayName = data['display_name'] as String;
           final parts = displayName.split(', ');
 
-          // Try to get a meaningful name from the address components
           final address = data['address'] as Map<String, dynamic>?;
 
           if (address != null) {
-            // Priority order for location name
             final nameKeys = [
               'house_number',
               'road',
@@ -216,7 +216,14 @@ class ChooseLocationViewModel extends ChangeNotifier {
     }
   }
 
-  void onSearchChanged(String query) async {
+  void onSearchChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _performSearch(query);
+    });
+  }
+
+  Future<void> _performSearch(String query) async {
     if (_isDisposed) return;
 
     if (query.isEmpty) {
@@ -249,8 +256,14 @@ class ChooseLocationViewModel extends ChangeNotifier {
   Future<List<SearchResult>> _searchPlaces(String query) async {
     try {
       final encodedQuery = Uri.encodeComponent(query);
-      final url = Uri.parse(
-          'https://nominatim.openstreetmap.org/search?format=json&q=$encodedQuery&limit=5&countrycodes=FR&addressdetails=1');
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search'
+          '?format=json'
+          '&q=$encodedQuery'
+          '&limit=5'
+          '&countrycodes=FR'
+          '&addressdetails=1'
+          '&bounded=1'
+          '&viewbox=-5.0,51.0,9.0,41.0'); // Limite géographique France
 
       final response = await http.get(
         url,

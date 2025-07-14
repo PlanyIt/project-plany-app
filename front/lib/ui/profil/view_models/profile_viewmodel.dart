@@ -134,19 +134,14 @@ class ProfileViewModel extends ChangeNotifier {
         final result = await userRepository.unfollowUser(userProfile!.id!);
         if (result is Ok<void>) {
           isFollowing = false;
-          userStats = userStats?.copyWith(
-            followersCount: (userStats?.followersCount ?? 0) - 1,
-          );
         }
       } else {
         final result = await userRepository.followUser(userProfile!.id!);
         if (result is Ok<void>) {
           isFollowing = true;
-          userStats = userStats?.copyWith(
-            followersCount: (userStats?.followersCount ?? 0) + 1,
-          );
         }
       }
+      await _loadStats();
     } finally {
       loadingFollow = false;
       notifyListeners();

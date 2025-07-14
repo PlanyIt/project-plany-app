@@ -1,5 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsString, IsBoolean, IsOptional, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,f
+  IsOptional,
+  IsArray,
+  IsNumber,
+} from 'class-validator';
 
 export class PlanDto {
   @IsString()
@@ -31,4 +37,12 @@ export class PlanDto {
   @IsString({ each: true })
   @IsOptional()
   favorites?: string[];
+
+  @IsNumber()
+  @IsOptional()
+  totalCost?: number;
+
+  @IsNumber()
+  @IsOptional()
+  totalDuration?: number;
 }

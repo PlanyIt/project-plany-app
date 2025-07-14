@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
+import '../../data/services/location_service.dart';
 import '../../routing/routes.dart';
 import '../core/ui/list/vertical_plan_list.dart';
 import '../core/ui/search_bar/search_bar.dart';
+import '../create_plan/view_models/choose_location_view_model.dart';
 import 'view_models/search_view_model.dart';
 import 'widgets/filter_bottom_sheet.dart';
 import 'widgets/filter_chips_section.dart';
@@ -12,6 +14,7 @@ import 'widgets/filter_chips_section.dart';
 class SearchScreen extends StatefulWidget {
   final String? initialQuery;
   final String? initialCategory;
+  final SearchViewModel viewModel;
 
   const SearchScreen({
     super.key,
@@ -20,8 +23,6 @@ class SearchScreen extends StatefulWidget {
     required this.viewModel,
   });
 
-  final SearchViewModel viewModel;
-
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
@@ -29,25 +30,59 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  bool _isUpdatingController = false;
+  late final ChooseLocationViewModel _locationViewModel;
+  final LocationService _locationService = LocationService();
+
+  bool _isLoadingLocation = false;
 
   @override
   void initState() {
     super.initState();
+    _locationViewModel =
+        ChooseLocationViewModel(locationService: _locationService);
+
+    _initializeLocationAndFilters();
+
     if (widget.initialQuery != null) {
       _searchController.text = widget.initialQuery!;
     }
 
-    // Appliquer les filtres initiaux
-    widget.viewModel.setInitialFilters(categoryId: widget.initialCategory);
+    if (widget.initialCategory != null) {
+      widget.viewModel.filtersViewModel
+          .setSelectedCategory(widget.initialCategory);
+    }
 
-    // Écouter les changements du viewModel pour synchroniser le controller
-    widget.viewModel.addListener(_syncSearchController);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshCurrentLocation();
+    });
+  }
+
+  Future<void> _initializeLocationAndFilters() async {
+    final position = await _locationService.getCurrentLocation();
+    if (position != null) {
+      final location = LatLng(position.latitude, position.longitude);
+      final name = await _locationService.reverseGeocode(location) ??
+          'Ma position actuelle';
+      widget.viewModel.filtersViewModel.setSelectedLocation(location, name);
+      widget.viewModel.filtersViewModel.distanceRange =
+          const RangeValues(0, 5000);
+      widget.viewModel.search.execute();
+    }
+  }
+
+  Future<void> _refreshCurrentLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+    });
+    await widget.viewModel.initializeWithCurrentLocation();
+    setState(() {
+      _isLoadingLocation = false;
+    });
   }
 
   @override
   void dispose() {
-    widget.viewModel.removeListener(_syncSearchController);
+    _locationViewModel.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -64,29 +99,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  void _onSearchChanged(String query) {
-    if (!_isUpdatingController) {
-      widget.viewModel.setSearchQuery(query);
-    }
-  }
-
-  void _syncSearchController() {
-    // Éviter les cycles de notifications
-    if (_isUpdatingController) return;
-
-    final currentQuery = widget.viewModel.searchQuery ?? '';
-    if (currentQuery != _searchController.text) {
-      // Différer la mise à jour pour éviter setState during build
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_isUpdatingController) {
-          _isUpdatingController = true;
-          _searchController.text = currentQuery;
-          _isUpdatingController = false;
-        }
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,7 +112,6 @@ class _SearchScreenState extends State<SearchScreen> {
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
-          // Search bar and filter button
           Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: Row(
@@ -109,13 +120,25 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: DashboardSearchBar(
                     controller: _searchController,
                     focusNode: _searchFocusNode,
-                    hintText: 'Rechercher des plans...',
-                    onChanged: _onSearchChanged,
-                    onSubmitted: _onSearchChanged,
+                    hintText: 'Rechercher un lieu...',
                     autofocus: true,
+                    onChanged: (query) {
+                      _locationViewModel.onSearchChanged(query);
+                    },
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
+                _isLoadingLocation
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.my_location),
+                        onPressed: _refreshCurrentLocation,
+                      ),
+                const SizedBox(width: 8),
                 Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
@@ -126,13 +149,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: InkWell(
                       onTap: () => _showFilterBottomSheet(context),
                       borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Icon(
-                          Icons.tune,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: Icon(Icons.tune, color: Colors.white, size: 20),
                       ),
                     ),
                   ),
@@ -140,63 +159,90 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
           ),
-
-          // Filter chips section
           AnimatedBuilder(
             animation: widget.viewModel,
             builder: (context, _) {
               return FilterChipsSection(viewModel: widget.viewModel);
             },
           ),
-
-          // Results section
-          Expanded(
-            child: AnimatedBuilder(
-              animation: widget.viewModel,
-              builder: (context, _) {
-                if (widget.viewModel.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                if (widget.viewModel.errorMessage != null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.grey[400],
+          AnimatedBuilder(
+            animation: _locationViewModel,
+            builder: (context, _) {
+              if (_locationViewModel.searchResults.isNotEmpty ||
+                  _locationViewModel.isSearching) {
+                return Expanded(
+                  child: _locationViewModel.isSearching
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                          itemCount: _locationViewModel.searchResults.length,
+                          itemBuilder: (context, index) {
+                            final result =
+                                _locationViewModel.searchResults[index];
+                            return ListTile(
+                              title: Text(result.name),
+                              subtitle: Text(result.description),
+                              leading: const Icon(Icons.location_on),
+                              onTap: () {
+                                widget.viewModel.filtersViewModel
+                                    .setSelectedLocationWithDefaultDistance(
+                                  result.location,
+                                  result.name,
+                                );
+                                widget.viewModel.search.execute();
+                                _locationViewModel.clearSearchResults();
+                                _searchFocusNode.unfocus();
+                                _searchController.clear();
+                              },
+                            );
+                          },
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Erreur de chargement',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.viewModel.errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => widget.viewModel.load.execute(),
-                          child: const Text('Réessayer'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return VerticalPlanList(
-                  plans: widget.viewModel.results,
-                  isLoading: widget.viewModel.isSearching,
                 );
-              },
-            ),
+              }
+
+              return Expanded(
+                child: AnimatedBuilder(
+                  animation: widget.viewModel,
+                  builder: (context, _) {
+                    if (widget.viewModel.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (widget.viewModel.errorMessage != null) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline,
+                                size: 64, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Erreur de chargement',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.viewModel.errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => widget.viewModel.load.execute(),
+                              child: const Text('Réessayer'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return VerticalPlanList(
+                      plans: widget.viewModel.results,
+                      isLoading: widget.viewModel.isSearching,
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
