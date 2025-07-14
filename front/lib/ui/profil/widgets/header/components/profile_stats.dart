@@ -96,7 +96,7 @@ class ProfileStats extends StatelessWidget {
                 ),
                 _buildVerticalDivider(),
                 _buildEnhancedStatCard(
-                  (viewModel.userStats?.plansCount ?? 0).toString(),
+                  (viewModel.userStats?.followersCount ?? 0).toString(),
                   'Abonnés',
                   Icons.person_add,
                   Colors.blue,

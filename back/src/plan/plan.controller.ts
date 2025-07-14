@@ -89,8 +89,8 @@ export class PlanController {
   }
 
   @Get('user/:userId')
-  async findAllByUserId(@Param('userId') userId: string) {
-    return this.planService.findAllByUserId(userId);
+  async findAllByUserId(@Param('userId') userId: string, @Req() req) {
+    return this.planService.findAllByUserId(userId, req.user._id);
   }
 
   @Get('user/:userId/favorites')
