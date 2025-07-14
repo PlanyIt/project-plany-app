@@ -39,6 +39,7 @@ class ProfileViewModel extends ChangeNotifier {
   UserStats? userStats;
   bool isFollowing = false;
   bool loadingFollow = false;
+  bool isUploadingAvatar = false;
   String selectedSection = 'plans';
 
   List<Category> userCategories = [];
@@ -52,11 +53,28 @@ class ProfileViewModel extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    final isCurrentUser =
+    final isCurrent =
         userId == null || userId == authRepository.currentUser?.id;
 
-    if (isCurrentUser) {
-      userProfile = authRepository.currentUser;
+    if (isCurrent) {
+      final userResult =
+          await userRepository.getUserById(authRepository.currentUser!.id!);
+      if (userResult is Ok<User>) {
+        userProfile = User(
+          id: authRepository.currentUser?.id,
+          username: userResult.value.username,
+          email: userResult.value.email,
+          description: userResult.value.description,
+          isPremium: userResult.value.isPremium,
+          photoUrl: userResult.value.photoUrl,
+          birthDate: userResult.value.birthDate,
+          gender: userResult.value.gender,
+          followers: userResult.value.followers,
+          following: userResult.value.following,
+          createdAt: userResult.value.createdAt,
+        );
+        authRepository.updateCurrentUser(userProfile!);
+      }
     } else {
       final userResult = await userRepository.getUserById(userId);
       userProfile = userResult is Ok<User> ? userResult.value : null;
@@ -172,6 +190,7 @@ class ProfileViewModel extends ChangeNotifier {
   void updatePhoto(String url) {
     if (userProfile == null) return;
     userProfile = userProfile!.copyWith(photoUrl: url);
+    authRepository.updateCurrentUser(userProfile!);
     notifyListeners();
   }
 
@@ -180,43 +199,61 @@ class ProfileViewModel extends ChangeNotifier {
     String? description,
     DateTime? birthDate,
     String? gender,
+    bool? isPremium,
   }) async {
-    await userRepository.updateUserProfile(userProfile!.copyWith(
+    userProfile = userProfile!.copyWith(
       username: username,
       description: description,
       birthDate: birthDate,
       email: userProfile!.email,
-      isPremium: userProfile!.isPremium,
+      isPremium: isPremium ?? userProfile!.isPremium,
       photoUrl: userProfile!.photoUrl,
-      gender: userProfile!.gender,
-    ));
+      gender: gender ?? userProfile!.gender,
+    );
 
-    await loadUserData(userProfile!.id);
+    await userRepository.updateUserProfile(userProfile!);
+    authRepository.updateCurrentUser(userProfile!);
+
+    notifyListeners();
   }
 
   Future<void> updateProfilePhoto(File file) async {
+    isUploadingAvatar = true;
+    notifyListeners();
+
     final result = await userRepository.uploadImage(file);
     String? imageUrl;
     if (result is Ok<String>) {
       imageUrl = result.value;
-    } else {
-      return;
+      await userRepository.updateUserProfile(
+        userProfile!.copyWith(photoUrl: imageUrl),
+      );
+      authRepository
+          .updateCurrentUser(userProfile!.copyWith(photoUrl: imageUrl));
+      updatePhoto(imageUrl);
+
+      // Refresh plans with updated avatar
+      await myPlansViewModel.loadPlans(userProfile!.id!);
     }
-    await userRepository
-        .updateUserProfile(userProfile!.copyWith(photoUrl: imageUrl));
-    await loadUserData(userProfile!.id);
+
+    isUploadingAvatar = false;
+    notifyListeners();
   }
 
   Future<void> removeProfilePhoto() async {
     await userRepository
         .updateUserProfile(userProfile!.copyWith(photoUrl: null));
-    await loadUserData(userProfile!.id);
+    authRepository.updateCurrentUser(userProfile!.copyWith(photoUrl: null));
+    updatePhoto('');
+    await myPlansViewModel.loadPlans(userProfile!.id!);
   }
 
   Future<Result<void>> updateEmail(String email, String password) async {
     try {
       await userRepository.updateEmail(email, password, userProfile?.id ?? '');
-      await loadUserData(userProfile?.id);
+      userProfile = userProfile!.copyWith(email: email);
+      authRepository.updateCurrentUser(userProfile!);
+      notifyListeners();
       return Result.ok(null);
     } catch (e) {
       return Result.error(Exception(e));

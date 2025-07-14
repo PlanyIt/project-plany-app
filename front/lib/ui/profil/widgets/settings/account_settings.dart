@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../domain/models/user/user.dart';
 import '../../../../utils/helpers.dart';
 import '../../../../utils/result.dart';
-import '../common/section_text_field.dart';
 import '../../view_models/profile_viewmodel.dart';
+import '../common/section_text_field.dart';
 import '../content/premium_popup.dart';
 
 class AccountSettings extends StatefulWidget {
-  final User userProfile;
   final Function onProfileUpdated;
   final Function(String, String) showInfoCard;
   final Function(String) showErrorCard;
@@ -17,7 +15,6 @@ class AccountSettings extends StatefulWidget {
 
   const AccountSettings({
     super.key,
-    required this.userProfile,
     required this.onProfileUpdated,
     required this.showInfoCard,
     required this.showErrorCard,
@@ -30,8 +27,8 @@ class AccountSettings extends StatefulWidget {
 
 class AccountSettingsState extends State<AccountSettings> {
   Future<void> _showEditEmailPopup() async {
-    final emailController =
-        TextEditingController(text: widget.userProfile.email);
+    final user = widget.viewModel.userProfile;
+    final emailController = TextEditingController(text: user?.email ?? '');
     final passwordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     var obscurePassword = true;
@@ -307,11 +304,13 @@ class AccountSettingsState extends State<AccountSettings> {
 
   @override
   Widget build(BuildContext context) {
+    final user = widget.viewModel.userProfile;
+
     return Column(
       children: [
         _buildInfoRow(
           title: 'Adresse email',
-          value: widget.userProfile.email,
+          value: user?.email ?? '',
           icon: Icons.email_outlined,
           onEdit: _showEditEmailPopup,
         ),
@@ -320,14 +319,14 @@ class AccountSettingsState extends State<AccountSettings> {
           icon: Icons.lock_outline,
           onTap: _showChangePasswordPopup,
         ),
-        if (widget.userProfile.createdAt != null)
+        if (user?.createdAt != null)
           _buildInfoRow(
             title: 'Membre depuis',
-            value: formatDate(widget.userProfile.createdAt!),
+            value: formatDate(user!.createdAt!),
             icon: Icons.calendar_today_outlined,
           ),
         _buildPremiumStatusRow(
-          isPremium: widget.userProfile.isPremium,
+          isPremium: user?.isPremium ?? false,
           onTap: _showPremiumPopup,
         ),
       ],

@@ -16,7 +16,8 @@ export class PlanDto {
   category: string;
 
   @IsString()
-  user: string;
+  @IsOptional()
+  user?: string;
 
   @IsArray()
   @Type(() => String)

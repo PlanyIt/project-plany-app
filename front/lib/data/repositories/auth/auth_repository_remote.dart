@@ -232,7 +232,7 @@ class AuthRepositoryRemote extends AuthRepository {
   @override
   Future<Result<void>> updatePassword(
       {required String currentPassword, required String newPassword}) {
-    return _authApiClient
+    return _apiClient
         .changePassword(currentPassword, newPassword)
         .then((result) {
       switch (result) {
@@ -244,5 +244,12 @@ class AuthRepositoryRemote extends AuthRepository {
           return Result.error(result.error);
       }
     });
+  }
+
+  @override
+  void updateCurrentUser(User user) {
+    _currentUser = user;
+    _authStorageService.saveUserJson(jsonEncode(_currentUser!.toJson()));
+    notifyListeners();
   }
 }

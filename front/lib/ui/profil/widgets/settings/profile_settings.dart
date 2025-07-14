@@ -1,8 +1,11 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../common/section_text_field.dart';
+
 import '../../view_models/profile_viewmodel.dart';
+import '../common/section_text_field.dart';
 import 'components/settings_row.dart';
 
 class ProfileSettings extends StatefulWidget {
@@ -122,8 +125,10 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                           birthDate: selectedBirthDate,
                           gender: selectedGender,
                         );
-                        if (context.mounted) Navigator.pop(context);
-                        widget.showInfoCard('Succès', 'Profil mis à jour');
+                        if (mounted && context.mounted) context.pop();
+                        if (mounted) {
+                          widget.showInfoCard('Succès', 'Profil mis à jour');
+                        }
                       },
                       child: const Text('Enregistrer'),
                     ),
@@ -219,15 +224,21 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                     ),
                   );
                 },
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: user.photoUrl != null
-                      ? NetworkImage(user.photoUrl!)
-                      : null,
-                  child: user.photoUrl == null
-                      ? const Icon(Icons.person, size: 50)
-                      : null,
-                ),
+                child: widget.viewModel.isUploadingAvatar
+                    ? const SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : CircleAvatar(
+                        radius: 50,
+                        backgroundImage: user.photoUrl != null
+                            ? NetworkImage(user.photoUrl!)
+                            : null,
+                        child: user.photoUrl == null
+                            ? const Icon(Icons.person, size: 50)
+                            : null,
+                      ),
               ),
               TextButton(
                 onPressed: () => _updateProfilePhoto(ImageSource.gallery),

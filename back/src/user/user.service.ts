@@ -7,10 +7,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
-import { Model, Connection, isValidObjectId } from 'mongoose';
+import { Model, Connection, isValidObjectId, Types } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from '../plan/schemas/plan.schema';
 import * as bcrypt from 'bcrypt';
+import e from 'express';
 
 @Injectable()
 export class UserService {
@@ -223,7 +224,7 @@ export class UserService {
 
     const populatedUser = await this.userModel
       .findById(user._id)
-      .populate('followers', 'username photoUrl')
+      .populate('followers', 'username email photoUrl')
       .exec();
 
     return populatedUser.followers;
@@ -240,11 +241,12 @@ export class UserService {
       .find({
         _id: { $in: user.following },
       })
-      .select('username photoUrl isPremium followers following');
+      .select('username email photoUrl isPremium followers following');
 
     const formattedUsers = followingUsers.map((user) => ({
       id: user._id,
       username: user.username,
+      email: user.email,
       photoUrl: user.photoUrl,
       isPremium: user.isPremium || false,
       followersCount: user.followers?.length || 0,
@@ -299,18 +301,15 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`Utilisateur ${userId} non trouvé`);
     }
-
+    const userObjectId = new Types.ObjectId(userId);
     const plansCount = await this.planModel.countDocuments({
-      user: userId,
+      user: userObjectId,
     });
-
     const favoritesCount = await this.planModel.countDocuments({
-      favorites: userId,
+      favorites: userObjectId,
     });
-
     const followersCount = user.followers?.length || 0;
     const followingCount = user.following?.length || 0;
-
     return {
       plansCount,
       favoritesCount,

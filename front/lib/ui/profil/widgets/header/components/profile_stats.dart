@@ -29,7 +29,7 @@ class ProfileStats extends StatelessWidget {
         border: Border.all(color: Colors.grey[200]!, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -51,7 +51,7 @@ class ProfileStats extends StatelessWidget {
                 ),
                 _buildVerticalDivider(),
                 _buildEnhancedStatCard(
-                  (viewModel.userStats?.plansCount ?? 0).toString(),
+                  (viewModel.userStats?.favoritesCount ?? 0).toString(),
                   'Favoris',
                   Icons.favorite,
                   Colors.red[400] ?? Colors.red,
@@ -67,7 +67,7 @@ class ProfileStats extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 _buildEnhancedStatCard(
-                  (viewModel.userStats?.plansCount ?? 0).toString(),
+                  (viewModel.userStats?.followingCount ?? 0).toString(),
                   'Abonnements',
                   Icons.people,
                   Colors.green,
@@ -75,7 +75,7 @@ class ProfileStats extends StatelessWidget {
                 ),
                 _buildVerticalDivider(),
                 _buildEnhancedStatCard(
-                  (viewModel.userStats?.plansCount ?? 0).toString(),
+                  (viewModel.userStats?.followersCount ?? 0).toString(),
                   'Abonnés',
                   Icons.person_add,
                   Colors.blue,
@@ -115,7 +115,7 @@ class ProfileStats extends StatelessWidget {
       height: 40,
       width: 1,
       margin: const EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.grey.withOpacity(0.2),
+      color: Colors.grey.withValues(alpha: .2),
     );
   }
 
@@ -141,7 +141,7 @@ class ProfileStats extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: .1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 18),
@@ -175,7 +175,7 @@ class ProfileStats extends StatelessWidget {
                         Icon(
                           Icons.arrow_forward_ios,
                           size: 10,
-                          color: color.withOpacity(0.7),
+                          color: color.withValues(alpha: .7),
                         ),
                       ],
                     ),

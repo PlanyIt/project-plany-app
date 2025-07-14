@@ -8,7 +8,7 @@ part of 'user_api_model.dart';
 
 _$UserApiModelImpl _$$UserApiModelImplFromJson(Map<String, dynamic> json) =>
     _$UserApiModelImpl(
-      id: json['id'] as String,
+      id: json['id'] as String?,
       username: json['username'] as String,
       email: json['email'] as String,
       description: json['description'] as String?,
@@ -26,6 +26,10 @@ _$UserApiModelImpl _$$UserApiModelImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      followersCount: (json['followersCount'] as num?)?.toInt(),
+      followingCount: (json['followingCount'] as num?)?.toInt(),
+      plansCount: (json['plansCount'] as num?)?.toInt(),
+      favoritesCount: (json['favoritesCount'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$UserApiModelImplToJson(_$UserApiModelImpl instance) =>
@@ -40,4 +44,8 @@ Map<String, dynamic> _$$UserApiModelImplToJson(_$UserApiModelImpl instance) =>
       'gender': instance.gender,
       'followers': instance.followers,
       'following': instance.following,
+      'followersCount': instance.followersCount,
+      'followingCount': instance.followingCount,
+      'plansCount': instance.plansCount,
+      'favoritesCount': instance.favoritesCount,
     };

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../view_models/profile_viewmodel.dart';
+import '../../content/premium_popup.dart';
 
 class ProfileUserInfo extends StatelessWidget {
   final ProfileViewModel viewModel;
   final bool isCurrentUser;
   final bool isFollowing;
   final bool loadingFollow;
-  final VoidCallback onPremiumTap;
   final VoidCallback onFollowTap;
 
   const ProfileUserInfo({
@@ -15,7 +15,6 @@ class ProfileUserInfo extends StatelessWidget {
     required this.isCurrentUser,
     required this.isFollowing,
     required this.loadingFollow,
-    required this.onPremiumTap,
     required this.onFollowTap,
   });
 
@@ -43,6 +42,89 @@ class ProfileUserInfo extends StatelessWidget {
     return "Débutant";
   }
 
+  Future<void> _showCancelPremiumDialog(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Désactiver Premium'),
+        content: const Text(
+            'Êtes-vous sûr de vouloir désactiver votre abonnement Premium ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Désactiver'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await viewModel.updateProfile(
+        username: viewModel.userProfile!.username,
+        description: viewModel.userProfile!.description,
+        birthDate: viewModel.userProfile!.birthDate,
+        gender: viewModel.userProfile!.gender,
+        isPremium: false,
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Votre abonnement Premium a été désactivé.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  Future<void> _showPremiumPopup(BuildContext context) async {
+    await PremiumPopup.show(
+      context: context,
+      viewModel: viewModel,
+      showInfoCard: (title, message) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Text(message),
+              ],
+            ),
+            backgroundColor: const Color(0xFF3425B5),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(10),
+          ),
+        );
+      },
+      showErrorCard: (message) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(10),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProfile = viewModel.userProfile!;
@@ -55,10 +137,9 @@ class ProfileUserInfo extends StatelessWidget {
               child: Text(
                 userProfile.username,
                 style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -67,10 +148,7 @@ class ProfileUserInfo extends StatelessWidget {
         ),
         Text(
           userProfile.email,
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
         ),
         const SizedBox(height: 10),
         Row(
@@ -84,156 +162,77 @@ class ProfileUserInfo extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    _getUserLevelEmoji(),
-                    style: const TextStyle(fontSize: 14),
-                  ),
+                  Text(_getUserLevelEmoji(),
+                      style: const TextStyle(fontSize: 14)),
                   const SizedBox(width: 5),
                   Text(
                     _getUserLevelName(),
                     style: TextStyle(
-                      color: _getUserLevelColor(),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: _getUserLevelColor(),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            isCurrentUser
-                ? Expanded(
-                    child: GestureDetector(
-                      onTap: onPremiumTap,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 6, horizontal: 10),
-                        decoration: BoxDecoration(
-                          gradient: (userProfile.isPremium)
-                              ? const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFFD700),
-                                    Color(0xFFFF8C00)
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
-                              : LinearGradient(
-                                  colors: [
-                                    Colors.grey[300]!,
-                                    Colors.grey[400]!
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: (userProfile.isPremium)
-                                  ? Colors.amber.withOpacity(0.4)
-                                  : Colors.grey.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+            if (isCurrentUser)
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    if (userProfile.isPremium) {
+                      await _showCancelPremiumDialog(context);
+                    } else {
+                      await _showPremiumPopup(context);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                    decoration: BoxDecoration(
+                      gradient: userProfile.isPremium
+                          ? const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : LinearGradient(
+                              colors: [Colors.grey, Colors.grey.shade400],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.3),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                (userProfile.isPremium)
-                                    ? Icons.workspace_premium
-                                    : Icons.diamond_outlined,
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                (userProfile.isPremium)
-                                    ? 'Premium Actif'
-                                    : 'Devenir Premium',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black26,
-                                      offset: Offset(0, 1),
-                                      blurRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  )
-                : userProfile.isPremium == true
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 4, horizontal: 8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          userProfile.isPremium
+                              ? Icons.workspace_premium
+                              : Icons.diamond_outlined,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            userProfile.isPremium
+                                ? 'Premium Actif'
+                                : 'Devenir Premium',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.amber.withOpacity(0.4),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.3),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.workspace_premium,
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Premium',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black26,
-                                    offset: Offset(0, 1),
-                                    blurRadius: 2,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : const SizedBox.shrink(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
         if (!isCurrentUser)
@@ -243,14 +242,6 @@ class ProfileUserInfo extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  if (!isFollowing)
-                    BoxShadow(
-                      color: const Color(0xFF3425B5).withOpacity(0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    )
-                ],
               ),
               child: Material(
                 color: Colors.transparent,
@@ -276,17 +267,10 @@ class ProfileUserInfo extends StatelessWidget {
                         ? Container(
                             width: 120,
                             alignment: Alignment.center,
-                            child: SizedBox(
+                            child: const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  isFollowing
-                                      ? const Color(0xFF3425B5)
-                                      : Colors.white,
-                                ),
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           )
                         : Container(

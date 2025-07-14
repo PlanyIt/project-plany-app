@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../view_models/profile_viewmodel.dart';
 
@@ -10,7 +11,7 @@ class PremiumPopup {
     required Function(String) showErrorCard,
     Function(bool)? onLoadingChanged,
   }) async {
-    final bool isPremium = viewModel.userProfile?.isPremium ?? false;
+    final isPremium = viewModel.userProfile?.isPremium ?? false;
 
     await showDialog(
       context: context,
@@ -58,7 +59,7 @@ class PremiumPopup {
                       width: double.infinity,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.1),
+                        color: Colors.amber.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.amber),
                       ),
@@ -96,28 +97,24 @@ class PremiumPopup {
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
-              Navigator.pop(context);
+              context.pop();
               if (onLoadingChanged != null) onLoadingChanged(true);
               try {
-                await viewModel.updateProfile(
-                  username: viewModel.userProfile!.username,
-                  description: viewModel.userProfile!.description,
-                  birthDate: viewModel.userProfile!.birthDate,
-                  gender: viewModel.userProfile!.gender,
+                final updatedUser = viewModel.userProfile!.copyWith(
+                  isPremium: !isPremium,
                 );
 
-                // Ici tu dois passer isPremium inverse car updateProfile remplace tout
-                viewModel.userProfile =
-                    viewModel.userProfile!.copyWith(isPremium: !isPremium);
                 await viewModel.updateProfile(
-                  username: viewModel.userProfile!.username,
-                  description: viewModel.userProfile!.description,
-                  birthDate: viewModel.userProfile!.birthDate,
-                  gender: viewModel.userProfile!.gender,
+                  username: updatedUser.username,
+                  description: updatedUser.description,
+                  birthDate: updatedUser.birthDate,
+                  gender: updatedUser.gender,
+                  isPremium: updatedUser.isPremium,
                 );
 
                 if (onLoadingChanged != null) onLoadingChanged(false);
 
+                if (!context.mounted) return;
                 showInfoCard(
                   isPremium ? 'Premium désactivé' : 'Félicitations !',
                   isPremium
@@ -126,6 +123,7 @@ class PremiumPopup {
                 );
               } catch (e) {
                 if (onLoadingChanged != null) onLoadingChanged(false);
+                if (!context.mounted) return;
                 showErrorCard('Erreur: $e');
               }
             },

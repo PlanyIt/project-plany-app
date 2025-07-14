@@ -361,7 +361,7 @@ class ApiClient {
         'description': user.description,
         'isPremium': user.isPremium,
         'photoUrl': user.photoUrl,
-        'birthDate': user.birthDate,
+        'birthDate': user.birthDate?.toIso8601String(),
         'gender': user.gender
       });
 
@@ -385,7 +385,7 @@ class ApiClient {
       String email, String password, String userId) async {
     final client = _clientFactory();
     try {
-      final request = await client.put(
+      final request = await client.patch(
         _host,
         _port,
         '/api/users/$userId/email',
@@ -393,10 +393,7 @@ class ApiClient {
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
-      final body = jsonEncode({
-        'email': email,
-        'password': password,
-      });
+      final body = jsonEncode({'email': email, 'password': password});
       request.write(body);
 
       final response = await request.close();
@@ -430,8 +427,10 @@ class ApiClient {
       final response = await request.close();
       return await _handleResponse(
         response,
-        (json) =>
-            (json as List<dynamic>).map((plan) => Plan.fromJson(plan)).toList(),
+        (json) => (json as List<dynamic>)
+            .whereType<Map<String, dynamic>>()
+            .map((plan) => Plan.fromJson(plan))
+            .toList(),
       );
     } on Exception catch (error) {
       return Result.error(error);
@@ -910,6 +909,35 @@ class ApiClient {
         response,
         (json) => (json as Map<String, dynamic>)['isFollowing'] as bool,
       );
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<void>> changePassword(
+      String currentPassword, String newPassword) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.post(
+        _host,
+        _port,
+        '/api/auth/change-password',
+      );
+
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
+      request.write(jsonEncode({
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      }));
+      final response = await request.close();
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return const Result.ok(null);
+      } else {
+        return const Result.error(HttpException("Change password error"));
+      }
     } on Exception catch (error) {
       return Result.error(error);
     } finally {

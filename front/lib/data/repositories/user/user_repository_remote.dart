@@ -45,6 +45,7 @@ class UserRepositoryRemote implements UserRepository {
 
   @override
   Future<Result<void>> unfollowUser(String userId) async {
+    print('Unfollowing user: $userId');
     return _apiClient.unfollowUser(userId);
   }
 

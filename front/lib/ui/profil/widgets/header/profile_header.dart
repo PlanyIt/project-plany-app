@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-import '../../../../domain/models/user/user.dart';
 import '../../view_models/profile_viewmodel.dart';
 import 'components/profile_avatar.dart';
 import 'components/profile_categories.dart';
@@ -8,33 +6,25 @@ import 'components/profile_stats.dart';
 import 'components/profile_user_info.dart';
 
 class ProfileHeader extends StatelessWidget {
-  final User userProfile;
-  final Function onProfileUpdated;
+  final ProfileViewModel viewModel;
   final Function(String) onUpdatePhoto;
+  final Function onProfileUpdated;
   final Function(String) onNavigationSelected;
-  final bool isCurrentUser;
   final bool isFollowing;
   final bool loadingFollow;
-  final VoidCallback? onFollowChanged;
   final VoidCallback? onToggleFollow;
-  final VoidCallback? onShowPremiumPopup;
   final ScrollController scrollController;
-  final ProfileViewModel viewModel;
 
   const ProfileHeader({
     super.key,
-    required this.userProfile,
     required this.viewModel,
     required this.onUpdatePhoto,
     required this.onProfileUpdated,
     required this.onNavigationSelected,
-    required this.isCurrentUser,
     required this.scrollController,
     this.isFollowing = false,
     this.loadingFollow = false,
-    this.onFollowChanged,
     this.onToggleFollow,
-    this.onShowPremiumPopup,
   });
 
   Widget _buildGlassIconButton({
@@ -73,6 +63,8 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = viewModel.userProfile!;
+    final isCurrentUser = viewModel.isCurrentUser;
     final primaryColor = const Color(0xFF3425B5);
 
     return Container(
@@ -141,19 +133,14 @@ class ProfileHeader extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Section de profil
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ProfileAvatar(
-                    userProfile: userProfile,
                     isCurrentUser: isCurrentUser,
-                    onPickPhoto: (file) async {
-                      await viewModel.updateProfilePhoto(file);
-                    },
+                    viewModel: viewModel,
                   ),
                   const SizedBox(width: 20),
                   Expanded(
@@ -162,16 +149,13 @@ class ProfileHeader extends StatelessWidget {
                       isCurrentUser: isCurrentUser,
                       isFollowing: isFollowing,
                       loadingFollow: loadingFollow,
-                      onPremiumTap: onShowPremiumPopup ?? () {},
                       onFollowTap: onToggleFollow ?? () {},
                     ),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -202,9 +186,9 @@ class ProfileHeader extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        userProfile.description?.isNotEmpty == true
-                            ? userProfile.description!
-                            : "Bonjour ! Je suis ${userProfile.username} et j'adore explorer de nouveaux endroits.",
+                        user.description?.isNotEmpty == true
+                            ? user.description!
+                            : "Bonjour ! Je suis ${user.username} et j'adore explorer de nouveaux endroits.",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[800],
@@ -219,16 +203,12 @@ class ProfileHeader extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ProfileCategories(viewModel: viewModel),
             ),
-
             const SizedBox(height: 24),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ProfileStats(
@@ -236,7 +216,6 @@ class ProfileHeader extends StatelessWidget {
                 onNavigationSelected: _handleNavigation,
               ),
             ),
-
             const SizedBox(height: 24),
           ],
         ),

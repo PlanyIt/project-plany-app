@@ -3,28 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../../domain/models/user/user.dart';
+import '../../../view_models/profile_viewmodel.dart';
 
-class ProfileAvatar extends StatefulWidget {
-  final User userProfile;
-  final Function(File) onPickPhoto;
+class ProfileAvatar extends StatelessWidget {
+  final ProfileViewModel viewModel;
   final bool isCurrentUser;
 
   const ProfileAvatar({
     super.key,
-    required this.userProfile,
-    required this.onPickPhoto,
+    required this.viewModel,
     required this.isCurrentUser,
   });
 
-  @override
-  State<ProfileAvatar> createState() => _ProfileAvatarState();
-}
-
-class _ProfileAvatarState extends State<ProfileAvatar> {
-  bool _uploading = false;
-
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(BuildContext context) async {
     HapticFeedback.lightImpact();
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
@@ -34,17 +25,14 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
       imageQuality: 85,
     );
 
-    if (pickedFile != null && mounted) {
-      setState(() => _uploading = true);
-      await widget.onPickPhoto(File(pickedFile.path));
-      if (mounted) {
-        setState(() => _uploading = false);
-      }
+    if (pickedFile != null) {
+      await viewModel.updateProfilePhoto(File(pickedFile.path));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final userProfile = viewModel.userProfile!;
     final avatarSize = 85.0;
     final primaryColor = const Color(0xFF3425B5);
 
@@ -66,16 +54,20 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(avatarSize / 2),
-            child: _uploading
+            child: viewModel.isUploadingAvatar
                 ? Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                      strokeWidth: 2,
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                      ),
                     ),
                   )
-                : widget.userProfile.photoUrl?.isNotEmpty == true
+                : userProfile.photoUrl?.isNotEmpty == true
                     ? Image.network(
-                        widget.userProfile.photoUrl!,
+                        userProfile.photoUrl!,
                         width: avatarSize,
                         height: avatarSize,
                         fit: BoxFit.cover,
@@ -95,12 +87,12 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
                       ),
           ),
         ),
-        if (widget.isCurrentUser)
+        if (isCurrentUser)
           Positioned(
             bottom: 0,
             right: 0,
             child: GestureDetector(
-              onTap: _pickImage,
+              onTap: () => _pickImage(context),
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(

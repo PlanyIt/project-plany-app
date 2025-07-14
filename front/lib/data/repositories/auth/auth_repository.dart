@@ -31,4 +31,6 @@ abstract class AuthRepository extends ChangeNotifier {
     required String currentPassword,
     required String newPassword,
   });
+
+  void updateCurrentUser(User user);
 }

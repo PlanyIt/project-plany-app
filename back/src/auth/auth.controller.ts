@@ -8,6 +8,7 @@ import {
   Logger,
   UseGuards,
   Request,
+  HttpCode,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -43,6 +44,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @HttpCode(201)
   async register(@Body() registerDto: RegisterDto) {
     try {
       this.logger.log(`Registration attempt for email: ${registerDto.email}`);
@@ -65,6 +67,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('change-password')
+  @HttpCode(200)
   async changePassword(
     @Body('currentPassword') currentPassword: string,
     @Body('newPassword') newPassword: string,

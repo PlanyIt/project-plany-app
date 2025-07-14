@@ -17,6 +17,7 @@ class SettingsSection extends StatelessWidget {
   });
 
   void _showInfoCard(BuildContext context, String title, String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Column(
@@ -43,6 +44,7 @@ class SettingsSection extends StatelessWidget {
   }
 
   void _showErrorCard(BuildContext context, String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -106,7 +108,6 @@ class SettingsSection extends StatelessWidget {
               children: [
                 AccountSettings(
                   viewModel: viewModel,
-                  userProfile: userProfile,
                   onProfileUpdated: onProfileUpdated,
                   showInfoCard: (title, message) =>
                       _showInfoCard(context, title, message),

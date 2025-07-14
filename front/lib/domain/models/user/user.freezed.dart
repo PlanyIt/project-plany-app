@@ -32,6 +32,10 @@ mixin _$User {
   List<String> get followers => throw _privateConstructorUsedError;
   List<String> get following => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  int? get followersCount => throw _privateConstructorUsedError;
+  int? get followingCount => throw _privateConstructorUsedError;
+  int? get plansCount => throw _privateConstructorUsedError;
+  int? get favoritesCount => throw _privateConstructorUsedError;
 
   /// Serializes this User to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -58,7 +62,11 @@ abstract class $UserCopyWith<$Res> {
       String? gender,
       List<String> followers,
       List<String> following,
-      DateTime? createdAt});
+      DateTime? createdAt,
+      int? followersCount,
+      int? followingCount,
+      int? plansCount,
+      int? favoritesCount});
 }
 
 /// @nodoc
@@ -87,6 +95,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? followers = null,
     Object? following = null,
     Object? createdAt = freezed,
+    Object? followersCount = freezed,
+    Object? followingCount = freezed,
+    Object? plansCount = freezed,
+    Object? favoritesCount = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -133,6 +145,22 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      followersCount: freezed == followersCount
+          ? _value.followersCount
+          : followersCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      followingCount: freezed == followingCount
+          ? _value.followingCount
+          : followingCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      plansCount: freezed == plansCount
+          ? _value.plansCount
+          : plansCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      favoritesCount: freezed == favoritesCount
+          ? _value.favoritesCount
+          : favoritesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -155,7 +183,11 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       String? gender,
       List<String> followers,
       List<String> following,
-      DateTime? createdAt});
+      DateTime? createdAt,
+      int? followersCount,
+      int? followingCount,
+      int? plansCount,
+      int? favoritesCount});
 }
 
 /// @nodoc
@@ -181,6 +213,10 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? followers = null,
     Object? following = null,
     Object? createdAt = freezed,
+    Object? followersCount = freezed,
+    Object? followingCount = freezed,
+    Object? plansCount = freezed,
+    Object? favoritesCount = freezed,
   }) {
     return _then(_$UserImpl(
       id: freezed == id
@@ -227,6 +263,22 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      followersCount: freezed == followersCount
+          ? _value.followersCount
+          : followersCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      followingCount: freezed == followingCount
+          ? _value.followingCount
+          : followingCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      plansCount: freezed == plansCount
+          ? _value.plansCount
+          : plansCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      favoritesCount: freezed == favoritesCount
+          ? _value.favoritesCount
+          : favoritesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -245,7 +297,11 @@ class _$UserImpl implements _User {
       this.gender,
       final List<String> followers = const [],
       final List<String> following = const [],
-      this.createdAt})
+      this.createdAt,
+      this.followersCount,
+      this.followingCount,
+      this.plansCount,
+      this.favoritesCount})
       : _followers = followers,
         _following = following;
 
@@ -290,10 +346,18 @@ class _$UserImpl implements _User {
 
   @override
   final DateTime? createdAt;
+  @override
+  final int? followersCount;
+  @override
+  final int? followingCount;
+  @override
+  final int? plansCount;
+  @override
+  final int? favoritesCount;
 
   @override
   String toString() {
-    return 'User(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following, createdAt: $createdAt)';
+    return 'User(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following, createdAt: $createdAt, followersCount: $followersCount, followingCount: $followingCount, plansCount: $plansCount, favoritesCount: $favoritesCount)';
   }
 
   @override
@@ -319,7 +383,15 @@ class _$UserImpl implements _User {
             const DeepCollectionEquality()
                 .equals(other._following, _following) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.followersCount, followersCount) ||
+                other.followersCount == followersCount) &&
+            (identical(other.followingCount, followingCount) ||
+                other.followingCount == followingCount) &&
+            (identical(other.plansCount, plansCount) ||
+                other.plansCount == plansCount) &&
+            (identical(other.favoritesCount, favoritesCount) ||
+                other.favoritesCount == favoritesCount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -336,7 +408,11 @@ class _$UserImpl implements _User {
       gender,
       const DeepCollectionEquality().hash(_followers),
       const DeepCollectionEquality().hash(_following),
-      createdAt);
+      createdAt,
+      followersCount,
+      followingCount,
+      plansCount,
+      favoritesCount);
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -366,7 +442,11 @@ abstract class _User implements User {
       final String? gender,
       final List<String> followers,
       final List<String> following,
-      final DateTime? createdAt}) = _$UserImpl;
+      final DateTime? createdAt,
+      final int? followersCount,
+      final int? followingCount,
+      final int? plansCount,
+      final int? favoritesCount}) = _$UserImpl;
 
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
@@ -393,6 +473,14 @@ abstract class _User implements User {
   List<String> get following;
   @override
   DateTime? get createdAt;
+  @override
+  int? get followersCount;
+  @override
+  int? get followingCount;
+  @override
+  int? get plansCount;
+  @override
+  int? get favoritesCount;
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.

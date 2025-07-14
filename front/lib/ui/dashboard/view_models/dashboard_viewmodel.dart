@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-
 import 'package:logging/logging.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/category/category_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
+import '../../../data/services/location_service.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart' as step_model;
 import '../../../domain/models/user/user.dart' show User;
-import '../../../data/services/location_service.dart';
 import '../../../utils/command.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/result.dart';
@@ -79,6 +78,8 @@ class DashboardViewModel extends ChangeNotifier {
     _planSteps.clear();
     _hasError = false;
     _errorMessage = null;
+
+    await _authRepository.getCurrentUser();
 
     // Charger l'utilisateur
     await _loadCurrentUser();

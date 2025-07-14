@@ -7,6 +7,7 @@ import {
 import { PlanDto } from './dto/plan.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from './schemas/plan.schema';
+import { Types, isValidObjectId } from 'mongoose';
 import { Model } from 'mongoose';
 import { StepService } from '../step/step.service';
 
@@ -69,7 +70,9 @@ export class PlanService {
 
     // Calculate totals for each plan
     for (const plan of plans) {
-      const stepIds = plan.steps.map((step) => step._id.toString());
+      const stepIds = plan.steps
+        .filter((step) => step && step._id)
+        .map((step) => step._id.toString());
       plan.totalCost = await this.stepService.calculateTotalCost(stepIds);
       plan.totalDuration =
         await this.stepService.calculateTotalDuration(stepIds);
@@ -79,9 +82,13 @@ export class PlanService {
   }
 
   async removeById(planId: string, userId: string): Promise<PlanDocument> {
-    return this.planModel
+    const deletedPlan = await this.planModel
       .findOneAndDelete({ _id: planId, user: userId })
       .exec();
+    if (!deletedPlan) {
+      throw new NotFoundException(`Plan not found or not owned by user`);
+    }
+    return deletedPlan;
   }
 
   async updateById(
@@ -97,11 +104,21 @@ export class PlanService {
   }
 
   async findById(planId: string): Promise<PlanDocument | undefined> {
+    if (!isValidObjectId(planId)) {
+      // Ajout d'une vérification pour éviter l'erreur CastError
+      throw new NotFoundException(
+        `Plan with ID ${planId} is not a valid ObjectId`,
+      );
+    }
     const plan = await this.planModel
       .findOne({ _id: planId })
       .populate({
         path: 'user',
         select: 'username email photoUrl',
+      })
+      .populate({
+        path: 'category',
+        select: 'name icon color',
       })
       .populate({
         path: 'steps',
@@ -136,7 +153,12 @@ export class PlanService {
         select: 'username email photoUrl',
       })
       .populate({
+        path: 'category',
+        select: 'name icon color',
+      })
+      .populate({
         path: 'steps',
+        model: 'Step',
         select:
           'title description image order duration cost longitude latitude',
       })
@@ -193,10 +215,21 @@ export class PlanService {
   }
 
   async findAllByUserId(userId: string): Promise<PlanDocument[]> {
+    const userObjectId = new Types.ObjectId(userId);
     const plans = await this.planModel
-      .find({ user: userId })
+      .find({ user: userObjectId })
+      .find()
+      .populate({
+        path: 'user',
+        select: 'username email photoUrl',
+      })
+      .populate({
+        path: 'category',
+        select: 'name icon color',
+      })
       .populate({
         path: 'steps',
+        model: 'Step',
         select:
           'title description image order duration cost longitude latitude',
       })
@@ -205,7 +238,9 @@ export class PlanService {
 
     // Calculate totals for each plan
     for (const plan of plans) {
-      const stepIds = plan.steps.map((step) => step._id.toString());
+      const stepIds = plan.steps
+        .filter((step) => step && step._id)
+        .map((step) => step._id.toString());
       plan.totalCost = await this.stepService.calculateTotalCost(stepIds);
       plan.totalDuration =
         await this.stepService.calculateTotalDuration(stepIds);
@@ -222,7 +257,12 @@ export class PlanService {
         select: 'username email photoUrl',
       })
       .populate({
+        path: 'category',
+        select: 'name icon color',
+      })
+      .populate({
         path: 'steps',
+        model: 'Step',
         select:
           'title description image order duration cost longitude latitude',
       })
@@ -231,7 +271,10 @@ export class PlanService {
 
     // Calculate totals for each plan
     for (const plan of plans) {
-      const stepIds = plan.steps.map((step) => step._id.toString());
+      const stepIds = plan.steps
+        .filter((step) => step && step._id)
+        .map((step) => (step._id ? step._id.toString() : null))
+        .filter((id) => id !== null);
       plan.totalCost = await this.stepService.calculateTotalCost(stepIds);
       plan.totalDuration =
         await this.stepService.calculateTotalDuration(stepIds);
@@ -241,7 +284,8 @@ export class PlanService {
   }
 
   async countUserPlans(userId: string): Promise<number> {
-    return this.planModel.countDocuments({ user: userId }).exec();
+    const userObjectId = new Types.ObjectId(userId);
+    return this.planModel.countDocuments({ user: userObjectId }).exec();
   }
 
   async countUserFavorites(userId: string): Promise<number> {
