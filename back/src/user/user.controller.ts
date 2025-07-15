@@ -18,7 +18,7 @@ import {
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PlanService } from 'src/plan/plan.service';
+import { PlanService } from '../plan/plan.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from '../auth/auth.service';
 @UseGuards(JwtAuthGuard)

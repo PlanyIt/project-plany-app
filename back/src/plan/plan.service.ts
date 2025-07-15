@@ -10,8 +10,8 @@ import { Plan, PlanDocument } from './schemas/plan.schema';
 import { Connection, Types, isValidObjectId } from 'mongoose';
 import { Model } from 'mongoose';
 import { StepService } from '../step/step.service';
-import { Step, StepDocument } from 'src/step/schemas/step.schema';
-import { Comment, CommentDocument } from 'src/comment/schemas/comment.schema';
+import { Step, StepDocument } from '../step/schemas/step.schema';
+import { Comment, CommentDocument } from '../comment/schemas/comment.schema';
 
 /**
  * Service de gestion des plans de sortie

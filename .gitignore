@@ -1,4 +1,57 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub/
+build/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+ios/Runner.xcworkspace/
+ios/Pods/
+ios/Podfile.lock
+android/.gradle/
+android/captures/
+android/app/build/
+android/key.properties
+*.iml
+
+# VS Code & IntelliJ
 .vscode/
-front/.vscode/
-front/.env
-playground-1.mongodb.js
+.idea/
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Logs & temp
+*.log
+*.lock
+*.tmp
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+
+# NestJS
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+.tmp/
+test-results.xml
+
+# MongoDB
+*.mongodb
+*.mongo
+dump/
+data/db/

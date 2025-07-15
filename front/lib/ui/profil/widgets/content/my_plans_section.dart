@@ -29,6 +29,12 @@ class MyPlansSection extends StatelessWidget {
                 "${viewModel.totalPlans} plan${viewModel.totalPlans > 1 ? 's' : ''} créés",
             icon: Icons.map_rounded,
             gradientColors: const [Colors.purple, Colors.purpleAccent],
+            action: IconButton(
+              icon: const Icon(Icons.add_circle_outline,
+                  size: 32, color: Colors.purple),
+              tooltip: "Créer un plan",
+              onPressed: () => context.go(Routes.createPlan),
+            ),
           ),
         ),
         if (viewModel.isLoading)

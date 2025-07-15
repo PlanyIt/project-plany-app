@@ -5,8 +5,8 @@ import { UserController } from './user.controller';
 import { User, UserSchema } from './schemas/user.schema';
 import { PlanModule } from '../plan/plan.module';
 import { AuthModule } from '../auth/auth.module';
-import { Plan, PlanSchema } from 'src/plan/schemas/plan.schema';
-import { Comment, CommentSchema } from 'src/comment/schemas/comment.schema';
+import { Plan, PlanSchema } from '../plan/schemas/plan.schema';
+import { Comment, CommentSchema } from '../comment/schemas/comment.schema';
 
 @Module({
   imports: [

@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { PasswordService } from './password.service';
 import { LoginDto } from './dto/login.dto';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../user/user.service';
 import { RegisterDto } from './dto/register.dto';
 import { TokenService } from './token.service';
-import { UserDocument } from 'src/user/schemas/user.schema';
+import { UserDocument } from '../user/schemas/user.schema';
 
 /**
  * Service d'authentification et de gestion des utilisateurs

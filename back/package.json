@@ -23,8 +23,12 @@
     "test:auth": "jest test/unit/auth test/integration/auth",
     "test:plan": "jest test/unit/plan test/integration/plan",
     "test:demo": "npm run test:unit && npm run test:integration && npm run test:e2e",
-    "test:all": "npm run test && npm run test:e2e"
+    "test:all": "npm run test && npm run test:e2e",
 
+    
+    "db:init": "ts-node scripts/init-database.ts",
+    "db:seed": "ts-node scripts/seed-data.ts",
+    "db:reset": "npm run db:init && npm run db:seed"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

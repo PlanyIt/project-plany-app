@@ -4,7 +4,7 @@ import { PlanService } from './plan.service';
 import { PlanController } from './plan.controller';
 import { Plan, PlanSchema } from './schemas/plan.schema';
 import { UserModule } from '../user/user.module';
-import { StepModule } from 'src/step/step.module';
+import { StepModule } from '../step/step.module';
 
 @Module({
   imports: [

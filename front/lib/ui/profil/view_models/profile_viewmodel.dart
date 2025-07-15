@@ -49,6 +49,12 @@ class ProfileViewModel extends ChangeNotifier {
 
   Future<void> loadUserData(String? userId) async {
     isLoading = true;
+    userProfile = null;
+    userStats = null;
+    isFollowing = false;
+    loadingFollow = false;
+    userCategories = [];
+    isLoadingCategories = false;
     notifyListeners();
 
     final isCurrent =
