@@ -6,12 +6,15 @@ part 'auth_response.freezed.dart';
 
 part 'auth_response.g.dart';
 
-/// AuthResponse model.
 @freezed
 class AuthResponse with _$AuthResponse {
   const factory AuthResponse({
-    /// The token to be used for authentication.
-    required String token,
+    /// Jeton court (≈15 min) à mettre dans l’Authorization header.
+    @JsonKey(name: 'accessToken') required String accessToken,
+
+    /// Jeton long (≈30 j) à garder en SecureStorage pour demander un
+    /// nouvel accessToken.
+    @JsonKey(name: 'refreshToken') required String refreshToken,
     required UserApiModel currentUser,
   }) = _AuthResponse;
 

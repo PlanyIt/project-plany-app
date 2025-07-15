@@ -32,9 +32,6 @@ export class User {
   @Prop({ default: 'user' })
   role: string;
 
-  @Prop({ default: true })
-  isActive: boolean;
-
   @Prop({
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     default: [],

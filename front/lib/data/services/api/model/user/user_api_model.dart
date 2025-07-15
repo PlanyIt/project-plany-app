@@ -6,7 +6,7 @@ part 'user_api_model.g.dart';
 @freezed
 class UserApiModel with _$UserApiModel {
   const factory UserApiModel({
-    @JsonKey(required: false) String? id,
+    @JsonKey(name: '_id') required String id,
     required String username,
     required String email,
     String? description,

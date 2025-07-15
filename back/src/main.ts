@@ -1,44 +1,22 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
+import {
+  applySecurity,
+  validateEnvOrThrow,
+} from './infrastructure/security.setup';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: false });
   const configService = app.get(ConfigService);
 
-  // Vérifier que les variables d'environnement essentielles sont définies
-  const jwtSecret = configService.get<string>('JWT_SECRET');
-  if (!jwtSecret) {
-    console.error(
-      'JWT_SECRET is not defined in environment variables. Application may not work properly.',
-    );
-  } else {
-    console.log('JWT_SECRET is properly configured.');
-  }
+  validateEnvOrThrow(configService);
 
-  // Sécurité: Appliquer des en-têtes HTTP sécurisés
-  app.use(helmet());
+  // Applique toute la couche sécurité
+  await applySecurity(app, configService);
 
-  // Validation des données entrantes
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Supprime les champs inutiles
-      forbidNonWhitelisted: true, // Retourne une erreur si un champ non autorisé est présent
-      transform: true, // Transforme les paramètres de requête en objets DTO
-    }),
-  );
-
-  // Configuration CORS
-  app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN') || '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  });
-
-  const port = configService.get<number>('PORT') || 3000;
+  const port = configService.get<number>('PORT') ?? 3000;
   await app.listen(port);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  console.log(`🚀  API ready on ${await app.getUrl()}`);
 }
 bootstrap();

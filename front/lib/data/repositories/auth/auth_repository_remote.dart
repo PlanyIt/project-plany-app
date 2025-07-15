@@ -13,6 +13,8 @@ import '../../services/api/model/register_request/register_request.dart';
 import '../../services/auth_storage_service.dart';
 import 'auth_repository.dart';
 
+/// Implémentation distante du dépôt d'authentification.
+/// Gère désormais **accessToken + refreshToken** (rotation automatique).
 class AuthRepositoryRemote extends AuthRepository {
   AuthRepositoryRemote({
     required ApiClient apiClient,
@@ -22,113 +24,120 @@ class AuthRepositoryRemote extends AuthRepository {
         _authApiClient = authApiClient,
         _authStorageService = authStorageService {
     _apiClient.authHeaderProvider = _authHeaderProvider;
-    _apiClient.onUnauthorized = () => logout();
+    _apiClient.onUnauthorized =
+        () => logout(); // API renvoie 401 → on force logout
   }
 
+  // ────────────────────────── Dépendances ──────────────────────────
   final AuthApiClient _authApiClient;
   final ApiClient _apiClient;
   final AuthStorageService _authStorageService;
 
+  // ────────────────────────── État interne ─────────────────────────
   bool? _isAuthenticated;
-  String? _authToken;
+  String? _accessToken;
+  String? _refreshToken;
   User? _currentUser;
   DateTime? _tokenExpiration;
+  bool _isRefreshing = false;
 
   final _log = Logger('AuthRepositoryRemote');
 
-  void _checkTokenExpiration() {
-    if (_tokenExpiration != null && DateTime.now().isAfter(_tokenExpiration!)) {
-      _log.info('Token expired, logging out user');
-      logout();
-    }
-  }
-
+  // ────────────────────────── Utilitaires privés ───────────────────
   DateTime _parseTokenExpiration(String token) {
     try {
-      // Décoder le JWT pour extraire l'expiration
       final parts = token.split('.');
       if (parts.length != 3) {
         return DateTime.now().add(const Duration(minutes: 2));
       }
-
-      final payload = parts[1];
-      // Ajouter padding si nécessaire
-      final normalized = base64.normalize(payload);
-      final decoded = utf8.decode(base64.decode(normalized));
-      final json = jsonDecode(decoded) as Map<String, dynamic>;
-
-      final exp = json['exp'] as int?;
+      final payload = utf8.decode(base64.decode(base64.normalize(parts[1])));
+      final jsonMap = jsonDecode(payload) as Map<String, dynamic>;
+      final exp = jsonMap['exp'] as int?;
       if (exp != null) {
         return DateTime.fromMillisecondsSinceEpoch(exp * 1000);
       }
     } catch (e) {
       _log.warning('Failed to parse token expiration: $e');
     }
-
-    // Fallback: supposer 2 minutes d'expiration
     return DateTime.now().add(const Duration(minutes: 2));
   }
 
-  /// Charge token et user JSON depuis le storage.
-  Future<void> _fetch() async {
-    // 1) token
-    final tokenRes = await _authStorageService.fetchToken();
-    if (tokenRes is Ok<String?>) {
-      _authToken = tokenRes.value;
-      _isAuthenticated = _authToken != null;
-
-      if (_authToken != null) {
-        _tokenExpiration = _parseTokenExpiration(_authToken!);
+  Future<void> _attemptSilentRefresh() async {
+    if (_isRefreshing || _refreshToken == null) return;
+    _isRefreshing = true;
+    try {
+      final res = await _authApiClient.refresh(_refreshToken!);
+      switch (res) {
+        case Ok<AuthResponse>():
+          await _setAuthState(res.value);
+          _log.fine('Silent refresh success');
+          break;
+        case Error<AuthResponse>():
+          _log.warning('Silent refresh failed → logout');
+          await logout();
       }
-    } else if (tokenRes is Error<String?>) {
-      _log.severe('Échec fetchToken: ${tokenRes.error}');
-    }
-
-    // 2) user JSON
-    final userJsonRes = await _authStorageService.fetchUserJson();
-    if (userJsonRes is Ok<String?> && userJsonRes.value != null) {
-      try {
-        final userMap = jsonDecode(userJsonRes.value!) as Map<String, dynamic>;
-        _currentUser = User.fromJson(userMap);
-        _log.info('User loaded from storage: ${_currentUser?.username}');
-      } catch (e, st) {
-        _log.severe('Erreur désérialisation user JSON', e, st);
-        // Nettoyer le cache corrompu
-        await _authStorageService.saveUserJson(null);
-      }
-    } else if (userJsonRes is Error<String?>) {
-      _log.warning('Échec fetchUserJson: ${userJsonRes.error}');
+    } finally {
+      _isRefreshing = false;
     }
   }
 
+  // ────────────────────────── Stockage local ───────────────────────
+  Future<void> _fetchFromStorage() async {
+    // 1. jetons
+    final (at, rt) = await _authStorageService.fetchTokens();
+    _accessToken = at;
+    _refreshToken = rt;
+    _isAuthenticated = _accessToken != null;
+    if (_accessToken != null) {
+      _tokenExpiration = _parseTokenExpiration(_accessToken!);
+    }
+
+    // 2. user JSON
+    final userJsonRes = await _authStorageService.fetchUserJson();
+    if (userJsonRes is Ok<String?> && userJsonRes.value != null) {
+      try {
+        _currentUser = User.fromJson(
+            jsonDecode(userJsonRes.value!) as Map<String, dynamic>);
+      } catch (e) {
+        await _authStorageService.saveUserJson(null);
+      }
+    }
+  }
+
+  // ────────────────────────── Provider header ──────────────────────
+  String? _authHeaderProvider() {
+    if (_accessToken == null) return null;
+    // access expiré ?
+    if (_tokenExpiration != null && DateTime.now().isAfter(_tokenExpiration!)) {
+      _attemptSilentRefresh();
+      // on laisse l'ancien token pour cette requête ; la suivante aura le nouveau
+    }
+    return 'Bearer $_accessToken';
+  }
+
+  // ────────────────────────── AuthRepository impl. ─────────────────
   @override
   Future<bool> get isAuthenticated async {
-    // Status is cached
-    if (_isAuthenticated != null) {
-      return _isAuthenticated!;
-    }
-    // No status cached, fetch from storage
-    await _fetch();
+    if (_isAuthenticated != null) return _isAuthenticated!;
+    await _fetchFromStorage();
     return _isAuthenticated ?? false;
   }
 
   @override
-  Future<Result<void>> register(
-      {required String email,
-      required String username,
-      required String password}) async {
+  Future<Result<void>> register({
+    required String email,
+    required String username,
+    required String password,
+  }) async {
     try {
-      final result = await _authApiClient.register(RegisterRequest(
-          username: username, email: email, password: password));
-      switch (result) {
-        case Ok<AuthResponse>():
-          _log.info('User registered successfully');
-          await _setAuthState(result.value);
-          return const Result.ok(null);
-        case Error<AuthResponse>():
-          _log.warning('Error registering user: ${result.error}');
-          return Result.error(result.error);
-      }
+      final res = await _authApiClient.register(
+        RegisterRequest(username: username, email: email, password: password),
+      );
+      return switch (res) {
+        final Ok<AuthResponse> r =>
+          _setAuthState(r.value).then((_) => const Result.ok(null)),
+        final Error<AuthResponse> e => Result.error(e.error),
+      };
     } finally {
       notifyListeners();
     }
@@ -140,44 +149,45 @@ class AuthRepositoryRemote extends AuthRepository {
     required String password,
   }) async {
     try {
-      final result = await _authApiClient.login(
+      final res = await _authApiClient.login(
         LoginRequest(email: email, password: password),
       );
-      switch (result) {
-        case Ok<AuthResponse>():
-          _log.info('User logged in');
-          await _setAuthState(result.value);
-          return const Result.ok(null);
-        case Error<AuthResponse>():
-          _log.warning('Error logging in: ${result.error}');
-          return Result.error(result.error);
-      }
+      return switch (res) {
+        final Ok<AuthResponse> r =>
+          _setAuthState(r.value).then((_) => const Result.ok(null)),
+        final Error<AuthResponse> e => Result.error(e.error),
+      };
     } finally {
       notifyListeners();
     }
   }
 
-  Future<void> _setAuthState(AuthResponse authResponse) async {
-    // Set auth status
+  Future<void> _setAuthState(AuthResponse auth) async {
     _isAuthenticated = true;
-    _authToken = authResponse.token;
-    _tokenExpiration = _parseTokenExpiration(authResponse.token);
+    _accessToken = auth.accessToken;
+    _refreshToken = auth.refreshToken;
+    _tokenExpiration = _parseTokenExpiration(auth.accessToken);
+
+    print('Access token: $_accessToken');
+    print('Refresh token: $_refreshToken');
+
+    print(auth.currentUser.id);
 
     _currentUser = User(
-      id: authResponse.currentUser.id,
-      username: authResponse.currentUser.username,
-      email: authResponse.currentUser.email,
-      description: authResponse.currentUser.description,
-      isPremium: authResponse.currentUser.isPremium,
-      photoUrl: authResponse.currentUser.photoUrl,
-      birthDate: authResponse.currentUser.birthDate,
+      id: auth.currentUser.id,
+      username: auth.currentUser.username,
+      email: auth.currentUser.email,
+      description: auth.currentUser.description,
+      isPremium: auth.currentUser.isPremium,
+      photoUrl: auth.currentUser.photoUrl,
+      birthDate: auth.currentUser.birthDate,
     );
 
-    // Store in storage
-    await _authStorageService.saveToken(authResponse.token);
+    await _authStorageService.saveTokens(
+      accessToken: _accessToken,
+      refreshToken: _refreshToken,
+    );
     await _authStorageService.saveUserJson(jsonEncode(_currentUser!.toJson()));
-
-    _log.info('Utilisateur connecté: ${authResponse.currentUser.id}');
   }
 
   @override
@@ -185,71 +195,46 @@ class AuthRepositoryRemote extends AuthRepository {
 
   @override
   Future<Result<void>> logout() async {
-    _log.info('User logged out');
     try {
-      // Clear stored auth token
-      await _authStorageService.saveToken(null);
+      await _authStorageService.saveTokens(
+          accessToken: null, refreshToken: null);
       await _authStorageService.saveUserJson(null);
-
-      _authToken = null;
+      _accessToken = _refreshToken = null;
       _currentUser = null;
-      _isAuthenticated = false;
       _tokenExpiration = null;
-      _log.info('Utilisateur déconnecté');
-
+      _isAuthenticated = false;
       return const Result.ok(null);
     } finally {
       notifyListeners();
     }
   }
 
-  String? _authHeaderProvider() {
-    if (_authToken == null) return null;
-
-    _checkTokenExpiration();
-
-    return _authToken != null ? 'Bearer $_authToken' : null;
-  }
-
   @override
   Future<Result<User>> getCurrentUser() async {
-    if (_currentUser != null) {
-      _log.info('Current user already loaded: ${_currentUser!.id}');
-      return Result.ok(_currentUser!);
-    }
-
-    // Essayer de recharger depuis le storage
-    await _fetch();
-
-    if (_currentUser != null) {
-      _log.info('Current user loaded from storage: ${_currentUser!.id}');
-      return Result.ok(_currentUser!);
-    }
-
-    return Result.error(Exception('No current user loaded'));
+    if (_currentUser != null) return Result.ok(_currentUser!);
+    await _fetchFromStorage();
+    return _currentUser != null
+        ? Result.ok(_currentUser!)
+        : Result.error(Exception('No current user'));
   }
 
   @override
-  Future<Result<void>> updatePassword(
-      {required String currentPassword, required String newPassword}) {
-    return _apiClient
-        .changePassword(currentPassword, newPassword)
-        .then((result) {
-      switch (result) {
-        case Ok<void>():
-          _log.info('Password updated successfully');
-          return const Result.ok(null);
-        case Error<void>():
-          _log.warning('Error updating password: ${result.error}');
-          return Result.error(result.error);
-      }
+  Future<Result<void>> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _apiClient.changePassword(currentPassword, newPassword).then((res) {
+      return switch (res) {
+        Ok<void>() => const Result.ok(null),
+        final Error<void> e => Result.error(e.error),
+      };
     });
   }
 
   @override
   void updateCurrentUser(User user) {
     _currentUser = user;
-    _authStorageService.saveUserJson(jsonEncode(_currentUser!.toJson()));
+    _authStorageService.saveUserJson(jsonEncode(user.toJson()));
     notifyListeners();
   }
 }

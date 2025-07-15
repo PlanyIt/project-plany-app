@@ -20,8 +20,8 @@ UserApiModel _$UserApiModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UserApiModel {
-  @JsonKey(required: false)
-  String? get id => throw _privateConstructorUsedError;
+  @JsonKey(name: '_id')
+  String get id => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
@@ -53,7 +53,7 @@ abstract class $UserApiModelCopyWith<$Res> {
       _$UserApiModelCopyWithImpl<$Res, UserApiModel>;
   @useResult
   $Res call(
-      {@JsonKey(required: false) String? id,
+      {@JsonKey(name: '_id') String id,
       String username,
       String email,
       String? description,
@@ -84,7 +84,7 @@ class _$UserApiModelCopyWithImpl<$Res, $Val extends UserApiModel>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = freezed,
+    Object? id = null,
     Object? username = null,
     Object? email = null,
     Object? description = freezed,
@@ -100,10 +100,10 @@ class _$UserApiModelCopyWithImpl<$Res, $Val extends UserApiModel>
     Object? favoritesCount = freezed,
   }) {
     return _then(_value.copyWith(
-      id: freezed == id
+      id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as String,
       username: null == username
           ? _value.username
           : username // ignore: cast_nullable_to_non_nullable
@@ -169,7 +169,7 @@ abstract class _$$UserApiModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(required: false) String? id,
+      {@JsonKey(name: '_id') String id,
       String username,
       String email,
       String? description,
@@ -198,7 +198,7 @@ class __$$UserApiModelImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = freezed,
+    Object? id = null,
     Object? username = null,
     Object? email = null,
     Object? description = freezed,
@@ -214,10 +214,10 @@ class __$$UserApiModelImplCopyWithImpl<$Res>
     Object? favoritesCount = freezed,
   }) {
     return _then(_$UserApiModelImpl(
-      id: freezed == id
+      id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as String,
       username: null == username
           ? _value.username
           : username // ignore: cast_nullable_to_non_nullable
@@ -278,7 +278,7 @@ class __$$UserApiModelImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UserApiModelImpl implements _UserApiModel {
   const _$UserApiModelImpl(
-      {@JsonKey(required: false) this.id,
+      {@JsonKey(name: '_id') required this.id,
       required this.username,
       required this.email,
       this.description,
@@ -299,8 +299,8 @@ class _$UserApiModelImpl implements _UserApiModel {
       _$$UserApiModelImplFromJson(json);
 
   @override
-  @JsonKey(required: false)
-  final String? id;
+  @JsonKey(name: '_id')
+  final String id;
   @override
   final String username;
   @override
@@ -417,7 +417,7 @@ class _$UserApiModelImpl implements _UserApiModel {
 
 abstract class _UserApiModel implements UserApiModel {
   const factory _UserApiModel(
-      {@JsonKey(required: false) final String? id,
+      {@JsonKey(name: '_id') required final String id,
       required final String username,
       required final String email,
       final String? description,
@@ -436,8 +436,8 @@ abstract class _UserApiModel implements UserApiModel {
       _$UserApiModelImpl.fromJson;
 
   @override
-  @JsonKey(required: false)
-  String? get id;
+  @JsonKey(name: '_id')
+  String get id;
   @override
   String get username;
   @override
