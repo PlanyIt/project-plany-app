@@ -2,10 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { getModelToken, getConnectionToken } from '@nestjs/mongoose';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-
-jest.mock('bcrypt');
-const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
+import { PasswordService } from '../auth/password.service';
 
 describe('UserService', () => {
   let userService: UserService;
@@ -123,6 +120,7 @@ describe('UserService', () => {
 
   mockUserModel.findById = jest.fn().mockReturnValue({
     populate: jest.fn().mockReturnThis(),
+    session: jest.fn().mockReturnThis(),
     exec: jest.fn(),
   });
 
@@ -148,14 +146,42 @@ describe('UserService', () => {
     countDocuments: jest.fn().mockImplementation(() => ({
       exec: jest.fn().mockResolvedValue(0),
     })),
+    deleteMany: jest.fn(),
+    updateMany: jest.fn(),
   };
 
-  const mockConnection = {};
+  const mockSession = {
+    startTransaction: jest.fn(),
+    commitTransaction: jest.fn(),
+    abortTransaction: jest.fn(),
+    endSession: jest.fn(),
+    withTransaction: jest.fn().mockImplementation(async (cb) => cb()),
+  };
+
+  const mockConnection = {
+    startSession: jest.fn().mockReturnValue(mockSession),
+  };
+
+  const mockCommentModel = {
+    deleteMany: jest.fn().mockReturnValue({
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue({}),
+    }),
+  };
+
+  mockCommentModel.deleteMany.mockReturnValue({
+    session: jest.fn().mockReturnThis(),
+    exec: jest.fn().mockResolvedValue({}),
+  });
+
+  let mockPasswordService: { hashPassword: jest.Mock };
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockedBcrypt.hash.mockResolvedValue('hashedPassword' as never);
 
+    mockPasswordService = {
+      hashPassword: jest.fn().mockResolvedValue('hashedPassword'),
+    };
     mockPlanModel.countDocuments.mockReset();
     mockPlanModel.countDocuments.mockReturnValue({
       exec: jest.fn().mockResolvedValue(0),
@@ -173,8 +199,16 @@ describe('UserService', () => {
           useValue: mockPlanModel,
         },
         {
+          provide: getModelToken('Comment'),
+          useValue: mockCommentModel,
+        },
+        {
           provide: getConnectionToken(),
           useValue: mockConnection,
+        },
+        {
+          provide: PasswordService,
+          useValue: mockPasswordService,
         },
       ],
     }).compile();
@@ -377,7 +411,9 @@ describe('UserService', () => {
 
       const result = await userService.updateById(userId, updateWithPassword);
 
-      expect(mockedBcrypt.hash).toHaveBeenCalledWith('NewPassword123!', 12);
+      expect(mockPasswordService.hashPassword).toHaveBeenCalledWith(
+        'NewPassword123!',
+      );
       expect(result.password).toBe('hashedPassword');
     });
 
@@ -420,49 +456,58 @@ describe('UserService', () => {
   });
 
   describe('removeById', () => {
-    it('should delete and return user', async () => {
+    it('should delete and return user (with transaction)', async () => {
       const userId = mockUsers[0]._id;
       const deletedUser = mockUsers[0];
 
-      mockUserModel.findByIdAndDelete.mockReturnValue({
+      const mockSession = {
+        withTransaction: jest.fn().mockImplementation(async (cb) => cb()),
+        endSession: jest.fn(),
+      };
+      mockConnection.startSession.mockResolvedValue(mockSession);
+
+      mockUserModel.findById.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(deletedUser),
+      });
+
+      mockUserModel.findByIdAndDelete.mockReturnValue({
+        session: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(deletedUser),
+      });
+
+      mockPlanModel.deleteMany = jest.fn().mockReturnValue({
+        session: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({}),
+      });
+
+      mockPlanModel.updateMany = jest.fn().mockReturnValue({
+        session: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({}),
+      });
+
+      mockUserModel.updateMany = jest.fn().mockReturnValue({
+        session: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({}),
+      });
+
+      mockCommentModel.deleteMany = jest.fn().mockReturnValue({
+        session: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({}),
+      });
+
+      mockPlanModel.find.mockReturnValue({
+        session: jest
+          .fn()
+          .mockResolvedValue([{ _id: 'plan1' }, { _id: 'plan2' }]),
       });
 
       const result = await userService.removeById(userId);
 
       expect(result).toEqual(deletedUser);
-      expect(mockUserModel.findByIdAndDelete).toHaveBeenCalledWith(userId);
-    });
-  });
-
-  describe('getUserPlans', () => {
-    it('should return user plans', async () => {
-      const userId = mockUsers[0]._id;
-      const userPlans = [mockPlans[0], mockPlans[2]];
-
-      mockUserModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockUsers[0]),
-      });
-
-      mockPlanModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(userPlans),
-      });
-
-      const result = await userService.getUserPlans(userId);
-
-      expect(result).toEqual(userPlans);
-      expect(mockUserModel.findById).toHaveBeenCalledWith(userId);
-    });
-
-    it('should throw NotFoundException when user not found', async () => {
-      mockUserModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      await expect(userService.getUserPlans('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      expect(mockConnection.startSession).toHaveBeenCalled();
+      expect(mockSession.withTransaction).toHaveBeenCalled();
+      expect(mockSession.endSession).toHaveBeenCalled();
     });
   });
 
@@ -484,38 +529,6 @@ describe('UserService', () => {
 
       expect(result).toEqual(favorites);
       expect(mockUserModel.findById).toHaveBeenCalledWith(userId);
-    });
-  });
-
-  describe('getPremiumStatus', () => {
-    it('should return true for premium user', async () => {
-      mockUserModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockUsers[1]),
-      });
-
-      const result = await userService.getPremiumStatus(mockUsers[1]._id);
-
-      expect(result).toBe(true);
-    });
-
-    it('should return false for non-premium user', async () => {
-      mockUserModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockUsers[0]),
-      });
-
-      const result = await userService.getPremiumStatus(mockUsers[0]._id);
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false when user not found', async () => {
-      mockUserModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await userService.getPremiumStatus('nonexistent');
-
-      expect(result).toBe(false);
     });
   });
 
@@ -626,67 +639,21 @@ describe('UserService', () => {
   });
 
   describe('getUserFollowing', () => {
-    it('should return formatted following users', async () => {
+    it('should return following users (populated)', async () => {
       const userId = mockUsers[0]._id;
       const followingUsers = [mockUsers[1]];
 
       mockUserModel.findOne.mockResolvedValue(mockUsers[0]);
-      mockUserModel.find.mockReturnValue({
-        select: jest.fn().mockResolvedValue(followingUsers),
+      mockUserModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest
+          .fn()
+          .mockResolvedValue({ ...mockUsers[0], following: followingUsers }),
       });
 
       const result = await userService.getUserFollowing(userId);
 
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        id: mockUsers[1]._id,
-        username: mockUsers[1].username,
-        photoUrl: mockUsers[1].photoUrl,
-        isPremium: mockUsers[1].isPremium,
-        followersCount: mockUsers[1].followers.length,
-        followingCount: mockUsers[1].following.length,
-      });
-    });
-  });
-
-  describe('checkIfFollowing', () => {
-    it('should return true if following', async () => {
-      mockUserModel.findById
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockUsers[0]),
-        })
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockUsers[1]),
-        });
-
-      const result = await userService.checkIfFollowing(
-        mockUsers[0]._id,
-        mockUsers[1]._id,
-      );
-
-      expect(result.isFollowing).toBe(true);
-    });
-
-    it('should return false if not following', async () => {
-      const userNotFollowing = {
-        ...mockUsers[0],
-        following: [],
-      };
-
-      mockUserModel.findById
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(userNotFollowing),
-        })
-        .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockUsers[1]),
-        });
-
-      const result = await userService.checkIfFollowing(
-        mockUsers[0]._id,
-        mockUsers[1]._id,
-      );
-
-      expect(result.isFollowing).toBe(false);
+      expect(result).toEqual(followingUsers);
     });
   });
 

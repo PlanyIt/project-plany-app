@@ -124,10 +124,10 @@ describe('AuthController', () => {
       await authController.login(validLoginDto);
 
       expect(loggerSpy).toHaveBeenCalledWith(
-        `Login attempt for email: ${validLoginDto.email}`,
+        `Login attempt «${validLoginDto.email}»`,
       );
       expect(loggerSpy).toHaveBeenCalledWith(
-        `Login successful for email: ${validLoginDto.email}`,
+        `Login success «${validLoginDto.email}»`,
       );
 
       loggerSpy.mockRestore();
@@ -147,7 +147,7 @@ describe('AuthController', () => {
       }
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        `Login failed for email: ${validLoginDto.email}`,
+        `Login failed «${validLoginDto.email}»`,
         loginError.stack,
       );
 
@@ -253,10 +253,10 @@ describe('AuthController', () => {
       await authController.register(validRegisterDto);
 
       expect(loggerSpy).toHaveBeenCalledWith(
-        `Registration attempt for email: ${validRegisterDto.email}`,
+        `Register attempt «${validRegisterDto.email}»`,
       );
       expect(loggerSpy).toHaveBeenCalledWith(
-        `Registration successful for email: ${validRegisterDto.email}`,
+        `Register success «${validRegisterDto.email}»`,
       );
 
       loggerSpy.mockRestore();
@@ -276,7 +276,7 @@ describe('AuthController', () => {
       }
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        `Registration failed for email: ${validRegisterDto.email}`,
+        `Register failed «${validRegisterDto.email}»`,
         registrationError.stack,
       );
 
@@ -375,7 +375,7 @@ describe('AuthController', () => {
       }
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        'Login failed for email: undefined',
+        'Login failed «undefined»',
         expect.any(String),
       );
 
@@ -396,7 +396,7 @@ describe('AuthController', () => {
       }
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        'Registration failed for email: undefined',
+        'Register failed «undefined»',
         expect.any(String),
       );
 

@@ -132,6 +132,26 @@ describe('CategoryController', () => {
       ).rejects.toThrow(BadRequestException);
       expect(mockCategoryService.create).toHaveBeenCalledWith(validCategoryDto);
     });
+
+    it('should validate CategoryDto fields', async () => {
+      const invalidDto = {
+        name: '',
+        color: 'invalid-color',
+        icon: '',
+      } as CategoryDto;
+
+      const validationError = new BadRequestException([
+        'Le nom ne peut pas être vide',
+        'La couleur doit être au format hexadécimal',
+        'L\'icône ne peut pas être vide',
+      ]);
+
+      mockCategoryService.create.mockRejectedValue(validationError);
+
+      await expect(
+        categoryController.createCategory(invalidDto),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('findAll', () => {
@@ -211,6 +231,18 @@ describe('CategoryController', () => {
 
       expect(result).toEqual(expectedCategory);
       expect(mockCategoryService.findByName).toHaveBeenCalledWith(specialName);
+    });
+
+    it('should handle URL encoded category names', async () => {
+      const encodedName = 'Voyage%20%26%20D%C3%A9couverte';
+      const decodedName = 'Voyage & Découverte';
+      const expectedCategory = { ...mockCategories[0], name: decodedName };
+
+      mockCategoryService.findByName.mockResolvedValue(expectedCategory);
+
+      const result = await categoryController.findByName(encodedName);
+
+      expect(result).toEqual(expectedCategory);
     });
   });
 
@@ -406,6 +438,46 @@ describe('CategoryController', () => {
       expect(getMetadata).toBeDefined();
       expect(putMetadata).toBeDefined();
       expect(deleteMetadata).toBeDefined();
+    });
+  });
+
+  describe('Service error handling', () => {
+    it('should propagate service errors in createCategory', async () => {
+      const serviceError = new Error('Service unavailable');
+      mockCategoryService.create.mockRejectedValue(serviceError);
+
+      await expect(
+        categoryController.createCategory(validCategoryDto),
+      ).rejects.toThrow('Service unavailable');
+    });
+
+    it('should handle null service response in findById', async () => {
+      mockCategoryService.findById.mockResolvedValue(null);
+
+      const result = await categoryController.findById('nonexistent-id');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('Controller metadata', () => {
+    it('should have correct controller path', () => {
+      const controllerPath = Reflect.getMetadata('path', CategoryController);
+      expect(controllerPath).toBe('api/categories');
+    });
+
+    it('should have UseGuards decorator', () => {
+      const guards = Reflect.getMetadata('__guards__', CategoryController);
+      expect(guards).toBeDefined();
+      expect(guards.length).toBeGreaterThan(0);
+    });
+
+    it('should have correct HTTP method decorators', () => {
+      const createMetadata = Reflect.getMetadata('method', categoryController.createCategory);
+      const findAllMetadata = Reflect.getMetadata('method', categoryController.findAll);
+      
+      expect(createMetadata).toBeDefined();
+      expect(findAllMetadata).toBeDefined();
     });
   });
 

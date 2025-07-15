@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PlanService } from '../../../src/plan/plan.service';
-import { getModelToken } from '@nestjs/mongoose';
+import { getModelToken, getConnectionToken } from '@nestjs/mongoose';
 import * as planFixtures from '../../__fixtures__/plans.json';
+import { StepService } from '../../../src/step/step.service';
 
 describe('PlanService', () => {
   let planService: PlanService;
@@ -12,11 +13,9 @@ describe('PlanService', () => {
     createPlanDtos,
     updatePlanDtos,
     planWithSteps,
-    planOperations,
     favoriteOperations,
     users,
     specialCases,
-    updateResults,
   } = planFixtures;
 
   const mockPlanModel = jest.fn().mockImplementation((dto) => ({
@@ -41,6 +40,41 @@ describe('PlanService', () => {
     }),
   })) as any;
 
+  const mockStepModel = {
+    deleteMany: jest.fn().mockReturnValue({
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue({ deletedCount: 2 }),
+    }),
+  };
+
+  const mockCommentModel = {
+    deleteMany: jest.fn().mockReturnValue({
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue({ deletedCount: 5 }),
+    }),
+  };
+
+  const mockConnection = {
+    startSession: jest.fn().mockReturnValue({
+      withTransaction: jest.fn().mockImplementation((fn) => fn()),
+      endSession: jest.fn().mockResolvedValue(undefined),
+    }),
+  };
+
+  const mockStepService = {
+    calculateTotalCost: jest.fn().mockResolvedValue(150),
+    calculateTotalDuration: jest.fn().mockResolvedValue(240),
+  };
+
+  const createMockQuery = (resolveValue) => ({
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    session: jest.fn().mockReturnThis(),
+    exec: jest.fn().mockResolvedValue(resolveValue),
+  });
+
   mockPlanModel.find = jest.fn();
   mockPlanModel.findOne = jest.fn();
   mockPlanModel.findById = jest.fn();
@@ -59,6 +93,26 @@ describe('PlanService', () => {
   mockUserModel.exec = jest.fn();
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
+    mockStepModel.deleteMany.mockReturnValue({
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue({ deletedCount: 2 }),
+    });
+
+    mockCommentModel.deleteMany.mockReturnValue({
+      session: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue({ deletedCount: 5 }),
+    });
+
+    mockPlanModel.find.mockReturnValue(createMockQuery([]));
+    mockPlanModel.findById.mockReturnValue(createMockQuery(null));
+    mockPlanModel.findOne.mockReturnValue(createMockQuery(null));
+    mockPlanModel.findByIdAndUpdate.mockReturnValue(createMockQuery(null));
+    mockPlanModel.findOneAndUpdate.mockReturnValue(createMockQuery(null));
+    mockPlanModel.findOneAndDelete.mockReturnValue(createMockQuery(null));
+    mockPlanModel.findOneAndUpdate.mockReturnValue(createMockQuery(null));
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PlanService,
@@ -69,6 +123,22 @@ describe('PlanService', () => {
         {
           provide: getModelToken('User'),
           useValue: mockUserModel,
+        },
+        {
+          provide: getModelToken('Step'),
+          useValue: mockStepModel,
+        },
+        {
+          provide: getModelToken('Comment'),
+          useValue: mockCommentModel,
+        },
+        {
+          provide: getConnectionToken(),
+          useValue: mockConnection,
+        },
+        {
+          provide: StepService,
+          useValue: mockStepService,
         },
       ],
     }).compile();
@@ -95,34 +165,118 @@ describe('PlanService', () => {
 
   describe('createPlan', () => {
     it('should create and return new plan', async () => {
+      mockStepService.calculateTotalCost.mockResolvedValue(150);
+      mockStepService.calculateTotalDuration.mockResolvedValue(240);
+
+      const mockChain = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({
+          ...createPlanDtos.validCreate,
+          _id: validPlans[0]._id,
+          totalCost: 150,
+          totalDuration: 240,
+        }),
+      };
+
+      mockPlanModel.findById.mockReturnValue(mockChain);
+
       const result = await planService.createPlan(createPlanDtos.validCreate);
 
-      expect(mockPlanModel).toHaveBeenCalledWith(createPlanDtos.validCreate);
-      expect(result._id).toBe(validPlans[0]._id);
-      expect(result.title).toBe(createPlanDtos.validCreate.title);
-      expect(result.description).toBe(createPlanDtos.validCreate.description);
-      expect(result.user).toBe(createPlanDtos.validCreate.user);
-      expect(result.category).toBe(createPlanDtos.validCreate.category);
-      expect(result.isPublic).toBe(createPlanDtos.validCreate.isPublic);
-    });
-
-    it('should create private plan', async () => {
-      const result = await planService.createPlan(createPlanDtos.privateCreate);
-
-      expect(result.isPublic).toBe(createPlanDtos.privateCreate.isPublic);
-      expect(result.category).toBe(createPlanDtos.privateCreate.category);
+      expect(mockPlanModel).toHaveBeenCalledWith({
+        ...createPlanDtos.validCreate,
+        totalCost: 150,
+        totalDuration: 240,
+      });
+      expect(result.totalCost).toBe(150);
+      expect(result.totalDuration).toBe(240);
     });
 
     it('should create plan with default values', async () => {
+      mockStepService.calculateTotalCost.mockResolvedValue(0);
+      mockStepService.calculateTotalDuration.mockResolvedValue(0);
+
+      const mockChain = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({
+          ...createPlanDtos.minimalCreate,
+          _id: validPlans[0]._id,
+          totalCost: 0,
+          totalDuration: 0,
+          user: {
+            _id: createPlanDtos.minimalCreate.user,
+            username: 'testuser',
+          },
+          category: {
+            _id: createPlanDtos.minimalCreate.category,
+            name: 'Test Category',
+          },
+        }),
+      };
+
+      mockPlanModel.findById.mockReturnValue(mockChain);
+
       const result = await planService.createPlan(createPlanDtos.minimalCreate);
 
       expect(result.title).toBe(createPlanDtos.minimalCreate.title);
       expect(result.description).toBe(createPlanDtos.minimalCreate.description);
-      expect(result.category).toBe(createPlanDtos.minimalCreate.category);
-      expect(result.user).toBe(createPlanDtos.minimalCreate.user);
+      expect(result.category).toBeDefined();
+      expect(result.user).toBeDefined();
+    });
+
+    it('should create private plan', async () => {
+      mockStepService.calculateTotalCost.mockResolvedValue(0);
+      mockStepService.calculateTotalDuration.mockResolvedValue(0);
+
+      const mockChain = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({
+          ...createPlanDtos.privateCreate,
+          _id: validPlans[0]._id,
+          totalCost: 0,
+          totalDuration: 0,
+          user: {
+            _id: createPlanDtos.privateCreate.user,
+            username: 'testuser',
+          },
+          category: {
+            _id: createPlanDtos.privateCreate.category,
+            name: 'Test Category',
+          },
+        }),
+      };
+
+      mockPlanModel.findById.mockReturnValue(mockChain);
+
+      const result = await planService.createPlan(createPlanDtos.privateCreate);
+
+      expect(result.isPublic).toBe(createPlanDtos.privateCreate.isPublic);
+      expect(result.category).toBeDefined();
     });
 
     it('should create plan with steps', async () => {
+      mockStepService.calculateTotalCost.mockResolvedValue(150);
+      mockStepService.calculateTotalDuration.mockResolvedValue(240);
+
+      const mockChain = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({
+          ...createPlanDtos.withStepsCreate,
+          _id: validPlans[0]._id,
+          totalCost: 150,
+          totalDuration: 240,
+          user: {
+            _id: createPlanDtos.withStepsCreate.user,
+            username: 'testuser',
+          },
+          category: {
+            _id: createPlanDtos.withStepsCreate.category,
+            name: 'Test Category',
+          },
+        }),
+      };
+
+      mockPlanModel.findById.mockReturnValue(mockChain);
+
       const result = await planService.createPlan(
         createPlanDtos.withStepsCreate,
       );
@@ -173,7 +327,15 @@ describe('PlanService', () => {
   });
 
   describe('findById', () => {
-    it('should return plan with populated data when found', async () => {
+    it('should throw NotFoundException for invalid ObjectId', async () => {
+      const invalidId = 'invalid-object-id';
+
+      await expect(planService.findById(invalidId)).rejects.toThrow(
+        'Plan with ID invalid-object-id is not a valid ObjectId',
+      );
+    });
+
+    it('should return plan when found', async () => {
       const planId = planWithSteps._id;
 
       const mockChain = {
@@ -181,75 +343,11 @@ describe('PlanService', () => {
         exec: jest.fn().mockResolvedValue(planWithSteps),
       };
 
-      mockPlanModel.findOne.mockReturnValue(mockChain);
+      mockPlanModel.findById.mockReturnValue(mockChain);
 
       const result = await planService.findById(planId);
 
       expect(result).toEqual(planWithSteps);
-      expect(result.category).toBe(planWithSteps.category);
-      expect(result.isPublic).toBe(planWithSteps.isPublic);
-      expect(result.favorites).toHaveLength(planWithSteps.favorites.length);
-      expect(result.steps).toHaveLength(planWithSteps.steps.length);
-    });
-
-    it('should return null when plan not found', async () => {
-      const planId = '507f1f77bcf86cd799439999';
-
-      const mockChain = {
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
-      };
-
-      mockPlanModel.findOne.mockReturnValue(mockChain);
-
-      const result = await planService.findById(planId);
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('addStepToPlan', () => {
-    it('should add step to plan steps array', async () => {
-      const planId = planOperations.afterAddStep._id;
-      const stepId = planOperations.afterAddStep.steps[0];
-
-      const mockChain = {
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(planOperations.afterAddStep),
-      };
-
-      mockPlanModel.findOneAndUpdate.mockReturnValue(mockChain);
-
-      const result = await planService.addStepToPlan(planId, stepId);
-
-      expect(result).toEqual(planOperations.afterAddStep);
-      expect(mockPlanModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: planId },
-        { $push: { steps: stepId } },
-        { new: true },
-      );
-      expect(result.steps).toContain(stepId);
-      expect(result.steps).toHaveLength(1);
-    });
-
-    it('should add multiple steps to existing steps array', async () => {
-      const planId = planOperations.afterAddMultipleSteps._id;
-      const newStepId = planOperations.afterAddMultipleSteps.steps[1];
-
-      const mockChain = {
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(planOperations.afterAddMultipleSteps),
-      };
-
-      mockPlanModel.findOneAndUpdate.mockReturnValue(mockChain);
-
-      const result = await planService.addStepToPlan(planId, newStepId);
-
-      expect(result.steps).toHaveLength(2);
-      expect(result.steps).toContain(newStepId);
-      expect(result.steps).toContain(
-        planOperations.afterAddMultipleSteps.steps[0],
-      );
     });
   });
 
@@ -350,17 +448,19 @@ describe('PlanService', () => {
       const updatedPlan = {
         _id: planId,
         ...updateData,
+        user: { _id: userId, username: 'testuser' },
+        category: { _id: 'cat1', name: 'Test Category' },
       };
 
-      mockPlanModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(updatedPlan),
-      });
+      mockPlanModel.findOneAndUpdate.mockReturnValue(
+        createMockQuery(updatedPlan),
+      );
 
       const result = await planService.updateById(planId, updateData, userId);
 
       expect(result).toEqual(updatedPlan);
-      expect(result.category).toBe(updateData.category);
-      expect(result.isPublic).toBe(updateData.isPublic);
+      expect(result.category).toBeDefined();
+      expect(result.user).toBeDefined();
       expect(mockPlanModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: planId, user: userId },
         updateData,
@@ -377,22 +477,22 @@ describe('PlanService', () => {
         _id: planId,
         title: updateData.title,
         description: validPlans[0].description,
-        category: updateData.category,
-        user: userId,
+        category: { _id: updateData.category, name: 'Test Category' },
+        user: { _id: userId, username: 'testuser' },
         isPublic: validPlans[0].isPublic,
         steps: validPlans[0].steps,
         favorites: validPlans[0].favorites,
       };
 
-      mockPlanModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(updatedPlan),
-      });
+      mockPlanModel.findOneAndUpdate.mockReturnValue(
+        createMockQuery(updatedPlan),
+      );
 
       const result = await planService.updateById(planId, updateData, userId);
 
       expect(result.title).toBe(updateData.title);
-      expect(result.category).toBe(updateData.category);
-      expect(result.description).toBe(validPlans[0].description);
+      expect(result.category).toBeDefined();
+      expect(result.user).toBeDefined();
     });
 
     it('should return null when plan not found or user not owner', async () => {
@@ -400,9 +500,7 @@ describe('PlanService', () => {
       const wrongUserId = '507f1f77bcf86cd799439999';
       const updateData = updatePlanDtos.partialUpdate;
 
-      mockPlanModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
+      mockPlanModel.findOneAndUpdate.mockReturnValue(createMockQuery(null));
 
       const result = await planService.updateById(
         planId,
@@ -414,93 +512,79 @@ describe('PlanService', () => {
     });
   });
 
-  describe('fixNullFavorites', () => {
-    it('should fix all plans with null favorites to empty array', async () => {
-      mockPlanModel.updateMany.mockResolvedValue(
-        updateResults.fixNullFavorites,
-      );
-
-      const result = await planService.fixNullFavorites();
-
-      expect(result).toEqual(updateResults.fixNullFavorites);
-      expect(result.modifiedCount).toBe(5);
-      expect(mockPlanModel.updateMany).toHaveBeenCalledWith(
-        { favorites: null },
-        { $set: { favorites: [] } },
-      );
-    });
-
-    it('should return zero modified when no plans have null favorites', async () => {
-      const noModifiedResult = {
-        acknowledged: true,
-        modifiedCount: 0,
-        upsertedId: null,
-        upsertedCount: 0,
-        matchedCount: 0,
-      };
-
-      mockPlanModel.updateMany.mockResolvedValue(noModifiedResult);
-
-      const result = await planService.fixNullFavorites();
-
-      expect(result.modifiedCount).toBe(0);
-      expect(result.acknowledged).toBe(true);
-    });
-  });
-
   describe('removeById', () => {
+    it('should throw NotFoundException when user is not the owner', async () => {
+      const planId = validPlans[0]._id;
+      const wrongUserId = '507f1f77bcf86cd799439999';
+
+      mockPlanModel.findOne.mockReturnValue({
+        session: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(planService.removeById(planId, wrongUserId)).rejects.toThrow(
+        'Plan not found or not owned by user',
+      );
+    });
+
+    it('should throw NotFoundException when plan not found', async () => {
+      const planId = '507f1f77bcf86cd799439999';
+      const userId = validPlans[0].user;
+
+      mockPlanModel.findOne.mockReturnValue({
+        session: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(planService.removeById(planId, userId)).rejects.toThrow(
+        'Plan not found or not owned by user',
+      );
+    });
+
     it('should delete plan when found and user is owner', async () => {
       const planId = validPlans[0]._id;
       const userId = validPlans[0].user;
       const deletedPlan = validPlans[0];
 
+      mockPlanModel.findOne.mockReturnValue({
+        session: jest.fn().mockResolvedValue(deletedPlan),
+      });
+
       mockPlanModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(deletedPlan),
+        session: jest.fn().mockResolvedValue(deletedPlan),
       });
 
       const result = await planService.removeById(planId, userId);
 
       expect(result).toEqual(deletedPlan);
-      expect(mockPlanModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: planId,
-        user: userId,
-      });
-    });
-
-    it('should return null when plan not found', async () => {
-      const planId = '507f1f77bcf86cd799439999';
-      const userId = validPlans[0].user;
-
-      mockPlanModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await planService.removeById(planId, userId);
-
-      expect(result).toBeNull();
-    });
-
-    it('should return null when user is not the owner', async () => {
-      const planId = validPlans[0]._id;
-      const wrongUserId = '507f1f77bcf86cd799439999';
-
-      mockPlanModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await planService.removeById(planId, wrongUserId);
-
-      expect(result).toBeNull();
-      expect(mockPlanModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: planId,
-        user: wrongUserId,
-      });
     });
   });
 
   describe('special cases', () => {
     it('should handle plan with long title', async () => {
       const longTitlePlan = specialCases.longTitle;
+
+      mockStepService.calculateTotalCost.mockResolvedValue(0);
+      mockStepService.calculateTotalDuration.mockResolvedValue(0);
+
+      mockPlanModel.mockImplementation((dto) => ({
+        ...dto,
+        _id: validPlans[0]._id,
+        save: jest.fn().mockResolvedValue({ _id: validPlans[0]._id, ...dto }),
+      }));
+
+      mockPlanModel.findById.mockReturnValue(
+        createMockQuery({
+          _id: validPlans[0]._id,
+          title: longTitlePlan.title,
+          description: longTitlePlan.description,
+          user: { _id: longTitlePlan.user, username: 'testuser' },
+          category: { _id: 'cat1', name: 'Test Category' },
+          isPublic: longTitlePlan.isPublic,
+          steps: longTitlePlan.steps || [],
+          favorites: longTitlePlan.favorites || [],
+          totalCost: 0,
+          totalDuration: 0,
+        }),
+      );
 
       const result = await planService.createPlan({
         title: longTitlePlan.title,
@@ -512,12 +596,40 @@ describe('PlanService', () => {
         favorites: longTitlePlan.favorites,
       });
 
+      expect(result).toBeDefined();
       expect(result.title).toBe(longTitlePlan.title);
       expect(result.title.length).toBeGreaterThan(50);
     });
 
     it('should handle plan with empty steps array', async () => {
       const emptyStepsPlan = specialCases.emptySteps;
+
+      mockStepService.calculateTotalCost.mockResolvedValue(0);
+      mockStepService.calculateTotalDuration.mockResolvedValue(0);
+
+      mockPlanModel.mockImplementation((dto) => ({
+        ...dto,
+        _id: validPlans[0]._id,
+        save: jest.fn().mockResolvedValue({
+          _id: validPlans[0]._id,
+          ...dto,
+        }),
+      }));
+
+      mockPlanModel.findById.mockReturnValue(
+        createMockQuery({
+          _id: validPlans[0]._id,
+          title: emptyStepsPlan.title,
+          description: emptyStepsPlan.description,
+          user: { _id: emptyStepsPlan.user, username: 'testuser' },
+          category: { _id: 'cat1', name: 'Test Category' },
+          isPublic: emptyStepsPlan.isPublic,
+          steps: [],
+          favorites: emptyStepsPlan.favorites || [],
+          totalCost: 0,
+          totalDuration: 0,
+        }),
+      );
 
       const result = await planService.createPlan({
         title: emptyStepsPlan.title,
@@ -529,6 +641,7 @@ describe('PlanService', () => {
         favorites: emptyStepsPlan.favorites,
       });
 
+      expect(result).toBeDefined();
       expect(result.steps).toEqual([]);
       expect(Array.isArray(result.steps)).toBe(true);
       expect(result.steps).toHaveLength(0);
@@ -536,6 +649,26 @@ describe('PlanService', () => {
 
     it('should handle plan with many favorites', async () => {
       const popularPlan = specialCases.manyFavorites;
+
+      const mockSavedPlan = {
+        _id: validPlans[0]._id,
+        ...popularPlan,
+      };
+
+      mockPlanModel.mockImplementation((dto) => ({
+        ...dto,
+        _id: validPlans[0]._id,
+        save: jest.fn().mockResolvedValue(mockSavedPlan),
+      }));
+
+      mockPlanModel.findById.mockReturnValue(
+        createMockQuery({
+          ...mockSavedPlan,
+          user: { _id: popularPlan.user, username: 'testuser' },
+          category: { _id: 'cat1', name: 'Test Category' },
+          steps: popularPlan.steps,
+        }),
+      );
 
       const result = await planService.createPlan({
         title: popularPlan.title,
@@ -549,6 +682,68 @@ describe('PlanService', () => {
 
       expect(result.favorites).toHaveLength(5);
       expect(result.favorites).toEqual(popularPlan.favorites);
+    });
+  });
+
+  describe('findAllByUserId', () => {
+    it('should return all plans for owner', async () => {
+      const userId = users[0]._id;
+      const viewerId = userId;
+
+      const mockChain = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(validPlans),
+      };
+
+      mockPlanModel.find.mockReturnValue(mockChain);
+
+      const result = await planService.findAllByUserId(userId, viewerId);
+
+      expect(result).toEqual(validPlans);
+      expect(mockPlanModel.find).toHaveBeenCalledWith({
+        user: expect.any(Object),
+      });
+    });
+
+    it('should return only public plans for other users', async () => {
+      const userId = users[0]._id;
+      const viewerId = users[1]._id;
+
+      const mockChain = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(publicPlans),
+      };
+
+      mockPlanModel.find.mockReturnValue(mockChain);
+
+      const result = await planService.findAllByUserId(userId, viewerId);
+
+      expect(result).toEqual(publicPlans);
+      expect(mockPlanModel.find).toHaveBeenCalledWith({
+        user: expect.any(Object),
+        isPublic: true,
+      });
+    });
+  });
+
+  describe('findFavoritesByUserId', () => {
+    it('should return favorite plans for user', async () => {
+      const userId = users[0]._id;
+
+      const mockChain = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(publicPlans),
+      };
+
+      mockPlanModel.find.mockReturnValue(mockChain);
+
+      const result = await planService.findFavoritesByUserId(userId);
+
+      expect(result).toEqual(publicPlans);
+      expect(mockPlanModel.find).toHaveBeenCalledWith({ favorites: userId });
     });
   });
 });

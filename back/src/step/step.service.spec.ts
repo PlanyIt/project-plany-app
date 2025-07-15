@@ -14,7 +14,7 @@ describe('StepService', () => {
       longitude: 2.2945,
       order: 1,
       image: 'eiffel-tower.jpg',
-      duration: '2 heures',
+      duration: 120,
       cost: 25,
       userId: '507f1f77bcf86cd799439011',
       createdAt: new Date('2024-01-20T10:00:00.000Z'),
@@ -28,7 +28,7 @@ describe('StepService', () => {
       longitude: 2.3376,
       order: 2,
       image: 'louvre-museum.jpg',
-      duration: '3 heures',
+      duration: 180,
       cost: 15,
       userId: '507f1f77bcf86cd799439011',
       createdAt: new Date('2024-01-20T11:00:00.000Z'),
@@ -40,7 +40,7 @@ describe('StepService', () => {
       description: 'Entraînement cardiovasculaire intensif',
       order: 1,
       image: 'cardio-workout.jpg',
-      duration: '45 minutes',
+      duration: 45,
       cost: 0,
       userId: '507f1f77bcf86cd799439012',
       createdAt: new Date('2024-01-20T12:00:00.000Z'),
@@ -55,7 +55,7 @@ describe('StepService', () => {
     longitude: 2.3522,
     order: 3,
     image: 'new-step.jpg',
-    duration: '1 heure',
+    duration: 60,
     cost: 10,
     userId: '507f1f77bcf86cd799439011',
   };
@@ -67,7 +67,7 @@ describe('StepService', () => {
     longitude: 2.3523,
     order: 1,
     image: 'updated-step.jpg',
-    duration: '1.5 heures',
+    duration: 90,
     cost: 12,
     userId: '507f1f77bcf86cd799439011',
   };
@@ -142,7 +142,6 @@ describe('StepService', () => {
       expect(result.image).toBe(createStepDto.image);
       expect(result.duration).toBe(createStepDto.duration);
       expect(result.cost).toBe(createStepDto.cost);
-      expect(result.userId).toBe(createStepDto.userId);
     });
 
     it('should create step without optional fields', async () => {
@@ -152,6 +151,9 @@ describe('StepService', () => {
         order: 1,
         image: 'minimal.jpg',
         userId: '507f1f77bcf86cd799439011',
+        duration: 3,
+        location: null,
+        cost: 0,
       };
 
       const result = await stepService.create(minimalStepDto);
@@ -159,7 +161,19 @@ describe('StepService', () => {
       expect(result.title).toBe(minimalStepDto.title);
       expect(result.description).toBe(minimalStepDto.description);
       expect(result.order).toBe(minimalStepDto.order);
-      expect(result.userId).toBe(minimalStepDto.userId);
+    });
+
+    it('should create step with zero cost and duration', async () => {
+      const stepWithZeros = {
+        ...createStepDto,
+        duration: 0,
+        cost: 0,
+      };
+
+      const result = await stepService.create(stepWithZeros);
+
+      expect(result.duration).toBe(0);
+      expect(result.cost).toBe(0);
     });
   });
 
@@ -261,6 +275,174 @@ describe('StepService', () => {
     });
   });
 
+  describe('calculateTotalCost', () => {
+    it('should calculate total cost of steps', async () => {
+      const stepIds = [mockSteps[0]._id, mockSteps[1]._id];
+      const stepsWithCost = [mockSteps[0], mockSteps[1]];
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(stepsWithCost),
+      });
+
+      const result = await stepService.calculateTotalCost(stepIds);
+
+      expect(result).toBe(40);
+      expect(mockStepModel.find).toHaveBeenCalledWith({
+        _id: { $in: stepIds },
+      });
+    });
+
+    it('should handle steps with zero cost', async () => {
+      const stepIds = [mockSteps[2]._id];
+      const stepsWithZeroCost = [mockSteps[2]];
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(stepsWithZeroCost),
+      });
+
+      const result = await stepService.calculateTotalCost(stepIds);
+
+      expect(result).toBe(0);
+    });
+
+    it('should handle steps with undefined cost', async () => {
+      const stepWithUndefinedCost = {
+        ...mockSteps[0],
+        cost: undefined,
+      };
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([stepWithUndefinedCost]),
+      });
+
+      const result = await stepService.calculateTotalCost([mockSteps[0]._id]);
+
+      expect(result).toBe(0);
+    });
+
+    it('should handle empty step array', async () => {
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      });
+
+      const result = await stepService.calculateTotalCost([]);
+
+      expect(result).toBe(0);
+    });
+
+    it('should handle mixed costs including nulls', async () => {
+      const stepsWithMixedCosts = [
+        { ...mockSteps[0], cost: 25 },
+        { ...mockSteps[1], cost: null },
+        { ...mockSteps[2], cost: 0 },
+      ];
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(stepsWithMixedCosts),
+      });
+
+      const result = await stepService.calculateTotalCost([
+        'id1',
+        'id2',
+        'id3',
+      ]);
+
+      expect(result).toBe(25);
+    });
+  });
+
+  describe('calculateTotalDuration', () => {
+    it('should calculate total duration of steps', async () => {
+      const stepIds = [mockSteps[0]._id, mockSteps[1]._id];
+      const stepsWithDuration = [mockSteps[0], mockSteps[1]];
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(stepsWithDuration),
+      });
+
+      const result = await stepService.calculateTotalDuration(stepIds);
+
+      expect(result).toBe(300);
+      expect(mockStepModel.find).toHaveBeenCalledWith({
+        _id: { $in: stepIds },
+      });
+    });
+
+    it('should handle steps with zero duration', async () => {
+      const stepWithZeroDuration = {
+        ...mockSteps[0],
+        duration: 0,
+      };
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([stepWithZeroDuration]),
+      });
+
+      const result = await stepService.calculateTotalDuration([
+        mockSteps[0]._id,
+      ]);
+
+      expect(result).toBe(0);
+    });
+
+    it('should handle steps with undefined duration', async () => {
+      const stepWithUndefinedDuration = {
+        ...mockSteps[0],
+        duration: undefined,
+      };
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([stepWithUndefinedDuration]),
+      });
+
+      const result = await stepService.calculateTotalDuration([
+        mockSteps[0]._id,
+      ]);
+
+      expect(result).toBe(0);
+    });
+
+    it('should handle empty step array', async () => {
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      });
+
+      const result = await stepService.calculateTotalDuration([]);
+
+      expect(result).toBe(0);
+    });
+
+    it('should handle mixed durations including nulls and decimals', async () => {
+      const stepsWithMixedDurations = [
+        { ...mockSteps[0], duration: 120.5 },
+        { ...mockSteps[1], duration: null },
+        { ...mockSteps[2], duration: 45 },
+      ];
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(stepsWithMixedDurations),
+      });
+
+      const result = await stepService.calculateTotalDuration([
+        'id1',
+        'id2',
+        'id3',
+      ]);
+
+      expect(result).toBe(165.5);
+    });
+  });
+
   describe('updateById', () => {
     it('should update and return step when user is authorized', async () => {
       const stepId = mockSteps[0]._id;
@@ -286,6 +468,7 @@ describe('StepService', () => {
       expect(result.latitude).toBe(updateStepDto.latitude);
       expect(result.longitude).toBe(updateStepDto.longitude);
       expect(result.cost).toBe(updateStepDto.cost);
+      expect(result.duration).toBe(updateStepDto.duration);
       expect(mockStepModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: stepId, userId },
         updateStepDto,
@@ -339,6 +522,7 @@ describe('StepService', () => {
         image: mockSteps[0].image,
         userId: userId,
         cost: 20,
+        duration: 90,
       };
       const updatedStep = {
         ...mockSteps[0],
@@ -358,6 +542,7 @@ describe('StepService', () => {
       expect(result).toEqual(updatedStep);
       expect(result.title).toBe(partialUpdate.title);
       expect(result.cost).toBe(partialUpdate.cost);
+      expect(result.duration).toBe(partialUpdate.duration);
     });
   });
 
@@ -432,6 +617,9 @@ describe('StepService', () => {
         order: 1,
         image: 'virtual.jpg',
         userId: '507f1f77bcf86cd799439011',
+        location: null,
+        duration: 30,
+        cost: 5,
       };
 
       const result = await stepService.create(stepWithoutLocation);
@@ -477,6 +665,130 @@ describe('StepService', () => {
 
       expect(result).toEqual(foundSteps);
       expect(result).toHaveLength(2);
+    });
+
+    it('should handle extreme coordinate values', async () => {
+      const extremeCoordStep = {
+        ...createStepDto,
+        latitude: -90,
+        longitude: -180,
+      };
+
+      const result = await stepService.create(extremeCoordStep);
+
+      expect(result.latitude).toBe(-90);
+      expect(result.longitude).toBe(-180);
+    });
+
+    it('should handle very large duration values', async () => {
+      const longDurationStep = {
+        ...createStepDto,
+        duration: 999999,
+      };
+
+      const result = await stepService.create(longDurationStep);
+
+      expect(result.duration).toBe(999999);
+    });
+
+    it('should handle negative cost (edge case)', async () => {
+      const negativeCostStep = {
+        ...createStepDto,
+        cost: -10,
+      };
+
+      const result = await stepService.create(negativeCostStep);
+
+      expect(result.cost).toBe(-10);
+    });
+
+    it('should handle decimal duration and cost', async () => {
+      const decimalStep = {
+        ...createStepDto,
+        duration: 45.5,
+        cost: 12.99,
+      };
+
+      const result = await stepService.create(decimalStep);
+
+      expect(result.duration).toBe(45.5);
+      expect(result.cost).toBe(12.99);
+    });
+  });
+
+  describe('Error handling', () => {
+    it('should handle database errors in create', async () => {
+      const mockSave = jest.fn().mockRejectedValue(new Error('Database error'));
+      mockStepModel.mockImplementation(() => ({ save: mockSave }));
+
+      await expect(stepService.create(createStepDto)).rejects.toThrow(
+        'Database error',
+      );
+    });
+
+    it('should handle database errors in findByIds', async () => {
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockRejectedValue(new Error('Connection lost')),
+      });
+
+      await expect(stepService.findByIds([mockSteps[0]._id])).rejects.toThrow(
+        'Connection lost',
+      );
+    });
+
+    it('should handle plan update errors in removeById', async () => {
+      const stepId = mockSteps[0]._id;
+
+      mockStepModel.findOneAndDelete.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockSteps[0]),
+      });
+
+      mockPlanModel.updateMany.mockRejectedValue(
+        new Error('Plan update failed'),
+      );
+
+      await expect(stepService.removeById(stepId)).rejects.toThrow(
+        'Plan update failed',
+      );
+    });
+  });
+
+  describe('Performance tests', () => {
+    it('should handle large arrays in calculateTotalCost efficiently', async () => {
+      const largeStepArray = Array.from({ length: 100 }, (_, i) => ({
+        _id: `step-${i}`,
+        cost: i,
+        duration: i * 10,
+      }));
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(largeStepArray),
+      });
+
+      const stepIds = largeStepArray.map((s) => s._id);
+      const result = await stepService.calculateTotalCost(stepIds);
+
+      expect(result).toBe(4950);
+    });
+
+    it('should handle large arrays in calculateTotalDuration efficiently', async () => {
+      const largeStepArray = Array.from({ length: 50 }, (_, i) => ({
+        _id: `step-${i}`,
+        cost: 10,
+        duration: 60,
+      }));
+
+      mockStepModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(largeStepArray),
+      });
+
+      const stepIds = largeStepArray.map((s) => s._id);
+      const result = await stepService.calculateTotalDuration(stepIds);
+
+      expect(result).toBe(3000);
     });
   });
 });

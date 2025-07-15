@@ -42,6 +42,23 @@ describe('CategoryService', () => {
     exec: jest.fn(),
   });
 
+  const mockPlanModel = {
+    find: jest.fn().mockReturnValue({
+      exec: jest.fn(),
+    }),
+    findOne: jest.fn().mockReturnValue({
+      exec: jest.fn(),
+    }),
+    findById: jest.fn().mockReturnValue({
+      exec: jest.fn(),
+    }),
+    countDocuments: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue(0),
+    }),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -51,6 +68,10 @@ describe('CategoryService', () => {
         {
           provide: getModelToken('Category'),
           useValue: mockCategoryModel,
+        },
+        {
+          provide: getModelToken('Plan'),
+          useValue: mockPlanModel,
         },
       ],
     }).compile();
@@ -168,6 +189,10 @@ describe('CategoryService', () => {
       const categoryId = validCategories[0]._id;
       const deletedCategory = validCategories[0];
 
+      mockPlanModel.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(0),
+      });
+
       mockCategoryModel.findOneAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(deletedCategory),
       });
@@ -175,12 +200,19 @@ describe('CategoryService', () => {
       const result = await categoryService.removeById(categoryId);
 
       expect(result).toEqual(deletedCategory);
+      expect(mockPlanModel.countDocuments).toHaveBeenCalledWith({
+        category: categoryId,
+      });
       expect(mockCategoryModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: categoryId,
       });
     });
 
     it('should return null when category not found', async () => {
+      mockPlanModel.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(0),
+      });
+
       mockCategoryModel.findOneAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
       });
@@ -188,6 +220,23 @@ describe('CategoryService', () => {
       const result = await categoryService.removeById('nonexistent');
 
       expect(result).toBeNull();
+    });
+
+    it('should throw BadRequestException when plans use this category', async () => {
+      const categoryId = validCategories[0]._id;
+
+      mockPlanModel.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(3),
+      });
+
+      await expect(categoryService.removeById(categoryId)).rejects.toThrow(
+        "Impossible de supprimer cette catégorie. 3 plan(s) l'utilise(nt) encore.",
+      );
+
+      expect(mockPlanModel.countDocuments).toHaveBeenCalledWith({
+        category: categoryId,
+      });
+      expect(mockCategoryModel.findOneAndDelete).not.toHaveBeenCalled();
     });
   });
 

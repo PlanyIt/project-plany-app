@@ -61,9 +61,8 @@ describe('StepController', () => {
     longitude: 2.3508,
     order: 4,
     image: 'https://example.com/new-step.jpg',
-    duration: '1h30',
+    duration: 1,
     cost: 25,
-    userId: '507f1f77bcf86cd799439021',
   };
 
   const updateStepDto: StepDto = {
@@ -73,9 +72,8 @@ describe('StepController', () => {
     longitude: 2.3515,
     order: 4,
     image: 'https://example.com/updated-step.jpg',
-    duration: '2h',
+    duration: 1,
     cost: 30,
-    userId: '507f1f77bcf86cd799439021',
   };
 
   const mockUser = {
@@ -166,10 +164,9 @@ describe('StepController', () => {
         description: 'Description minimale',
         order: 1,
         image: 'https://example.com/minimal.jpg',
-        userId: mockUser._id,
         latitude: 48.8566,
         longitude: 2.3522,
-        duration: '1h',
+        duration: 1,
         cost: 10,
       };
 
@@ -223,7 +220,7 @@ describe('StepController', () => {
     it('should handle step creation with cost and duration', async () => {
       const stepWithDetails: StepDto = {
         ...validStepDto,
-        duration: '3h45',
+        duration: 3,
         cost: 75,
       };
 

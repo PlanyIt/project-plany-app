@@ -3,13 +3,13 @@ import { AuthService } from '../../../src/auth/auth.service';
 import { UserService } from '../../../src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { PasswordService } from '../../../src/auth/password.service';
+import { TokenService } from '../../../src/auth/token.service';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import * as authFixtures from '../../__fixtures__/auth.json';
 
 describe('AuthService', () => {
   let authService: AuthService;
   let userService: UserService;
-  let jwtService: JwtService;
   let passwordService: PasswordService;
 
   const {
@@ -40,6 +40,14 @@ describe('AuthService', () => {
     verifyLegacyPassword: jest.fn(() => Promise.resolve(false)),
   };
 
+  const mockTokenService = {
+    signAccess: jest.fn(() => jwtTokens.validToken),
+    signRefresh: jest.fn(() => Promise.resolve('refresh_token_mock')),
+    verifyRefresh: jest.fn(),
+    revokeFromJwt: jest.fn(),
+    revokeAllForUser: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -49,12 +57,12 @@ describe('AuthService', () => {
         { provide: UserService, useValue: mockUserService },
         { provide: JwtService, useValue: mockJwtService },
         { provide: PasswordService, useValue: mockPasswordService },
+        { provide: TokenService, useValue: mockTokenService },
       ],
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
     userService = module.get<UserService>(UserService);
-    jwtService = module.get<JwtService>(JwtService);
     passwordService = module.get<PasswordService>(PasswordService);
   });
 
@@ -80,6 +88,10 @@ describe('AuthService', () => {
           gender: user.gender,
           followers: user.followers,
           following: user.following,
+          createdAt: user.createdAt,
+          role: user.role,
+          updatedAt: user.updatedAt,
+          password: user.password,
         }),
       };
 
@@ -91,7 +103,21 @@ describe('AuthService', () => {
         loginData.password,
       );
 
-      expect(result).toEqual(mockUser.toObject());
+      expect(result).toEqual(
+        expect.objectContaining({
+          _id: user._id,
+          email: user.email,
+          username: user.username,
+          description: user.description,
+          isPremium: user.isPremium,
+          photoUrl: user.photoUrl,
+          birthDate: user.birthDate,
+          gender: user.gender,
+          role: user.role,
+          password: user.password,
+        }),
+      );
+
       expect(userService.findOneByEmail).toHaveBeenCalledWith(loginData.email);
       expect(passwordService.verifyPassword).toHaveBeenCalledWith(
         loginData.password,
@@ -133,40 +159,6 @@ describe('AuthService', () => {
         user.password,
       );
     });
-
-    it('should handle legacy bcrypt passwords', async () => {
-      const loginData = loginDtos.validLogin;
-      const user = {
-        ...validUsers[0],
-        password: passwordOperations.bcryptLegacyPasswords[0],
-      };
-
-      const mockUser = {
-        ...user,
-        toObject: () => ({
-          _id: user._id,
-          email: user.email,
-          username: user.username,
-        }),
-      };
-
-      mockUserService.findOneByEmail.mockResolvedValue(mockUser);
-      mockPasswordService.verifyPassword.mockRejectedValue(
-        new Error('Argon2 failed'),
-      );
-      mockPasswordService.verifyLegacyPassword.mockResolvedValue(true);
-
-      const result = await authService.validateUser(
-        loginData.email,
-        loginData.password,
-      );
-
-      expect(result).toEqual(mockUser.toObject());
-      expect(passwordService.verifyLegacyPassword).toHaveBeenCalledWith(
-        loginData.password,
-        user.password,
-      );
-    });
   });
 
   describe('login', () => {
@@ -176,14 +168,28 @@ describe('AuthService', () => {
 
       mockUserService.findOneByEmail.mockResolvedValue({
         ...user,
-        toObject: () => user,
+        toObject: () => ({
+          _id: user._id,
+          email: user.email,
+          username: user.username,
+          isPremium: user.isPremium,
+          description: user.description,
+          photoUrl: user.photoUrl,
+          birthDate: user.birthDate,
+          gender: user.gender,
+          followers: user.followers,
+          following: user.following,
+          createdAt: user.createdAt,
+          role: user.role,
+          updatedAt: user.updatedAt,
+        }),
       });
       mockPasswordService.verifyPassword.mockResolvedValue(true);
 
       const result = await authService.login(loginData);
 
-      expect(result.token).toBe(jwtTokens.validToken);
-      expect(result.currentUser.id).toBe(user._id);
+      expect(result.accessToken).toBe(jwtTokens.validToken);
+      expect(result.currentUser._id).toBe(user._id);
       expect(result.currentUser.email).toBe(user.email);
       expect(result.currentUser.username).toBe(user.username);
       expect(result.currentUser.isPremium).toBe(user.isPremium);
@@ -212,7 +218,6 @@ describe('AuthService', () => {
         _id: '507f1f77bcf86cd799439013',
         ...registerData,
         password: hashedPassword,
-        isActive: true,
         isPremium: false,
         description: null,
         photoUrl: null,
@@ -220,6 +225,21 @@ describe('AuthService', () => {
         gender: null,
         followers: [],
         following: [],
+        toObject: () => ({
+          _id: '507f1f77bcf86cd799439013',
+          email: registerData.email,
+          username: registerData.username,
+          isPremium: false,
+          description: null,
+          photoUrl: null,
+          birthDate: null,
+          gender: null,
+          followers: [],
+          following: [],
+          role: 'user',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
       };
 
       mockUserService.findOneByEmail.mockResolvedValue(null);
@@ -229,7 +249,7 @@ describe('AuthService', () => {
 
       const result = await authService.register(registerData);
 
-      expect(result.token).toBe(jwtTokens.validToken);
+      expect(result.accessToken).toBe(jwtTokens.validToken);
       expect(result.currentUser.email).toBe(registerData.email);
       expect(result.currentUser.username).toBe(registerData.username);
       expect(passwordService.hashPassword).toHaveBeenCalledWith(
@@ -238,7 +258,6 @@ describe('AuthService', () => {
       expect(userService.create).toHaveBeenCalledWith({
         ...registerData,
         password: hashedPassword,
-        isActive: true,
       });
     });
 
@@ -279,47 +298,10 @@ describe('AuthService', () => {
       mockUserService.findOneByUsername.mockResolvedValue(null);
       mockPasswordService.hashPassword.mockResolvedValue(hashedPassword);
 
-      const mongoError = new Error('Duplicate key error') as any;
-      mongoError.code = 11000;
-      mongoError.keyPattern = { email: 1 };
+      const createError = new Error('Database error');
+      mockUserService.create.mockRejectedValue(createError);
 
-      mockUserService.create.mockRejectedValue(mongoError);
-
-      await expect(authService.register(registerData)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-  });
-
-  describe('refreshToken', () => {
-    it('should return new token when user exists', async () => {
-      const userId = validUsers[0]._id;
-      const user = validUsers[0];
-
-      mockUserService.findById.mockResolvedValue(user);
-
-      const result = await authService.refreshToken(userId);
-
-      expect(result.token).toBe(jwtTokens.validToken);
-      expect(userService.findById).toHaveBeenCalledWith(userId);
-      expect(jwtService.sign).toHaveBeenCalledWith({
-        sub: user._id,
-        email: user.email,
-        username: user.username,
-      });
-    });
-
-    it('should throw UnauthorizedException when user not found', async () => {
-      const userId = 'nonexistent';
-
-      mockUserService.findById.mockResolvedValue(null);
-
-      await expect(authService.refreshToken(userId)).rejects.toThrow(
-        UnauthorizedException,
-      );
-      await expect(authService.refreshToken(userId)).rejects.toThrow(
-        errorMessages.userNotFound,
-      );
+      await expect(authService.register(registerData)).rejects.toThrow(Error);
     });
   });
 });

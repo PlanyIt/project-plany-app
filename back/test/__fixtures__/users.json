@@ -5,259 +5,116 @@
       "username": "johndoe",
       "email": "john@plany.com",
       "password": "$2b$10$hashedPassword123",
-      "description": "Développeur passionné de voyages",
-      "isPremium": false,
-      "photoUrl": "https://example.com/photos/john.jpg",
-      "birthDate": "1990-05-15T00:00:00.000Z",
-      "gender": "male",
       "role": "user",
       "isActive": true,
+      "isPremium": false,
       "followers": ["507f1f77bcf86cd799439012"],
       "following": ["507f1f77bcf86cd799439013"],
       "createdAt": "2024-01-20T10:00:00.000Z",
-      "updatedAt": "2024-01-20T10:00:00.000Z"
+      "updatedAt": "2024-01-20T10:00:00.000Z",
+      "description": "Développeur passionné de voyages",
+      "birthDate": "1990-05-15T00:00:00.000Z",
+      "gender": "male",
+      "photoUrl": "https://example.com/photos/john.jpg"
     },
     {
       "_id": "507f1f77bcf86cd799439012",
       "username": "janedoe",
       "email": "jane@plany.com",
       "password": "$2b$10$hashedPassword456",
-      "description": "Amatrice de fitness et de bien-être",
-      "isPremium": true,
-      "photoUrl": "https://example.com/photos/jane.jpg",
-      "birthDate": "1992-08-22T00:00:00.000Z",
-      "gender": "female",
       "role": "user",
       "isActive": true,
+      "isPremium": true,
       "followers": [],
       "following": ["507f1f77bcf86cd799439011"],
-      "createdAt": "2024-01-19T10:00:00.000Z",
-      "updatedAt": "2024-01-19T10:00:00.000Z"
-    },
-    {
-      "_id": "507f1f77bcf86cd799439013",
-      "username": "adminuser",
-      "email": "admin@plany.com",
-      "password": "$2b$10$hashedAdminPassword",
-      "description": "Administrateur de la plateforme",
-      "isPremium": true,
-      "photoUrl": "https://example.com/photos/admin.jpg",
-      "role": "admin",
-      "isActive": true,
-      "followers": ["507f1f77bcf86cd799439011"],
-      "following": [],
-      "createdAt": "2024-01-18T10:00:00.000Z",
-      "updatedAt": "2024-01-18T10:00:00.000Z"
+      "createdAt": "2024-01-20T11:00:00.000Z",
+      "updatedAt": "2024-01-20T11:00:00.000Z"
     }
   ],
   "createUserDtos": {
     "validCreate": {
       "username": "newuser",
       "email": "newuser@plany.com",
-      "password": "SecurePass123!",
-      "description": "Nouvel utilisateur de la plateforme",
-      "photoUrl": "https://example.com/photos/new.jpg",
-      "gender": "other"
+      "password": "SecurePass123!"
     },
     "minimalCreate": {
       "username": "minimal",
       "email": "minimal@plany.com",
-      "password": "MinimalPass123!"
+      "password": "SecurePass123!"
     },
     "premiumCreate": {
       "username": "premium",
       "email": "premium@plany.com",
-      "password": "PremiumPass123!",
-      "isPremium": true,
-      "description": "Utilisateur premium"
+      "password": "SecurePass123!",
+      "isPremium": true
     },
     "adminCreate": {
-      "username": "newadmin",
-      "email": "newadmin@plany.com",
+      "username": "admin",
+      "email": "admin@plany.com",
       "password": "AdminPass123!",
-      "role": "admin",
-      "description": "Nouvel administrateur"
-    },
-    "withBirthDate": {
-      "username": "birthday",
-      "email": "birthday@plany.com",
-      "password": "BirthdayPass123!",
-      "description": "Utilisateur avec date de naissance"
+      "role": "admin"
     }
   },
   "updateUserDtos": {
-    "fullUpdate": {
-      "username": "updated_user",
-      "description": "Description mise à jour",
-      "photoUrl": "https://example.com/photos/updated.jpg",
-      "gender": "male",
-      "isPremium": true
-    },
     "partialUpdate": {
-      "description": "Nouvelle description seulement"
-    },
-    "profilePictureUpdate": {
-      "photoUrl": "https://example.com/photos/new-profile.jpg"
-    },
-    "premiumUpgrade": {
-      "isPremium": true,
-      "description": "Compte mis à niveau vers Premium"
-    },
-    "withBirthDate": {
-      "description": "Mise à jour avec nouvelle date de naissance"
+      "description": "Updated description"
     }
   },
   "invalidData": {
-    "invalidEmail": {
-      "username": "testuser",
-      "email": "invalid-email-format",
-      "password": "ValidPass123!"
-    },
-    "weakPassword": {
-      "username": "testuser",
-      "email": "test@plany.com",
-      "password": "weak"
-    },
     "duplicateEmail": {
-      "username": "newuser",
+      "username": "duplicate",
       "email": "john@plany.com",
-      "password": "ValidPass123!"
+      "password": "SecurePass123!"
     },
     "duplicateUsername": {
       "username": "johndoe",
-      "email": "newemail@plany.com",
-      "password": "ValidPass123!"
+      "email": "duplicate@plany.com",
+      "password": "SecurePass123!"
+    },
+    "weakPassword": {
+      "username": "weak",
+      "email": "weak@plany.com",
+      "password": "123"
     }
   },
   "followOperations": {
     "beforeFollow": {
-      "_id": "507f1f77bcf86cd799439011",
-      "username": "johndoe",
-      "followers": [],
-      "following": []
+      "_id": "507f1f77bcf86cd799439011"
     },
     "afterFollow": {
-      "_id": "507f1f77bcf86cd799439011",
-      "username": "johndoe",
-      "followers": ["507f1f77bcf86cd799439012"],
-      "following": []
+      "_id": "507f1f77bcf86cd799439011"
     },
     "userToFollow": {
-      "_id": "507f1f77bcf86cd799439012",
-      "username": "janedoe",
-      "followers": [],
-      "following": ["507f1f77bcf86cd799439011"]
-    },
-    "afterUnfollow": {
-      "_id": "507f1f77bcf86cd799439011",
-      "username": "johndoe",
-      "followers": [],
-      "following": []
+      "_id": "507f1f77bcf86cd799439012"
     }
-  },
-  "accountOperations": {
-    "activeUser": {
-      "_id": "507f1f77bcf86cd799439011",
-      "username": "activeuser",
-      "email": "active@plany.com",
-      "isActive": true
-    },
-    "deactivatedUser": {
-      "_id": "507f1f77bcf86cd799439011",
-      "username": "activeuser",
-      "email": "active@plany.com",
-      "isActive": false
-    },
-    "deletedUser": {
-      "_id": "507f1f77bcf86cd799439011",
-      "username": "deleteduser",
-      "email": "deleted@plany.com",
-      "isActive": false,
-      "deletedAt": "2024-01-25T10:00:00.000Z"
-    }
-  },
-  "searchResults": {
-    "usersByUsername": [
-      {
-        "_id": "507f1f77bcf86cd799439011",
-        "username": "johndoe",
-        "email": "john@plany.com",
-        "photoUrl": "https://example.com/photos/john.jpg",
-        "isActive": true
-      },
-      {
-        "_id": "507f1f77bcf86cd799439014",
-        "username": "johnsmith",
-        "email": "johnsmith@plany.com",
-        "photoUrl": "https://example.com/photos/johnsmith.jpg",
-        "isActive": true
-      }
-    ],
-    "premiumUsers": [
-      {
-        "_id": "507f1f77bcf86cd799439012",
-        "username": "janedoe",
-        "email": "jane@plany.com",
-        "isPremium": true,
-        "isActive": true
-      },
-      {
-        "_id": "507f1f77bcf86cd799439013",
-        "username": "adminuser",
-        "email": "admin@plany.com",
-        "isPremium": true,
-        "role": "admin",
-        "isActive": true
-      }
-    ]
   },
   "passwordOperations": {
     "securePasswords": [
       "SecurePass123!",
-      "MyStrongPassword456$",
-      "ComplexPass789@"
+      "MyStr0ngP@ssw0rd",
+      "Complex123Password!"
     ],
     "weakPasswords": [
       "123",
       "password",
-      "weak",
-      "12345678",
-      "Password"
+      "abc123"
     ],
     "hashResults": {
-      "password": "SecurePass123!",
-      "hash": "$2b$10$hashResultExample123456789",
-      "saltRounds": 10
+      "hash": "$argon2id$v=19$m=65536,t=3,p=4$hashedPassword123"
     }
   },
   "specialCases": {
     "userWithLongDescription": {
-      "_id": "507f1f77bcf86cd799439015",
-      "username": "unique_long_desc_user",
-      "email": "longdesc@unique.com",
-      "description": "Une très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très longue description qui dépasse 100 caractères..."
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris."
     },
     "userWithManyFollowers": {
-      "_id": "507f1f77bcf86cd799439016",
-      "username": "popular",
-      "email": "popular@plany.com",
-      "followers": [
-        "507f1f77bcf86cd799439011",
-        "507f1f77bcf86cd799439012",
-        "507f1f77bcf86cd799439013",
-        "507f1f77bcf86cd799439014",
-        "507f1f77bcf86cd799439015"
-      ],
-      "following": []
+      "_id": "507f1f77bcf86cd799439011",
+      "followers": ["user1", "user2", "user3", "user4", "user5"]
     },
     "userWithoutOptionalFields": {
-      "_id": "507f1f77bcf86cd799439017",
+      "_id": "507f1f77bcf86cd799439011",
       "username": "basic",
       "email": "basic@plany.com",
-      "password": "$2b$10$basicHashedPassword",
-      "role": "user",
-      "isActive": true,
-      "isPremium": false,
       "followers": [],
       "following": []
     }

@@ -10,7 +10,7 @@ describe('CommentService', () => {
     {
       _id: '507f1f77bcf86cd799439031',
       content: 'Super plan de voyage !',
-      userId: '507f1f77bcf86cd799439011',
+      user: '507f1f77bcf86cd799439011',
       planId: '507f1f77bcf86cd799439021',
       likes: ['507f1f77bcf86cd799439012'],
       responses: [],
@@ -20,7 +20,7 @@ describe('CommentService', () => {
     {
       _id: '507f1f77bcf86cd799439032',
       content: 'Merci pour ce partage !',
-      userId: '507f1f77bcf86cd799439012',
+      user: '507f1f77bcf86cd799439012',
       planId: '507f1f77bcf86cd799439021',
       likes: [],
       responses: ['507f1f77bcf86cd799439033'],
@@ -30,7 +30,7 @@ describe('CommentService', () => {
     {
       _id: '507f1f77bcf86cd799439033',
       content: 'De rien, bon voyage !',
-      userId: '507f1f77bcf86cd799439011',
+      user: '507f1f77bcf86cd799439011',
       planId: '507f1f77bcf86cd799439021',
       parentId: '507f1f77bcf86cd799439032',
       likes: [],
@@ -42,44 +42,44 @@ describe('CommentService', () => {
 
   const createCommentDto = {
     content: 'Excellent plan !',
-    userId: '507f1f77bcf86cd799439011',
+    user: '507f1f77bcf86cd799439011',
     planId: '507f1f77bcf86cd799439021',
-    likes: [],
     parentId: undefined,
   };
 
   const updateCommentDto = {
     content: 'Plan mis à jour - encore mieux !',
-    userId: '507f1f77bcf86cd799439011',
+    user: '507f1f77bcf86cd799439011',
     planId: '507f1f77bcf86cd799439021',
-    likes: [],
     parentId: undefined,
   };
 
   const responseDto = {
     content: 'Merci pour ton commentaire !',
-    userId: '507f1f77bcf86cd799439012',
+    user: '507f1f77bcf86cd799439012',
     planId: '507f1f77bcf86cd799439021',
-    likes: [],
     parentId: undefined,
   };
 
-  const mockCommentModel = jest.fn().mockImplementation((dto) => ({
-    ...dto,
-    _id: mockComments[0]._id,
-    likes: [],
-    responses: [],
-    createdAt: mockComments[0].createdAt,
-    updatedAt: mockComments[0].updatedAt,
-    save: jest.fn().mockResolvedValue({
-      _id: mockComments[0]._id,
+  const mockCommentModel = jest.fn().mockImplementation((dto) => {
+    const mockInstance = {
       ...dto,
+      _id: mockComments[0]._id,
       likes: [],
       responses: [],
       createdAt: mockComments[0].createdAt,
       updatedAt: mockComments[0].updatedAt,
-    }),
-  })) as any;
+      save: jest.fn().mockResolvedValue({
+        _id: mockComments[0]._id,
+        ...dto,
+        likes: [],
+        responses: [],
+        createdAt: mockComments[0].createdAt,
+        updatedAt: mockComments[0].updatedAt,
+      }),
+    };
+    return mockInstance;
+  }) as any;
 
   mockCommentModel.find = jest.fn().mockReturnValue({
     sort: jest.fn().mockReturnThis(),
@@ -100,6 +100,7 @@ describe('CommentService', () => {
   });
 
   mockCommentModel.findOneAndUpdate = jest.fn().mockReturnValue({
+    populate: jest.fn().mockReturnThis(),
     exec: jest.fn(),
   });
 
@@ -108,6 +109,7 @@ describe('CommentService', () => {
   });
 
   mockCommentModel.findByIdAndDelete = jest.fn().mockReturnValue({
+    populate: jest.fn().mockReturnThis(),
     exec: jest.fn(),
   });
 
@@ -140,14 +142,30 @@ describe('CommentService', () => {
   });
 
   describe('create', () => {
-    it('should create and return new comment', async () => {
+    it('should create and return new comment with populated user', async () => {
+      const commentWithPopulatedUser = {
+        ...createCommentDto,
+        _id: mockComments[0]._id,
+        likes: [],
+        responses: [],
+        createdAt: mockComments[0].createdAt,
+        updatedAt: mockComments[0].updatedAt,
+      };
+
+      mockCommentModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(commentWithPopulatedUser),
+      });
+
       const result = await commentService.create(createCommentDto);
 
       expect(mockCommentModel).toHaveBeenCalledWith(createCommentDto);
+      expect(mockCommentModel.findById).toHaveBeenCalledWith(
+        mockComments[0]._id,
+      );
       expect(result._id).toBe(mockComments[0]._id);
       expect(result.content).toBe(createCommentDto.content);
-      expect(result.userId).toBe(createCommentDto.userId);
-      expect(result.planId).toBe(createCommentDto.planId);
+      expect(result.user).toBe(createCommentDto.user);
     });
   });
 
@@ -173,7 +191,7 @@ describe('CommentService', () => {
       expect(result).toEqual(expectedComments);
       expect(mockCommentModel.find).toHaveBeenCalledWith({
         planId,
-        parentId: { $exists: false },
+        $or: [{ parentId: { $exists: false } }, { parentId: null }],
       });
     });
 
@@ -195,6 +213,25 @@ describe('CommentService', () => {
       );
 
       expect(result).toEqual([]);
+    });
+
+    it('should apply correct pagination calculations', async () => {
+      const planId = '507f1f77bcf86cd799439021';
+      const paginationOptions = { page: 3, limit: 5 };
+
+      mockCommentModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      });
+
+      await commentService.findAllByPlanId(planId, paginationOptions);
+
+      const findChain = mockCommentModel.find();
+      expect(findChain.skip).toHaveBeenCalledWith(10);
+      expect(findChain.limit).toHaveBeenCalledWith(5);
     });
   });
 
@@ -232,13 +269,14 @@ describe('CommentService', () => {
       const userComments = [mockComments[0], mockComments[2]];
 
       mockCommentModel.find.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(userComments),
       });
 
       const result = await commentService.findAllByUserId(userId);
 
       expect(result).toEqual(userComments);
-      expect(mockCommentModel.find).toHaveBeenCalledWith({ userId });
+      expect(mockCommentModel.find).toHaveBeenCalledWith({ user: userId });
     });
   });
 
@@ -252,6 +290,7 @@ describe('CommentService', () => {
       };
 
       mockCommentModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(likedComment),
       });
 
@@ -260,19 +299,39 @@ describe('CommentService', () => {
       expect(result).toEqual(likedComment);
       expect(mockCommentModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: commentId },
-        { $push: { likes: userId } },
+        { $addToSet: { likes: userId } },
         { new: true },
       );
     });
 
     it('should return null when comment not found', async () => {
       mockCommentModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(null),
       });
 
       const result = await commentService.likeComment('nonexistent', 'userId');
 
       expect(result).toBeNull();
+    });
+
+    it('should not add duplicate likes with $addToSet', async () => {
+      const commentId = mockComments[0]._id;
+      const userId = mockComments[0].likes[0];
+
+      mockCommentModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(mockComments[0]),
+      });
+
+      const result = await commentService.likeComment(commentId, userId);
+
+      expect(result).toEqual(mockComments[0]);
+      expect(mockCommentModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: commentId },
+        { $addToSet: { likes: userId } },
+        { new: true },
+      );
     });
   });
 
@@ -286,12 +345,31 @@ describe('CommentService', () => {
       };
 
       mockCommentModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(unlikedComment),
       });
 
       const result = await commentService.unlikeComment(commentId, userId);
 
       expect(result).toEqual(unlikedComment);
+      expect(mockCommentModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: commentId },
+        { $pull: { likes: userId } },
+        { new: true },
+      );
+    });
+
+    it('should handle removing non-existent like gracefully', async () => {
+      const commentId = mockComments[0]._id;
+      const userId = 'user-who-never-liked';
+
+      mockCommentModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(mockComments[0]),
+      });
+
+      await commentService.unlikeComment(commentId, userId);
+
       expect(mockCommentModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: commentId },
         { $pull: { likes: userId } },
@@ -331,13 +409,18 @@ describe('CommentService', () => {
 
       mockCommentModel.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
+      mockCommentModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(savedResponse),
+      });
+
       const result = await commentService.addResponse(commentId, responseDto);
 
       expect(result).toEqual(savedResponse);
       expect(mockCommentModel.findById).toHaveBeenCalledWith(commentId);
       expect(mockCommentModel.updateOne).toHaveBeenCalledWith(
         { _id: commentId },
-        { $push: { responses: responseId } },
+        { $addToSet: { responses: responseId } },
       );
     });
 
@@ -361,6 +444,7 @@ describe('CommentService', () => {
       const responses = [mockComments[2]];
 
       mockCommentModel.find.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(responses),
       });
 
@@ -444,7 +528,10 @@ describe('CommentService', () => {
       const result = await commentService.countByPlanId(planId);
 
       expect(result).toBe(count);
-      expect(mockCommentModel.countDocuments).toHaveBeenCalledWith({ planId });
+      expect(mockCommentModel.countDocuments).toHaveBeenCalledWith({
+        planId,
+        $or: [{ parentId: { $exists: false } }, { parentId: null }],
+      });
     });
   });
 
@@ -457,6 +544,7 @@ describe('CommentService', () => {
       };
 
       mockCommentModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(updatedComment),
       });
 
@@ -475,6 +563,7 @@ describe('CommentService', () => {
 
     it('should return null when comment not found', async () => {
       mockCommentModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(null),
       });
 
@@ -504,6 +593,7 @@ describe('CommentService', () => {
       });
 
       mockCommentModel.findByIdAndDelete.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(commentWithResponses),
       });
 
@@ -544,12 +634,82 @@ describe('CommentService', () => {
       });
 
       mockCommentModel.findByIdAndDelete.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(commentWithoutResponses),
       });
 
       const result = await commentService.removeById(commentId);
 
       expect(result).toEqual(commentWithoutResponses);
+      expect(mockCommentModel.deleteMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Database errors', () => {
+    it('should handle database errors in create', async () => {
+      const mockSave = jest.fn().mockRejectedValue(new Error('Database error'));
+      mockCommentModel.mockImplementation(() => ({ save: mockSave }));
+
+      await expect(commentService.create(createCommentDto)).rejects.toThrow(
+        'Database error',
+      );
+    });
+
+    it('should handle populate errors', async () => {
+      const mockSave = jest.fn().mockResolvedValue({ _id: 'test-id' });
+      mockCommentModel.mockImplementation(() => ({ save: mockSave }));
+
+      mockCommentModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockRejectedValue(new Error('Populate error')),
+      });
+
+      await expect(commentService.create(createCommentDto)).rejects.toThrow(
+        'Populate error',
+      );
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('should handle empty responses array in removeById', async () => {
+      const commentId = mockComments[0]._id;
+      const commentWithEmptyResponses = {
+        ...mockComments[0],
+        responses: [],
+      };
+
+      mockCommentModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(commentWithEmptyResponses),
+      });
+
+      mockCommentModel.findByIdAndDelete.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(commentWithEmptyResponses),
+      });
+
+      await commentService.removeById(commentId);
+
+      expect(mockCommentModel.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('should handle null responses array in removeById', async () => {
+      const commentId = mockComments[0]._id;
+      const commentWithNullResponses = {
+        ...mockComments[0],
+        responses: null,
+      };
+
+      mockCommentModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(commentWithNullResponses),
+      });
+
+      mockCommentModel.findByIdAndDelete.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(commentWithNullResponses),
+      });
+
+      await commentService.removeById(commentId);
+
       expect(mockCommentModel.deleteMany).not.toHaveBeenCalled();
     });
   });

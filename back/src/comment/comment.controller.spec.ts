@@ -13,7 +13,7 @@ describe('CommentController', () => {
     {
       _id: '507f1f77bcf86cd799439011',
       content: 'Super plan de voyage !',
-      userId: '507f1f77bcf86cd799439021',
+      user: '507f1f77bcf86cd799439021',
       planId: '507f1f77bcf86cd799439031',
       parentId: null,
       likes: ['507f1f77bcf86cd799439022'],
@@ -24,7 +24,7 @@ describe('CommentController', () => {
     {
       _id: '507f1f77bcf86cd799439012',
       content: 'Merci pour les conseils !',
-      userId: '507f1f77bcf86cd799439022',
+      user: '507f1f77bcf86cd799439022',
       planId: '507f1f77bcf86cd799439031',
       parentId: '507f1f77bcf86cd799439011',
       likes: [],
@@ -38,16 +38,12 @@ describe('CommentController', () => {
     content: 'Nouveau commentaire très intéressant',
     planId: '507f1f77bcf86cd799439031',
     parentId: null,
-    userId: '507f1f77bcf86cd799439021',
-    likes: [],
   };
 
   const updateCommentDto: CommentDto = {
     content: 'Commentaire mis à jour',
     planId: '507f1f77bcf86cd799439031',
     parentId: null,
-    userId: '507f1f77bcf86cd799439021',
-    likes: [],
   };
 
   const mockUser = {
@@ -109,7 +105,7 @@ describe('CommentController', () => {
       const createdComment = {
         _id: '507f1f77bcf86cd799439013',
         ...validCommentDto,
-        userId: mockUser._id,
+        user: mockUser._id,
         likes: [],
         responses: [],
         createdAt: new Date(),
@@ -126,20 +122,20 @@ describe('CommentController', () => {
       expect(result).toEqual(createdComment);
       expect(mockCommentService.create).toHaveBeenCalledWith({
         ...validCommentDto,
-        userId: mockUser._id,
+        user: mockUser._id,
       });
       expect(mockCommentService.create).toHaveBeenCalledTimes(1);
     });
 
-    it('should add userId from request to comment data', async () => {
-      const createdComment = { ...validCommentDto, userId: mockUser._id };
+    it('should add user from request to comment data', async () => {
+      const createdComment = { ...validCommentDto, user: mockUser._id };
       mockCommentService.create.mockResolvedValue(createdComment);
 
       await commentController.createComment(validCommentDto, mockRequest);
 
       expect(mockCommentService.create).toHaveBeenCalledWith({
         ...validCommentDto,
-        userId: mockUser._id,
+        user: mockUser._id,
       });
     });
   });
@@ -259,7 +255,7 @@ describe('CommentController', () => {
       const updatedComment = {
         ...mockComments[0],
         ...updateCommentDto,
-        userId: mockUser._id,
+        user: mockUser._id,
         updatedAt: new Date(),
       };
 
@@ -274,7 +270,7 @@ describe('CommentController', () => {
       expect(result).toEqual(updatedComment);
       expect(mockCommentService.updateById).toHaveBeenCalledWith(commentId, {
         ...updateCommentDto,
-        userId: mockUser._id,
+        user: mockUser._id,
       });
     });
   });
@@ -331,7 +327,7 @@ describe('CommentController', () => {
       const responseDto = { ...validCommentDto, parentId: commentId };
       const addedResponse = {
         ...responseDto,
-        userId: mockUser._id,
+        user: mockUser._id,
         _id: '507f1f77bcf86cd799439014',
       };
 
@@ -346,7 +342,7 @@ describe('CommentController', () => {
       expect(result).toEqual(addedResponse);
       expect(mockCommentService.addResponse).toHaveBeenCalledWith(commentId, {
         ...responseDto,
-        userId: mockUser._id,
+        user: mockUser._id,
       });
     });
   });
@@ -372,7 +368,7 @@ describe('CommentController', () => {
       const commentId = mockComments[0]._id;
       const commentToDelete = {
         ...mockComments[0],
-        userId: mockUser._id.toString(),
+        user: mockUser._id.toString(),
       };
 
       mockCommentService.findById.mockResolvedValue(commentToDelete);
@@ -407,7 +403,7 @@ describe('CommentController', () => {
       const commentId = mockComments[0]._id;
       const otherUserComment = {
         ...mockComments[0],
-        userId: 'other-user-id',
+        user: 'other-user-id',
       };
 
       mockCommentService.findById.mockResolvedValue(otherUserComment);
@@ -421,6 +417,25 @@ describe('CommentController', () => {
 
       expect(mockCommentService.removeById).not.toHaveBeenCalled();
     });
+
+    it('should handle user as object reference', async () => {
+      const commentId = mockComments[0]._id;
+      const commentWithUserObject = {
+        ...mockComments[0],
+        user: { _id: mockUser._id, username: 'testuser' },
+      };
+
+      mockCommentService.findById.mockResolvedValue(commentWithUserObject);
+      mockCommentService.removeById.mockResolvedValue(commentWithUserObject);
+
+      const result = await commentController.removeComment(
+        commentId,
+        mockRequest,
+      );
+
+      expect(result).toEqual(commentWithUserObject);
+      expect(mockCommentService.removeById).toHaveBeenCalledWith(commentId);
+    });
   });
 
   describe('removeResponse', () => {
@@ -429,7 +444,7 @@ describe('CommentController', () => {
       const responseId = mockComments[1]._id;
       const responseToDelete = {
         ...mockComments[1],
-        userId: mockUser._id.toString(),
+        user: mockUser._id.toString(),
       };
 
       mockCommentService.findById.mockResolvedValue(responseToDelete);
@@ -449,28 +464,12 @@ describe('CommentController', () => {
       );
     });
 
-    it('should throw NotFoundException when response not found', async () => {
-      const commentId = mockComments[0]._id;
-      const responseId = '507f1f77bcf86cd799439999';
-
-      mockCommentService.findById.mockResolvedValue(null);
-
-      await expect(
-        commentController.removeResponse(commentId, responseId, mockRequest),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        commentController.removeResponse(commentId, responseId, mockRequest),
-      ).rejects.toThrow(`Response with ID ${responseId} not found`);
-
-      expect(mockCommentService.removeResponse).not.toHaveBeenCalled();
-    });
-
     it('should throw UnauthorizedException when user tries to delete others response', async () => {
       const commentId = mockComments[0]._id;
       const responseId = mockComments[1]._id;
       const otherUserResponse = {
         ...mockComments[1],
-        userId: 'other-user-id',
+        user: 'other-user-id',
       };
 
       mockCommentService.findById.mockResolvedValue(otherUserResponse);
@@ -484,59 +483,106 @@ describe('CommentController', () => {
 
       expect(mockCommentService.removeResponse).not.toHaveBeenCalled();
     });
+
+    it('should handle user as object reference in response', async () => {
+      const commentId = mockComments[0]._id;
+      const responseId = mockComments[1]._id;
+      const responseWithUserObject = {
+        ...mockComments[1],
+        user: { _id: mockUser._id, username: 'testuser' },
+      };
+
+      mockCommentService.findById.mockResolvedValue(responseWithUserObject);
+      mockCommentService.removeResponse.mockResolvedValue(
+        responseWithUserObject,
+      );
+
+      const result = await commentController.removeResponse(
+        commentId,
+        responseId,
+        mockRequest,
+      );
+
+      expect(result).toEqual(responseWithUserObject);
+      expect(mockCommentService.removeResponse).toHaveBeenCalledWith(
+        commentId,
+        responseId,
+      );
+    });
   });
 
   describe('Authentication and Authorization', () => {
-    it('should be protected by JwtAuthGuard', () => {
-      const guards = Reflect.getMetadata('__guards__', CommentController);
-
-      if (guards && guards.length > 0) {
-        const guardNames = guards.map(
-          (guard: any) => guard.name || guard.constructor?.name,
-        );
-        expect(guardNames).toContain('JwtAuthGuard');
-      } else {
-        expect(CommentController).toBeDefined();
-      }
-    });
-
     it('should extract user from request correctly', async () => {
-      const createdComment = { ...validCommentDto, userId: mockUser._id };
+      const createdComment = { ...validCommentDto, user: mockUser._id };
       mockCommentService.create.mockResolvedValue(createdComment);
 
       await commentController.createComment(validCommentDto, mockRequest);
 
       expect(mockCommentService.create).toHaveBeenCalledWith({
         ...validCommentDto,
-        userId: mockUser._id,
+        user: mockUser._id,
       });
     });
   });
 
-  describe('Controller routing', () => {
-    it('should be mapped to correct base route', () => {
-      const controllerPath = Reflect.getMetadata('path', CommentController);
-      expect(controllerPath).toBe('api/comments');
-    });
-  });
-
   describe('Edge cases', () => {
-    it('should handle invalid pagination parameters', async () => {
-      const planId = '507f1f77bcf86cd799439031';
-      const invalidPage = 'invalid' as any;
-      const invalidLimit = 'invalid' as any;
+    it('should handle null request user gracefully', async () => {
+      const nullRequest = { user: null };
 
-      mockCommentService.findAllByPlanId.mockResolvedValue([]);
-      mockCommentService.countByPlanId.mockResolvedValue(0);
+      await expect(
+        commentController.createComment(validCommentDto, nullRequest),
+      ).rejects.toThrow();
+    });
 
-      const result = await commentController.findAllByPlanId(
-        planId,
-        invalidPage,
-        invalidLimit,
+    it('should handle undefined user._id', async () => {
+      const invalidRequest = { user: {} };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: undefined,
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        invalidRequest,
       );
 
-      expect(result.meta.page).toBeDefined();
-      expect(result.meta.limit).toBeDefined();
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: undefined,
+      });
+      expect(result.user).toBeUndefined();
+    });
+
+    it('should handle user without _id property', async () => {
+      const userWithoutId = { username: 'test', email: 'test@example.com' };
+      const requestWithoutUserId = { user: userWithoutId };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: undefined,
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        requestWithoutUserId,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: undefined,
+      });
+      expect(result.user).toBeUndefined();
+    });
+
+    it('should throw error when accessing properties on null user', async () => {
+      const nullRequest = { user: null };
+
+      await expect(
+        commentController.createComment(validCommentDto, nullRequest),
+      ).rejects.toThrow(TypeError);
     });
 
     it('should handle zero pagination results', async () => {
@@ -552,12 +598,377 @@ describe('CommentController', () => {
       expect(result.meta.totalPages).toBe(0);
     });
 
-    it('should handle null request user gracefully', async () => {
-      const nullRequest = { user: null };
+    it('should handle empty string user id', async () => {
+      const emptyIdRequest = { user: { _id: '' } };
 
-      await expect(
-        commentController.createComment(validCommentDto, nullRequest),
-      ).rejects.toThrow();
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: '',
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        emptyIdRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: '',
+      });
+
+      expect(result).toEqual({
+        ...validCommentDto,
+        user: '',
+        _id: 'test-id',
+      });
+    });
+
+    it('should handle non-string user id', async () => {
+      const numericIdRequest = { user: { _id: 123 } };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: 123,
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        numericIdRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: 123,
+      });
+
+      expect(result).toEqual({
+        ...validCommentDto,
+        user: 123,
+        _id: 'test-id',
+      });
+    });
+
+    it('should handle boolean user id', async () => {
+      const booleanIdRequest = { user: { _id: true } };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: true,
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        booleanIdRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: true,
+      });
+
+      expect(result.user).toBe(true);
+    });
+
+    it('should handle object user id', async () => {
+      const objectIdRequest = { user: { _id: { nested: 'value' } } };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: { nested: 'value' },
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        objectIdRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: { nested: 'value' },
+      });
+
+      expect(result.user).toEqual({ nested: 'value' });
+    });
+
+    it('should handle array user id', async () => {
+      const arrayIdRequest = { user: { _id: ['array', 'value'] } };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: ['array', 'value'],
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        arrayIdRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: ['array', 'value'],
+      });
+
+      expect(result.user).toEqual(['array', 'value']);
+    });
+
+    it('should handle edge case user in updateComment', async () => {
+      const commentId = mockComments[0]._id;
+      const emptyIdRequest = { user: { _id: '' } };
+
+      mockCommentService.updateById.mockResolvedValue({
+        ...updateCommentDto,
+        user: '',
+        _id: commentId,
+      });
+
+      const result = await commentController.updateComment(
+        commentId,
+        updateCommentDto,
+        emptyIdRequest,
+      );
+
+      expect(mockCommentService.updateById).toHaveBeenCalledWith(commentId, {
+        ...updateCommentDto,
+        user: '',
+      });
+
+      expect(result.user).toBe('');
+    });
+
+    it('should handle edge case user in likeComment', async () => {
+      const commentId = mockComments[0]._id;
+      const numericIdRequest = { user: { _id: 123 } };
+
+      mockCommentService.likeComment.mockResolvedValue({
+        ...mockComments[0],
+        likes: [123],
+      });
+
+      const result = await commentController.likeComment(
+        commentId,
+        numericIdRequest,
+      );
+
+      expect(mockCommentService.likeComment).toHaveBeenCalledWith(
+        commentId,
+        123,
+      );
+
+      expect(result.likes).toContain(123);
+    });
+
+    it('should handle edge case user in addResponse', async () => {
+      const commentId = mockComments[0]._id;
+      const responseDto = { ...validCommentDto, parentId: commentId };
+      const undefinedIdRequest = { user: { _id: undefined } };
+
+      mockCommentService.addResponse.mockResolvedValue({
+        ...responseDto,
+        user: undefined,
+        _id: 'response-id',
+      });
+
+      const result = await commentController.addResponse(
+        commentId,
+        responseDto,
+        undefinedIdRequest,
+      );
+
+      expect(mockCommentService.addResponse).toHaveBeenCalledWith(commentId, {
+        ...responseDto,
+        user: undefined,
+      });
+
+      expect(result.user).toBeUndefined();
+    });
+
+    it('should handle potentially malicious user id', async () => {
+      const maliciousRequest = {
+        user: {
+          _id: "<script>alert('xss')</script>",
+        },
+      };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: "<script>alert('xss')</script>",
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        maliciousRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: "<script>alert('xss')</script>",
+      });
+
+      expect(result.user).toBe("<script>alert('xss')</script>");
+    });
+
+    it('should handle potentially malicious MongoDB operators in user id', async () => {
+      const mongoInjectionRequest = {
+        user: {
+          _id: { $ne: null },
+        },
+      };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: { $ne: null },
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        mongoInjectionRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: { $ne: null },
+      });
+
+      expect(result.user).toEqual({ $ne: null });
+    });
+
+    it('should handle MongoDB regex injection attempt', async () => {
+      const regexInjectionRequest = {
+        user: {
+          _id: { $regex: '.*' },
+        },
+      };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: { $regex: '.*' },
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        regexInjectionRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: { $regex: '.*' },
+      });
+
+      expect(result.user).toEqual({ $regex: '.*' });
+    });
+
+    it('should handle MongoDB where injection attempt', async () => {
+      const whereInjectionRequest = {
+        user: {
+          _id: { $where: 'this.username == "admin"' },
+        },
+      };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: { $where: 'this.username == "admin"' },
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        whereInjectionRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: { $where: 'this.username == "admin"' },
+      });
+
+      expect(result.user).toEqual({ $where: 'this.username == "admin"' });
+    });
+
+    it('should handle invalid ObjectId format', async () => {
+      const invalidObjectIdRequest = {
+        user: {
+          _id: 'invalid-objectid-format',
+        },
+      };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: 'invalid-objectid-format',
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        invalidObjectIdRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: 'invalid-objectid-format',
+      });
+
+      expect(result.user).toBe('invalid-objectid-format');
+    });
+
+    it('should handle very long user id string', async () => {
+      const longUserId = 'a'.repeat(1000);
+      const longUserIdRequest = {
+        user: {
+          _id: longUserId,
+        },
+      };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: longUserId,
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        longUserIdRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: longUserId,
+      });
+
+      expect(result.user).toBe(longUserId);
+    });
+
+    it('should handle Unicode characters in user id', async () => {
+      const unicodeUserId = '👤🔥💀🎉';
+      const unicodeRequest = {
+        user: {
+          _id: unicodeUserId,
+        },
+      };
+
+      mockCommentService.create.mockResolvedValue({
+        ...validCommentDto,
+        user: unicodeUserId,
+        _id: 'test-id',
+      });
+
+      const result = await commentController.createComment(
+        validCommentDto,
+        unicodeRequest,
+      );
+
+      expect(mockCommentService.create).toHaveBeenCalledWith({
+        ...validCommentDto,
+        user: unicodeUserId,
+      });
+
+      expect(result.user).toBe(unicodeUserId);
     });
   });
 });

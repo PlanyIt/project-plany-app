@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
-import { JwtService } from '@nestjs/jwt';
 import { PasswordService } from './password.service';
+import { TokenService } from './token.service';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 
 describe('AuthService', () => {
   let authService: AuthService;
   let userService: UserService;
-  let jwtService: JwtService;
   let passwordService: PasswordService;
+  let tokenService: TokenService;
 
   const mockUser = {
     _id: '507f1f77bcf86cd799439011',
@@ -22,14 +22,8 @@ describe('AuthService', () => {
     followers: [],
     following: [],
     toObject: function () {
-      return {
-        _id: this._id,
-        email: this.email,
-        username: this.username,
-        isPremium: this.isPremium,
-        followers: this.followers,
-        following: this.following,
-      };
+      const { password, __v, ...rest } = this;
+      return rest;
     },
   };
 
@@ -38,16 +32,21 @@ describe('AuthService', () => {
     findOneByUsername: jest.fn(),
     create: jest.fn(),
     findById: jest.fn(),
-  };
-
-  const mockJwtService = {
-    sign: jest.fn(() => 'mock.jwt.token'),
+    updateById: jest.fn(),
   };
 
   const mockPasswordService = {
-    hashPassword: jest.fn(() => Promise.resolve('hashedPassword')),
-    verifyPassword: jest.fn(() => Promise.resolve(true)),
-    verifyLegacyPassword: jest.fn(() => Promise.resolve(false)),
+    hashPassword: jest.fn(),
+    verifyPassword: jest.fn(),
+    verifyLegacyPassword: jest.fn(),
+  };
+
+  const mockTokenService = {
+    signAccess: jest.fn(() => 'mock.access.token'),
+    signRefresh: jest.fn(() => Promise.resolve('mock.refresh.token')),
+    verifyRefresh: jest.fn(),
+    revokeFromJwt: jest.fn(),
+    revokeAllForUser: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -57,23 +56,65 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: UserService, useValue: mockUserService },
-        { provide: JwtService, useValue: mockJwtService },
         { provide: PasswordService, useValue: mockPasswordService },
+        { provide: TokenService, useValue: mockTokenService },
       ],
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
     userService = module.get<UserService>(UserService);
-    jwtService = module.get<JwtService>(JwtService);
     passwordService = module.get<PasswordService>(PasswordService);
+    tokenService = module.get<TokenService>(TokenService);
   });
 
   it('should be defined', () => {
     expect(authService).toBeDefined();
   });
 
+  describe('validateUser', () => {
+    it('should return user when credentials are valid', async () => {
+      mockUserService.findOneByEmail.mockResolvedValue(mockUser);
+      mockPasswordService.verifyPassword.mockResolvedValue(true);
+
+      const result = await authService.validateUser(
+        'john@plany.com',
+        'password',
+      );
+
+      expect(result).toEqual(mockUser);
+      expect(userService.findOneByEmail).toHaveBeenCalledWith('john@plany.com');
+      expect(passwordService.verifyPassword).toHaveBeenCalledWith(
+        'password',
+        mockUser.password,
+      );
+    });
+
+    it('should return null when user not found', async () => {
+      mockUserService.findOneByEmail.mockResolvedValue(null);
+
+      const result = await authService.validateUser(
+        'nonexistent@plany.com',
+        'password',
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when password is invalid', async () => {
+      mockUserService.findOneByEmail.mockResolvedValue(mockUser);
+      mockPasswordService.verifyPassword.mockResolvedValue(false);
+
+      const result = await authService.validateUser(
+        'john@plany.com',
+        'wrongpassword',
+      );
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('login', () => {
-    it('should return token and user data when credentials are valid', async () => {
+    it('should return access and refresh tokens when credentials are valid', async () => {
       const loginDto = {
         email: 'john@plany.com',
         password: 'SecurePass123!',
@@ -84,14 +125,20 @@ describe('AuthService', () => {
 
       const result = await authService.login(loginDto);
 
-      expect(result.token).toBe('mock.jwt.token');
-      expect(result.currentUser.id).toBe(mockUser._id);
+      expect(result.accessToken).toBe('mock.access.token');
+      expect(result.refreshToken).toBe('mock.refresh.token');
+      expect(result.currentUser._id).toBe(mockUser._id);
       expect(result.currentUser.email).toBe(mockUser.email);
       expect(result.currentUser.username).toBe(mockUser.username);
-      expect(userService.findOneByEmail).toHaveBeenCalledWith(loginDto.email);
-      expect(passwordService.verifyPassword).toHaveBeenCalledWith(
-        loginDto.password,
-        mockUser.password,
+      expect(result.currentUser.password).toBeUndefined();
+
+      expect(tokenService.signAccess).toHaveBeenCalledWith({
+        sub: mockUser._id.toString(),
+        email: mockUser.email,
+        username: mockUser.username,
+      });
+      expect(tokenService.signRefresh).toHaveBeenCalledWith(
+        mockUser._id.toString(),
       );
     });
 
@@ -119,7 +166,6 @@ describe('AuthService', () => {
 
       mockUserService.findOneByEmail.mockResolvedValue(mockUser);
       mockPasswordService.verifyPassword.mockResolvedValue(false);
-      mockPasswordService.verifyLegacyPassword.mockResolvedValue(false);
 
       await expect(authService.login(loginDto)).rejects.toThrow(
         UnauthorizedException,
@@ -128,7 +174,7 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('should create user and return token when data is valid', async () => {
+    it('should create user and return tokens when data is valid', async () => {
       const registerDto = {
         username: 'newuser',
         email: 'newuser@plany.com',
@@ -143,6 +189,10 @@ describe('AuthService', () => {
         isPremium: false,
         followers: [],
         following: [],
+        toObject: function () {
+          const { password, __v, ...rest } = this;
+          return rest;
+        },
       };
 
       mockUserService.findOneByEmail.mockResolvedValue(null);
@@ -152,16 +202,18 @@ describe('AuthService', () => {
 
       const result = await authService.register(registerDto);
 
-      expect(result.token).toBe('mock.jwt.token');
+      expect(result.accessToken).toBe('mock.access.token');
+      expect(result.refreshToken).toBe('mock.refresh.token');
       expect(result.currentUser.email).toBe(registerDto.email);
       expect(result.currentUser.username).toBe(registerDto.username);
+      expect(result.currentUser.password).toBeUndefined();
+
       expect(passwordService.hashPassword).toHaveBeenCalledWith(
         registerDto.password,
       );
       expect(userService.create).toHaveBeenCalledWith({
         ...registerDto,
         password: 'hashedPassword',
-        isActive: true,
       });
     });
 
@@ -201,34 +253,85 @@ describe('AuthService', () => {
     });
   });
 
-  describe('refreshToken', () => {
-    it('should return new token when user exists', async () => {
+  describe('changePassword', () => {
+    it('should change password successfully', async () => {
       const userId = mockUser._id;
+      const currentPassword = 'CurrentPass123!';
+      const newPassword = 'NewPass123!';
 
       mockUserService.findById.mockResolvedValue(mockUser);
+      mockPasswordService.verifyPassword.mockResolvedValue(true);
+      mockPasswordService.hashPassword.mockResolvedValue('newHashedPassword');
 
-      const result = await authService.refreshToken(userId);
+      await authService.changePassword(userId, currentPassword, newPassword);
 
-      expect(result.token).toBe('mock.jwt.token');
       expect(userService.findById).toHaveBeenCalledWith(userId);
-      expect(jwtService.sign).toHaveBeenCalledWith({
-        sub: mockUser._id,
-        email: mockUser.email,
-        username: mockUser.username,
+      expect(passwordService.verifyPassword).toHaveBeenCalledWith(
+        currentPassword,
+        mockUser.password,
+      );
+      expect(passwordService.hashPassword).toHaveBeenCalledWith(newPassword);
+      expect(userService.updateById).toHaveBeenCalledWith(userId, {
+        password: 'newHashedPassword',
       });
+      expect(tokenService.revokeAllForUser).toHaveBeenCalledWith(userId);
     });
 
     it('should throw UnauthorizedException when user not found', async () => {
-      const userId = 'nonexistent';
-
       mockUserService.findById.mockResolvedValue(null);
 
-      await expect(authService.refreshToken(userId)).rejects.toThrow(
-        UnauthorizedException,
-      );
-      await expect(authService.refreshToken(userId)).rejects.toThrow(
-        'Utilisateur non trouvé',
-      );
+      await expect(
+        authService.changePassword('nonexistent', 'current', 'new'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException when current password is incorrect', async () => {
+      mockUserService.findById.mockResolvedValue(mockUser);
+      mockPasswordService.verifyPassword.mockResolvedValue(false);
+
+      await expect(
+        authService.changePassword(
+          mockUser._id,
+          'wrongpassword',
+          'NewPass123!',
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw BadRequestException when new password is weak', async () => {
+      mockUserService.findById.mockResolvedValue(mockUser);
+      mockPasswordService.verifyPassword.mockResolvedValue(true);
+
+      await expect(
+        authService.changePassword(mockUser._id, 'CurrentPass123!', 'weak'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('refresh', () => {
+    it('should return new tokens when refresh token is valid', async () => {
+      const refreshToken = 'valid.refresh.token';
+      const payload = { sub: mockUser._id };
+
+      mockTokenService.verifyRefresh.mockResolvedValue(payload);
+      mockUserService.findById.mockResolvedValue(mockUser);
+
+      const result = await authService.refresh(refreshToken);
+
+      expect(result.accessToken).toBe('mock.access.token');
+      expect(result.refreshToken).toBe('mock.refresh.token');
+      expect(tokenService.verifyRefresh).toHaveBeenCalledWith(refreshToken);
+      expect(userService.findById).toHaveBeenCalledWith(payload.sub);
+    });
+  });
+
+  describe('logout', () => {
+    it('should revoke refresh token', async () => {
+      const refreshToken = 'refresh.token.to.revoke';
+
+      await authService.logout(refreshToken);
+
+      expect(tokenService.revokeFromJwt).toHaveBeenCalledWith(refreshToken);
     });
   });
 });

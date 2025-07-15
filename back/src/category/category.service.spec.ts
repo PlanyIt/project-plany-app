@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CategoryService } from './category.service';
 import { getModelToken } from '@nestjs/mongoose';
+import { BadRequestException } from '@nestjs/common';
 
 describe('CategoryService', () => {
   let categoryService: CategoryService;
@@ -74,6 +75,12 @@ describe('CategoryService', () => {
     exec: jest.fn(),
   });
 
+  const mockPlanModel = {
+    countDocuments: jest.fn().mockReturnValue({
+      exec: jest.fn(),
+    }),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -83,6 +90,10 @@ describe('CategoryService', () => {
         {
           provide: getModelToken('Category'),
           useValue: mockCategoryModel,
+        },
+        {
+          provide: getModelToken('Plan'),
+          useValue: mockPlanModel,
         },
       ],
     }).compile();
@@ -224,9 +235,13 @@ describe('CategoryService', () => {
   });
 
   describe('removeById', () => {
-    it('should delete and return category', async () => {
+    it('should delete and return category when no plans use it', async () => {
       const categoryId = mockCategories[0]._id;
       const deletedCategory = mockCategories[0];
+
+      mockPlanModel.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(0),
+      });
 
       mockCategoryModel.findOneAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(deletedCategory),
@@ -235,12 +250,19 @@ describe('CategoryService', () => {
       const result = await categoryService.removeById(categoryId);
 
       expect(result).toEqual(deletedCategory);
+      expect(mockPlanModel.countDocuments).toHaveBeenCalledWith({
+        category: categoryId,
+      });
       expect(mockCategoryModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: categoryId,
       });
     });
 
     it('should return null when category not found', async () => {
+      mockPlanModel.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(0),
+      });
+
       mockCategoryModel.findOneAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
       });
@@ -248,6 +270,57 @@ describe('CategoryService', () => {
       const result = await categoryService.removeById('nonexistent');
 
       expect(result).toBeNull();
+    });
+
+    it('should throw BadRequestException when category is used by plans', async () => {
+      const categoryId = mockCategories[0]._id;
+
+      mockPlanModel.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(3),
+      });
+
+      await expect(categoryService.removeById(categoryId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(categoryService.removeById(categoryId)).rejects.toThrow(
+        'Impossible de supprimer cette catégorie. 3 plan(s) l\'utilise(nt) encore.',
+      );
+
+      expect(mockPlanModel.countDocuments).toHaveBeenCalledWith({
+        category: categoryId,
+      });
+      expect(mockCategoryModel.findOneAndDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Database errors', () => {
+    it('should handle database errors in create', async () => {
+      const mockSave = jest.fn().mockRejectedValue(new Error('Database connection failed'));
+      mockCategoryModel.mockImplementation(() => ({ save: mockSave }));
+
+      await expect(categoryService.create(createCategoryDto)).rejects.toThrow(
+        'Database connection failed',
+      );
+    });
+
+    it('should handle duplicate key error in create', async () => {
+      const duplicateError = new Error('Duplicate key error');
+      Object.assign(duplicateError, { code: 11000, keyPattern: { name: 1 } });
+      
+      const mockSave = jest.fn().mockRejectedValue(duplicateError);
+      
+      jest.clearAllMocks();
+      mockCategoryModel.mockImplementation(() => ({ save: mockSave }));
+
+      await expect(categoryService.create(createCategoryDto)).rejects.toThrow();
+    });
+
+    it('should handle database errors in findAll', async () => {
+      mockCategoryModel.find.mockReturnValue({
+        exec: jest.fn().mockRejectedValue(new Error('Database error')),
+      });
+
+      await expect(categoryService.findAll()).rejects.toThrow('Database error');
     });
   });
 });

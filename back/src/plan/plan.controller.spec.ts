@@ -24,7 +24,7 @@ describe('PlanController', () => {
       duration: 3,
       budget: 800,
       difficulty: 'easy',
-      userId: '507f1f77bcf86cd799439021',
+      user: '507f1f77bcf86cd799439021',
       isPublic: true,
       isFavorite: false,
       tags: ['voyage', 'paris', 'culture'],
@@ -39,7 +39,7 @@ describe('PlanController', () => {
       duration: 30,
       budget: 0,
       difficulty: 'medium',
-      userId: '507f1f77bcf86cd799439022',
+      user: '507f1f77bcf86cd799439022',
       isPublic: true,
       isFavorite: true,
       tags: ['sport', 'fitness', 'santé'],
@@ -53,7 +53,6 @@ describe('PlanController', () => {
     description: 'Description du nouveau plan',
     category: 'Loisir',
     isPublic: true,
-    user: '507f1f77bcf86cd799439021',
     steps: ['Étape 1', 'Étape 2'],
   };
 
@@ -62,7 +61,6 @@ describe('PlanController', () => {
     description: 'Description mise à jour',
     category: 'Loisir',
     isPublic: false,
-    user: '507f1f77bcf86cd799439021',
     steps: ['Étape 1', 'Étape 2'],
   };
 
@@ -74,12 +72,6 @@ describe('PlanController', () => {
 
   const mockRequest = {
     user: mockUser,
-  };
-
-  const mockUpdatedUser = {
-    ...mockUser,
-    username: 'updateduser',
-    description: 'Updated description',
   };
 
   const mockPlanService = {
@@ -195,7 +187,7 @@ describe('PlanController', () => {
       const createdPlan = {
         _id: '507f1f77bcf86cd799439013',
         ...validPlanDto,
-        userId: mockUser._id,
+        user: mockUser._id,
         isFavorite: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -208,20 +200,20 @@ describe('PlanController', () => {
       expect(result).toEqual(createdPlan);
       expect(mockPlanService.createPlan).toHaveBeenCalledWith({
         ...validPlanDto,
-        userId: mockUser._id,
+        user: mockUser._id,
       });
       expect(mockPlanService.createPlan).toHaveBeenCalledTimes(1);
     });
 
-    it('should add userId from request to plan data', async () => {
-      const createdPlan = { ...validPlanDto, userId: mockUser._id };
+    it('should add user from request to plan data', async () => {
+      const createdPlan = { ...validPlanDto, user: mockUser._id };
       mockPlanService.createPlan.mockResolvedValue(createdPlan);
 
       await planController.createPlan(validPlanDto, mockRequest);
 
       expect(mockPlanService.createPlan).toHaveBeenCalledWith({
         ...validPlanDto,
-        userId: mockUser._id,
+        user: mockUser._id,
       });
     });
 
@@ -247,6 +239,7 @@ describe('PlanController', () => {
 
     it('should log error when creation fails', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
       const serviceError = new Error('Database error');
       mockPlanService.createPlan.mockRejectedValue(serviceError);
 
@@ -257,11 +250,36 @@ describe('PlanController', () => {
       }
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Erreur lors de la création du plan :',
+        '❌ Error creating plan:',
         serviceError,
       );
 
       consoleErrorSpy.mockRestore();
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should log success when plan is created', async () => {
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      const createdPlan = {
+        _id: 'new-plan-id',
+        ...validPlanDto,
+        user: mockUser._id,
+      };
+
+      mockPlanService.createPlan.mockResolvedValue(createdPlan);
+
+      await planController.createPlan(validPlanDto, mockRequest);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '📝 Creating plan with data:',
+        { ...validPlanDto, user: mockUser._id },
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '✅ Plan created successfully:',
+        'new-plan-id',
+      );
+
+      consoleLogSpy.mockRestore();
     });
   });
 
@@ -406,10 +424,13 @@ describe('PlanController', () => {
 
       mockPlanService.findAllByUserId.mockResolvedValue(userPlans);
 
-      const result = await planController.findAllByUserId(userId);
+      const result = await planController.findAllByUserId(userId, mockRequest);
 
       expect(result).toEqual(userPlans);
-      expect(mockPlanService.findAllByUserId).toHaveBeenCalledWith(userId);
+      expect(mockPlanService.findAllByUserId).toHaveBeenCalledWith(
+        userId,
+        mockUser._id,
+      );
       expect(mockPlanService.findAllByUserId).toHaveBeenCalledTimes(1);
     });
 
@@ -418,10 +439,27 @@ describe('PlanController', () => {
 
       mockPlanService.findAllByUserId.mockResolvedValue([]);
 
-      const result = await planController.findAllByUserId(userId);
+      const result = await planController.findAllByUserId(userId, mockRequest);
 
       expect(result).toEqual([]);
-      expect(mockPlanService.findAllByUserId).toHaveBeenCalledWith(userId);
+      expect(mockPlanService.findAllByUserId).toHaveBeenCalledWith(
+        userId,
+        mockUser._id,
+      );
+    });
+
+    it('should pass current user ID for plan visibility logic', async () => {
+      const targetUserId = 'other-user-id';
+      const currentUserId = mockUser._id;
+
+      mockPlanService.findAllByUserId.mockResolvedValue([]);
+
+      await planController.findAllByUserId(targetUserId, mockRequest);
+
+      expect(mockPlanService.findAllByUserId).toHaveBeenCalledWith(
+        targetUserId,
+        currentUserId,
+      );
     });
   });
 
@@ -452,74 +490,6 @@ describe('PlanController', () => {
     });
   });
 
-  describe('updateUserProfile', () => {
-    it('should update user profile when user owns the profile', async () => {
-      const profileId = mockUser._id;
-      const updateUserDto = {
-        username: 'updateduser',
-        description: 'Updated description',
-      };
-
-      mockUserService.updateById.mockResolvedValue(mockUpdatedUser);
-
-      const result = await planController.updateUserProfile(
-        profileId,
-        updateUserDto,
-        mockRequest,
-      );
-
-      expect(result).toEqual(mockUpdatedUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(
-        profileId,
-        updateUserDto,
-      );
-    });
-
-    it('should throw UnauthorizedException when user tries to update other profile', async () => {
-      const otherUserId = 'other-user-id';
-      const updateUserDto = { username: 'hacker' };
-
-      await expect(
-        planController.updateUserProfile(
-          otherUserId,
-          updateUserDto,
-          mockRequest,
-        ),
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        planController.updateUserProfile(
-          otherUserId,
-          updateUserDto,
-          mockRequest,
-        ),
-      ).rejects.toThrow('Vous ne pouvez pas modifier ce profil');
-
-      expect(mockUserService.updateById).not.toHaveBeenCalled();
-    });
-
-    it('should handle string comparison for user ID verification', async () => {
-      const profileId = mockUser._id.toString();
-      const requestWithObjectId = {
-        user: { _id: { toString: () => mockUser._id } },
-      };
-      const updateUserDto = { username: 'updateduser' };
-
-      mockUserService.updateById.mockResolvedValue(mockUpdatedUser);
-
-      const result = await planController.updateUserProfile(
-        profileId,
-        updateUserDto,
-        requestWithObjectId,
-      );
-
-      expect(result).toEqual(mockUpdatedUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(
-        profileId,
-        updateUserDto,
-      );
-    });
-  });
-
   describe('Authentication and Authorization', () => {
     it('should be protected by JwtAuthGuard', () => {
       const guards = Reflect.getMetadata('__guards__', PlanController);
@@ -535,14 +505,14 @@ describe('PlanController', () => {
     });
 
     it('should extract user from request correctly', async () => {
-      const createdPlan = { ...validPlanDto, userId: mockUser._id };
+      const createdPlan = { ...validPlanDto, user: mockUser._id };
       mockPlanService.createPlan.mockResolvedValue(createdPlan);
 
       await planController.createPlan(validPlanDto, mockRequest);
 
       expect(mockPlanService.createPlan).toHaveBeenCalledWith({
         ...validPlanDto,
-        userId: mockUser._id,
+        user: mockUser._id,
       });
     });
   });
@@ -581,23 +551,40 @@ describe('PlanController', () => {
       await expect(planController.findAll()).rejects.toThrow('Request timeout');
     });
 
-    it('should handle null updateUserDto in updateUserProfile', async () => {
-      const profileId = mockUser._id;
-      const nullDto = null;
+    it('should preserve original error type in createPlan when not wrapped', async () => {
+      const validationError = new UnauthorizedException('Unauthorized access');
+      mockPlanService.createPlan.mockRejectedValue(validationError);
 
-      mockUserService.updateById.mockResolvedValue(mockUser);
+      await expect(
+        planController.createPlan(validPlanDto, mockRequest),
+      ).rejects.toThrow(HttpException);
+    });
 
-      const result = await planController.updateUserProfile(
-        profileId,
-        nullDto,
-        mockRequest,
+    it('should handle undefined user._id in request', async () => {
+      const requestWithUndefinedUserId = { user: {} };
+
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      mockPlanService.createPlan.mockResolvedValue({
+        ...validPlanDto,
+        user: undefined,
+      });
+
+      await planController.createPlan(validPlanDto, requestWithUndefinedUserId);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '📝 Creating plan with data:',
+        { ...validPlanDto, user: undefined },
       );
 
-      expect(result).toEqual(mockUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(
-        profileId,
-        nullDto,
-      );
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should handle missing request in findAllByUserId', async () => {
+      const userId = 'test-user-id';
+
+      await expect(
+        planController.findAllByUserId(userId, null),
+      ).rejects.toThrow();
     });
   });
 });
