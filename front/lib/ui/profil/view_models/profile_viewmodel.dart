@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
 import '../../../data/repositories/user/user_repository.dart';
@@ -48,50 +47,67 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   Future<void> loadUserData(String? userId) async {
-    isLoading = true;
-    userProfile = null;
-    userStats = null;
-    isFollowing = false;
-    loadingFollow = false;
-    userCategories = [];
-    isLoadingCategories = false;
-    notifyListeners();
+    try {
+      isLoading = true;
+      notifyListeners();
 
-    final isCurrent =
-        userId == null || userId == authRepository.currentUser?.id;
-    final idToFetch = isCurrent ? authRepository.currentUser!.id! : userId!;
+      final currentUserId = authRepository.currentUser?.id;
+      final isCurrent = userId == null;
+      final idToFetch = isCurrent ? currentUserId : userId;
 
-    final userResult = await userRepository.getUserById(idToFetch);
-    userProfile = userResult is Ok<User> ? userResult.value : null;
+      if (idToFetch == null) {
+        debugPrint('❌ Aucun utilisateur identifié, arrêt du chargement.');
+        userProfile = null;
+        return;
+      }
 
-    if (isCurrent && userProfile != null) {
-      authRepository.updateCurrentUser(userProfile!);
-    }
+      final userResult = await userRepository.getUserById(idToFetch);
+      if (userResult is Ok<User>) {
+        userProfile = userResult.value;
+        if (isCurrent) {
+          authRepository.updateCurrentUser(userProfile!);
+        }
+      } else {
+        userProfile = null;
+        return;
+      }
 
-    if (userProfile != null) {
       userListViewModel = UserListViewModel(
         userRepository: userRepository,
         userId: userProfile!.id!,
       );
 
-      await Future.wait([
-        myPlansViewModel.loadPlans(userProfile!.id!),
-        favoritesViewModel.loadFavorites(userProfile!.id!),
-        userListViewModel!.loadFollowers(),
-        userListViewModel!.loadFollowing(),
-        _loadStats(),
-        _checkFollowStatus(),
-        loadUserCategories(),
-      ]);
+      await _loadRelatedData();
+    } catch (e, stack) {
+      debugPrint('Erreur loadUserData: $e\n$stack');
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
+  }
 
-    isLoading = false;
-    notifyListeners();
+  Future<void> _loadRelatedData() async {
+    final tasks = [
+      myPlansViewModel.loadPlans(userProfile!.id!),
+      favoritesViewModel.loadFavorites(userProfile!.id!),
+      userListViewModel!.loadFollowers(),
+      userListViewModel!.loadFollowing(),
+      _loadStats(),
+      _checkFollowStatus(),
+      loadUserCategories(),
+    ];
+
+    for (final task in tasks) {
+      try {
+        await task;
+      } catch (e) {
+        debugPrint('Erreur dans task loadRelatedData: $e');
+      }
+    }
   }
 
   Future<void> loadUserCategories() async {
     if (userProfile == null) return;
-
     try {
       isLoadingCategories = true;
       notifyListeners();
@@ -106,7 +122,6 @@ class ProfileViewModel extends ChangeNotifier {
           categoryMap[plan.category!.id] = plan.category!;
         }
       }
-
       userCategories = categoryMap.values.toList();
     } catch (_) {
       userCategories = [];
@@ -176,11 +191,10 @@ class ProfileViewModel extends ChangeNotifier {
     final result = await userRepository.uploadImage(file);
     if (result is Ok<String>) {
       final imageUrl = result.value;
-      await userRepository
-          .updateUserProfile(userProfile!.copyWith(photoUrl: imageUrl));
-      authRepository
-          .updateCurrentUser(userProfile!.copyWith(photoUrl: imageUrl));
-      userProfile = userProfile!.copyWith(photoUrl: imageUrl);
+      final updatedUser = userProfile!.copyWith(photoUrl: imageUrl);
+      await userRepository.updateUserProfile(updatedUser);
+      authRepository.updateCurrentUser(updatedUser);
+      userProfile = updatedUser;
       await myPlansViewModel.loadPlans(userProfile!.id!);
     }
 
@@ -189,10 +203,10 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   Future<void> removeProfilePhoto() async {
-    await userRepository
-        .updateUserProfile(userProfile!.copyWith(photoUrl: null));
-    authRepository.updateCurrentUser(userProfile!.copyWith(photoUrl: null));
-    userProfile = userProfile!.copyWith(photoUrl: null);
+    final updatedUser = userProfile!.copyWith(photoUrl: null);
+    await userRepository.updateUserProfile(updatedUser);
+    authRepository.updateCurrentUser(updatedUser);
+    userProfile = updatedUser;
     await myPlansViewModel.loadPlans(userProfile!.id!);
     notifyListeners();
   }
@@ -235,7 +249,9 @@ class ProfileViewModel extends ChangeNotifier {
       String currentPassword, String newPassword) async {
     try {
       await authRepository.updatePassword(
-          currentPassword: currentPassword, newPassword: newPassword);
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
       return Result.ok(null);
     } catch (e) {
       return Result.error(Exception(e));

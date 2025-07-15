@@ -93,14 +93,8 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
         GoRoute(
           path: Routes.profile,
           builder: (context, state) {
-            return ProfileScreen(
-              userId: state.uri.queryParameters['userId'],
-              viewModel: ProfileViewModel(
-                authRepository: context.read(),
-                userRepository: context.read(),
-                planRepository: context.read(),
-              ),
-            );
+            final userId = state.uri.queryParameters['userId'];
+            return ProfileScreen(userId: userId);
           },
         ),
         GoRoute(
@@ -109,8 +103,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
             final planId = state.uri.queryParameters['id'];
 
             if (planId == null) {
-              return const SizedBox
-                  .shrink(); // ou redirige, mais pas dans le builder
+              return const SizedBox.shrink();
             }
 
             return MultiProvider(

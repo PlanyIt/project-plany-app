@@ -399,21 +399,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (!locationService.hasLocation) {
           return _buildPlanListSection(
             context,
-            plans: widget.viewModel.trendingPlans,
+            plans: [],
             isLoading: false,
-            emptyMessage: 'Plans populaires',
-            emptySubMessage:
+            emptyMessage:
                 'Activez la géolocalisation pour voir les plans à proximité',
+            emptySubMessage: 'Aucun plan à proximité sans géolocalisation',
           );
         }
 
         if (nearbyPlans.isEmpty) {
           return _buildPlanListSection(
             context,
-            plans: widget.viewModel.trendingPlans,
+            plans: [],
             isLoading: false,
             emptyMessage: 'Aucun plan à moins de 10km',
-            emptySubMessage: 'Découvrez les plans populaires en attendant',
+            emptySubMessage: 'Aucun plan disponible à proximité',
             showDistance: false,
           );
         }
