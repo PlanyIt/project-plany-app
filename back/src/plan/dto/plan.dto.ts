@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsString,
-  IsBoolean,f
+  IsBoolean,
   IsOptional,
   IsArray,
   IsNumber,

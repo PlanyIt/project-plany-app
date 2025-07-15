@@ -24,15 +24,4 @@ export class PasswordService {
   ): Promise<boolean> {
     return argon2.verify(hashedPassword, plainPassword);
   }
-
-  /**
-   * Pour la compatibilité avec les mots de passe existants hashés avec bcrypt
-   */
-  async verifyLegacyPassword(
-    plainPassword: string,
-    hashedPassword: string,
-  ): Promise<boolean> {
-    const bcrypt = await import('bcrypt');
-    return bcrypt.compare(plainPassword, hashedPassword);
-  }
 }

@@ -29,7 +29,7 @@ export class Plan {
     ref: 'Category',
     required: true,
   })
-  category: string;
+  category: Types.ObjectId;
 
   @Prop({
     type: [{ type: Types.ObjectId, ref: 'Step', required: true }],

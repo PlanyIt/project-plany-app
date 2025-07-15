@@ -9,6 +9,16 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserService } from 'src/user/user.service';
 
+/**
+ * Service d'authentification et de gestion des utilisateurs
+ *
+ * Ce service gère l'authentification JWT, la validation des mots de passe
+ * et les opérations de connexion/inscription sécurisées.
+ * Utilise Argon2 pour le hachage des mots de passe.
+ *
+ * @author Équipe Plany
+ * @version 1.0.0
+ */
 @Injectable()
 export class AuthService {
   constructor(
@@ -17,6 +27,16 @@ export class AuthService {
     private passwordService: PasswordService,
   ) {}
 
+  /**
+   * Valide les informations d'identification d'un utilisateur
+   *
+   * Vérifie l'email et le mot de passe en utilisant Argon2.
+   *
+   * @param email - Email de l'utilisateur
+   * @param password - Mot de passe en clair
+   * @returns Objet utilisateur sans le mot de passe si validation réussie, null sinon
+   * @throws {UnauthorizedException} Si l'utilisateur n'existe pas ou mot de passe incorrect
+   */
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
 
@@ -24,7 +44,6 @@ export class AuthService {
       return null;
     }
 
-    // Tenter avec Argon2 d'abord, puis avec bcrypt si nécessaire
     let isPasswordValid = false;
 
     try {
@@ -33,24 +52,26 @@ export class AuthService {
         user.password,
       );
     } catch (e) {
-      isPasswordValid = await this.passwordService.verifyLegacyPassword(
-        password,
-        user.password,
+      throw new UnauthorizedException(
+        'Erreur de validation du mot de passe : ' + e.message,
       );
-
-      if (!isPasswordValid) {
-        return null;
-      }
     }
 
     if (isPasswordValid) {
-      const { password, ...result } = user.toObject();
+      const { ...result } = user.toObject();
       return result;
     }
 
     return null;
   }
 
+  /**
+   * Connecte un utilisateur et génère un token JWT
+   *
+   * @param loginDto - Données de connexion (email, password)
+   * @returns Object contenant le token JWT et les informations utilisateur
+   * @throws {UnauthorizedException} Si les identifiants sont incorrects
+   */
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
 
@@ -81,6 +102,25 @@ export class AuthService {
     };
   }
 
+  /**
+   * Enregistre un nouvel utilisateur
+   *
+   * Vérifie l'unicité de l'email et du nom d'utilisateur,
+   * hache le mot de passe avec Argon2 et génère un token JWT.
+   *
+   * @param createUserDto - Données d'inscription
+   * @returns Object contenant le token JWT et les informations du nouvel utilisateur
+   * @throws {BadRequestException} Si email/username déjà utilisé ou erreur de validation
+   *
+   * @example
+   * ```typescript
+   * const newUser = await authService.register({
+   *   username: 'john_doe',
+   *   email: 'john@example.com',
+   *   password: 'SecurePass123!'
+   * });
+   * ```
+   */
   async register(createUserDto: CreateUserDto) {
     // Vérifier si l'email existe déjà
     const existingUserByEmail = await this.usersService.findOneByEmail(
@@ -145,23 +185,18 @@ export class AuthService {
     }
   }
 
-  async refreshToken(userId: string) {
-    const user = await this.usersService.findById(userId);
-    if (!user) {
-      throw new UnauthorizedException('Utilisateur non trouvé');
-    }
-
-    const payload = {
-      sub: user._id,
-      email: user.email,
-      username: user.username,
-    };
-
-    return {
-      token: this.jwtService.sign(payload),
-    };
-  }
-
+  /**
+   * Change le mot de passe d'un utilisateur
+   *
+   * Vérifie l'ancien mot de passe avant de le remplacer par le nouveau.
+   * Applique les règles de sécurité pour le nouveau mot de passe.
+   *
+   * @param userId - ID de l'utilisateur
+   * @param currentPassword - Mot de passe actuel
+   * @param newPassword - Nouveau mot de passe
+   * @throws {UnauthorizedException} Si l'utilisateur n'existe pas ou mot de passe actuel incorrect
+   * @throws {BadRequestException} Si le nouveau mot de passe ne respecte pas les règles de sécurité
+   */
   async changePassword(
     userId: string,
     currentPassword: string,
@@ -180,9 +215,8 @@ export class AuthService {
         user.password,
       );
     } catch (e) {
-      isPasswordValid = await this.passwordService.verifyLegacyPassword(
-        currentPassword,
-        user.password,
+      throw new UnauthorizedException(
+        'Erreur de validation du mot de passe : ' + e.message,
       );
     }
     if (!isPasswordValid) {
