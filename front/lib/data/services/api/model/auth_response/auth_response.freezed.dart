@@ -20,8 +20,14 @@ AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$AuthResponse {
-  /// The token to be used for authentication.
-  String get token => throw _privateConstructorUsedError;
+  /// Jeton court (≈15 min) à mettre dans l’Authorization header.
+  @JsonKey(name: 'accessToken')
+  String get accessToken => throw _privateConstructorUsedError;
+
+  /// Jeton long (≈30 j) à garder en SecureStorage pour demander un
+  /// nouvel accessToken.
+  @JsonKey(name: 'refreshToken')
+  String get refreshToken => throw _privateConstructorUsedError;
   UserApiModel get currentUser => throw _privateConstructorUsedError;
 
   /// Serializes this AuthResponse to a JSON map.
@@ -40,7 +46,10 @@ abstract class $AuthResponseCopyWith<$Res> {
           AuthResponse value, $Res Function(AuthResponse) then) =
       _$AuthResponseCopyWithImpl<$Res, AuthResponse>;
   @useResult
-  $Res call({String token, UserApiModel currentUser});
+  $Res call(
+      {@JsonKey(name: 'accessToken') String accessToken,
+      @JsonKey(name: 'refreshToken') String refreshToken,
+      UserApiModel currentUser});
 
   $UserApiModelCopyWith<$Res> get currentUser;
 }
@@ -60,13 +69,18 @@ class _$AuthResponseCopyWithImpl<$Res, $Val extends AuthResponse>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? token = null,
+    Object? accessToken = null,
+    Object? refreshToken = null,
     Object? currentUser = null,
   }) {
     return _then(_value.copyWith(
-      token: null == token
-          ? _value.token
-          : token // ignore: cast_nullable_to_non_nullable
+      accessToken: null == accessToken
+          ? _value.accessToken
+          : accessToken // ignore: cast_nullable_to_non_nullable
+              as String,
+      refreshToken: null == refreshToken
+          ? _value.refreshToken
+          : refreshToken // ignore: cast_nullable_to_non_nullable
               as String,
       currentUser: null == currentUser
           ? _value.currentUser
@@ -94,7 +108,10 @@ abstract class _$$AuthResponseImplCopyWith<$Res>
       __$$AuthResponseImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String token, UserApiModel currentUser});
+  $Res call(
+      {@JsonKey(name: 'accessToken') String accessToken,
+      @JsonKey(name: 'refreshToken') String refreshToken,
+      UserApiModel currentUser});
 
   @override
   $UserApiModelCopyWith<$Res> get currentUser;
@@ -113,13 +130,18 @@ class __$$AuthResponseImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? token = null,
+    Object? accessToken = null,
+    Object? refreshToken = null,
     Object? currentUser = null,
   }) {
     return _then(_$AuthResponseImpl(
-      token: null == token
-          ? _value.token
-          : token // ignore: cast_nullable_to_non_nullable
+      accessToken: null == accessToken
+          ? _value.accessToken
+          : accessToken // ignore: cast_nullable_to_non_nullable
+              as String,
+      refreshToken: null == refreshToken
+          ? _value.refreshToken
+          : refreshToken // ignore: cast_nullable_to_non_nullable
               as String,
       currentUser: null == currentUser
           ? _value.currentUser
@@ -132,20 +154,30 @@ class __$$AuthResponseImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$AuthResponseImpl implements _AuthResponse {
-  const _$AuthResponseImpl({required this.token, required this.currentUser});
+  const _$AuthResponseImpl(
+      {@JsonKey(name: 'accessToken') required this.accessToken,
+      @JsonKey(name: 'refreshToken') required this.refreshToken,
+      required this.currentUser});
 
   factory _$AuthResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$AuthResponseImplFromJson(json);
 
-  /// The token to be used for authentication.
+  /// Jeton court (≈15 min) à mettre dans l’Authorization header.
   @override
-  final String token;
+  @JsonKey(name: 'accessToken')
+  final String accessToken;
+
+  /// Jeton long (≈30 j) à garder en SecureStorage pour demander un
+  /// nouvel accessToken.
+  @override
+  @JsonKey(name: 'refreshToken')
+  final String refreshToken;
   @override
   final UserApiModel currentUser;
 
   @override
   String toString() {
-    return 'AuthResponse(token: $token, currentUser: $currentUser)';
+    return 'AuthResponse(accessToken: $accessToken, refreshToken: $refreshToken, currentUser: $currentUser)';
   }
 
   @override
@@ -153,14 +185,18 @@ class _$AuthResponseImpl implements _AuthResponse {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$AuthResponseImpl &&
-            (identical(other.token, token) || other.token == token) &&
+            (identical(other.accessToken, accessToken) ||
+                other.accessToken == accessToken) &&
+            (identical(other.refreshToken, refreshToken) ||
+                other.refreshToken == refreshToken) &&
             (identical(other.currentUser, currentUser) ||
                 other.currentUser == currentUser));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, token, currentUser);
+  int get hashCode =>
+      Object.hash(runtimeType, accessToken, refreshToken, currentUser);
 
   /// Create a copy of AuthResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -180,15 +216,23 @@ class _$AuthResponseImpl implements _AuthResponse {
 
 abstract class _AuthResponse implements AuthResponse {
   const factory _AuthResponse(
-      {required final String token,
+      {@JsonKey(name: 'accessToken') required final String accessToken,
+      @JsonKey(name: 'refreshToken') required final String refreshToken,
       required final UserApiModel currentUser}) = _$AuthResponseImpl;
 
   factory _AuthResponse.fromJson(Map<String, dynamic> json) =
       _$AuthResponseImpl.fromJson;
 
-  /// The token to be used for authentication.
+  /// Jeton court (≈15 min) à mettre dans l’Authorization header.
   @override
-  String get token;
+  @JsonKey(name: 'accessToken')
+  String get accessToken;
+
+  /// Jeton long (≈30 j) à garder en SecureStorage pour demander un
+  /// nouvel accessToken.
+  @override
+  @JsonKey(name: 'refreshToken')
+  String get refreshToken;
   @override
   UserApiModel get currentUser;
 

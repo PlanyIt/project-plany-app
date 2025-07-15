@@ -4,38 +4,25 @@ import 'package:logging/logging.dart';
 import '../../utils/result.dart';
 
 class AuthStorageService {
-  static const _tokenKey = 'TOKEN';
+  static const _atKey = 'ACCESS_TOKEN';
+  static const _rtKey = 'REFRESH_TOKEN';
   static const _userJsonKey = 'USER_JSON';
 
   final _log = Logger('AuthStorageService');
   static const _secureStorage = FlutterSecureStorage();
 
-  /// --- TOKEN ---
-  Future<Result<String?>> fetchToken() async {
-    try {
-      final token = await _secureStorage.read(key: _tokenKey);
-      _log.finer('Got token from SecureStorage');
-      return Result.ok(token);
-    } on Exception catch (e) {
-      _log.warning('Failed to get token', e);
-      return Result.error(e);
-    }
+  Future<(String?, String?)> fetchTokens() async {
+    final at = await _secureStorage.read(key: _atKey);
+    final rt = await _secureStorage.read(key: _rtKey);
+    return (at, rt);
   }
 
-  Future<Result<void>> saveToken(String? token) async {
-    try {
-      if (token == null) {
-        _log.finer('Removed token');
-        await _secureStorage.delete(key: _tokenKey);
-      } else {
-        _log.finer('Saved token');
-        await _secureStorage.write(key: _tokenKey, value: token);
-      }
-      return const Result.ok(null);
-    } on Exception catch (e) {
-      _log.warning('Failed to set token', e);
-      return Result.error(e);
-    }
+  Future<void> saveTokens({
+    required String? accessToken,
+    required String? refreshToken,
+  }) async {
+    await _secureStorage.write(key: _atKey, value: accessToken);
+    await _secureStorage.write(key: _rtKey, value: refreshToken);
   }
 
   /// --- USER JSON (profil complet) ---

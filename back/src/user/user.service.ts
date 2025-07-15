@@ -10,8 +10,8 @@ import { User, UserDocument } from './schemas/user.schema';
 import { Model, Connection, isValidObjectId, Types } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from '../plan/schemas/plan.schema';
-import * as bcrypt from 'bcrypt';
 import { Comment, CommentDocument } from '../comment/schemas/comment.schema';
+import { PasswordService } from 'src/auth/password.service';
 
 /**
  * Service de gestion des utilisateurs
@@ -29,6 +29,7 @@ export class UserService {
     @InjectModel(Plan.name) private planModel: Model<PlanDocument>,
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
     @InjectConnection() private connection: Connection,
+    private passwordService: PasswordService,
   ) {}
 
   /**
@@ -210,7 +211,9 @@ export class UserService {
 
     // Si le mot de passe est mis à jour, on le hache
     if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 12);
+      updateUserDto.password = await this.passwordService.hashPassword(
+        updateUserDto.password,
+      );
     }
 
     const updatedUser = await this.userModel

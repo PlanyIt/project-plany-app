@@ -17,7 +17,6 @@ class UserRepositoryRemote implements UserRepository {
   @override
   Future<Result<User>> getUserById(String userId) {
     return _apiClient.getUserById(userId).then((result) {
-      print('getUserById result: $result');
       switch (result) {
         case Ok<User>():
           return Result.ok(result.value);

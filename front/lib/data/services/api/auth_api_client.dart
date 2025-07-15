@@ -55,4 +55,24 @@ class AuthApiClient {
       client.close();
     }
   }
+
+  Future<Result<AuthResponse>> refresh(String refreshToken) async {
+    final client = _clientFactory();
+    try {
+      final req = await client.post(_host, _port, '/api/auth/refresh');
+      req.headers.contentType = ContentType.json;
+      req.write(jsonEncode({'refreshToken': refreshToken}));
+      final res = await req.close();
+
+      if (res.statusCode == 200) {
+        final data = await res.transform(utf8.decoder).join();
+        return Result.ok(AuthResponse.fromJson(jsonDecode(data)));
+      }
+      return const Result.error(HttpException('Refresh error'));
+    } catch (e) {
+      return Result.error(Exception('Failed to refresh token: $e'));
+    } finally {
+      client.close();
+    }
+  }
 }
