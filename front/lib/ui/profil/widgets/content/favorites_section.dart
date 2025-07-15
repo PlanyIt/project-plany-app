@@ -9,10 +9,14 @@ import '../common/section_header.dart';
 
 class FavoritesSection extends StatelessWidget {
   final FavoritesViewModel viewModel;
+  final String user;
+  final VoidCallback? onToggleFavorite;
 
   const FavoritesSection({
     super.key,
     required this.viewModel,
+    required this.user,
+    this.onToggleFavorite,
   });
 
   @override
@@ -64,22 +68,50 @@ class FavoritesSection extends StatelessWidget {
                       ...vm.displayedFavorites.map(
                         (plan) => Padding(
                           padding: const EdgeInsets.only(bottom: 16),
-                          child: CompactPlanCard(
-                            title: plan.title,
-                            description: plan.description,
-                            imageUrls: plan.steps
-                                .map((e) => e.image)
-                                .where((img) => img.isNotEmpty)
-                                .toList(),
-                            category: plan.category,
-                            stepsCount: plan.steps.length,
-                            totalCost: plan.steps.fold(0.0,
-                                (total, step) => total! + (step.cost ?? 0)),
-                            totalDuration: plan.steps.fold(0,
-                                (total, step) => total! + (step.duration ?? 0)),
-                            onTap: () => context
-                                .push('${Routes.planDetails}?id=${plan.id}'),
-                            borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            children: [
+                              CompactPlanCard(
+                                title: plan.title,
+                                description: plan.description,
+                                imageUrls: plan.steps
+                                    .map((e) => e.image)
+                                    .where((img) => img.isNotEmpty)
+                                    .toList(),
+                                category: plan.category,
+                                stepsCount: plan.steps.length,
+                                totalCost: plan.steps.fold(0.0,
+                                    (total, step) => total! + (step.cost ?? 0)),
+                                totalDuration: plan.steps.fold(
+                                    0,
+                                    (total, step) =>
+                                        total! + (step.duration ?? 0)),
+                                onTap: () => context.push(
+                                    '${Routes.planDetails}?id=${plan.id}'),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: .5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(Icons.favorite_rounded,
+                                        color: Colors.red, size: 20),
+                                    onPressed: () async {
+                                      await vm.removeFavorite(plan.id!, user);
+                                      onToggleFavorite?.call();
+                                    },
+                                    tooltip: 'Retirer des favoris',
+                                    constraints:
+                                        BoxConstraints.tight(Size(36, 36)),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

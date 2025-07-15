@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../domain/models/user/user.dart';
+import '../../../../routing/routes.dart';
 import '../../view_models/profile_viewmodel.dart';
 
 class GeneralSettings extends StatefulWidget {
@@ -96,7 +98,7 @@ class GeneralSettingsState extends State<GeneralSettings> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => context.pop(false),
             child: const Text('Annuler'),
           ),
           ElevatedButton(
@@ -108,7 +110,7 @@ class GeneralSettingsState extends State<GeneralSettings> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => context.pop(true),
             child: const Text('Déconnexion'),
           ),
         ],
@@ -124,7 +126,7 @@ class GeneralSettingsState extends State<GeneralSettings> {
     try {
       await widget.viewModel.logout();
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/login');
+      context.go(Routes.login);
     } catch (e) {
       widget.showErrorCard('Erreur lors de la déconnexion: $e');
     }

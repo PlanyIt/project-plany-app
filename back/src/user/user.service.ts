@@ -11,7 +11,7 @@ import { Model, Connection, isValidObjectId, Types } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Plan, PlanDocument } from '../plan/schemas/plan.schema';
 import { Comment, CommentDocument } from '../comment/schemas/comment.schema';
-import { PasswordService } from 'src/auth/password.service';
+import { PasswordService } from '../auth/password.service';
 
 /**
  * Service de gestion des utilisateurs

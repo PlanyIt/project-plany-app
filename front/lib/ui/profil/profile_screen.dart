@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../ui/profil/widgets/content/favorites_section.dart';
@@ -6,6 +7,7 @@ import '../../../ui/profil/widgets/content/followers_section.dart';
 import '../../../ui/profil/widgets/content/following_section.dart';
 import '../../../ui/profil/widgets/content/my_plans_section.dart';
 import '../../../ui/profil/widgets/content/settings_section.dart';
+import '../../routing/routes.dart';
 import '../core/ui/bottom_bar/bottom_bar.dart';
 import 'view_models/my_plan_viewmodel.dart';
 import 'view_models/profile_viewmodel.dart';
@@ -72,11 +74,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
 
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: body,
-            bottomNavigationBar:
-                vm.isCurrentUser ? const BottomBar(currentIndex: 2) : null,
+          return PopScope(
+            canPop: false,
+            child: Scaffold(
+              backgroundColor: Colors.white,
+              body: body,
+              bottomNavigationBar:
+                  vm.isCurrentUser ? const BottomBar(currentIndex: 2) : null,
+            ),
           );
         },
       ),
@@ -97,7 +102,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       case 'favorites':
-        return FavoritesSection(viewModel: vm.favoritesViewModel);
+        return FavoritesSection(
+            viewModel: vm.favoritesViewModel,
+            user: user.id!,
+            onToggleFavorite: vm.refreshProfile);
       case 'subscriptions':
         return FollowingSection(
           viewModel: vm.userListViewModel!,
@@ -155,7 +163,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => widget.viewModel.loadUserData(widget.userId),
+              onPressed: () => context.go(Routes.dashboard),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3425B5),
                 foregroundColor: Colors.white,
@@ -165,7 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Réessayer'),
+              child: const Text('Retour'),
             ),
           ],
         ),

@@ -63,13 +63,20 @@ IconData getIconData(String? iconName) {
     'nature': Icons.landscape,
     'celebration': Icons.celebration,
     'shopping_bag': Icons.shopping_bag,
-    'museum': Icons.museum,
-    'sports': Icons.sports_soccer,
     'home_filled': Icons.home,
     'home_rounded': Icons.home_rounded,
     'house': Icons.house,
     'house_outlined': Icons.house_outlined,
-    // ...
+
+    // Icônes utilisées dans les catégories
+    'calendar_today': Icons.calendar_today,
+    'eco': Icons.eco,
+    'palette': Icons.palette,
+    'terrain': Icons.terrain,
+    'directions_run': Icons.directions_run,
+    'group': Icons.group,
+    'shopping_cart': Icons.shopping_cart,
+    'help_outline': Icons.category,
 
     // Mappages de secours pour les icônes non trouvées
     'place_outlined': Icons.place_outlined,

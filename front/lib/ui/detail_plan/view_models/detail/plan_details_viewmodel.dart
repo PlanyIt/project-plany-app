@@ -114,7 +114,7 @@ class PlanDetailsViewModel extends ChangeNotifier {
   void navigateToUserProfile(BuildContext context, String? userId) {
     if (userId == null) return;
     if (currentUser?.id == plan?.user?.id) {
-      context.go(Routes.profile);
+      context.push('${Routes.profile}?userId=${currentUser?.id}');
     } else {
       context.push('${Routes.profile}?userId=$userId');
     }

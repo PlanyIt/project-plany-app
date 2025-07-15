@@ -41,7 +41,7 @@ export async function applySecurity(app: INestApplication, cfg: ConfigService) {
   app.use(
     rateLimit({
       windowMs: 15 * 60 * 1000,
-      max: 100, // 100 req / 15 min / IP
+      max: 1000, // 1000 req / 15 min / IP
     }),
   );
 

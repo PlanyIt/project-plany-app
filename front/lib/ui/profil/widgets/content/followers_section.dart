@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../routing/routes.dart';
-import '../../profile_screen.dart';
 import '../../view_models/user_list_viewmodel.dart';
 import '../common/section_header.dart';
 import 'user_list.dart';
