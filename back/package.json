@@ -21,11 +21,7 @@
     
     "init-data": "ts-node src/init-data.ts",
     "db:init": "ts-node scripts/init-database.ts",
-    "db:migrate": "ts-node scripts/migrate-database.ts",
     "db:seed": "ts-node scripts/seed-data.ts",
-    "db:backup": "ts-node scripts/backup-restore.ts backup",
-    "db:restore": "ts-node scripts/backup-restore.ts restore",
-    "db:list-backups": "ts-node scripts/backup-restore.ts list",
     "db:reset": "npm run db:init && npm run db:seed"
   },
   "dependencies": {
