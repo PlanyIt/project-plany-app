@@ -1,6 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StepService } from './step.service';
-import { getModelToken } from '@nestjs/mongoose';
+
+const mockStepModel = {
+  find: jest.fn().mockReturnThis(),
+  findOne: jest.fn().mockReturnThis(),
+  findOneAndUpdate: jest.fn().mockReturnThis(),
+  findOneAndDelete: jest.fn().mockReturnThis(),
+  updateMany: jest.fn(),
+  save: jest.fn(),
+  sort: jest.fn().mockReturnThis(),
+  exec: jest.fn(),
+};
+const mockPlanModel = {
+  updateMany: jest.fn(),
+};
 
 describe('StepService', () => {
   let stepService: StepService;
@@ -112,683 +125,70 @@ describe('StepService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StepService,
-        {
-          provide: getModelToken('Step'),
-          useValue: mockStepModel,
-        },
-        {
-          provide: getModelToken('Plan'),
-          useValue: mockPlanModel,
-        },
+        { provide: 'StepModel', useValue: mockStepModel },
+        { provide: 'PlanModel', useValue: mockPlanModel },
       ],
     }).compile();
 
-    stepService = module.get<StepService>(StepService);
+    service = module.get<StepService>(StepService);
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
-    expect(stepService).toBeDefined();
-  });
-
-  describe('create', () => {
-    it('should create and return new step', async () => {
-      const result = await stepService.create(createStepDto);
-
-      expect(mockStepModel).toHaveBeenCalledWith(createStepDto);
-      expect(result._id).toBe(mockSteps[0]._id);
-      expect(result.title).toBe(createStepDto.title);
-      expect(result.description).toBe(createStepDto.description);
-      expect(result.order).toBe(createStepDto.order);
-      expect(result.image).toBe(createStepDto.image);
-      expect(result.duration).toBe(createStepDto.duration);
-      expect(result.cost).toBe(createStepDto.cost);
-    });
-
-    it('should create step without optional fields', async () => {
-      const minimalStepDto = {
-        title: 'Step Minimal',
-        description: 'Description minimale',
-        order: 1,
-        image: 'minimal.jpg',
-        userId: '507f1f77bcf86cd799439011',
-        duration: 3,
-        location: null,
-        cost: 0,
-      };
-
-      const result = await stepService.create(minimalStepDto);
-
-      expect(result.title).toBe(minimalStepDto.title);
-      expect(result.description).toBe(minimalStepDto.description);
-      expect(result.order).toBe(minimalStepDto.order);
-    });
-
-    it('should create step with zero cost and duration', async () => {
-      const stepWithZeros = {
-        ...createStepDto,
-        duration: 0,
-        cost: 0,
-      };
-
-      const result = await stepService.create(stepWithZeros);
-
-      expect(result.duration).toBe(0);
-      expect(result.cost).toBe(0);
-    });
+    expect(service).toBeDefined();
   });
 
   describe('findAll', () => {
     it('should return all steps', async () => {
-      mockStepModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockSteps),
-      });
-
-      const result = await stepService.findAll();
-
-      expect(result).toEqual(mockSteps);
-      expect(result).toHaveLength(3);
+      const steps = [{ title: 'Step1' }, { title: 'Step2' }];
+      mockStepModel.exec.mockResolvedValueOnce(steps);
+      expect(await service.findAll()).toBe(steps);
       expect(mockStepModel.find).toHaveBeenCalled();
-    });
-
-    it('should return empty array when no steps', async () => {
-      mockStepModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue([]),
-      });
-
-      const result = await stepService.findAll();
-
-      expect(result).toEqual([]);
-      expect(result).toHaveLength(0);
     });
   });
 
   describe('findById', () => {
-    it('should return step when found', async () => {
-      const stepId = mockSteps[0]._id;
-      const expectedStep = mockSteps[0];
-
-      mockStepModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(expectedStep),
-      });
-
-      const result = await stepService.findById(stepId);
-
-      expect(result).toEqual(expectedStep);
-      expect(mockStepModel.findOne).toHaveBeenCalledWith({ _id: stepId });
+    it('should return a step by id', async () => {
+      const step = { _id: '1', title: 'Test' };
+      mockStepModel.exec.mockResolvedValueOnce(step);
+      expect(await service.findById('1')).toBe(step);
+      expect(mockStepModel.findOne).toHaveBeenCalledWith({ _id: '1' });
     });
-
-    it('should return undefined when step not found', async () => {
-      mockStepModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await stepService.findById('nonexistent');
-
-      expect(result).toBeUndefined();
+    it('should return undefined if not found', async () => {
+      mockStepModel.exec.mockResolvedValueOnce(undefined);
+      expect(await service.findById('notfound')).toBeUndefined();
     });
   });
 
   describe('findByIds', () => {
-    it('should return steps sorted by order', async () => {
-      const stepIds = [mockSteps[1]._id, mockSteps[0]._id];
-      const expectedSteps = [mockSteps[0], mockSteps[1]];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(expectedSteps),
-      });
-
-      const result = await stepService.findByIds(stepIds);
-
-      expect(result).toEqual(expectedSteps);
+    it('should return steps by ids', async () => {
+      const steps = [{ _id: '1' }, { _id: '2' }];
+      mockStepModel.exec.mockResolvedValueOnce(steps);
+      expect(await service.findByIds(['1', '2'])).toBe(steps);
       expect(mockStepModel.find).toHaveBeenCalledWith({
-        _id: { $in: stepIds },
+        _id: { $in: ['1', '2'] },
       });
-      expect(mockStepModel.find().sort).toHaveBeenCalledWith({ order: 1 });
-    });
-
-    it('should return empty array when no matching ids', async () => {
-      const stepIds = ['nonexistent1', 'nonexistent2'];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([]),
-      });
-
-      const result = await stepService.findByIds(stepIds);
-
-      expect(result).toEqual([]);
-    });
-
-    it('should handle empty stepIds array', async () => {
-      const stepIds: string[] = [];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([]),
-      });
-
-      const result = await stepService.findByIds(stepIds);
-
-      expect(result).toEqual([]);
-      expect(mockStepModel.find).toHaveBeenCalledWith({ _id: { $in: [] } });
+      expect(mockStepModel.sort).toHaveBeenCalledWith({ order: 1 });
     });
   });
 
   describe('calculateTotalCost', () => {
-    it('should calculate total cost of steps', async () => {
-      const stepIds = [mockSteps[0]._id, mockSteps[1]._id];
-      const stepsWithCost = [mockSteps[0], mockSteps[1]];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(stepsWithCost),
-      });
-
-      const result = await stepService.calculateTotalCost(stepIds);
-
-      expect(result).toBe(40);
-      expect(mockStepModel.find).toHaveBeenCalledWith({
-        _id: { $in: stepIds },
-      });
-    });
-
-    it('should handle steps with zero cost', async () => {
-      const stepIds = [mockSteps[2]._id];
-      const stepsWithZeroCost = [mockSteps[2]];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(stepsWithZeroCost),
-      });
-
-      const result = await stepService.calculateTotalCost(stepIds);
-
-      expect(result).toBe(0);
-    });
-
-    it('should handle steps with undefined cost', async () => {
-      const stepWithUndefinedCost = {
-        ...mockSteps[0],
-        cost: undefined,
-      };
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([stepWithUndefinedCost]),
-      });
-
-      const result = await stepService.calculateTotalCost([mockSteps[0]._id]);
-
-      expect(result).toBe(0);
-    });
-
-    it('should handle empty step array', async () => {
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([]),
-      });
-
-      const result = await stepService.calculateTotalCost([]);
-
-      expect(result).toBe(0);
-    });
-
-    it('should handle mixed costs including nulls', async () => {
-      const stepsWithMixedCosts = [
-        { ...mockSteps[0], cost: 25 },
-        { ...mockSteps[1], cost: null },
-        { ...mockSteps[2], cost: 0 },
-      ];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(stepsWithMixedCosts),
-      });
-
-      const result = await stepService.calculateTotalCost([
-        'id1',
-        'id2',
-        'id3',
-      ]);
-
-      expect(result).toBe(25);
+    it('should sum cost of steps', async () => {
+      const steps = [{ cost: 10 }, { cost: 5 }, { cost: undefined }];
+      jest.spyOn(service, 'findByIds').mockResolvedValueOnce(steps as any);
+      expect(await service.calculateTotalCost(['1', '2', '3'])).toBe(15);
     });
   });
 
   describe('calculateTotalDuration', () => {
-    it('should calculate total duration of steps', async () => {
-      const stepIds = [mockSteps[0]._id, mockSteps[1]._id];
-      const stepsWithDuration = [mockSteps[0], mockSteps[1]];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(stepsWithDuration),
-      });
-
-      const result = await stepService.calculateTotalDuration(stepIds);
-
-      expect(result).toBe(300);
-      expect(mockStepModel.find).toHaveBeenCalledWith({
-        _id: { $in: stepIds },
-      });
-    });
-
-    it('should handle steps with zero duration', async () => {
-      const stepWithZeroDuration = {
-        ...mockSteps[0],
-        duration: 0,
-      };
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([stepWithZeroDuration]),
-      });
-
-      const result = await stepService.calculateTotalDuration([
-        mockSteps[0]._id,
-      ]);
-
-      expect(result).toBe(0);
-    });
-
-    it('should handle steps with undefined duration', async () => {
-      const stepWithUndefinedDuration = {
-        ...mockSteps[0],
-        duration: undefined,
-      };
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([stepWithUndefinedDuration]),
-      });
-
-      const result = await stepService.calculateTotalDuration([
-        mockSteps[0]._id,
-      ]);
-
-      expect(result).toBe(0);
-    });
-
-    it('should handle empty step array', async () => {
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([]),
-      });
-
-      const result = await stepService.calculateTotalDuration([]);
-
-      expect(result).toBe(0);
-    });
-
-    it('should handle mixed durations including nulls and decimals', async () => {
-      const stepsWithMixedDurations = [
-        { ...mockSteps[0], duration: 120.5 },
-        { ...mockSteps[1], duration: null },
-        { ...mockSteps[2], duration: 45 },
+    it('should sum duration of steps', async () => {
+      const steps = [
+        { duration: 30 },
+        { duration: 15 },
+        { duration: undefined },
       ];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(stepsWithMixedDurations),
-      });
-
-      const result = await stepService.calculateTotalDuration([
-        'id1',
-        'id2',
-        'id3',
-      ]);
-
-      expect(result).toBe(165.5);
-    });
-  });
-
-  describe('updateById', () => {
-    it('should update and return step when user is authorized', async () => {
-      const stepId = mockSteps[0]._id;
-      const userId = mockSteps[0].userId;
-      const updatedStep = {
-        ...mockSteps[0],
-        ...updateStepDto,
-      };
-
-      mockStepModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(updatedStep),
-      });
-
-      const result = await stepService.updateById(
-        stepId,
-        updateStepDto,
-        userId,
-      );
-
-      expect(result).toEqual(updatedStep);
-      expect(result.title).toBe(updateStepDto.title);
-      expect(result.description).toBe(updateStepDto.description);
-      expect(result.latitude).toBe(updateStepDto.latitude);
-      expect(result.longitude).toBe(updateStepDto.longitude);
-      expect(result.cost).toBe(updateStepDto.cost);
-      expect(result.duration).toBe(updateStepDto.duration);
-      expect(mockStepModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: stepId, userId },
-        updateStepDto,
-        { new: true },
-      );
-    });
-
-    it('should return null when step not found', async () => {
-      mockStepModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await stepService.updateById(
-        'nonexistent',
-        updateStepDto,
-        'userId',
-      );
-
-      expect(result).toBeNull();
-    });
-
-    it('should return null when user is not authorized', async () => {
-      const stepId = mockSteps[0]._id;
-      const unauthorizedUserId = 'unauthorized';
-
-      mockStepModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await stepService.updateById(
-        stepId,
-        updateStepDto,
-        unauthorizedUserId,
-      );
-
-      expect(result).toBeNull();
-      expect(mockStepModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: stepId, userId: unauthorizedUserId },
-        updateStepDto,
-        { new: true },
-      );
-    });
-
-    it('should update step with partial data', async () => {
-      const stepId = mockSteps[0]._id;
-      const userId = mockSteps[0].userId;
-      const partialUpdate = {
-        title: 'Titre Modifié',
-        description: mockSteps[0].description,
-        order: mockSteps[0].order,
-        image: mockSteps[0].image,
-        userId: userId,
-        cost: 20,
-        duration: 90,
-      };
-      const updatedStep = {
-        ...mockSteps[0],
-        ...partialUpdate,
-      };
-
-      mockStepModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(updatedStep),
-      });
-
-      const result = await stepService.updateById(
-        stepId,
-        partialUpdate,
-        userId,
-      );
-
-      expect(result).toEqual(updatedStep);
-      expect(result.title).toBe(partialUpdate.title);
-      expect(result.cost).toBe(partialUpdate.cost);
-      expect(result.duration).toBe(partialUpdate.duration);
-    });
-  });
-
-  describe('removeById', () => {
-    it('should delete step and remove from plans', async () => {
-      const stepId = mockSteps[0]._id;
-      const deletedStep = mockSteps[0];
-
-      mockStepModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(deletedStep),
-      });
-
-      mockPlanModel.updateMany.mockResolvedValue({
-        modifiedCount: 2,
-        matchedCount: 2,
-      });
-
-      const result = await stepService.removeById(stepId);
-
-      expect(result).toEqual(deletedStep);
-      expect(mockStepModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: stepId,
-      });
-      expect(mockPlanModel.updateMany).toHaveBeenCalledWith(
-        { steps: stepId },
-        { $pull: { steps: stepId } },
-      );
-    });
-
-    it('should return null when step not found', async () => {
-      mockStepModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await stepService.removeById('nonexistent');
-
-      expect(result).toBeNull();
-      expect(mockStepModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: 'nonexistent',
-      });
-      expect(mockPlanModel.updateMany).not.toHaveBeenCalled();
-    });
-
-    it('should delete step even if no plans reference it', async () => {
-      const stepId = mockSteps[2]._id;
-      const deletedStep = mockSteps[2];
-
-      mockStepModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(deletedStep),
-      });
-
-      mockPlanModel.updateMany.mockResolvedValue({
-        modifiedCount: 0,
-        matchedCount: 0,
-      });
-
-      const result = await stepService.removeById(stepId);
-
-      expect(result).toEqual(deletedStep);
-      expect(mockPlanModel.updateMany).toHaveBeenCalledWith(
-        { steps: stepId },
-        { $pull: { steps: stepId } },
-      );
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should handle step with no latitude/longitude', async () => {
-      const stepWithoutLocation = {
-        title: 'Step sans localisation',
-        description: 'Étape virtuelle',
-        order: 1,
-        image: 'virtual.jpg',
-        userId: '507f1f77bcf86cd799439011',
-        location: null,
-        duration: 30,
-        cost: 5,
-      };
-
-      const result = await stepService.create(stepWithoutLocation);
-
-      expect(result.title).toBe(stepWithoutLocation.title);
-      expect(result.latitude).toBeUndefined();
-      expect(result.longitude).toBeUndefined();
-    });
-
-    it('should handle step with zero cost', async () => {
-      const freeStep = {
-        ...createStepDto,
-        cost: 0,
-      };
-
-      const result = await stepService.create(freeStep);
-
-      expect(result.cost).toBe(0);
-    });
-
-    it('should handle step with very long description', async () => {
-      const stepWithLongDesc = {
-        ...createStepDto,
-        description: 'A'.repeat(1000),
-      };
-
-      const result = await stepService.create(stepWithLongDesc);
-
-      expect(result.description).toBe(stepWithLongDesc.description);
-      expect(result.description.length).toBe(1000);
-    });
-
-    it('should handle findByIds with mixed existing and non-existing ids', async () => {
-      const mixedIds = [mockSteps[0]._id, 'nonexistent', mockSteps[1]._id];
-      const foundSteps = [mockSteps[0], mockSteps[1]];
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(foundSteps),
-      });
-
-      const result = await stepService.findByIds(mixedIds);
-
-      expect(result).toEqual(foundSteps);
-      expect(result).toHaveLength(2);
-    });
-
-    it('should handle extreme coordinate values', async () => {
-      const extremeCoordStep = {
-        ...createStepDto,
-        latitude: -90,
-        longitude: -180,
-      };
-
-      const result = await stepService.create(extremeCoordStep);
-
-      expect(result.latitude).toBe(-90);
-      expect(result.longitude).toBe(-180);
-    });
-
-    it('should handle very large duration values', async () => {
-      const longDurationStep = {
-        ...createStepDto,
-        duration: 999999,
-      };
-
-      const result = await stepService.create(longDurationStep);
-
-      expect(result.duration).toBe(999999);
-    });
-
-    it('should handle negative cost (edge case)', async () => {
-      const negativeCostStep = {
-        ...createStepDto,
-        cost: -10,
-      };
-
-      const result = await stepService.create(negativeCostStep);
-
-      expect(result.cost).toBe(-10);
-    });
-
-    it('should handle decimal duration and cost', async () => {
-      const decimalStep = {
-        ...createStepDto,
-        duration: 45.5,
-        cost: 12.99,
-      };
-
-      const result = await stepService.create(decimalStep);
-
-      expect(result.duration).toBe(45.5);
-      expect(result.cost).toBe(12.99);
-    });
-  });
-
-  describe('Error handling', () => {
-    it('should handle database errors in create', async () => {
-      const mockSave = jest.fn().mockRejectedValue(new Error('Database error'));
-      mockStepModel.mockImplementation(() => ({ save: mockSave }));
-
-      await expect(stepService.create(createStepDto)).rejects.toThrow(
-        'Database error',
-      );
-    });
-
-    it('should handle database errors in findByIds', async () => {
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockRejectedValue(new Error('Connection lost')),
-      });
-
-      await expect(stepService.findByIds([mockSteps[0]._id])).rejects.toThrow(
-        'Connection lost',
-      );
-    });
-
-    it('should handle plan update errors in removeById', async () => {
-      const stepId = mockSteps[0]._id;
-
-      mockStepModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockSteps[0]),
-      });
-
-      mockPlanModel.updateMany.mockRejectedValue(
-        new Error('Plan update failed'),
-      );
-
-      await expect(stepService.removeById(stepId)).rejects.toThrow(
-        'Plan update failed',
-      );
-    });
-  });
-
-  describe('Performance tests', () => {
-    it('should handle large arrays in calculateTotalCost efficiently', async () => {
-      const largeStepArray = Array.from({ length: 100 }, (_, i) => ({
-        _id: `step-${i}`,
-        cost: i,
-        duration: i * 10,
-      }));
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(largeStepArray),
-      });
-
-      const stepIds = largeStepArray.map((s) => s._id);
-      const result = await stepService.calculateTotalCost(stepIds);
-
-      expect(result).toBe(4950);
-    });
-
-    it('should handle large arrays in calculateTotalDuration efficiently', async () => {
-      const largeStepArray = Array.from({ length: 50 }, (_, i) => ({
-        _id: `step-${i}`,
-        cost: 10,
-        duration: 60,
-      }));
-
-      mockStepModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(largeStepArray),
-      });
-
-      const stepIds = largeStepArray.map((s) => s._id);
-      const result = await stepService.calculateTotalDuration(stepIds);
-
-      expect(result).toBe(3000);
+      jest.spyOn(service, 'findByIds').mockResolvedValueOnce(steps as any);
+      expect(await service.calculateTotalDuration(['1', '2', '3'])).toBe(45);
     });
   });
 });

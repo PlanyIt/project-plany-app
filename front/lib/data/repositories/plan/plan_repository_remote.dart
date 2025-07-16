@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../../domain/models/plan/plan.dart';
 import '../../../utils/result.dart';
 import '../../services/api/api_client.dart';
@@ -8,6 +10,9 @@ import 'plan_repository.dart';
 class PlanRepositoryRemote implements PlanRepository {
   PlanRepositoryRemote({required ApiClient apiClient}) : _apiClient = apiClient;
   final ApiClient _apiClient;
+
+  @visibleForTesting
+  List<Plan>? get cachedData => _cachedData;
 
   List<Plan>? _cachedData;
 

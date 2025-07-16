@@ -198,7 +198,15 @@ class ProfileDrawer extends StatelessWidget {
           Colors.green,
           () {
             onClose();
-            Navigator.pushNamed(context, '/my-plans');
+            if (viewModel.user != null && viewModel.user!.id!.isNotEmpty) {
+              GoRouter.of(context).go(
+                Routes.profile,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Utilisateur non connecté')),
+              );
+            }
           },
         ),
         _buildMenuItem(
@@ -208,17 +216,15 @@ class ProfileDrawer extends StatelessWidget {
           Colors.orange,
           () {
             onClose();
-            // Navigation vers paramètres
-          },
-        ),
-        _buildMenuItem(
-          context,
-          'Aide & Support',
-          Icons.help_outline,
-          Colors.blue,
-          () {
-            onClose();
-            // Navigation vers aide
+            if (viewModel.user != null && viewModel.user!.id!.isNotEmpty) {
+              GoRouter.of(context).go(
+                Routes.profile,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Utilisateur non connecté')),
+              );
+            }
           },
         ),
       ],

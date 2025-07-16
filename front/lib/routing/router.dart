@@ -18,7 +18,6 @@ import '../ui/detail_plan/view_models/detail/follow_user_viewmodel.dart';
 import '../ui/detail_plan/view_models/detail/plan_details_viewmodel.dart';
 import '../ui/home/home_screen.dart';
 import '../ui/profil/profile_screen.dart';
-import '../ui/profil/view_models/profile_viewmodel.dart';
 import '../ui/search_plan/search_screen.dart';
 import '../ui/search_plan/view_models/search_view_model.dart';
 import 'routes.dart';
@@ -93,14 +92,8 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
         GoRoute(
           path: Routes.profile,
           builder: (context, state) {
-            return ProfileScreen(
-              userId: state.uri.queryParameters['userId'],
-              viewModel: ProfileViewModel(
-                authRepository: context.read(),
-                userRepository: context.read(),
-                planRepository: context.read(),
-              ),
-            );
+            final userId = state.uri.queryParameters['userId'];
+            return ProfileScreen(userId: userId);
           },
         ),
         GoRoute(
@@ -109,8 +102,7 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
             final planId = state.uri.queryParameters['id'];
 
             if (planId == null) {
-              return const SizedBox
-                  .shrink(); // ou redirige, mais pas dans le builder
+              return const SizedBox.shrink();
             }
 
             return MultiProvider(

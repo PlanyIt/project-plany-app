@@ -9,10 +9,14 @@ import '../../services/imgur_service.dart';
 import 'user_repository.dart';
 
 class UserRepositoryRemote implements UserRepository {
-  UserRepositoryRemote({required ApiClient apiClient}) : _apiClient = apiClient;
+  UserRepositoryRemote({
+    required ApiClient apiClient,
+    required ImgurService imgurService,
+  })  : _apiClient = apiClient,
+        _imgurService = imgurService;
 
   final ApiClient _apiClient;
-  final ImgurService _imgurService = ImgurService();
+  final ImgurService _imgurService;
 
   @override
   Future<Result<User>> getUserById(String userId) {

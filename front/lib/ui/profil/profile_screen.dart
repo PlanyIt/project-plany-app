@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../data/repositories/auth/auth_repository.dart';
+import '../../../data/repositories/plan/plan_repository.dart';
+import '../../../data/repositories/user/user_repository.dart';
 import '../../../ui/profil/widgets/content/favorites_section.dart';
 import '../../../ui/profil/widgets/content/followers_section.dart';
 import '../../../ui/profil/widgets/content/following_section.dart';
@@ -13,78 +16,71 @@ import 'view_models/my_plan_viewmodel.dart';
 import 'view_models/profile_viewmodel.dart';
 import 'widgets/header/profile_header.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   final String? userId;
-  final ProfileViewModel viewModel;
 
   const ProfileScreen({
     super.key,
     this.userId,
-    required this.viewModel,
   });
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ProfileViewModel(
+        authRepository: context.read<AuthRepository>(),
+        userRepository: context.read<UserRepository>(),
+        planRepository: context.read<PlanRepository>(),
+      )..loadUserData(userId),
+      child: const _ProfileScreenContent(),
+    );
+  }
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  @override
-  void initState() {
-    super.initState();
-    widget.viewModel.loadUserData(widget.userId);
-  }
+class _ProfileScreenContent extends StatelessWidget {
+  const _ProfileScreenContent();
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: widget.viewModel,
-      child: Consumer<ProfileViewModel>(
-        builder: (context, vm, _) {
-          if (vm.isLoading) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3425B5)),
-                ),
+    final vm = context.watch<ProfileViewModel>();
+
+    if (vm.isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3425B5)),
+          ),
+        ),
+      );
+    }
+
+    if (vm.userProfile == null) {
+      return _buildErrorView(context);
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          controller: vm.scrollController,
+          child: Column(
+            children: [
+              ProfileHeader(
+                viewModel: vm,
+                onProfileUpdated: vm.refreshProfile,
+                onNavigationSelected: vm.selectSection,
+                isFollowing: vm.isFollowing,
+                loadingFollow: vm.loadingFollow,
+                onToggleFollow: vm.toggleFollow,
+                scrollController: vm.scrollController,
               ),
-            );
-          }
-
-          if (vm.userProfile == null) {
-            return _buildErrorView(context);
-          }
-
-          final body = SafeArea(
-            child: SingleChildScrollView(
-              controller: vm.scrollController,
-              child: Column(
-                children: [
-                  ProfileHeader(
-                    viewModel: vm,
-                    onProfileUpdated: vm.refreshProfile,
-                    onNavigationSelected: vm.selectSection,
-                    isFollowing: vm.isFollowing,
-                    loadingFollow: vm.loadingFollow,
-                    onToggleFollow: vm.toggleFollow,
-                    scrollController: vm.scrollController,
-                  ),
-                  _buildSection(vm),
-                ],
-              ),
-            ),
-          );
-
-          return PopScope(
-            canPop: false,
-            child: Scaffold(
-              backgroundColor: Colors.white,
-              body: body,
-              bottomNavigationBar:
-                  vm.isCurrentUser ? const BottomBar(currentIndex: 2) : null,
-            ),
-          );
-        },
+              _buildSection(vm),
+            ],
+          ),
+        ),
       ),
+      bottomNavigationBar:
+          vm.isCurrentUser ? const BottomBar(currentIndex: 2) : null,
     );
   }
 
@@ -103,9 +99,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       case 'favorites':
         return FavoritesSection(
-            viewModel: vm.favoritesViewModel,
-            user: user.id!,
-            onToggleFavorite: vm.refreshProfile);
+          viewModel: vm.favoritesViewModel,
+          user: user.id!,
+          onToggleFavorite: vm.refreshProfile,
+        );
       case 'subscriptions':
         return FollowingSection(
           viewModel: vm.userListViewModel!,
@@ -149,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.error_outline,
                 size: 50,
-                color: const Color(0xFF3425B5).withValues(alpha: .7),
+                color: const Color(0xFF3425B5).withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 20),

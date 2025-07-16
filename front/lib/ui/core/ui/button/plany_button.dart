@@ -23,7 +23,7 @@ class PlanyButton extends StatelessWidget {
     this.fontSize = 16,
     this.height = 56,
     this.borderRadius = AppTheme.radiusXL,
-    this.isLoading = false, // Default to false
+    this.isLoading = false,
   });
 
   @override

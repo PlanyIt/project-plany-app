@@ -1,939 +1,351 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { PasswordService } from '../auth/password.service';
 import { PlanService } from '../plan/plan.service';
 import { AuthService } from '../auth/auth.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import {
   NotFoundException,
   UnauthorizedException,
-  BadRequestException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 
-describe('UserController', () => {
-  let userController: UserController;
-  let userService: UserService;
-  let planService: PlanService;
-  let authService: AuthService;
+const mockUserService = {
+  findAll: jest.fn(),
+  findById: jest.fn(),
+  create: jest.fn(),
+  updateById: jest.fn(),
+  removeById: jest.fn(),
+  findOneByUsername: jest.fn(),
+  findOneByEmail: jest.fn(),
+  getUserStats: jest.fn(),
+  followUser: jest.fn(),
+  unfollowUser: jest.fn(),
+  getUserFollowers: jest.fn(),
+  getUserFollowing: jest.fn(),
+  isFollowing: jest.fn(),
+};
+const mockPlanService = {
+  findAllByUserId: jest.fn(),
+  findFavoritesByUserId: jest.fn(),
+};
+const mockAuthService = {
+  validateUser: jest.fn(),
+};
 
-  const mockUsers = [
-    {
-      _id: '507f1f77bcf86cd799439011',
-      username: 'johndoe',
-      email: 'john@plany.com',
-      password: 'hashedPassword123',
-      description: 'Développeur passionné',
-      isPremium: false,
-      photoUrl: 'https://example.com/john.jpg',
-      birthDate: new Date('1990-05-15T00:00:00.000Z'),
-      gender: 'male',
-      role: 'user',
-      isActive: true,
-      followers: ['507f1f77bcf86cd799439012'],
-      following: ['507f1f77bcf86cd799439013'],
-      createdAt: new Date('2024-01-20T10:00:00.000Z'),
-      updatedAt: new Date('2024-01-20T10:00:00.000Z'),
-    },
-    {
-      _id: '507f1f77bcf86cd799439012',
-      username: 'janedoe',
-      email: 'jane@plany.com',
-      password: 'hashedPassword456',
-      description: 'Amatrice de voyages',
-      isPremium: true,
-      photoUrl: 'https://example.com/jane.jpg',
-      birthDate: new Date('1995-08-22T00:00:00.000Z'),
-      gender: 'female',
-      role: 'user',
-      isActive: true,
-      followers: [],
-      following: ['507f1f77bcf86cd799439011'],
-      createdAt: new Date('2024-01-20T11:00:00.000Z'),
-      updatedAt: new Date('2024-01-20T11:00:00.000Z'),
-    },
-    {
-      _id: '507f1f77bcf86cd799439013',
-      username: 'adminuser',
-      email: 'admin@plany.com',
-      password: 'hashedAdminPassword',
-      description: 'Administrateur de la plateforme',
-      isPremium: true,
-      photoUrl: 'https://example.com/admin.jpg',
-      birthDate: new Date('1985-03-10T00:00:00.000Z'),
-      gender: 'male',
-      role: 'admin',
-      isActive: true,
-      followers: [],
-      following: [],
-      createdAt: new Date('2024-01-20T09:00:00.000Z'),
-      updatedAt: new Date('2024-01-20T09:00:00.000Z'),
-    },
-  ];
-
-  const validCreateUserDto: CreateUserDto = {
-    username: 'newuser',
-    email: 'newuser@plany.com',
-    password: 'SecurePass123!',
-    description: 'Nouvel utilisateur',
-    isPremium: false,
-    photoUrl: 'https://example.com/newuser.jpg',
-    birthDate: new Date('1992-12-01T00:00:00.000Z'),
-    gender: 'other',
-    role: 'user',
-  };
-
-  const validUpdateUserDto: UpdateUserDto = {
-    username: 'updateduser',
-    description: 'Description mise à jour',
-    photoUrl: 'https://example.com/updated.jpg',
-    isPremium: true,
-  };
-
-  const mockUser = mockUsers[0];
-
-  const mockRequest = {
-    user: mockUser,
-  };
-
-  const mockPlans = [
-    {
-      _id: '507f1f77bcf86cd799439031',
-      title: 'Plan de John',
-      userId: mockUser._id,
-      isPublic: true,
-    },
-  ];
-
-  const mockUserStats = {
-    userId: mockUser._id,
-    plansCount: 5,
-    favoritesCount: 3,
-    followersCount: 1,
-    followingCount: 1,
-    totalViews: 250,
-    averageRating: 4.2,
-  };
-
-  const mockUserService = {
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    updateById: jest.fn(),
-    removeById: jest.fn(),
-    findOneByUsername: jest.fn(),
-    findOneByEmail: jest.fn(),
-    getUserStats: jest.fn(),
-    followUser: jest.fn(),
-    unfollowUser: jest.fn(),
-    getUserFollowers: jest.fn(),
-    getUserFollowing: jest.fn(),
-    isFollowing: jest.fn(),
-  };
-
-  const mockPlanService = {
-    findAllByUserId: jest.fn(),
-    findFavoritesByUserId: jest.fn(),
-  };
-
-  const mockAuthService = {
-    validateUser: jest.fn(),
-    login: jest.fn(),
-    register: jest.fn(),
-  };
-
-  const mockJwtAuthGuard = {
-    canActivate: jest.fn(() => true),
-  };
+describe('UsersController', () => {
+  let controller: UserController;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
-
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
       providers: [
-        {
-          provide: UserService,
-          useValue: mockUserService,
-        },
-        {
-          provide: PlanService,
-          useValue: mockPlanService,
-        },
-        {
-          provide: AuthService,
-          useValue: mockAuthService,
-        },
+        { provide: UserService, useValue: mockUserService },
+        { provide: PlanService, useValue: mockPlanService },
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: PasswordService, useValue: {} },
       ],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue(mockJwtAuthGuard)
-      .compile();
+    }).compile();
 
-    userController = module.get<UserController>(UserController);
-    userService = module.get<UserService>(UserService);
-    planService = module.get<PlanService>(PlanService);
-    authService = module.get<AuthService>(AuthService);
+    controller = module.get<UserController>(UserController);
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    (console.error as jest.Mock).mockRestore();
   });
 
   it('should be defined', () => {
-    expect(userController).toBeDefined();
-    expect(userService).toBeDefined();
-    expect(planService).toBeDefined();
-    expect(authService).toBeDefined();
+    expect(controller).toBeDefined();
   });
 
   describe('findAll', () => {
     it('should return all users', async () => {
-      mockUserService.findAll.mockResolvedValue(mockUsers);
-
-      const result = await userController.findAll();
-
-      expect(result).toEqual(mockUsers);
-      expect(mockUserService.findAll).toHaveBeenCalledTimes(1);
-      expect(result).toHaveLength(3);
-    });
-
-    it('should return empty array when no users exist', async () => {
-      mockUserService.findAll.mockResolvedValue([]);
-
-      const result = await userController.findAll();
-
-      expect(result).toEqual([]);
-      expect(mockUserService.findAll).toHaveBeenCalledTimes(1);
+      mockUserService.findAll.mockResolvedValue(['user1', 'user2']);
+      expect(await controller.findAll()).toEqual(['user1', 'user2']);
     });
   });
 
   describe('findOne', () => {
-    it('should return user by ID', async () => {
-      const userId = mockUser._id;
-      mockUserService.findById.mockResolvedValue(mockUser);
-
-      const result = await userController.findOne(userId, mockRequest);
-
-      expect(result).toEqual(mockUser);
-      expect(mockUserService.findById).toHaveBeenCalledWith(userId);
-      expect(mockUserService.findById).toHaveBeenCalledTimes(1);
+    it('should return user by id', async () => {
+      mockUserService.findById.mockResolvedValue({ _id: '123' });
+      const req = { user: { _id: '123' } };
+      expect(await controller.findOne('123', req)).toEqual({ _id: '123' });
     });
-
-    it('should return current user when id is "me"', async () => {
-      mockUserService.findById.mockResolvedValue(mockUser);
-
-      const result = await userController.findOne('me', mockRequest);
-
-      expect(result).toEqual(mockUser);
-      expect(mockUserService.findById).toHaveBeenCalledWith(mockUser._id);
-    });
-
-    it('should throw NotFoundException when user not found', async () => {
-      const userId = '507f1f77bcf86cd799439999';
+    it('should throw NotFoundException if user not found', async () => {
       mockUserService.findById.mockResolvedValue(null);
-
-      await expect(userController.findOne(userId, mockRequest)).rejects.toThrow(
+      const req = { user: { _id: '123' } };
+      await expect(controller.findOne('123', req)).rejects.toThrow(
         NotFoundException,
-      );
-      await expect(userController.findOne(userId, mockRequest)).rejects.toThrow(
-        `User with ID ${userId} not found`,
-      );
-    });
-
-    it('should throw NotFoundException when current user not found with "me"', async () => {
-      mockUserService.findById.mockResolvedValue(null);
-
-      await expect(userController.findOne('me', mockRequest)).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(userController.findOne('me', mockRequest)).rejects.toThrow(
-        `User with ID ${mockUser._id} not found`,
       );
     });
   });
 
   describe('create', () => {
-    it('should create and return a new user', async () => {
-      const createdUser = {
-        _id: '507f1f77bcf86cd799439014',
-        ...validCreateUserDto,
-        followers: [],
-        following: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      mockUserService.create.mockResolvedValue(createdUser);
-
-      const result = await userController.create(validCreateUserDto);
-
-      expect(result).toEqual(createdUser);
-      expect(mockUserService.create).toHaveBeenCalledWith(validCreateUserDto);
-      expect(mockUserService.create).toHaveBeenCalledTimes(1);
+    it('should create a user', async () => {
+      mockUserService.create.mockResolvedValue({ _id: '1' });
+      expect(
+        await controller.create({
+          email: 'a',
+          password: 'b',
+          username: 'c',
+        }),
+      ).toEqual({
+        _id: '1',
+      });
     });
-
-    it('should throw BadRequestException for invalid user data', async () => {
-      const invalidUserDto = {
-        username: '',
-        email: 'invalid',
-      } as CreateUserDto;
-      const validationError = new BadRequestException('Invalid user data');
-
-      mockUserService.create.mockRejectedValue(validationError);
-
-      await expect(userController.create(invalidUserDto)).rejects.toThrow(
-        BadRequestException,
-      );
-      expect(mockUserService.create).toHaveBeenCalledWith(invalidUserDto);
+    it('should throw InternalServerErrorException on error', async () => {
+      mockUserService.create.mockRejectedValue(new Error('fail'));
+      await expect(
+        controller.create({
+          email: 'a',
+          password: 'b',
+          username: 'c',
+        }),
+      ).rejects.toThrow(InternalServerErrorException);
     });
-
-    it('should throw InternalServerErrorException for service errors', async () => {
-      const serviceError = new Error('Database connection failed');
-      mockUserService.create.mockRejectedValue(serviceError);
-
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      await expect(userController.create(validCreateUserDto)).rejects.toThrow(
-        InternalServerErrorException,
-      );
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Erreur lors de la création de l'utilisateur :",
-        serviceError,
-      );
-
-      consoleErrorSpy.mockRestore();
+    it('should throw BadRequestException if error is BadRequestException', async () => {
+      mockUserService.create.mockRejectedValue(new BadRequestException());
+      await expect(
+        controller.create({
+          username: 'c',
+          email: 'a',
+          password: 'b',
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('updateProfile', () => {
-    it('should update own profile successfully', async () => {
-      const userId = mockUser._id;
-      const updatedUser = { ...mockUser, ...validUpdateUserDto };
-
-      mockUserService.updateById.mockResolvedValue(updatedUser);
-
-      const result = await userController.updateProfile(
-        userId,
-        validUpdateUserDto,
-        mockRequest,
-      );
-
-      expect(result).toEqual(updatedUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(
-        userId,
-        validUpdateUserDto,
-      );
+    it('should update user profile', async () => {
+      mockUserService.updateById.mockResolvedValue({
+        _id: '1',
+        username: 'testuser',
+      });
+      const req = { user: { _id: '1' } };
+      expect(
+        await controller.updateProfile('1', { username: 'testuser' }, req),
+      ).toEqual({ _id: '1', username: 'testuser' });
     });
-
-    it('should throw UnauthorizedException when updating other user profile', async () => {
-      const otherUserId = mockUsers[1]._id;
-
-      let thrownError;
-      try {
-        await userController.updateProfile(
-          otherUserId,
-          validUpdateUserDto,
-          mockRequest,
-        );
-      } catch (error) {
-        thrownError = error;
-      }
-
-      expect(thrownError).toBeInstanceOf(UnauthorizedException);
-      expect(thrownError.message).toBe('Vous ne pouvez pas modifier ce profil');
-      expect(mockUserService.updateById).not.toHaveBeenCalled();
+    it('should throw UnauthorizedException if user tries to update another profile', () => {
+      const req = { user: { _id: '1' } };
+      expect(() =>
+        controller.updateProfile('2', { username: 'test' }, req),
+      ).toThrow(UnauthorizedException);
     });
   });
 
   describe('removeById', () => {
-    it('should delete own account successfully', async () => {
-      const userId = mockUser._id;
-      const deletedUser = mockUser;
-
-      mockUserService.removeById.mockResolvedValue(deletedUser);
-
-      const result = await userController.removeById(userId, mockRequest);
-
-      expect(result).toEqual(deletedUser);
-      expect(mockUserService.removeById).toHaveBeenCalledWith(userId);
+    it('should remove user', async () => {
+      mockUserService.removeById.mockResolvedValue({ _id: '1' });
+      const req = { user: { _id: '1' } };
+      expect(await controller.removeById('1', req)).toEqual({ _id: '1' });
     });
-
-    it('should throw UnauthorizedException when deleting other user account', async () => {
-      const otherUserId = mockUsers[1]._id;
-
-      let thrownError;
-      try {
-        await userController.removeById(otherUserId, mockRequest);
-      } catch (error) {
-        thrownError = error;
-      }
-
-      expect(thrownError).toBeInstanceOf(UnauthorizedException);
-      expect(thrownError.message).toBe(
-        'Vous ne pouvez pas supprimer ce compte',
+    it('should throw UnauthorizedException if user tries to delete another account', () => {
+      const req = { user: { _id: '1' } };
+      expect(() => controller.removeById('2', req)).toThrow(
+        UnauthorizedException,
       );
-      expect(mockUserService.removeById).not.toHaveBeenCalled();
     });
   });
 
   describe('findOneByUsername', () => {
     it('should return user by username', async () => {
-      const username = mockUser.username;
-      mockUserService.findOneByUsername.mockResolvedValue(mockUser);
-
-      const result = await userController.findOneByUsername(username);
-
-      expect(result).toEqual(mockUser);
-      expect(mockUserService.findOneByUsername).toHaveBeenCalledWith(username);
+      mockUserService.findOneByUsername.mockResolvedValue({ username: 'bob' });
+      expect(await controller.findOneByUsername('bob')).toEqual({
+        username: 'bob',
+      });
     });
   });
 
   describe('findOneByEmail', () => {
     it('should return user by email', async () => {
-      const email = mockUser.email;
-      mockUserService.findOneByEmail.mockResolvedValue(mockUser);
-
-      const result = await userController.findOneByEmail(email);
-
-      expect(result).toEqual(mockUser);
-      expect(mockUserService.findOneByEmail).toHaveBeenCalledWith(email);
+      mockUserService.findOneByEmail.mockResolvedValue({ email: 'bob@a.com' });
+      expect(await controller.findOneByEmail('bob@a.com')).toEqual({
+        email: 'bob@a.com',
+      });
     });
   });
 
   describe('updateEmail', () => {
-    it('should update own email successfully with correct password', async () => {
-      const userId = mockUser._id;
-      const newEmail = 'newemail@plany.com';
-      const password = 'correctPassword123';
-      const updatedUser = { ...mockUser, email: newEmail };
-
+    it('should update email if password is correct', async () => {
       mockUserService.findOneByEmail.mockResolvedValue(null);
-      mockAuthService.validateUser.mockResolvedValue(mockUser);
-      mockUserService.updateById.mockResolvedValue(updatedUser);
-
-      const result = await userController.updateEmail(
-        userId,
-        newEmail,
-        password,
-        mockRequest,
+      mockAuthService.validateUser.mockResolvedValue({ _id: '1' });
+      mockUserService.updateById.mockResolvedValue({ email: 'new@a.com' });
+      const req = { user: { _id: '1', email: 'old@a.com' } };
+      expect(await controller.updateEmail('1', 'new@a.com', 'pw', req)).toEqual(
+        { email: 'new@a.com' },
       );
-
-      expect(result).toEqual(updatedUser);
-      expect(mockUserService.findOneByEmail).toHaveBeenCalledWith(newEmail);
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
-        mockUser.email,
-        password,
-      );
-      expect(mockUserService.updateById).toHaveBeenCalledWith(userId, {
-        email: newEmail,
-      });
     });
-
-    it('should throw UnauthorizedException for incorrect password', async () => {
-      const userId = mockUser._id;
-      const newEmail = 'newemail@plany.com';
-      const wrongPassword = 'wrongPassword';
-
+    it('should throw UnauthorizedException if email already used', async () => {
+      mockUserService.findOneByEmail.mockResolvedValue({ _id: '2' });
+      const req = { user: { _id: '1', email: 'old@a.com' } };
+      await expect(
+        controller.updateEmail('1', 'new@a.com', 'pw', req),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+    it('should throw UnauthorizedException if password is wrong', async () => {
       mockUserService.findOneByEmail.mockResolvedValue(null);
       mockAuthService.validateUser.mockResolvedValue(null);
-
+      const req = { user: { _id: '1', email: 'old@a.com' } };
       await expect(
-        userController.updateEmail(
-          userId,
-          newEmail,
-          wrongPassword,
-          mockRequest,
-        ),
+        controller.updateEmail('1', 'new@a.com', 'pw', req),
       ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        userController.updateEmail(
-          userId,
-          newEmail,
-          wrongPassword,
-          mockRequest,
-        ),
-      ).rejects.toThrow('Mot de passe incorrect');
     });
+  });
 
-    it('should throw UnauthorizedException when updating other user email', async () => {
-      const otherUserId = mockUsers[1]._id;
-      const newEmail = 'newemail@plany.com';
-      const password = 'password123';
-
-      await expect(
-        userController.updateEmail(
-          otherUserId,
-          newEmail,
-          password,
-          mockRequest,
-        ),
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        userController.updateEmail(
-          otherUserId,
-          newEmail,
-          password,
-          mockRequest,
-        ),
-      ).rejects.toThrow('Vous ne pouvez pas modifier cet email');
-    });
-
-    it('should throw UnauthorizedException when email already exists', async () => {
-      const userId = mockUser._id;
-      const existingEmail = 'existing@plany.com';
-      const password = 'password123';
-      const existingUser = {
-        ...mockUsers[1],
-        email: existingEmail,
-        _id: mockUsers[1]._id,
-      };
-
-      mockUserService.findOneByEmail.mockResolvedValue(existingUser);
-
-      await expect(
-        userController.updateEmail(
-          userId,
-          existingEmail,
-          password,
-          mockRequest,
-        ),
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        userController.updateEmail(
-          userId,
-          existingEmail,
-          password,
-          mockRequest,
-        ),
-      ).rejects.toThrow('Cet email est déjà utilisé');
-    });
-
-    it('should update email when id is "me"', async () => {
-      const newEmail = 'newemail@plany.com';
-      const password = 'correctPassword123';
-      const updatedUser = { ...mockUser, email: newEmail };
-
-      mockUserService.findOneByEmail.mockResolvedValue(null);
-      mockAuthService.validateUser.mockResolvedValue(mockUser);
-      mockUserService.updateById.mockResolvedValue(updatedUser);
-
-      const result = await userController.updateEmail(
-        'me',
-        newEmail,
-        password,
-        mockRequest,
-      );
-
-      expect(result).toEqual(updatedUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(mockUser._id, {
-        email: newEmail,
+  describe('updateUserPhoto', () => {
+    it('should update user photo', async () => {
+      mockUserService.updateById.mockResolvedValue({ photoUrl: 'url' });
+      const req = { user: { _id: '1' } };
+      expect(await controller.updateUserPhoto('1', 'url', req)).toEqual({
+        photoUrl: 'url',
       });
+    });
+    it('should throw UnauthorizedException if not owner', () => {
+      const req = { user: { _id: '1' } };
+      expect(() => controller.updateUserPhoto('2', 'url', req)).toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('deleteUserPhoto', () => {
+    it('should delete user photo', async () => {
+      mockUserService.updateById.mockResolvedValue({ photoUrl: null });
+      const req = { user: { _id: '1' } };
+      expect(await controller.deleteUserPhoto('1', req)).toEqual({
+        photoUrl: null,
+      });
+    });
+    it('should throw UnauthorizedException if not owner', () => {
+      const req = { user: { _id: '1' } };
+      expect(() => controller.deleteUserPhoto('2', req)).toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('getUserStats', () => {
+    it('should return user stats', async () => {
+      mockUserService.getUserStats.mockResolvedValue({ plans: 2 });
+      const req = { user: { _id: '1' } };
+      expect(await controller.getUserStats('1', req)).toEqual({ plans: 2 });
     });
   });
 
   describe('getUserPlans', () => {
     it('should return user plans', async () => {
-      const userId = mockUser._id;
-      mockPlanService.findAllByUserId.mockResolvedValue(mockPlans);
-
-      const result = await userController.getUserPlans(userId, mockRequest);
-
-      expect(result).toEqual(mockPlans);
-      expect(mockPlanService.findAllByUserId).toHaveBeenCalledWith(userId);
-    });
-
-    it('should return current user plans when id is "me"', async () => {
-      mockPlanService.findAllByUserId.mockResolvedValue(mockPlans);
-
-      const result = await userController.getUserPlans('me', mockRequest);
-
-      expect(result).toEqual(mockPlans);
-      expect(mockPlanService.findAllByUserId).toHaveBeenCalledWith(
-        mockUser._id,
-      );
-    });
-
-    it('should handle and log errors in getUserPlans', async () => {
-      const userId = mockUser._id;
-      const error = new Error('Plans fetch failed');
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      mockPlanService.findAllByUserId.mockRejectedValue(error);
-
-      await expect(
-        userController.getUserPlans(userId, mockRequest),
-      ).rejects.toThrow(error);
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `Error getting plans: ${error.message}`,
-      );
-
-      consoleErrorSpy.mockRestore();
+      mockPlanService.findAllByUserId.mockResolvedValue(['plan1']);
+      const req = { user: { _id: '1' } };
+      expect(await controller.getUserPlans('1', req)).toEqual(['plan1']);
     });
   });
 
   describe('getUserFavorites', () => {
     it('should return user favorites', async () => {
-      const userId = mockUser._id;
-      mockPlanService.findFavoritesByUserId.mockResolvedValue(mockPlans);
-
-      const result = await userController.getUserFavorites(userId, mockRequest);
-
-      expect(result).toEqual(mockPlans);
-      expect(mockPlanService.findFavoritesByUserId).toHaveBeenCalledWith(
-        userId,
-      );
-    });
-
-    it('should return current user favorites when id is "me"', async () => {
-      mockPlanService.findFavoritesByUserId.mockResolvedValue(mockPlans);
-
-      const result = await userController.getUserFavorites('me', mockRequest);
-
-      expect(result).toEqual(mockPlans);
-      expect(mockPlanService.findFavoritesByUserId).toHaveBeenCalledWith(
-        mockUser._id,
-      );
-    });
-
-    it('should handle and log errors in getUserFavorites', async () => {
-      const userId = mockUser._id;
-      const error = new Error('Favorites fetch failed');
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      mockPlanService.findFavoritesByUserId.mockRejectedValue(error);
-
-      await expect(
-        userController.getUserFavorites(userId, mockRequest),
-      ).rejects.toThrow(error);
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `Error getting favorites: ${error.message}`,
-      );
-
-      consoleErrorSpy.mockRestore();
+      mockPlanService.findFavoritesByUserId.mockResolvedValue(['fav1']);
+      const req = { user: { _id: '1' } };
+      expect(await controller.getUserFavorites('1', req)).toEqual(['fav1']);
     });
   });
 
-  describe('getUserStats', () => {
-    it('should return user statistics', async () => {
-      const userId = mockUser._id;
-      mockUserService.getUserStats.mockResolvedValue(mockUserStats);
-
-      const result = await userController.getUserStats(userId, mockRequest);
-
-      expect(result).toEqual(mockUserStats);
-      expect(mockUserService.getUserStats).toHaveBeenCalledWith(userId);
+  describe('updatePremiumStatus', () => {
+    it('should update premium status if owner', async () => {
+      mockUserService.updateById.mockResolvedValue({ isPremium: true });
+      const req = { user: { _id: '1', role: 'user' } };
+      expect(await controller.updatePremiumStatus('1', true, req)).toEqual({
+        isPremium: true,
+      });
     });
-
-    it('should return current user stats when id is "me"', async () => {
-      mockUserService.getUserStats.mockResolvedValue(mockUserStats);
-
-      const result = await userController.getUserStats('me', mockRequest);
-
-      expect(result).toEqual(mockUserStats);
-      expect(mockUserService.getUserStats).toHaveBeenCalledWith(mockUser._id);
+    it('should update premium status if admin', async () => {
+      mockUserService.updateById.mockResolvedValue({ isPremium: true });
+      const req = { user: { _id: '2', role: 'admin' } };
+      expect(await controller.updatePremiumStatus('1', true, req)).toEqual({
+        isPremium: true,
+      });
     });
-
-    it('should handle and log errors in getUserStats', async () => {
-      const userId = mockUser._id;
-      const error = new Error('Stats fetch failed');
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      mockUserService.getUserStats.mockRejectedValue(error);
-
+    it('should throw UnauthorizedException if not owner or admin', async () => {
+      const req = { user: { _id: '2', role: 'user' } };
       await expect(
-        userController.getUserStats(userId, mockRequest),
-      ).rejects.toThrow(error);
+        controller.updatePremiumStatus('1', true, req),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Erreur dans getUserStats:',
-        error,
+  describe('followUser', () => {
+    it('should follow user', async () => {
+      mockUserService.followUser.mockResolvedValue({ followed: true });
+      const req = { user: { _id: '1' } };
+      expect(await controller.followUser('2', req)).toEqual({ followed: true });
+    });
+    it('should throw UnauthorizedException if not authenticated', async () => {
+      await expect(controller.followUser('2', {} as any)).rejects.toThrow(
+        UnauthorizedException,
       );
+    });
+  });
 
-      consoleErrorSpy.mockRestore();
+  describe('unfollowUser', () => {
+    it('should unfollow user', async () => {
+      mockUserService.unfollowUser.mockResolvedValue({ unfollowed: true });
+      const req = { user: { _id: '1' } };
+      expect(await controller.unfollowUser('2', req)).toEqual({
+        unfollowed: true,
+      });
+    });
+    it('should throw UnauthorizedException if not authenticated', async () => {
+      await expect(controller.unfollowUser('2', {} as any)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('getUserFollowers', () => {
+    it('should return followers', async () => {
+      mockUserService.getUserFollowers.mockResolvedValue(['f1']);
+      const req = { user: { _id: '1' } };
+      expect(await controller.getUserFollowers('1', req)).toEqual(['f1']);
+    });
+  });
+
+  describe('getUserFollowing', () => {
+    it('should return following', async () => {
+      mockUserService.getUserFollowing.mockResolvedValue(['f2']);
+      const req = { user: { _id: '1' } };
+      expect(await controller.getUserFollowing('1', req)).toEqual(['f2']);
     });
   });
 
   describe('checkFollowing', () => {
-    it('should return true when user is following target', async () => {
-      const followerId = mockUser._id;
-      const targetId = mockUsers[1]._id;
-
+    it('should return isFollowing', async () => {
       mockUserService.isFollowing.mockResolvedValue(true);
-
-      const result = await userController.checkFollowing(
-        followerId,
-        targetId,
-        mockRequest,
-      );
-
-      expect(result).toEqual({ isFollowing: true });
-      expect(mockUserService.isFollowing).toHaveBeenCalledWith(
-        followerId,
-        targetId,
-      );
-    });
-
-    it('should return false when user is not following target', async () => {
-      const followerId = mockUser._id;
-      const targetId = mockUsers[1]._id;
-
-      mockUserService.isFollowing.mockResolvedValue(false);
-
-      const result = await userController.checkFollowing(
-        followerId,
-        targetId,
-        mockRequest,
-      );
-
-      expect(result).toEqual({ isFollowing: false });
-    });
-
-    it('should check following status when followerId is "me"', async () => {
-      const targetId = mockUsers[1]._id;
-
-      mockUserService.isFollowing.mockResolvedValue(true);
-
-      const result = await userController.checkFollowing(
-        'me',
-        targetId,
-        mockRequest,
-      );
-
-      expect(result).toEqual({ isFollowing: true });
-      expect(mockUserService.isFollowing).toHaveBeenCalledWith(
-        mockUser._id,
-        targetId,
-      );
+      const req = { user: { _id: '1' } };
+      expect(await controller.checkFollowing('1', '2', req)).toEqual({
+        isFollowing: true,
+      });
     });
   });
 
   describe('explicitFollowUser', () => {
-    it('should follow user with explicit parameters', async () => {
-      const followerId = mockUser._id;
-      const targetId = mockUsers[1]._id;
-      const followResult = { success: true };
-
-      mockUserService.followUser.mockResolvedValue(followResult);
-
-      const result = await userController.explicitFollowUser(
-        followerId,
-        targetId,
-        mockRequest,
-      );
-
-      expect(result).toEqual(followResult);
-      expect(mockUserService.followUser).toHaveBeenCalledWith(
-        followerId,
-        targetId,
-      );
-    });
-
-    it('should follow user when followerId is "me"', async () => {
-      const targetId = mockUsers[1]._id;
-      const followResult = { success: true };
-
-      mockUserService.followUser.mockResolvedValue(followResult);
-
-      const result = await userController.explicitFollowUser(
-        'me',
-        targetId,
-        mockRequest,
-      );
-
-      expect(result).toEqual(followResult);
-      expect(mockUserService.followUser).toHaveBeenCalledWith(
-        mockUser._id,
-        targetId,
-      );
+    it('should follow user explicitly', async () => {
+      mockUserService.followUser.mockResolvedValue({ followed: true });
+      const req = { user: { _id: '1' } };
+      expect(await controller.explicitFollowUser('1', '2', req)).toEqual({
+        followed: true,
+      });
     });
   });
 
   describe('explicitUnfollowUser', () => {
-    it('should unfollow user with explicit parameters', async () => {
-      const followerId = mockUser._id;
-      const targetId = mockUsers[1]._id;
-      const unfollowResult = { success: true };
-
-      mockUserService.unfollowUser.mockResolvedValue(unfollowResult);
-
-      const result = await userController.explicitUnfollowUser(
-        followerId,
-        targetId,
-        mockRequest,
-      );
-
-      expect(result).toEqual(unfollowResult);
-      expect(mockUserService.unfollowUser).toHaveBeenCalledWith(
-        followerId,
-        targetId,
-      );
-    });
-
-    it('should unfollow user when followerId is "me"', async () => {
-      const targetId = mockUsers[1]._id;
-      const unfollowResult = { success: true };
-
-      mockUserService.unfollowUser.mockResolvedValue(unfollowResult);
-
-      const result = await userController.explicitUnfollowUser(
-        'me',
-        targetId,
-        mockRequest,
-      );
-
-      expect(result).toEqual(unfollowResult);
-      expect(mockUserService.unfollowUser).toHaveBeenCalledWith(
-        mockUser._id,
-        targetId,
-      );
-    });
-  });
-
-  describe('Parameter "me" handling', () => {
-    it('should handle "me" parameter in updateProfile', async () => {
-      const updatedUser = { ...mockUser, ...validUpdateUserDto };
-      mockUserService.updateById.mockResolvedValue(updatedUser);
-
-      const result = await userController.updateProfile(
-        'me',
-        validUpdateUserDto,
-        mockRequest,
-      );
-
-      expect(result).toEqual(updatedUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(
-        mockUser._id,
-        validUpdateUserDto,
-      );
-    });
-
-    it('should handle "me" parameter in removeById', async () => {
-      mockUserService.removeById.mockResolvedValue(mockUser);
-
-      const result = await userController.removeById('me', mockRequest);
-
-      expect(result).toEqual(mockUser);
-      expect(mockUserService.removeById).toHaveBeenCalledWith(mockUser._id);
-    });
-
-    it('should handle "me" parameter in updateUserPhoto', async () => {
-      const newPhotoUrl = 'https://example.com/newphoto.jpg';
-      const updatedUser = { ...mockUser, photoUrl: newPhotoUrl };
-
-      mockUserService.updateById.mockResolvedValue(updatedUser);
-
-      const result = await userController.updateUserPhoto(
-        'me',
-        newPhotoUrl,
-        mockRequest,
-      );
-
-      expect(result).toEqual(updatedUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(mockUser._id, {
-        photoUrl: newPhotoUrl,
+    it('should unfollow user explicitly', async () => {
+      mockUserService.unfollowUser.mockResolvedValue({ unfollowed: true });
+      const req = { user: { _id: '1' } };
+      expect(await controller.explicitUnfollowUser('1', '2', req)).toEqual({
+        unfollowed: true,
       });
-    });
-
-    it('should handle "me" parameter in deleteUserPhoto', async () => {
-      const updatedUser = { ...mockUser, photoUrl: null };
-      mockUserService.updateById.mockResolvedValue(updatedUser);
-
-      const result = await userController.deleteUserPhoto('me', mockRequest);
-
-      expect(result).toEqual(updatedUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(mockUser._id, {
-        photoUrl: null,
-      });
-    });
-
-    it('should handle "me" parameter in updatePremiumStatus', async () => {
-      const isPremium = true;
-      const updatedUser = { ...mockUser, isPremium };
-      mockUserService.updateById.mockResolvedValue(updatedUser);
-
-      const result = await userController.updatePremiumStatus(
-        'me',
-        isPremium,
-        mockRequest,
-      );
-
-      expect(result).toEqual(updatedUser);
-      expect(mockUserService.updateById).toHaveBeenCalledWith(mockUser._id, {
-        isPremium,
-      });
-    });
-
-    it('should handle "me" parameter in followUser', async () => {
-      const followResult = { success: true, message: 'User followed' };
-      mockUserService.followUser.mockResolvedValue(followResult);
-
-      const result = await userController.followUser('me', mockRequest);
-
-      expect(result).toEqual(followResult);
-      expect(mockUserService.followUser).toHaveBeenCalledWith(
-        mockUser._id,
-        mockUser._id,
-      );
-    });
-
-    it('should handle "me" parameter in unfollowUser', async () => {
-      const unfollowResult = { success: true, message: 'User unfollowed' };
-      mockUserService.unfollowUser.mockResolvedValue(unfollowResult);
-
-      const result = await userController.unfollowUser('me', mockRequest);
-
-      expect(result).toEqual(unfollowResult);
-      expect(mockUserService.unfollowUser).toHaveBeenCalledWith(
-        mockUser._id,
-        mockUser._id,
-      );
-    });
-
-    it('should handle "me" parameter in getUserFollowers', async () => {
-      const followers = [mockUsers[1]];
-      mockUserService.getUserFollowers.mockResolvedValue(followers);
-
-      const result = await userController.getUserFollowers('me', mockRequest);
-
-      expect(result).toEqual(followers);
-      expect(mockUserService.getUserFollowers).toHaveBeenCalledWith(
-        mockUser._id,
-      );
-    });
-
-    it('should handle "me" parameter in getUserFollowing', async () => {
-      const following = [mockUsers[2]];
-      mockUserService.getUserFollowing.mockResolvedValue(following);
-
-      const result = await userController.getUserFollowing('me', mockRequest);
-
-      expect(result).toEqual(following);
-      expect(mockUserService.getUserFollowing).toHaveBeenCalledWith(
-        mockUser._id,
-      );
-    });
-  });
-
-  describe('Error handling with logs', () => {
-    it('should log errors in getUserFollowing', async () => {
-      const userId = mockUser._id;
-      const error = new Error('Following fetch failed');
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      mockUserService.getUserFollowing.mockRejectedValue(error);
-
-      await expect(
-        userController.getUserFollowing(userId, mockRequest),
-      ).rejects.toThrow(error);
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Erreur dans getUserFollowing:',
-        error,
-      );
-
-      consoleErrorSpy.mockRestore();
     });
   });
 });

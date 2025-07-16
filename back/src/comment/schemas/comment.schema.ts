@@ -8,11 +8,11 @@ export class Comment {
   @Prop({ required: true })
   content: string;
 
+  @Prop({ type: String, required: true })
+  planId: string;
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   user: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Plan', required: true })
-  planId: Types.ObjectId;
 
   @Prop({ type: [String], default: [] })
   likes?: string[];

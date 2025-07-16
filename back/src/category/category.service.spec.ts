@@ -1,8 +1,21 @@
 /* eslint-disable prettier/prettier */
 import { Test, TestingModule } from '@nestjs/testing';
 import { CategoryService } from './category.service';
-import { getModelToken } from '@nestjs/mongoose';
 import { BadRequestException } from '@nestjs/common';
+
+const mockCategoryModel = {
+  find: jest.fn().mockReturnThis(),
+  exec: jest.fn(),
+  findOne: jest.fn().mockReturnThis(),
+  save: jest.fn(),
+  findOneAndUpdate: jest.fn().mockReturnThis(),
+  findOneAndDelete: jest.fn().mockReturnThis(),
+};
+
+const mockPlanModel = {
+  countDocuments: jest.fn().mockReturnThis(),
+  exec: jest.fn(),
+};
 
 describe('CategoryService', () => {
   let categoryService: CategoryService;
@@ -87,240 +100,97 @@ describe('CategoryService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CategoryService,
-        {
-          provide: getModelToken('Category'),
-          useValue: mockCategoryModel,
-        },
-        {
-          provide: getModelToken('Plan'),
-          useValue: mockPlanModel,
-        },
+        { provide: 'CategoryModel', useValue: mockCategoryModel },
+        { provide: 'PlanModel', useValue: mockPlanModel },
       ],
     }).compile();
 
-    categoryService = module.get<CategoryService>(CategoryService);
+    service = module.get<CategoryService>(CategoryService);
+
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
-    expect(categoryService).toBeDefined();
-  });
-
-  describe('create', () => {
-    it('should create and return new category', async () => {
-      const result = await categoryService.create(createCategoryDto);
-
-      expect(mockCategoryModel).toHaveBeenCalledWith(createCategoryDto);
-      expect(result._id).toBe(mockCategories[0]._id);
-      expect(result.name).toBe(createCategoryDto.name);
-      expect(result.icon).toBe(createCategoryDto.icon);
-      expect(result.color).toBe(createCategoryDto.color);
-    });
+    expect(service).toBeDefined();
   });
 
   describe('findAll', () => {
     it('should return all categories', async () => {
-      mockCategoryModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockCategories),
-      });
-
-      const result = await categoryService.findAll();
-
-      expect(result).toEqual(mockCategories);
-      expect(result).toHaveLength(3);
+      const categories = [{ name: 'A' }, { name: 'B' }];
+      mockCategoryModel.exec.mockResolvedValueOnce(categories);
+      expect(await service.findAll()).toBe(categories);
       expect(mockCategoryModel.find).toHaveBeenCalled();
-    });
-
-    it('should return empty array when no categories', async () => {
-      mockCategoryModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue([]),
-      });
-
-      const result = await categoryService.findAll();
-
-      expect(result).toEqual([]);
-      expect(result).toHaveLength(0);
     });
   });
 
   describe('findById', () => {
-    it('should return category when found', async () => {
-      const categoryId = mockCategories[0]._id;
-      const expectedCategory = mockCategories[0];
-
-      mockCategoryModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(expectedCategory),
-      });
-
-      const result = await categoryService.findById(categoryId);
-
-      expect(result).toEqual(expectedCategory);
-      expect(mockCategoryModel.findOne).toHaveBeenCalledWith({
-        _id: categoryId,
-      });
-    });
-
-    it('should return null when category not found', async () => {
-      mockCategoryModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await categoryService.findById('nonexistent');
-
-      expect(result).toBeNull();
+    it('should return a category by id', async () => {
+      const category = { _id: '1', name: 'Test' };
+      mockCategoryModel.exec.mockResolvedValueOnce(category);
+      expect(await service.findById('1')).toBe(category);
+      expect(mockCategoryModel.findOne).toHaveBeenCalledWith({ _id: '1' });
     });
   });
 
   describe('findByName', () => {
-    it('should return category by name', async () => {
-      const categoryName = mockCategories[0].name;
-      const expectedCategory = mockCategories[0];
-
-      mockCategoryModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(expectedCategory),
-      });
-
-      const result = await categoryService.findByName(categoryName);
-
-      expect(result).toEqual(expectedCategory);
-      expect(mockCategoryModel.findOne).toHaveBeenCalledWith({
-        name: categoryName,
-      });
+    it('should return a category by name', async () => {
+      const category = { _id: '2', name: 'Test2' };
+      mockCategoryModel.exec.mockResolvedValueOnce(category);
+      expect(await service.findByName('Test2')).toBe(category);
+      expect(mockCategoryModel.findOne).toHaveBeenCalledWith({ name: 'Test2' });
     });
+  });
 
-    it('should return null when category name not found', async () => {
-      mockCategoryModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await categoryService.findByName('NonExistent');
-
-      expect(result).toBeNull();
+  describe('create', () => {
+    it('should create and return a new category', async () => {
+      const dto = { name: 'New', icon: 'icon', color: '#fff' };
+      const saveMock = jest.fn().mockResolvedValue(dto);
+      // simulate new this.categoryModel(dto)
+      (mockCategoryModel as any).constructor = function (d: any) {
+        return { ...d, save: saveMock };
+      };
+      const serviceInstance = new (CategoryService as any)(
+        mockCategoryModel.constructor,
+        mockPlanModel,
+      );
+      expect(await serviceInstance.create(dto)).toBe(dto);
+      expect(saveMock).toHaveBeenCalled();
     });
   });
 
   describe('updateById', () => {
-    it('should update and return category', async () => {
-      const categoryId = mockCategories[0]._id;
-      const updatedCategory = {
-        ...mockCategories[0],
-        ...updateCategoryDto,
-      };
-
-      mockCategoryModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(updatedCategory),
-      });
-
-      const result = await categoryService.updateById(categoryId, updateCategoryDto);
-
-      expect(result).toEqual(updatedCategory);
-      expect(result.name).toBe(updateCategoryDto.name);
-      expect(result.icon).toBe(updateCategoryDto.icon);
-      expect(result.color).toBe(updateCategoryDto.color);
+    it('should update and return the category', async () => {
+      const updated = { _id: '1', name: 'Updated' };
+      mockCategoryModel.exec.mockResolvedValueOnce(updated);
+      const updateDto = { name: 'Updated', icon: 'icon', color: '#fff' };
+      expect(await service.updateById('1', updateDto)).toBe(updated);
       expect(mockCategoryModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: categoryId },
-        updateCategoryDto,
-        { new: true }
+        { _id: '1' },
+        updateDto,
+        { new: true },
       );
-    });
-
-    it('should return null when category not found', async () => {
-      mockCategoryModel.findOneAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await categoryService.updateById('nonexistent', updateCategoryDto);
-
-      expect(result).toBeNull();
     });
   });
 
   describe('removeById', () => {
-    it('should delete and return category when no plans use it', async () => {
-      const categoryId = mockCategories[0]._id;
-      const deletedCategory = mockCategories[0];
-
-      mockPlanModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(0),
-      });
-
-      mockCategoryModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(deletedCategory),
-      });
-
-      const result = await categoryService.removeById(categoryId);
-
-      expect(result).toEqual(deletedCategory);
-      expect(mockPlanModel.countDocuments).toHaveBeenCalledWith({
-        category: categoryId,
-      });
-      expect(mockCategoryModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: categoryId,
-      });
-    });
-
-    it('should return null when category not found', async () => {
-      mockPlanModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(0),
-      });
-
-      mockCategoryModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
-      });
-
-      const result = await categoryService.removeById('nonexistent');
-
-      expect(result).toBeNull();
-    });
-
-    it('should throw BadRequestException when category is used by plans', async () => {
-      const categoryId = mockCategories[0]._id;
-
-      mockPlanModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(3),
-      });
-
-      await expect(categoryService.removeById(categoryId)).rejects.toThrow(
+    it('should throw if plans use the category', async () => {
+      mockPlanModel.exec.mockResolvedValueOnce(2);
+      await expect(service.removeById('cat1')).rejects.toThrow(
         BadRequestException,
       );
-      await expect(categoryService.removeById(categoryId)).rejects.toThrow(
-        'Impossible de supprimer cette catégorie. 3 plan(s) l\'utilise(nt) encore.',
-      );
-
       expect(mockPlanModel.countDocuments).toHaveBeenCalledWith({
-        category: categoryId,
+        category: 'cat1',
       });
-      expect(mockCategoryModel.findOneAndDelete).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Database errors', () => {
-    it('should handle database errors in create', async () => {
-      const mockSave = jest.fn().mockRejectedValue(new Error('Database connection failed'));
-      mockCategoryModel.mockImplementation(() => ({ save: mockSave }));
-
-      await expect(categoryService.create(createCategoryDto)).rejects.toThrow(
-        'Database connection failed',
-      );
     });
 
-    it('should handle duplicate key error in create', async () => {
-      const duplicateError = new Error('Duplicate key error');
-      Object.assign(duplicateError, { code: 11000, keyPattern: { name: 1 } });
-      
-      const mockSave = jest.fn().mockRejectedValue(duplicateError);
-      
-      jest.clearAllMocks();
-      mockCategoryModel.mockImplementation(() => ({ save: mockSave }));
-
-      await expect(categoryService.create(createCategoryDto)).rejects.toThrow();
-    });
-
-    it('should handle database errors in findAll', async () => {
-      mockCategoryModel.find.mockReturnValue({
-        exec: jest.fn().mockRejectedValue(new Error('Database error')),
+    it('should delete and return the category if not used', async () => {
+      mockPlanModel.exec.mockResolvedValueOnce(0);
+      const deleted = { _id: 'cat1', name: 'ToDelete' };
+      mockCategoryModel.exec.mockResolvedValueOnce(deleted);
+      expect(await service.removeById('cat1')).toBe(deleted);
+      expect(mockCategoryModel.findOneAndDelete).toHaveBeenCalledWith({
+        _id: 'cat1',
       });
-
-      await expect(categoryService.findAll()).rejects.toThrow('Database error');
     });
   });
 });

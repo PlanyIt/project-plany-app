@@ -66,6 +66,7 @@ List<SingleChildWidget> get providers {
     Provider(
       create: (context) => UserRepositoryRemote(
         apiClient: context.read(),
+        imgurService: context.read(),
       ) as UserRepository,
     ),
     ChangeNotifierProvider(

@@ -13,7 +13,7 @@ class NavigationService {
       required double longitude,
       String? title}) async {
     try {
-      final hasPermission = await _handleLocationPermission(context);
+      final hasPermission = await handleLocationPermission(context);
       if (!hasPermission) return;
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -64,7 +64,7 @@ class NavigationService {
     );
   }
 
-  static Future<bool> _handleLocationPermission(BuildContext context) async {
+  static Future<bool> handleLocationPermission(BuildContext context) async {
     LocationPermission permission;
 
     permission = await Geolocator.checkPermission();

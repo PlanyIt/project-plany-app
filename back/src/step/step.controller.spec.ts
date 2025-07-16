@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StepController } from './step.controller';
 import { StepService } from './step.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { StepDto } from './dto/step.dto';
-import { NotFoundException, UnauthorizedException } from '@nestjs/common';
+
+const mockStepService = {};
 
 describe('StepController', () => {
   let stepController: StepController;
@@ -104,16 +103,8 @@ describe('StepController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StepController],
-      providers: [
-        {
-          provide: StepService,
-          useValue: mockStepService,
-        },
-      ],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue(mockJwtAuthGuard)
-      .compile();
+      providers: [{ provide: StepService, useValue: mockStepService }],
+    }).compile();
 
     stepController = module.get<StepController>(StepController);
     stepService = module.get<StepService>(StepService);

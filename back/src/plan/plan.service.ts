@@ -59,14 +59,23 @@ export class PlanService {
    * ```
    */
   async createPlan(createPlanDto: PlanDto): Promise<PlanDocument> {
-    const stepIds = createPlanDto.steps.map((stepId) => stepId.toString());
+    // Conversion explicite des champs en ObjectId
+    const stepIds = createPlanDto.steps.map(
+      (stepId) => new Types.ObjectId(stepId),
+    );
+    const categoryId = new Types.ObjectId(createPlanDto.category);
 
-    const totalCost = await this.stepService.calculateTotalCost(stepIds);
-    const totalDuration =
-      await this.stepService.calculateTotalDuration(stepIds);
+    const totalCost = await this.stepService.calculateTotalCost(
+      stepIds.map((id) => id.toString()),
+    );
+    const totalDuration = await this.stepService.calculateTotalDuration(
+      stepIds.map((id) => id.toString()),
+    );
 
     const createdPlan = new this.planModel({
       ...createPlanDto,
+      steps: stepIds,
+      category: categoryId,
       totalCost,
       totalDuration,
     });

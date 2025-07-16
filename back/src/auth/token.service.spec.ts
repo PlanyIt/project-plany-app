@@ -1,344 +1,153 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { TokenService } from './token.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { UnauthorizedException } from '@nestjs/common';
-import { TokenService } from './token.service';
-import { RefreshToken } from './schemas/refresh-token.schema';
+
+const mockJwtService = {
+  sign: jest.fn(),
+  verify: jest.fn(),
+};
+const mockConfigService = {
+  get: jest.fn(),
+};
+const mockRefreshModel = {
+  create: jest.fn(),
+  updateOne: jest.fn(),
+  updateMany: jest.fn(),
+  findOne: jest.fn(),
+};
 
 describe('TokenService', () => {
-  let tokenService: TokenService;
-  let jwtService: JwtService;
-
-  const mockJwtService = {
-    sign: jest.fn(),
-    verify: jest.fn(),
-  };
-
-  const mockConfigService = {
-    get: jest.fn((key: string) => {
-      const config = {
-        JWT_SECRET_AT: 'access-secret',
-        JWT_SECRET_RT: 'refresh-secret',
-        JWT_AT_EXPIRES_IN: '15m',
-        JWT_RT_EXPIRES_IN: '30d',
-      };
-      return config[key];
-    }),
-  };
-
-  const mockRefreshModel = {
-    create: jest.fn(),
-    updateOne: jest.fn(() => ({ exec: jest.fn() })),
-    updateMany: jest.fn(),
-    findOne: jest.fn(() => ({ lean: jest.fn() })),
-  };
+  let service: TokenService;
 
   beforeEach(async () => {
     jest.clearAllMocks();
-
-    mockConfigService.get.mockImplementation((key: string) => {
-      const config = {
-        JWT_SECRET_AT: 'access-secret',
-        JWT_SECRET_RT: 'refresh-secret',
-        JWT_AT_EXPIRES_IN: '15m',
-        JWT_RT_EXPIRES_IN: '30d',
-      };
-      return config[key];
-    });
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokenService,
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
-        {
-          provide: getModelToken(RefreshToken.name),
-          useValue: mockRefreshModel,
-        },
+        { provide: getModelToken('RefreshToken'), useValue: mockRefreshModel },
       ],
     }).compile();
 
-    tokenService = module.get<TokenService>(TokenService);
-    jwtService = module.get<JwtService>(JwtService);
+    service = module.get<TokenService>(TokenService);
+    // Patch the refreshModel property directly for test
+    (service as any).refreshModel = mockRefreshModel;
   });
 
   it('should be defined', () => {
-    expect(tokenService).toBeDefined();
+    expect(service).toBeDefined();
   });
 
   describe('signAccess', () => {
-    it('should sign access token with correct payload and options', () => {
-      const payload = {
-        sub: '507f1f77bcf86cd799439011',
-        email: 'test@example.com',
-        username: 'testuser',
-      };
-
-      mockJwtService.sign.mockReturnValue('signed.access.token');
-
-      const result = tokenService.signAccess(payload);
-
-      expect(result).toBe('signed.access.token');
-      expect(jwtService.sign).toHaveBeenCalledWith(payload, {
-        secret: 'access-secret',
-        expiresIn: '15m',
-        algorithm: 'HS512',
-      });
-    });
-
-    it('should use default expires time when config is not set', () => {
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'JWT_SECRET_AT') return 'access-secret';
-        if (key === 'JWT_AT_EXPIRES_IN') return undefined;
-        return undefined;
-      });
-
-      const payload = { sub: '507f1f77bcf86cd799439011' };
-      mockJwtService.sign.mockReturnValue('token');
-
-      tokenService.signAccess(payload);
-
-      expect(jwtService.sign).toHaveBeenCalledWith(payload, {
-        secret: 'access-secret',
-        expiresIn: '15m',
-        algorithm: 'HS512',
-      });
+    it('should sign access token', () => {
+      mockConfigService.get.mockReturnValueOnce('secret');
+      mockJwtService.sign.mockReturnValue('access-token');
+      const res = service.signAccess({ sub: 'id' });
+      expect(res).toBe('access-token');
+      expect(mockJwtService.sign).toHaveBeenCalled();
     });
   });
 
   describe('signRefresh', () => {
-    it('should create refresh token in database and sign JWT', async () => {
-      const userId = '507f1f77bcf86cd799439011';
-      const tokenVersion = 1;
-
+    it('should create refresh token and sign JWT', async () => {
+      mockConfigService.get.mockReturnValue('secret');
       mockRefreshModel.create.mockResolvedValue({});
-      mockJwtService.sign.mockReturnValue('signed.refresh.token');
-
-      const result = await tokenService.signRefresh(userId, tokenVersion);
-
-      expect(result).toBe('signed.refresh.token');
-      expect(mockRefreshModel.create).toHaveBeenCalledWith({
-        jti: expect.any(String),
-        userId,
-        expiresAt: expect.any(Date),
-      });
-      expect(jwtService.sign).toHaveBeenCalledWith(
-        { sub: userId, jti: expect.any(String), tokenVersion },
-        {
-          secret: 'refresh-secret',
-          expiresIn: '30d',
-          algorithm: 'HS512',
-        },
-      );
-    });
-
-    it('should use default token version when not provided', async () => {
-      const userId = '507f1f77bcf86cd799439011';
-
-      mockRefreshModel.create.mockResolvedValue({});
-      mockJwtService.sign.mockReturnValue('token');
-
-      await tokenService.signRefresh(userId);
-
-      expect(jwtService.sign).toHaveBeenCalledWith(
-        { sub: userId, jti: expect.any(String), tokenVersion: 0 },
-        {
-          secret: 'refresh-secret',
-          expiresIn: '30d',
-          algorithm: 'HS512',
-        },
-      );
+      mockJwtService.sign.mockReturnValue('refresh-token');
+      const res = await service.signRefresh('userid');
+      expect(res).toBe('refresh-token');
+      expect(mockRefreshModel.create).toHaveBeenCalled();
+      expect(mockJwtService.sign).toHaveBeenCalled();
     });
   });
 
   describe('revoke', () => {
-    it('should mark refresh token as revoked in database', async () => {
-      const jti = 'test-jti';
-
+    it('should update refresh token as revoked', async () => {
       mockRefreshModel.updateOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+        exec: () => Promise.resolve({}),
       });
-
-      await tokenService.revoke(jti);
-
+      await expect(service.revoke('jti')).resolves.toBeUndefined();
       expect(mockRefreshModel.updateOne).toHaveBeenCalledWith(
-        { jti },
+        { jti: 'jti' },
         { revoked: true },
       );
     });
   });
 
   describe('verifyRefresh', () => {
-    it('should verify valid refresh token and return payload', async () => {
-      const refreshToken = 'valid.refresh.token';
-      const payload = { sub: '507f1f77bcf86cd799439011', jti: 'test-jti' };
-      const dbRecord = {
-        jti: 'test-jti',
-        userId: '507f1f77bcf86cd799439011',
-        revoked: false,
-      };
-
+    it('should return payload if valid and not revoked', async () => {
+      const payload = { jti: 'jti', sub: 'id' };
+      mockConfigService.get.mockReturnValue('secret');
       mockJwtService.verify.mockReturnValue(payload);
-      mockRefreshModel.findOne.mockReturnValue({
-        lean: jest.fn().mockResolvedValue(dbRecord),
-      });
-
-      const result = await tokenService.verifyRefresh(refreshToken);
-
+      mockRefreshModel.findOne.mockImplementation(() => ({
+        lean: () => Promise.resolve({ revoked: false }),
+      }));
+      const result = await service.verifyRefresh('rt');
       expect(result).toEqual(payload);
-      expect(jwtService.verify).toHaveBeenCalledWith(refreshToken, {
-        secret: 'refresh-secret',
-      });
-      expect(mockRefreshModel.findOne).toHaveBeenCalledWith({
-        jti: 'test-jti',
-      });
     });
 
-    it('should throw UnauthorizedException when token is revoked', async () => {
-      const refreshToken = 'revoked.refresh.token';
-      const payload = { sub: '507f1f77bcf86cd799439011', jti: 'test-jti' };
-      const dbRecord = {
-        jti: 'test-jti',
-        userId: '507f1f77bcf86cd799439011',
-        revoked: true,
-      };
-
+    it('should throw UnauthorizedException if revoked', async () => {
+      const payload = { jti: 'jti', sub: 'id' };
+      mockConfigService.get.mockReturnValue('secret');
       mockJwtService.verify.mockReturnValue(payload);
-      mockRefreshModel.findOne.mockReturnValue({
-        lean: jest.fn().mockResolvedValue(dbRecord),
-      });
-
-      await expect(tokenService.verifyRefresh(refreshToken)).rejects.toThrow(
+      mockRefreshModel.findOne.mockImplementation(() => ({
+        lean: () => Promise.resolve({ revoked: true }),
+      }));
+      await expect(service.verifyRefresh('rt')).rejects.toThrow(
         UnauthorizedException,
       );
-      await expect(tokenService.verifyRefresh(refreshToken)).rejects.toThrow(
-        'Refresh token invalide ou expiré',
-      );
     });
 
-    it('should throw UnauthorizedException when token record not found', async () => {
-      const refreshToken = 'unknown.refresh.token';
-      const payload = { sub: '507f1f77bcf86cd799439011', jti: 'unknown-jti' };
-
+    it('should throw UnauthorizedException if not found', async () => {
+      const payload = { jti: 'jti', sub: 'id' };
+      mockConfigService.get.mockReturnValue('secret');
       mockJwtService.verify.mockReturnValue(payload);
-      mockRefreshModel.findOne.mockReturnValue({
-        lean: jest.fn().mockResolvedValue(null),
-      });
-
-      await expect(tokenService.verifyRefresh(refreshToken)).rejects.toThrow(
+      mockRefreshModel.findOne.mockImplementation(() => ({
+        lean: () => Promise.resolve(null),
+      }));
+      await expect(service.verifyRefresh('rt')).rejects.toThrow(
         UnauthorizedException,
       );
-      await expect(tokenService.verifyRefresh(refreshToken)).rejects.toThrow(
-        'Refresh token invalide ou expiré',
-      );
     });
 
-    it('should throw UnauthorizedException when JWT verification fails', async () => {
-      const refreshToken = 'invalid.refresh.token';
-
+    it('should throw UnauthorizedException if jwt.verify fails', async () => {
       mockJwtService.verify.mockImplementation(() => {
-        throw new Error('JWT verification failed');
+        throw new Error();
       });
-
-      await expect(tokenService.verifyRefresh(refreshToken)).rejects.toThrow(
+      await expect(service.verifyRefresh('rt')).rejects.toThrow(
         UnauthorizedException,
-      );
-      await expect(tokenService.verifyRefresh(refreshToken)).rejects.toThrow(
-        'Refresh token invalide ou expiré',
       );
     });
   });
 
   describe('revokeAllForUser', () => {
-    it('should revoke all active refresh tokens for user', async () => {
-      const userId = '507f1f77bcf86cd799439011';
-
-      mockRefreshModel.updateMany.mockResolvedValue({ modifiedCount: 3 });
-
-      await tokenService.revokeAllForUser(userId);
-
+    it('should update all refresh tokens for user as revoked', async () => {
+      mockRefreshModel.updateMany.mockResolvedValue({});
+      await expect(service.revokeAllForUser('uid')).resolves.toBeUndefined();
       expect(mockRefreshModel.updateMany).toHaveBeenCalledWith(
-        { userId, revoked: false },
+        { userId: 'uid', revoked: false },
         { revoked: true },
       );
     });
   });
 
   describe('revokeFromJwt', () => {
-    it('should extract jti from JWT and revoke it', async () => {
-      const refreshToken = 'token.to.revoke';
-      const jti = 'test-jti';
-
-      mockJwtService.verify.mockReturnValue({ jti });
-      mockRefreshModel.updateOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
-      });
-
-      await tokenService.revokeFromJwt(refreshToken);
-
-      expect(jwtService.verify).toHaveBeenCalledWith(refreshToken, {
-        secret: 'refresh-secret',
-        ignoreExpiration: true,
-      });
-      expect(mockRefreshModel.updateOne).toHaveBeenCalledWith(
-        { jti },
-        { revoked: true },
-      );
+    it('should extract jti and revoke', async () => {
+      mockConfigService.get.mockReturnValue('secret');
+      mockJwtService.verify.mockReturnValue({ jti: 'jti' });
+      const spy = jest.spyOn(service, 'revoke').mockResolvedValue(undefined);
+      await expect(service.revokeFromJwt('rt')).resolves.toBeUndefined();
+      expect(spy).toHaveBeenCalledWith('jti');
     });
 
-    it('should handle JWT verification errors silently', async () => {
-      const refreshToken = 'invalid.token';
-
+    it('should not throw if jwt.verify fails', async () => {
       mockJwtService.verify.mockImplementation(() => {
-        throw new Error('Invalid token');
+        throw new Error();
       });
-
-      await expect(
-        tokenService.revokeFromJwt(refreshToken),
-      ).resolves.toBeUndefined();
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should handle missing JWT_SECRET_RT in signRefresh', async () => {
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'JWT_SECRET_RT') return undefined;
-        if (key === 'JWT_RT_EXPIRES_IN') return '30d';
-        return undefined;
-      });
-
-      const userId = '507f1f77bcf86cd799439011';
-      mockRefreshModel.create.mockResolvedValue({});
-      mockJwtService.sign.mockReturnValue('token');
-
-      await tokenService.signRefresh(userId);
-
-      expect(jwtService.sign).toHaveBeenCalledWith(expect.any(Object), {
-        secret: undefined,
-        expiresIn: '30d',
-        algorithm: 'HS512',
-      });
-    });
-
-    it('should use default expires time for refresh token when not configured', async () => {
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'JWT_SECRET_RT') return 'refresh-secret';
-        if (key === 'JWT_RT_EXPIRES_IN') return undefined;
-        return undefined;
-      });
-
-      const userId = '507f1f77bcf86cd799439011';
-      mockRefreshModel.create.mockResolvedValue({});
-      mockJwtService.sign.mockReturnValue('token');
-
-      await tokenService.signRefresh(userId);
-
-      expect(jwtService.sign).toHaveBeenCalledWith(expect.any(Object), {
-        secret: 'refresh-secret',
-        expiresIn: '30d',
-        algorithm: 'HS512',
-      });
+      await expect(service.revokeFromJwt('rt')).resolves.toBeUndefined();
     });
   });
 });

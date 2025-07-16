@@ -118,6 +118,7 @@ async function main() {
       favorites: [users[1]._id.toString()],
       totalCost: 80,
       totalDuration: 16,
+      createdAt: new Date(),
     },
     {
       _id: new ObjectId(),
@@ -134,6 +135,7 @@ async function main() {
       favorites: [users[0]._id.toString(), users[2]._id.toString()],
       totalCost: 200,
       totalDuration: 24,
+      createdAt: new Date(),
     },
     {
       _id: new ObjectId(),
@@ -150,6 +152,7 @@ async function main() {
       favorites: [],
       totalCost: 120,
       totalDuration: 8,
+      createdAt: new Date(),
     },
   ];
 
@@ -373,6 +376,7 @@ async function main() {
       favorites: [users[1]._id.toString()],
       totalCost: 20,
       totalDuration: 5,
+      createdAt: new Date(),
     },
     {
       _id: new ObjectId(),
@@ -389,6 +393,7 @@ async function main() {
       favorites: [users[2]._id.toString()],
       totalCost: 15,
       totalDuration: 4,
+      createdAt: new Date(),
     },
     {
       _id: new ObjectId(),
@@ -405,6 +410,7 @@ async function main() {
       favorites: [users[0]._id.toString()],
       totalCost: 10,
       totalDuration: 2,
+      createdAt: new Date(),
     },
   ];
 
@@ -444,7 +450,7 @@ async function main() {
       _id: new ObjectId(),
       content: 'Super plan, merci !',
       user: users[1]._id,
-      planId: plans[0]._id,
+      planId: plans[0]._id.toString(),
       likes: [users[2]._id.toString()],
       responses: [],
       createdAt: new Date(),
@@ -454,7 +460,7 @@ async function main() {
       _id: new ObjectId(),
       content: 'J’ai adoré la balade à Montmartre.',
       user: users[2]._id,
-      planId: plans[0]._id,
+      planId: plans[0]._id.toString(),
       likes: [],
       responses: [],
       createdAt: new Date(),
@@ -464,7 +470,7 @@ async function main() {
       _id: new ObjectId(),
       content: 'La Croisette, un incontournable !',
       user: users[0]._id,
-      planId: plans[1]._id,
+      planId: plans[1]._id.toString(),
       likes: [users[2]._id.toString()],
       responses: [],
       createdAt: new Date(),
@@ -474,7 +480,7 @@ async function main() {
       _id: new ObjectId(),
       content: 'Les Halles de Lyon, un régal.',
       user: users[1]._id,
-      planId: plans[2]._id,
+      planId: plans[2]._id.toString(),
       likes: [users[0]._id.toString()],
       responses: [],
       createdAt: new Date(),
