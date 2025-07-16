@@ -1,10 +1,11 @@
 workflows:
-  build-app:
-    name: Build Android
+  plany-app:
+    name: Build Plany Android
+    max_build_duration: 60
     environment:
       flutter: stable
     scripts:
-      - cd front
+      - cd front  # Accès au sous-dossier front
       - flutter pub get
       - flutter build apk
     artifacts:
