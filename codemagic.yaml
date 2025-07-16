@@ -9,6 +9,15 @@ workflows:
         script: flutter clean
         working_directory: front
 
+      - name: Generate .env file from Codemagic environment variables
+        script: |
+          echo "API_PORT=$API_PORT" > front/.env
+          echo "API_HOST=$API_HOST" >> front/.env
+          echo "IMGUR_REFRESH_TOKEN=$IMGUR_REFRESH_TOKEN" >> front/.env
+          echo "IMGUR_CALLBACK_URL=$IMGUR_CALLBACK_URL" >> front/.env
+          echo "IMGUR_CLIENT_SECRET=$IMGUR_CLIENT_SECRET" >> front/.env
+          echo "IMGUR_CLIENT_ID=$IMGUR_CLIENT_ID" >> front/.env
+
       - name: Get Flutter dependencies
         script: flutter pub get
         working_directory: front
