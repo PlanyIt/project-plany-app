@@ -8,6 +8,12 @@ class FakeStepRepository extends StepRepository {
   final List<Step> _steps = [];
   int _idCounter = 0;
 
+  /// Permet de forcer le résultat de uploadImage dans les tests.
+  Result<String>? uploadImageResult;
+
+  /// Permet de forcer le résultat de createStep dans les tests.
+  Result<Step>? createStepResult;
+
   @override
   Future<Result<List<Step>>> getStepsList(String planId) async {
     return Result.ok(List<Step>.from(_steps));
@@ -15,6 +21,9 @@ class FakeStepRepository extends StepRepository {
 
   @override
   Future<Result<Step>> createStep(Step step) async {
+    if (createStepResult != null) {
+      return createStepResult!;
+    }
     final newStep = step.copyWith(
       id: 'step_${_idCounter++}',
     );
@@ -24,6 +33,9 @@ class FakeStepRepository extends StepRepository {
 
   @override
   Future<Result<String>> uploadImage(File imageFile) async {
+    if (uploadImageResult != null) {
+      return uploadImageResult!;
+    }
     return Result.ok(
         'https://fake-storage.com/steps/${imageFile.path.split('/').last}');
   }

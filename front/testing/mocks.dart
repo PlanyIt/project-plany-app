@@ -41,11 +41,11 @@ extension HttpMethodMocks on MockHttpClient {
   void mockPut(String path, Object object, [int statusCode = 200]) =>
       _mockRequest(HttpMethod.put, path, object, statusCode);
 
-  void mockPatch(String path, [int statusCode = 204]) =>
-      _mockRequest(HttpMethod.patch, path, {}, statusCode);
+  void mockPatch(String path, Object object, [int statusCode = 204]) =>
+      _mockRequest(HttpMethod.patch, path, object, statusCode);
 
-  void mockDelete(String path, [int statusCode = 204]) =>
-      _mockRequest(HttpMethod.delete, path, {}, statusCode);
+  void mockDelete(String path, Object object, [int statusCode = 204]) =>
+      _mockRequest(HttpMethod.delete, path, object, statusCode);
 
   void mockGetThrows(String path, Exception exception) =>
       _mockRequestThrows(HttpMethod.get, path, exception);

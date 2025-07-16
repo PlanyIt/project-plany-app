@@ -62,13 +62,13 @@ void main() {
     });
 
     test('should fail if deletePlan returns error', () async {
-      mockHttpClient.mockDelete('/api/plans/plan1', 500);
+      mockHttpClient.mockDelete('/api/plans/plan1', {}, 500);
       final result = await apiClient.deletePlan('plan1');
       expect(result, isA<Error>());
     });
 
     test('should fail if updateEmail returns error', () async {
-      mockHttpClient.mockPatch('/api/users/user1/email', 500);
+      mockHttpClient.mockPatch('/api/users/user1/email', {}, 500);
       final result = await apiClient.updateEmail('email', 'pass', 'user1');
       expect(result, isA<Error>());
     });
@@ -162,7 +162,7 @@ void main() {
     });
 
     test('should unfollow user', () async {
-      mockHttpClient.mockDelete('/api/users/user1/follow', 200);
+      mockHttpClient.mockDelete('/api/users/user1/follow', {}, 200);
       final result = await apiClient.unfollowUser('user1');
       expect(result, isA<Ok>());
     });
@@ -284,6 +284,152 @@ void main() {
     test('should handle errors on getPlans', () async {
       mockHttpClient.mockGetThrows('/api/plans', Exception('fail'));
       final result = await apiClient.getPlans();
+      expect(result, isA<Error>());
+    });
+
+    test('should update user profile', () async {
+      mockHttpClient.mockPatch(
+          '/api/users/user1/profile',
+          {
+            '_id': 'user1',
+            'username': 'John',
+            'email': 'john@example.com',
+            'description': '',
+            'isPremium': false,
+            'photoUrl': null,
+            'birthDate': null,
+            'gender': null,
+            'followers': [],
+            'following': [],
+            'followersCount': 0,
+            'followingCount': 0,
+            'plansCount': 0,
+            'favoritesCount': 0,
+          },
+          200);
+
+      final user = kUser.copyWith(id: 'user1');
+      final result = await apiClient.updateUserProfile(user);
+      expect(result, isA<Ok>());
+    });
+
+    test('should return false on isFollowing if response is invalid', () async {
+      mockHttpClient.mockGet('/api/users/me/following/user1', {});
+      final result = await apiClient.isFollowing('user1');
+      expect(result.asOk.value, isFalse);
+    });
+
+    test('should fail to follow user on exception', () async {
+      mockHttpClient.mockPostThrows(
+          '/api/users/user1/follow', Exception('fail'));
+      final result = await apiClient.followUser('user1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to unfollow user on exception', () async {
+      mockHttpClient.mockDeleteThrows(
+          '/api/users/user1/follow', Exception('fail'));
+      final result = await apiClient.unfollowUser('user1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to like comment on error', () async {
+      mockHttpClient.mockPut('/api/comments/comment1/like', {}, 500);
+      final result = await apiClient.likeComment('comment1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to unlike comment on error', () async {
+      mockHttpClient.mockPut('/api/comments/comment1/unlike', {}, 500);
+      final result = await apiClient.unlikeComment('comment1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to edit comment on error', () async {
+      mockHttpClient.mockPut('/api/comments/comment1', {}, 500);
+      final result = await apiClient.editComment('comment1', kComment);
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to add response to comment on error', () async {
+      mockHttpClient.mockPut('/api/comments/comment1/responses', {}, 500);
+      final result =
+          await apiClient.addResponseToComment('comment1', 'response1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to delete response on error', () async {
+      mockHttpClient.mockDelete(
+          '/api/comments/comment1/response/response1', {}, 500);
+      final result = await apiClient.deleteResponse('comment1', 'response1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to get followers on exception', () async {
+      mockHttpClient.mockGetThrows(
+          '/api/users/user1/followers', Exception('fail'));
+      final result = await apiClient.getFollowers('user1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to get following on exception', () async {
+      mockHttpClient.mockGetThrows(
+          '/api/users/user1/following', Exception('fail'));
+      final result = await apiClient.getFollowing('user1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to get favorites by user on exception', () async {
+      mockHttpClient.mockGetThrows(
+          '/api/users/user1/favorites', Exception('fail'));
+      final result = await apiClient.getFavoritesByUser('user1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to get plans by user on exception', () async {
+      mockHttpClient.mockGetThrows('/api/plans/user/user1', Exception('fail'));
+      final result = await apiClient.getPlansByUser('user1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to respond to comment if response missing _id', () async {
+      mockHttpClient.mockPost('/api/comments/comment1/response', {});
+      final result = await apiClient.respondToComment('comment1', kComment);
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to create comment if response missing _id', () async {
+      mockHttpClient.mockPost('/api/comments', {});
+      final result = await apiClient.createComment('plan1', kComment);
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to add plan to favorites on error', () async {
+      mockHttpClient.mockPut('/api/plans/plan1/favorite', {}, 500);
+      final result = await apiClient.addPlanToFavorites('plan1');
+      expect(result, isA<Error>());
+    });
+
+    test('should fail to remove plan from favorites on error', () async {
+      mockHttpClient.mockPut('/api/plans/plan1/unfavorite', {}, 500);
+      final result = await apiClient.removePlanFromFavorites('plan1');
+      expect(result, isA<Error>());
+    });
+
+    test('should get user stats', () async {
+      mockHttpClient.mockGet('/api/users/user1/stats', {
+        'plansCount': 3,
+        'favoritesCount': 5,
+        'followersCount': 10,
+        'followingCount': 5,
+      });
+      final result = await apiClient.getUserStats('user1');
+      expect(result, isA<Ok>());
+    });
+
+    test('should fail to get user stats on exception', () async {
+      mockHttpClient.mockGetThrows('/api/users/user1/stats', Exception('fail'));
+      final result = await apiClient.getUserStats('user1');
       expect(result, isA<Error>());
     });
   });

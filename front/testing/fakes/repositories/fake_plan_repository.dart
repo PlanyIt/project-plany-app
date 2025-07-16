@@ -28,6 +28,9 @@ class FakePlanRepository extends PlanRepository {
 
   List<Plan> get plans => _plans;
 
+  /// Permet de forcer le résultat de createPlan dans les tests.
+  Result<Plan>? createPlanResult;
+
   @override
   Future<Result<List<Plan>>> getPlanList() async {
     return Result.ok(List<Plan>.from(_plans));
@@ -51,6 +54,9 @@ class FakePlanRepository extends PlanRepository {
 
   @override
   Future<Result<Plan>> createPlan(Plan plan) async {
+    if (createPlanResult != null) {
+      return createPlanResult!;
+    }
     final newPlan = plan.copyWith(id: 'plan_${_idCounter++}');
     _plans.add(newPlan);
     return Result.ok(newPlan);
