@@ -41,6 +41,7 @@ class BottomBar extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.add_circle_outline),
           label: 'Créer',
+          tooltip: 'Créer',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outline),

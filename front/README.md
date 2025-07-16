@@ -42,3 +42,5 @@ BASE_URL=https://your-backend-api-url.com
 This admin panel connects to the Plany backend API to fetch and manipulate real data. Authentication is handled via Firebase tokens which are sent with each API request.
 
 flutter pub run build_runner build --delete-conflicting-outputs
+
+flutter test integration_test/app_test.dart --dart-define=IS_TEST=true

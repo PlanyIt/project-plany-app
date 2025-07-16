@@ -112,7 +112,7 @@ class GridSelectorModal<T> extends StatelessWidget {
                 childAspectRatio: childAspectRatio,
                 physics: const NeverScrollableScrollPhysics(),
                 children: items.map((item) {
-                  final bool isSelected = selectedItem == item;
+                  final isSelected = selectedItem == item;
 
                   return Material(
                     color: Colors.transparent,

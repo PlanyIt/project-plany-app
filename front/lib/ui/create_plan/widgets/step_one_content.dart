@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/models/category/category.dart';
 import '../../../utils/icon_utils.dart';
-import 'grid_selector_modal.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_plan_view_model.dart';
+import 'grid_selector_modal.dart';
 
 class StepOneContent extends StatelessWidget {
   const StepOneContent({super.key, required this.viewModel});
@@ -22,6 +22,7 @@ class StepOneContent extends StatelessWidget {
           _buildInfoCard(),
           const SizedBox(height: 24),
           _buildValueTextField(
+            key: const Key('titleField'),
             context: context,
             title: 'Titre du plan',
             hint: 'Ex: Weekend à Paris, Randonnée en montagne...',
@@ -31,6 +32,7 @@ class StepOneContent extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           _buildValueTextField(
+            key: const Key('descriptionField'),
             context: context,
             title: 'Description',
             hint: 'Décrivez votre plan en détail...',
@@ -49,6 +51,7 @@ class StepOneContent extends StatelessWidget {
   }
 
   Widget _buildValueTextField({
+    required Key key,
     required BuildContext context,
     required String title,
     required String hint,
@@ -77,6 +80,7 @@ class StepOneContent extends StatelessWidget {
                 ],
               ),
               child: TextField(
+                key: key,
                 onChanged: (text) => valueNotifier.value = text,
                 controller: TextEditingController.fromValue(
                   TextEditingValue(
@@ -231,6 +235,7 @@ class StepOneContent extends StatelessWidget {
       onItemSelected: viewModel.setCategory,
       itemBuilder: (context, cat, isSelected) {
         return Column(
+          key: Key('category_${cat.id}'),
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(

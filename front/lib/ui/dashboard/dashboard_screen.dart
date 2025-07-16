@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +31,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  final bool isInTest = bool.fromEnvironment('IS_TEST');
+
   @override
   void initState() {
     super.initState();
@@ -36,7 +40,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final locationService = context.read<LocationService>();
-      if (!locationService.hasLocation && !locationService.isLoading) {
+      if (!isInTest &&
+          !locationService.hasLocation &&
+          !locationService.isLoading) {
         locationService.getCurrentLocation();
       }
     });
@@ -87,10 +93,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: RefreshIndicator(
           color: Theme.of(context).primaryColor,
           onRefresh: () async {
-            // Rafraîchir aussi la position
-            await context
-                .read<LocationService>()
-                .getCurrentLocation(forceRefresh: true);
+            if (!isInTest) {
+              await context
+                  .read<LocationService>()
+                  .getCurrentLocation(forceRefresh: true);
+            }
             return widget.viewModel.load.execute();
           },
           child: ListenableBuilder(
@@ -286,7 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(width: 8),
                   TextButton.icon(
                     onPressed: () async {
-                      if (locationService.serviceDisabled) {
+                      if (!isInTest && locationService.serviceDisabled) {
                         await locationService.requestLocationService();
                       }
                       await locationService.getCurrentLocation(

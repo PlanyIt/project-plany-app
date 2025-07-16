@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -5,6 +7,7 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 
 import 'config/dependencies.dart';
+import 'data/services/fake_location_service.dart';
 import 'data/services/location_service.dart';
 import 'routing/router.dart';
 import 'ui/core/localization/applocalization.dart';
@@ -19,8 +22,9 @@ Future<void> main() async {
     debugPrint('${rec.level.name}: ${rec.time}: ${rec.message}');
   });
 
-  // Initialiser le service de géolocalisation
-  final locationService = LocationService();
+  const isInTest = bool.fromEnvironment('IS_TEST');
+
+  final locationService = isInTest ? FakeLocationService() : LocationService();
 
   runApp(
     MultiProvider(
@@ -32,10 +36,12 @@ Future<void> main() async {
     ),
   );
 
-  // Initialiser la géolocalisation après un court délai pour que l'app soit prête
-  Future.delayed(const Duration(milliseconds: 500), () {
-    locationService.initialize();
-  });
+  // ⚠️ Empêche d'appeler initialize en test
+  if (!isInTest) {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      locationService.initialize();
+    });
+  }
 }
 
 class MainApp extends StatelessWidget {

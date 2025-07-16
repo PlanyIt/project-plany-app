@@ -115,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildEmailField() {
     return CustomTextField(
+      key: Key('emailField'),
       controller: _email,
       labelText: 'Email',
       hintText: 'Entrez votre email',
@@ -124,6 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildPasswordField() {
     return CustomTextField(
+      key: Key('passwordField'),
       controller: _password,
       labelText: 'Mot de passe',
       hintText: 'Entrez votre mot de passe',
@@ -155,6 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
       listenable: widget.viewModel.login,
       builder: (context, _) {
         return PlanyButton(
+          key: Key('loginButtonForm'),
           text: AppLocalization.of(context).login,
           isLoading: widget.viewModel.login.running,
           onPressed: _handleLogin,

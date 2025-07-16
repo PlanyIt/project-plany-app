@@ -67,6 +67,7 @@ class HomeScreenState extends State<HomeScreen>
         left: 30,
         right: 30,
         child: PlanyButton(
+          key: const Key('loginButtonHome'),
           text: 'Se connecter',
           onPressed: () => context.push(Routes.login),
           filled: true,
