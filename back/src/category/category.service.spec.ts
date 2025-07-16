@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CategoryService } from './category.service';
 import { BadRequestException } from '@nestjs/common';
-
+ 
 const mockCategoryModel = {
   find: jest.fn().mockReturnThis(),
   exec: jest.fn(),
@@ -11,92 +11,16 @@ const mockCategoryModel = {
   findOneAndUpdate: jest.fn().mockReturnThis(),
   findOneAndDelete: jest.fn().mockReturnThis(),
 };
-
+ 
 const mockPlanModel = {
   countDocuments: jest.fn().mockReturnThis(),
   exec: jest.fn(),
 };
-
+ 
 describe('CategoryService', () => {
-  let categoryService: CategoryService;
-
-  const mockCategories = [
-    {
-      _id: '507f1f77bcf86cd799439021',
-      name: 'Fitness',
-      icon: 'dumbbell',
-      color: '#FF6B6B',
-      createdAt: new Date('2024-01-20T10:00:00.000Z'),
-      updatedAt: new Date('2024-01-20T10:00:00.000Z')
-    },
-    {
-      _id: '507f1f77bcf86cd799439022',
-      name: 'Travel',
-      icon: 'plane',
-      color: '#4ECDC4',
-      createdAt: new Date('2024-01-20T10:00:00.000Z'),
-      updatedAt: new Date('2024-01-20T10:00:00.000Z')
-    },
-    {
-      _id: '507f1f77bcf86cd799439023',
-      name: 'Food',
-      icon: 'utensils',
-      color: '#45B7D1',
-      createdAt: new Date('2024-01-20T10:00:00.000Z'),
-      updatedAt: new Date('2024-01-20T10:00:00.000Z')
-    }
-  ];
-
-  const createCategoryDto = {
-    name: 'Education',
-    icon: 'book',
-    color: '#96CEB4'
-  };
-
-  const updateCategoryDto = {
-    name: 'Updated Fitness',
-    icon: 'updated-dumbbell',
-    color: '#E74C3C'
-  };
-
-  const mockCategoryModel = jest.fn().mockImplementation((dto) => ({
-    ...dto,
-    _id: mockCategories[0]._id,
-    createdAt: mockCategories[0].createdAt,
-    updatedAt: mockCategories[0].updatedAt,
-    save: jest.fn().mockResolvedValue({
-      _id: mockCategories[0]._id,
-      ...dto,
-      createdAt: mockCategories[0].createdAt,
-      updatedAt: mockCategories[0].updatedAt,
-    }),
-  })) as any;
-
-  mockCategoryModel.find = jest.fn().mockReturnValue({
-    exec: jest.fn(),
-  });
-
-  mockCategoryModel.findOne = jest.fn().mockReturnValue({
-    exec: jest.fn(),
-  });
-
-  mockCategoryModel.findOneAndUpdate = jest.fn().mockReturnValue({
-    exec: jest.fn(),
-  });
-
-  mockCategoryModel.findOneAndDelete = jest.fn().mockReturnValue({
-    exec: jest.fn(),
-  });
-
-  const mockPlanModel = {
-    countDocuments: jest.fn().mockReturnValue({
-      exec: jest.fn(),
-    }),
-  };
-
+  let service: CategoryService;
+ 
   beforeEach(async () => {
-    jest.clearAllMocks();
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CategoryService,
@@ -104,16 +28,16 @@ describe('CategoryService', () => {
         { provide: 'PlanModel', useValue: mockPlanModel },
       ],
     }).compile();
-
+ 
     service = module.get<CategoryService>(CategoryService);
-
+ 
     jest.clearAllMocks();
   });
-
+ 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-
+ 
   describe('findAll', () => {
     it('should return all categories', async () => {
       const categories = [{ name: 'A' }, { name: 'B' }];
@@ -122,7 +46,7 @@ describe('CategoryService', () => {
       expect(mockCategoryModel.find).toHaveBeenCalled();
     });
   });
-
+ 
   describe('findById', () => {
     it('should return a category by id', async () => {
       const category = { _id: '1', name: 'Test' };
@@ -131,7 +55,7 @@ describe('CategoryService', () => {
       expect(mockCategoryModel.findOne).toHaveBeenCalledWith({ _id: '1' });
     });
   });
-
+ 
   describe('findByName', () => {
     it('should return a category by name', async () => {
       const category = { _id: '2', name: 'Test2' };
@@ -140,7 +64,7 @@ describe('CategoryService', () => {
       expect(mockCategoryModel.findOne).toHaveBeenCalledWith({ name: 'Test2' });
     });
   });
-
+ 
   describe('create', () => {
     it('should create and return a new category', async () => {
       const dto = { name: 'New', icon: 'icon', color: '#fff' };
@@ -157,7 +81,7 @@ describe('CategoryService', () => {
       expect(saveMock).toHaveBeenCalled();
     });
   });
-
+ 
   describe('updateById', () => {
     it('should update and return the category', async () => {
       const updated = { _id: '1', name: 'Updated' };
@@ -171,7 +95,7 @@ describe('CategoryService', () => {
       );
     });
   });
-
+ 
   describe('removeById', () => {
     it('should throw if plans use the category', async () => {
       mockPlanModel.exec.mockResolvedValueOnce(2);
@@ -182,7 +106,7 @@ describe('CategoryService', () => {
         category: 'cat1',
       });
     });
-
+ 
     it('should delete and return the category if not used', async () => {
       mockPlanModel.exec.mockResolvedValueOnce(0);
       const deleted = { _id: 'cat1', name: 'ToDelete' };
