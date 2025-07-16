@@ -5,6 +5,10 @@ workflows:
     environment:
       flutter: stable
     scripts:
+      - name: Clean Flutter
+        script: flutter clean
+        working_directory: front
+
       - name: Get Flutter dependencies
         script: flutter pub get
         working_directory: front
