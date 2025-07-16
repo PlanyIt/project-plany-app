@@ -8,7 +8,12 @@ import 'package:logging/logging.dart';
 class LocationService extends ChangeNotifier {
   static final LocationService _instance = LocationService._internal();
   factory LocationService() => _instance;
+
+  // Singleton interne
   LocationService._internal();
+
+  // Ce constructeur ne sert que pour les tests / fakes
+  LocationService.test();
 
   final _log = Logger('LocationService');
 

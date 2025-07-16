@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
 import '../../../domain/models/user/user.dart';
@@ -40,6 +41,11 @@ class AuthRepositoryRemote extends AuthRepository {
   User? _currentUser;
   DateTime? _tokenExpiration;
   bool _isRefreshing = false;
+
+  @visibleForTesting
+  set tokenExpiration(DateTime? value) {
+    _tokenExpiration = value;
+  }
 
   final _log = Logger('AuthRepositoryRemote');
 

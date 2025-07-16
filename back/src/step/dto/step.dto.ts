@@ -7,7 +7,6 @@ import {
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
-  MinLength,
   MaxLength,
   Min,
   Max,

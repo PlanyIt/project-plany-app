@@ -320,9 +320,8 @@ class _CreatePlanScreenState extends State<CreatePlanScreen>
                           ),
                           actions: [
                             TextButton(
-                              onPressed: () {
-                                context.go(Routes.dashboard);
-                              },
+                              onPressed: () =>
+                                  widget.viewModel.goToDashboard(context),
                               child: const Text('OK'),
                             ),
                           ],

@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../../../domain/models/category/category.dart';
 import '../../../domain/models/comment/comment.dart';
 import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart';
 import '../../../domain/models/user/user.dart';
 import '../../../domain/models/user/user_stats.dart';
 import '../../../utils/result.dart';
-import 'model/category/category_api_model.dart';
 import 'model/step/step_api_model.dart';
 import 'model/user/user_api_model.dart';
 
@@ -61,7 +61,7 @@ class ApiClient {
 
   // Category endpoints
 
-  Future<Result<List<CategoryApiModel>>> getCategories() async {
+  Future<Result<List<Category>>> getCategories() async {
     final client = _clientFactory();
     try {
       final request = await client.get(_host, _port, '/api/categories');
@@ -72,7 +72,7 @@ class ApiClient {
       return await _handleResponse(
         response,
         (json) => (json as List<dynamic>)
-            .map((category) => CategoryApiModel.fromJson(category))
+            .map((category) => Category.fromJson(category))
             .toList(),
       );
     } on Exception catch (error) {
@@ -82,7 +82,7 @@ class ApiClient {
     }
   }
 
-  Future<Result<CategoryApiModel>> getCategory(String id) async {
+  Future<Result<Category>> getCategory(String id) async {
     final client = _clientFactory();
     try {
       final request = await client.get(_host, _port, '/api/categories/$id');
@@ -90,7 +90,7 @@ class ApiClient {
       final response = await request.close();
       if (response.statusCode == 200) {
         final stringData = await response.transform(utf8.decoder).join();
-        final category = CategoryApiModel.fromJson(jsonDecode(stringData));
+        final category = Category.fromJson(jsonDecode(stringData));
         return Result.ok(category);
       } else {
         return const Result.error(HttpException("Invalid response"));
@@ -301,8 +301,9 @@ class ApiClient {
       final request = await client.get(
         _host,
         _port,
-        'api/steps/plan/$planId',
+        '/api/steps/plan/$planId',
       );
+
       await _authHeader(request.headers);
       final response = await request.close();
       if (response.statusCode == 200) {

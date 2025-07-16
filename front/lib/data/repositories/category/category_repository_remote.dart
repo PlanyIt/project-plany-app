@@ -1,7 +1,6 @@
 import '../../../domain/models/category/category.dart';
 import '../../../utils/result.dart';
 import '../../services/api/api_client.dart';
-import '../../services/api/model/category/category_api_model.dart';
 import 'category_repository.dart';
 
 /// Remote data source for [Category].
@@ -19,7 +18,7 @@ class CategoryRepositoryRemote implements CategoryRepository {
     if (_cachedCategories == null) {
       // No cached data, request categories
       final result = await _apiClient.getCategories();
-      if (result is Ok<List<CategoryApiModel>>) {
+      if (result is Ok<List<Category>>) {
         // Store value if result Ok and map to Category
         final apiModels = result.value;
         _cachedCategories = apiModels
@@ -44,9 +43,9 @@ class CategoryRepositoryRemote implements CategoryRepository {
     try {
       final resultCategory = await _apiClient.getCategory(id);
       switch (resultCategory) {
-        case Error<CategoryApiModel>():
+        case Error<Category>():
           return Result.error(resultCategory.error);
-        case Ok<CategoryApiModel>():
+        case Ok<Category>():
       }
 
       return Result.ok(

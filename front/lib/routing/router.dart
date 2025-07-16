@@ -18,7 +18,6 @@ import '../ui/detail_plan/view_models/detail/follow_user_viewmodel.dart';
 import '../ui/detail_plan/view_models/detail/plan_details_viewmodel.dart';
 import '../ui/home/home_screen.dart';
 import '../ui/profil/profile_screen.dart';
-import '../ui/profil/view_models/profile_viewmodel.dart';
 import '../ui/search_plan/search_screen.dart';
 import '../ui/search_plan/view_models/search_view_model.dart';
 import 'routes.dart';

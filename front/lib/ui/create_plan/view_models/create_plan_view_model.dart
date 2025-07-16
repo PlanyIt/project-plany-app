@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/category/category_repository.dart';
@@ -11,6 +12,7 @@ import '../../../domain/models/plan/plan.dart';
 import '../../../domain/models/step/step.dart' as step_model;
 import '../../../domain/models/user/user.dart';
 import '../../../domain/use_cases/plan/create_plan_use_case.dart';
+import '../../../routing/routes.dart';
 import '../../../utils/command.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/result.dart';
@@ -247,6 +249,10 @@ class CreatePlanViewModel extends ChangeNotifier {
       default:
         return true;
     }
+  }
+
+  void goToDashboard(BuildContext context) {
+    context.go(Routes.dashboard);
   }
 
   void initAnimationController(TickerProvider vsync) {
