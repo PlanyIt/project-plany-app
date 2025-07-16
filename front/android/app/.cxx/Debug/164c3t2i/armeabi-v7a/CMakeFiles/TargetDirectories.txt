@@ -1,0 +1,2 @@
+C:/Users/labie/PLANY/project-plany-app/front/android/app/.cxx/Debug/164c3t2i/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/labie/PLANY/project-plany-app/front/android/app/.cxx/Debug/164c3t2i/armeabi-v7a/CMakeFiles/rebuild_cache.dir
