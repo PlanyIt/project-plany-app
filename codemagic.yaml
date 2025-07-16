@@ -22,9 +22,9 @@ workflows:
         script: flutter pub get
         working_directory: front
 
-      - name: Build APK
-        script: flutter build apk --release
+      - name: Build AAB
+        script: flutter build appbundle --release
         working_directory: front
 
     artifacts:
-      - front/build/app/outputs/flutter-apk/app-release.apk
+      - front/build/app/outputs/bundle/release/app-release.aab
