@@ -4,7 +4,7 @@ import '../../utils/helpers.dart';
 
 class ShareService {
   static Future<void> sharePlan(Plan plan, int favoritesCount) async {
-    final planUrl = "https://plany.app/plans/${plan.id}";
+    final planUrl = "https://api-plany.onrender.com/api/plans/${plan.id}";
     final shareText = """
 🗺️ Découvrez ce plan "${capitalize(plan.title)}" sur Plany !
 
