@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
-
 import '../../../data/repositories/category/category_repository.dart';
 import '../../../data/repositories/plan/plan_repository.dart';
-import '../../../data/repositories/step/step_repository.dart';
+import '../../../data/services/location_service.dart';
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/plan/plan.dart';
-import '../../../domain/models/step/step.dart' as step_model;
+import '../../../domain/models/step/step.dart';
 import '../../../utils/command.dart';
 import '../../../utils/result.dart';
+import 'search_chips_view_model.dart';
+import 'search_filters_view_model.dart';
 
-/// Critères de tri disponibles
-enum SortOption { distance, cost, duration, favorites, recent }
-
-/// Association d'un Plan avec ses métriques calculées
 class PlanWithMetrics {
   final Plan plan;
   final double totalDistance;
@@ -31,210 +28,238 @@ class PlanWithMetrics {
   });
 }
 
-/// ViewModel pour la recherche de plans
 class SearchViewModel extends ChangeNotifier {
   SearchViewModel({
     required PlanRepository planRepository,
-    required StepRepository stepRepository,
     required CategoryRepository categoryRepository,
   })  : _planRepository = planRepository,
-        _stepRepository = stepRepository,
-        _categoryRepository = categoryRepository {
+        _categoryRepository = categoryRepository,
+        _locationService = LocationService(),
+        filtersViewModel = SearchFiltersViewModel() {
     load = Command0(_load)..execute();
     search = Command0(_search);
+
+    filtersViewModel.addListener(() {
+      search.execute();
+    });
   }
 
   final _log = Logger('SearchViewModel');
   final PlanRepository _planRepository;
-  final StepRepository _stepRepository;
   final CategoryRepository _categoryRepository;
+  final LocationService _locationService;
 
-  /// Indicateur de chargement initial
+  final SearchFiltersViewModel filtersViewModel;
+  SearchChipsViewModel? chipsViewModel;
+
   bool isLoading = false;
-
-  /// Indicateur de recherche en cours
   bool isSearching = false;
-
-  /// Éventuelle erreur
   String? errorMessage;
 
-  /// Liste brute de tous les plans
   List<Plan> _allPlans = [];
-
-  /// Résultats après application des filtres / tris
   List<PlanWithMetrics> results = [];
+  List<Category> _categories = [];
 
-  /// Liste des catégories disponibles
-  List<String> categories = [];
-
-  /// Catégorie sélectionnée, null = toutes
-  String? selectedCategory;
-
-  // --- filtres sélectionnés ---
-  RangeValues? distanceRange; // en mètres
-  RangeValues? costRange; // unités monétaires
-  RangeValues? durationRange; // en secondes
-  int? favoritesThreshold; // nb minimum de favoris
-  SortOption sortBy = SortOption.recent;
-
-  /// Commandes
   late final Command0 load;
   late final Command0 search;
 
-  /// Charge catégories et plans
+  List<Map<String, dynamic>> getActiveFilters() {
+    return chipsViewModel?.getActiveFilters() ?? [];
+  }
+
+  bool get hasActiveFilters => chipsViewModel?.hasActiveFilters ?? false;
+
+  int get activeFiltersCount => chipsViewModel?.activeFiltersCount ?? 0;
+
+  List<Category> get fullCategories => _categories;
+  String? getFieldError(String fieldName) {
+    return filtersViewModel.getFieldError(fieldName);
+  }
+
+  Future<void> initializeWithCurrentLocation() async {
+    final position = await _locationService.getCurrentLocation();
+    if (position == null) return;
+
+    final selectedLocation = LatLng(position.latitude, position.longitude);
+    final addressName = await _locationService.reverseGeocode(selectedLocation);
+
+    filtersViewModel.setSelectedLocationWithDefaultDistance(
+      selectedLocation,
+      addressName ?? 'Ma position actuelle',
+    );
+
+    search.execute();
+  }
+
   Future<Result<void>> _load() async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
-    // Charger catégories
-    final catRes = await _categoryRepository.getCategoriesList();
-    if (catRes is Ok<List<Category>>) {
-      categories = catRes.value.map((c) => c.id).toList();
-    } else {
-      _log.warning(
-          'Impossible de charger les catégories', (catRes as Error).error);
-    }
+    try {
+      final catRes = await _categoryRepository.getCategoriesList();
+      if (catRes is Ok<List<Category>>) {
+        _categories = catRes.value;
+        chipsViewModel = SearchChipsViewModel(
+          filtersViewModel: filtersViewModel,
+          categories: _categories,
+        );
+      } else {
+        _log.warning(
+            'Impossible de charger les catégories', (catRes as Error).error);
+      }
 
-    // Charger plans
-    final res = await _planRepository.getPlanList();
-    if (res is Error) {
-      errorMessage = (res).toString();
-      _log.warning('Échec du chargement des plans', res);
+      final res = await _planRepository.getPlanList();
+      if (res is Error) {
+        errorMessage = (res).toString();
+        _log.warning('Échec du chargement des plans', res);
+        return res;
+      }
+
+      _allPlans = (res as Ok<List<Plan>>).value;
+      _log.fine('Plans chargés : ${_allPlans.length}');
+
+      final searchRes = await _search();
+      return searchRes;
+    } finally {
       isLoading = false;
       notifyListeners();
-      return res;
     }
-
-    _allPlans = (res as Ok<List<Plan>>).value;
-    _log.fine('Plans chargés : ${_allPlans.length}');
-
-    final searchRes = await _search();
-
-    isLoading = false;
-    notifyListeners();
-    return searchRes;
   }
 
-  /// Applique filtres, catégorie et tris sur [_allPlans]
   Future<Result<void>> _search() async {
     isSearching = true;
     errorMessage = null;
     notifyListeners();
 
-    var hadError = false;
-    final distance = Distance();
-
     final futures = _allPlans.map((plan) async {
-      // Filtre catégorie
-      if (selectedCategory != null && plan.category != selectedCategory) {
+      if (filtersViewModel.selectedCategory != null &&
+          plan.category?.id != filtersViewModel.selectedCategory) {
         return null;
       }
 
-      final stepRes = await _stepRepository.getStepsList(plan.id!);
-      if (stepRes is Error) {
-        hadError = true;
-        _log.warning('Échec chargement steps pour plan ${plan.id}', (stepRes));
-        return null;
+      if (filtersViewModel.keywordQuery != null &&
+          filtersViewModel.keywordQuery!.isNotEmpty) {
+        final query = filtersViewModel.keywordQuery!.toLowerCase();
+        final matchesSearch = _matchesQuery(plan, query);
+        if (!matchesSearch) return null;
       }
-      final steps = (stepRes as Ok<List<step_model.Step>>).value;
 
-      // Calcul métriques
-      double totalDist = 0;
-      for (var i = 1; i < steps.length; i++) {
-        final p1 = steps[i - 1].position;
-        final p2 = steps[i].position;
-        if (p1 != null && p2 != null) {
-          totalDist += distance.as(LengthUnit.Meter, p1, p2);
+      double totalDistance = 0;
+      if (plan.steps.isNotEmpty) {
+        final firstStep = plan.steps.first;
+        if (firstStep.position != null) {
+          final selectedLocation = filtersViewModel.selectedLocation;
+          if (selectedLocation != null) {
+            totalDistance = const Distance().as(
+              LengthUnit.Meter,
+              LatLng(
+                  firstStep.position!.latitude, firstStep.position!.longitude),
+              selectedLocation,
+            );
+          } else {
+            totalDistance = _locationService.calculateDistanceToPoint(
+                  firstStep.position!.latitude,
+                  firstStep.position!.longitude,
+                ) ??
+                0;
+          }
         }
       }
-      final totalCost = steps.fold<double>(0, (sum, s) => sum + (s.cost ?? 0));
-      final totalDuration = steps.fold<Duration>(
-        Duration.zero,
-        (sum, s) {
-          if (s.duration != null) {
-            final parts = s.duration!.split(':').map(int.parse).toList();
-            if (parts.length == 2) {
-              return sum + Duration(hours: parts[0], minutes: parts[1]);
-            }
-            return sum + Duration(minutes: parts[0]);
-          }
-          return sum;
-        },
-      );
-      final favCount = plan.favorites?.length ?? 0;
 
       return PlanWithMetrics(
         plan: plan,
-        totalDistance: totalDist,
-        totalCost: totalCost,
-        totalDuration: totalDuration,
-        favoritesCount: favCount,
+        totalDistance: totalDistance,
+        totalCost: plan.totalCost ?? 0,
+        totalDuration: Duration(minutes: plan.totalDuration ?? 0),
+        favoritesCount: plan.favorites?.length ?? 0,
       );
     }).toList();
 
     final metricsList =
         (await Future.wait(futures)).whereType<PlanWithMetrics>().toList();
-
-    if (hadError) {
-      errorMessage ??= 'Certaines étapes n’ont pas pu être chargées';
-      _log.warning(errorMessage!);
-    }
-
-    // Appliquer filtres numériques
-    var filtered = metricsList.where((m) {
-      if (distanceRange != null &&
-          (m.totalDistance < distanceRange!.start ||
-              m.totalDistance > distanceRange!.end)) {
-        return false;
-      }
-      if (costRange != null &&
-          (m.totalCost < costRange!.start || m.totalCost > costRange!.end)) {
-        return false;
-      }
-      final durSec = m.totalDuration.inSeconds.toDouble();
-      if (durationRange != null &&
-          (durSec < durationRange!.start || durSec > durationRange!.end)) {
-        return false;
-      }
-      if (favoritesThreshold != null &&
-          m.favoritesCount < favoritesThreshold!) {
-        return false;
-      }
-      return true;
-    }).toList();
-
-    // Tri
-    switch (sortBy) {
-      case SortOption.distance:
-        filtered.sort((a, b) => a.totalDistance.compareTo(b.totalDistance));
-        break;
-      case SortOption.cost:
-        filtered.sort((a, b) => a.totalCost.compareTo(b.totalCost));
-        break;
-      case SortOption.duration:
-        filtered.sort((a, b) => a.totalDuration.compareTo(b.totalDuration));
-        break;
-      case SortOption.favorites:
-        filtered.sort((a, b) => b.favoritesCount.compareTo(a.favoritesCount));
-        break;
-      case SortOption.recent:
-        filtered.sort((a, b) {
-          final da = a.plan.createdAt;
-          final db = b.plan.createdAt;
-          if (da == null || db == null) return 0;
-          return db.compareTo(da);
-        });
-        break;
-    }
+    final filtered = _applyFilters(metricsList);
 
     results = filtered;
-    _log.fine('Recherche terminée : ${results.length} plans trouvés');
-
     isSearching = false;
     notifyListeners();
-    return hadError
-        ? Result.error(Exception(errorMessage ?? 'Erreur inconnue'))
-        : Result.ok(null);
+    return const Result.ok(null);
+  }
+
+  bool _matchesQuery(Plan plan, String query) {
+    if (plan.title.toLowerCase().contains(query) ||
+        plan.description.toLowerCase().contains(query)) {
+      return true;
+    }
+    for (final step in plan.steps) {
+      if (step.title.toLowerCase().contains(query) ||
+          step.description.toLowerCase().contains(query)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  List<PlanWithMetrics> _applyFilters(List<PlanWithMetrics> metricsList) {
+    return metricsList.where((m) {
+      final distanceRange = filtersViewModel.effectiveDistanceRange;
+      if (distanceRange != null &&
+          (m.totalDistance < distanceRange.start ||
+              m.totalDistance > distanceRange.end)) {
+        return false;
+      }
+
+      final costRange = filtersViewModel.costRange;
+      if (costRange != null &&
+          ((costRange.start > 0.0 && m.totalCost < costRange.start) ||
+              (costRange.end < 999999.0 && m.totalCost > costRange.end))) {
+        return false;
+      }
+
+      final durationRange = filtersViewModel.durationRange;
+      if (durationRange != null) {
+        final durSec = m.totalDuration.inSeconds.toDouble();
+        if ((durationRange.start > 0.0 && durSec < durationRange.start) ||
+            (durationRange.end < (999999 * 60) && durSec > durationRange.end)) {
+          return false;
+        }
+      }
+
+      if (filtersViewModel.favoritesThreshold != null &&
+          m.favoritesCount < filtersViewModel.favoritesThreshold!) {
+        return false;
+      }
+
+      if (filtersViewModel.pmrOnly == true && m.plan.isAccessible != true) {
+        return false;
+      }
+
+      return true;
+    }).toList()
+      ..sort((a, b) {
+        switch (filtersViewModel.sortBy) {
+          case SortOption.cost:
+            return a.totalCost.compareTo(b.totalCost);
+          case SortOption.duration:
+            return a.totalDuration.compareTo(b.totalDuration);
+          case SortOption.favorites:
+            return b.favoritesCount.compareTo(a.favoritesCount);
+          case SortOption.recent:
+            final da = a.plan.createdAt;
+            final db = b.plan.createdAt;
+            return (da == null || db == null) ? 0 : db.compareTo(da);
+        }
+      });
+  }
+
+  void clearAllFilters() {
+    filtersViewModel.clearAllFilters();
+    search.execute();
+  }
+
+  @override
+  void dispose() {
+    filtersViewModel.dispose();
+    super.dispose();
   }
 }

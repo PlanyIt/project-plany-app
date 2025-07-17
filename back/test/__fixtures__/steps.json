@@ -1,0 +1,70 @@
+{
+  "validSteps": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "title": "Étape 1",
+      "description": "Description de l'étape 1",
+      "latitude": 48.8566,
+      "longitude": 2.3522,
+      "order": 1,
+      "image": "https://example.com/image.jpg",
+      "duration": 120,
+      "cost": 25.50,
+      "createdAt": "2023-01-01T00:00:00.000Z",
+      "updatedAt": "2023-01-01T00:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "title": "Étape 2",
+      "description": "Description de l'étape 2",
+      "latitude": 48.8606,
+      "longitude": 2.3376,
+      "order": 2,
+      "image": "https://example.com/image2.jpg",
+      "duration": 90,
+      "cost": 30.25,
+      "createdAt": "2023-01-01T00:00:00.000Z",
+      "updatedAt": "2023-01-01T00:00:00.000Z"
+    }
+  ],
+  "createStepDtos": {
+    "validCreate": {
+      "title": "Nouvelle étape",
+      "description": "Description de la nouvelle étape",
+      "latitude": 48.8566,
+      "longitude": 2.3522,
+      "order": 1,
+      "image": "https://example.com/new-image.jpg",
+      "duration": 90,
+      "cost": 15.75
+    },
+    "minimalCreate": {
+      "title": "Étape minimale",
+      "description": "Description minimale",
+      "order": 1,
+      "image": "minimal.jpg",
+      "duration": 0,
+      "cost": 0
+    }
+  },
+  "updateStepDtos": {
+    "fullUpdate": {
+      "title": "Étape mise à jour",
+      "description": "Description mise à jour",
+      "latitude": 49.0000,
+      "longitude": 2.5000,
+      "order": 2,
+      "image": "updated.jpg",
+      "duration": 150,
+      "cost": 35.00
+    },
+    "partialUpdate": {
+      "title": "Titre mis à jour",
+      "description": "Description mise à jour",
+      "order": 1,
+      "image": "updated.jpg",
+      "duration": 120,
+      "cost": 25.50
+    }
+  }
+}

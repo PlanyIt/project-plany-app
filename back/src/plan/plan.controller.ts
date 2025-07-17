@@ -6,14 +6,12 @@ import {
   Param,
   Delete,
   Put,
-  Patch,
   UseGuards,
   Req,
   HttpException,
   HttpStatus,
   Inject,
   forwardRef,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { PlanService } from './plan.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -41,10 +39,20 @@ export class PlanController {
   @Post()
   async createPlan(@Body() createPlanDto: PlanDto, @Req() req) {
     try {
-      const planData = { ...createPlanDto, userId: req.user._id };
-      return await this.planService.createPlan(planData);
+      const planData = {
+        ...createPlanDto,
+        user: req.user._id,
+      };
+
+      console.log('📝 Creating plan with data:', planData);
+
+      const createdPlan = await this.planService.createPlan(planData);
+
+      console.log('✅ Plan created successfully:', createdPlan._id);
+
+      return createdPlan;
     } catch (error) {
-      console.error('Erreur lors de la création du plan :', error);
+      console.error('❌ Error creating plan:', error);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -81,25 +89,12 @@ export class PlanController {
   }
 
   @Get('user/:userId')
-  async findAllByUserId(@Param('userId') userId: string) {
-    return this.planService.findAllByUserId(userId);
+  async findAllByUserId(@Param('userId') userId: string, @Req() req) {
+    return this.planService.findAllByUserId(userId, req.user._id);
   }
 
   @Get('user/:userId/favorites')
   async findFavoritesByUserId(@Param('userId') userId: string) {
     return this.planService.findFavoritesByUserId(userId);
-  }
-
-  @Patch(':id/profile')
-  async updateUserProfile(
-    @Param('id') id: string,
-    @Body() updateUserDto: any,
-    @Req() req,
-  ) {
-    // Vérifier que l'utilisateur ne modifie que son propre profil
-    if (req.user._id.toString() !== id) {
-      throw new UnauthorizedException('Vous ne pouvez pas modifier ce profil');
-    }
-    return this.userService.updateById(id, updateUserDto);
   }
 }

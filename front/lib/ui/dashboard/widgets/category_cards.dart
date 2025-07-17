@@ -5,29 +5,24 @@ import '../../../domain/models/category/category.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/icon_utils.dart';
 import '../../core/themes/app_theme.dart';
+import '../view_models/dashboard_viewmodel.dart';
 
 class CategoryCards extends StatelessWidget {
-  final List<Category> categories;
-  final bool isLoading;
-  final Function(Category) onCategoryTap;
+  final Function(Category)? onPressed;
+  const CategoryCards({super.key, required this.viewModel, this.onPressed});
 
-  const CategoryCards({
-    super.key,
-    required this.categories,
-    required this.isLoading,
-    required this.onCategoryTap,
-  });
+  final DashboardViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    if (viewModel.load.running && !viewModel.hasLoadedData) {
       return _buildCategoryShimmer();
     }
     return _buildCategoryCarousel(context);
   }
 
   Widget _buildCategoryCarousel(BuildContext context) {
-    if (categories.isEmpty) {
+    if (viewModel.categories.isEmpty) {
       return const SizedBox(
         height: 120,
         child: Center(
@@ -41,17 +36,17 @@ class CategoryCards extends StatelessWidget {
       margin: const EdgeInsets.only(top: 12),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
+        itemCount: viewModel.categories.length,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         itemBuilder: (context, index) {
-          final category = categories[index];
+          final category = viewModel.categories[index];
           final gradientColors = [
             colorFromHex(category.color),
             colorFromHex(category.color).withValues(alpha: 0.8),
           ];
 
           return GestureDetector(
-            onTap: () => onCategoryTap(category),
+            onTap: onPressed != null ? () => onPressed!(category) : null,
             child: Container(
               width: 110,
               margin:

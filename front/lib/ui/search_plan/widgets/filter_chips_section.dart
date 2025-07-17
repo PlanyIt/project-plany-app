@@ -12,7 +12,7 @@ class FilterChipsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeFilters = _getActiveFilters();
+    final activeFilters = viewModel.getActiveFilters();
 
     if (activeFilters.isEmpty) {
       return const SizedBox.shrink();
@@ -53,12 +53,11 @@ class FilterChipsSection extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              if (activeFilters.length > 1)
+              if (viewModel.activeFiltersCount > 1)
                 GestureDetector(
-                  onTap: _clearAllFilters,
+                  onTap: viewModel.clearAllFilters,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: .1),
                       borderRadius: BorderRadius.circular(12),
@@ -189,115 +188,5 @@ class FilterChipsSection extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void _clearAllFilters() {
-    viewModel.distanceRange = null;
-    viewModel.costRange = null;
-    viewModel.durationRange = null;
-    viewModel.favoritesThreshold = null;
-    viewModel.sortBy = SortOption.recent;
-    viewModel.search.execute();
-  }
-
-  List<Map<String, dynamic>> _getActiveFilters() {
-    final filters = <Map<String, dynamic>>[];
-
-    if (viewModel.distanceRange != null) {
-      filters.add({
-        'label':
-            '${viewModel.distanceRange!.start.toInt()}-${viewModel.distanceRange!.end.toInt()}m',
-        'icon': Icons.location_on_rounded,
-        'color': Colors.blue,
-        'onRemove': () {
-          viewModel.distanceRange = null;
-          viewModel.search.execute();
-        },
-      });
-    }
-
-    if (viewModel.costRange != null) {
-      filters.add({
-        'label':
-            '${viewModel.costRange!.start.toInt()}-${viewModel.costRange!.end.toInt()}€',
-        'icon': Icons.euro_rounded,
-        'color': Colors.green,
-        'onRemove': () {
-          viewModel.costRange = null;
-          viewModel.search.execute();
-        },
-      });
-    }
-
-    if (viewModel.durationRange != null) {
-      final startHours = (viewModel.durationRange!.start / 3600).toInt();
-      final endHours = (viewModel.durationRange!.end / 3600).toInt();
-      filters.add({
-        'label': '${startHours}h-${endHours}h',
-        'icon': Icons.schedule_rounded,
-        'color': Colors.orange,
-        'onRemove': () {
-          viewModel.durationRange = null;
-          viewModel.search.execute();
-        },
-      });
-    }
-
-    if (viewModel.favoritesThreshold != null) {
-      filters.add({
-        'label': 'Min ${viewModel.favoritesThreshold} ♥',
-        'icon': Icons.favorite_rounded,
-        'color': Colors.red,
-        'onRemove': () {
-          viewModel.favoritesThreshold = null;
-          viewModel.search.execute();
-        },
-      });
-    }
-
-    if (viewModel.sortBy != SortOption.recent) {
-      final sortData = _getSortData(viewModel.sortBy);
-      filters.add({
-        'label': sortData['label'],
-        'icon': sortData['icon'],
-        'color': Colors.purple,
-        'onRemove': () {
-          viewModel.sortBy = SortOption.recent;
-          viewModel.search.execute();
-        },
-      });
-    }
-
-    return filters;
-  }
-
-  Map<String, dynamic> _getSortData(SortOption sortOption) {
-    switch (sortOption) {
-      case SortOption.distance:
-        return {
-          'label': 'Tri: Distance',
-          'icon': Icons.near_me_rounded,
-        };
-      case SortOption.cost:
-        return {
-          'label': 'Tri: Prix',
-          'icon': Icons.attach_money_rounded,
-        };
-      case SortOption.duration:
-        return {
-          'label': 'Tri: Durée',
-          'icon': Icons.timer_rounded,
-        };
-      case SortOption.favorites:
-        return {
-          'label': 'Tri: Popularité',
-          'icon': Icons.trending_up_rounded,
-        };
-      case SortOption.recent:
-        return {
-          'label': 'Tri: Récent',
-          'icon': Icons.history_rounded,
-        };
-    }
   }
 }

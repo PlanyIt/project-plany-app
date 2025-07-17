@@ -3,26 +3,25 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/repositories/auth/auth_repository.dart';
-import '../screens/create-plan/create_plans_screen.dart';
-import '../screens/profile/profile_screen.dart';
+import '../ui/auth/login/login_screen.dart';
 import '../ui/auth/login/view_models/login_viewmodel.dart';
-import '../ui/auth/login/widgets/login_screen.dart';
+import '../ui/auth/register/register_screen.dart';
 import '../ui/auth/register/view_models/register_viewmodel.dart';
-import '../ui/auth/register/widgets/register_screen.dart';
-import '../ui/auth/reset-password/widgets/reset_password_screen.dart';
-import '../ui/auth/widgets/home_screen.dart';
+import '../ui/auth/reset-password/reset_password_screen.dart';
+import '../ui/create_plan/create_plan_screen.dart';
 import '../ui/create_plan/view_models/create_plan_view_model.dart';
-import '../ui/create_plan/widgets/create_plan_screen.dart';
+import '../ui/dashboard/dashboard_screen.dart';
 import '../ui/dashboard/view_models/dashboard_viewmodel.dart';
-import '../ui/dashboard/widgets/dashboard_screen.dart';
+import '../ui/detail_plan/plan_details_screen.dart';
+import '../ui/detail_plan/view_models/detail/favorite_viewmodel.dart';
+import '../ui/detail_plan/view_models/detail/follow_user_viewmodel.dart';
+import '../ui/detail_plan/view_models/detail/plan_details_viewmodel.dart';
+import '../ui/home/home_screen.dart';
+import '../ui/profil/profile_screen.dart';
+import '../ui/search_plan/search_screen.dart';
 import '../ui/search_plan/view_models/search_view_model.dart';
-import '../ui/search_plan/widgets/search_screen.dart';
 import 'routes.dart';
 
-/// Top go_router entry point.
-///
-/// Listens to changes in [AuthTokenRepository] to redirect the user
-/// to /home when the user logs out.
 GoRouter router(AuthRepository authRepository) => GoRouter(
       initialLocation: Routes.dashboard,
       debugLogDiagnostics: true,
@@ -31,53 +30,45 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
       routes: [
         GoRoute(
           path: Routes.home,
-          builder: (context, state) {
-            return HomeScreen();
-          },
+          builder: (context, state) => const HomeScreen(),
         ),
         GoRoute(
           path: Routes.login,
-          builder: (context, state) {
-            return LoginScreen(
-              viewModel: LoginViewModel(authRepository: context.read()),
-            );
-          },
+          builder: (context, state) => LoginScreen(
+            viewModel: LoginViewModel(sessionManager: context.read()),
+          ),
         ),
         GoRoute(
           path: Routes.register,
-          builder: (context, state) {
-            return RegisterScreen(
-              viewModel: RegisterViewModel(authRepository: context.read()),
-            );
-          },
+          builder: (context, state) => RegisterScreen(
+            viewModel: RegisterViewModel(sessionManager: context.read()),
+          ),
         ),
         GoRoute(
           path: Routes.reset,
-          builder: (context, state) {
-            return ResetPasswordScreen();
-          },
+          builder: (context, state) => const ResetPasswordScreen(),
         ),
         GoRoute(
           path: Routes.dashboard,
-          builder: (context, state) {
-            return DashboardScreen(
-                viewModel: DashboardViewModel(
-                    categoryRepository: context.read(),
-                    authRepository: context.read(),
-                    planRepository: context.read(),
-                    stepRepository: context.read()));
-          },
+          builder: (context, state) => DashboardScreen(
+            viewModel: DashboardViewModel(
+              categoryRepository: context.read(),
+              authRepository: context.read(),
+              planRepository: context.read(),
+              locationService: context.read(),
+            ),
+          ),
           routes: [
             GoRoute(
               name: 'search',
-              path: '/search',
+              path: 'search',
               builder: (context, state) {
                 final initialQuery = state.uri.queryParameters['query'];
                 final initialCategory = state.uri.queryParameters['category'];
+
                 return SearchScreen(
                   viewModel: SearchViewModel(
                     planRepository: context.read(),
-                    stepRepository: context.read(),
                     categoryRepository: context.read(),
                   ),
                   initialQuery: initialQuery,
@@ -89,27 +80,73 @@ GoRouter router(AuthRepository authRepository) => GoRouter(
         ),
         GoRoute(
           path: Routes.createPlan,
+          builder: (context, state) => CreatePlanScreen(
+            viewModel: CreatePlanViewModel(
+              authRepository: context.read(),
+              categoryRepository: context.read(),
+              planRepository: context.read(),
+              stepRepository: context.read(),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: Routes.profile,
           builder: (context, state) {
-            return CreatePlanScreen(
-              viewModel: CreatePlanViewModel(
-                authRepository: context.read(),
-                categoryRepository: context.read(),
-                planRepository: context.read(),
-                stepRepository: context.read(),
-              ),
-            );
+            final userId = state.uri.queryParameters['userId'];
+            return ProfileScreen(userId: userId);
           },
         ),
         GoRoute(
-          path: Routes.profil,
+          path: Routes.planDetails,
           builder: (context, state) {
-            return ProfileScreen();
+            final planId = state.uri.queryParameters['id'];
+
+            if (planId == null) {
+              return const SizedBox.shrink();
+            }
+
+            return MultiProvider(
+              providers: [
+                ChangeNotifierProvider(
+                  create: (context) => PlanDetailsViewModel(
+                    planRepository: context.read(),
+                    locationService: context.read(),
+                    authRepository: context.read(),
+                    planId: planId,
+                    commentRepository: context.read(),
+                    userRepository: context.read(),
+                  )..loadPlan(planId),
+                ),
+                ChangeNotifierProvider(
+                  create: (context) => FavoriteViewModel(
+                    context.read(),
+                    context.read(),
+                  )..initFavoriteStatus(planId),
+                ),
+                ChangeNotifierProvider(
+                  create: (context) => FollowUserViewModel(
+                    context.read(),
+                    context.read(),
+                  ),
+                ),
+              ],
+              child: Consumer3<PlanDetailsViewModel, FavoriteViewModel,
+                  FollowUserViewModel>(
+                builder: (context, planVM, favoriteVM, followVM, _) {
+                  return PlanDetailsScreen(
+                    planId: planId,
+                    planVM: planVM,
+                    favoriteVM: favoriteVM,
+                    followVM: followVM,
+                  );
+                },
+              ),
+            );
           },
         ),
       ],
     );
 
-// From https://github.com/flutter/packages/blob/main/packages/go_router/example/lib/redirection.dart
 Future<String?> _redirect(BuildContext context, GoRouterState state) async {
   final loggedIn = await context.read<AuthRepository>().isAuthenticated;
   final loggingIn = state.matchedLocation == Routes.login ||
@@ -118,10 +155,7 @@ Future<String?> _redirect(BuildContext context, GoRouterState state) async {
       state.matchedLocation == Routes.home;
 
   if (!loggedIn) {
-    if (loggingIn) {
-      return null;
-    }
-    return Routes.home;
+    return loggingIn ? null : Routes.home;
   }
 
   if (loggingIn) {

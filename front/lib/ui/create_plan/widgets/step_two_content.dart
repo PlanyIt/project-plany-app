@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../core/themes/app_theme.dart';
 import '../view_models/create_plan_view_model.dart';
+import '../view_models/create_step_viewmodel.dart';
 import 'step_card_timeline.dart';
 import 'step_modal.dart';
 
-class StepTwoContent extends StatefulWidget {
+class StepTwoContent extends StatelessWidget {
   const StepTwoContent({super.key, required this.viewModel});
-
   final CreatePlanViewModel viewModel;
 
-  @override
-  State<StepTwoContent> createState() => _StepTwoContentState();
-}
-
-class _StepTwoContentState extends State<StepTwoContent> {
   @override
   Widget build(BuildContext context) {
     final themeColor = Theme.of(context).primaryColor;
@@ -35,15 +30,143 @@ class _StepTwoContentState extends State<StepTwoContent> {
             ),
           ),
           const SizedBox(height: 16),
-          widget.viewModel.stepCards.isEmpty
-              ? _buildEmptyCard()
-              : _buildStepsList(themeColor),
+          ValueListenableBuilder<List<StepData>>(
+            valueListenable: viewModel.steps,
+            builder: (context, steps, _) {
+              return steps.isEmpty
+                  ? _buildEmptyCard()
+                  : _buildStepsList(context, steps, themeColor);
+            },
+          ),
           const SizedBox(height: 24),
-          _buildAddStepButton(),
+          _buildAddStepButton(context),
           const SizedBox(height: 100),
         ],
       ),
     );
+  }
+
+  Widget _buildStepsList(
+      BuildContext context, List<StepData> steps, Color themeColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ReorderableListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: steps.length,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        onReorder: viewModel.reorderSteps,
+        itemBuilder: (context, index) {
+          final step = steps[index];
+          final isFirst = index == 0;
+          final isLast = index == steps.length - 1;
+
+          return Padding(
+            key: Key('step_card_$index'),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: StepCardTimeline(
+              index: index,
+              isFirst: isFirst,
+              isLast: isLast,
+              title: step.title,
+              description: step.description,
+              imagePath: step.imageUrl,
+              duration: step.duration,
+              durationUnit: step.durationUnit,
+              cost: step.cost,
+              locationName: step.locationName,
+              onDelete: () => viewModel.removeStepAt(index),
+              onEdit: () async {
+                final stepViewModel = CreateStepViewModel();
+                stepViewModel.startEditing(step, index);
+
+                await showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => StepModal(
+                    viewModel: stepViewModel,
+                    onSave: _handleStepSave,
+                  ),
+                );
+              },
+              themeColor: themeColor,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAddStepButton(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        final stepViewModel = CreateStepViewModel();
+
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => StepModal(
+            viewModel: stepViewModel,
+            onSave: _handleStepSave,
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border:
+              Border.all(color: AppTheme.primaryColor.withValues(alpha: .5)),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: .1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_circle_outline,
+                color: AppTheme.primaryColor, size: 20),
+            const SizedBox(width: 12),
+            Text(
+              'Ajouter une étape',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleStepSave(StepData step, int? index) {
+    final updated = List<StepData>.from(viewModel.steps.value);
+    if (index != null) {
+      updated[index] = step;
+    } else {
+      updated.add(step);
+    }
+    viewModel.steps.value = updated;
   }
 
   Widget _buildInfoCard() {
@@ -54,7 +177,7 @@ class _StepTwoContentState extends State<StepTwoContent> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -73,7 +196,7 @@ class _StepTwoContentState extends State<StepTwoContent> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withValues(alpha: .2),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -119,13 +242,13 @@ class _StepTwoContentState extends State<StepTwoContent> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
         border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.2),
+          color: Colors.grey.withValues(alpha: .2),
           width: 1,
         ),
       ),
@@ -135,7 +258,7 @@ class _StepTwoContentState extends State<StepTwoContent> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              color: AppTheme.primaryColor.withValues(alpha: .1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -161,133 +284,6 @@ class _StepTwoContentState extends State<StepTwoContent> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStepsList(Color themeColor) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ReorderableListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: widget.viewModel.stepCards.length,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        onReorder: (oldIndex, newIndex) {
-          widget.viewModel.reorderStepCards(oldIndex, newIndex);
-        },
-        itemBuilder: (context, index) {
-          final step = widget.viewModel.stepCards[index];
-          final isFirst = index == 0;
-          final isLast = index == widget.viewModel.stepCards.length - 1;
-
-          return Padding(
-            key: Key('step_card_$index'),
-            padding: const EdgeInsets.only(bottom: 8),
-            child: StepCardTimeline(
-              index: index,
-              isFirst: isFirst,
-              isLast: isLast,
-              title: step.title,
-              description: step.description,
-              imagePath: step.imageUrl,
-              duration: step.duration,
-              durationUnit: step.durationUnit,
-              cost: step.cost,
-              locationName: step.locationName,
-              onDelete: () {
-                widget.viewModel.removeStepCard(index);
-                setState(() {});
-              },
-              onEdit: () async {
-                widget.viewModel.startEditingStep(index);
-
-                await showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (BuildContext context) {
-                    return StepModal(
-                      viewModel: widget.viewModel,
-                    );
-                  },
-                );
-
-                if (widget.viewModel.isEditingStep) {
-                  widget.viewModel.cancelEditingStep();
-                }
-
-                setState(() {});
-              },
-              themeColor: themeColor,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildAddStepButton() {
-    return InkWell(
-      onTap: () async {
-        await showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (BuildContext context) {
-            return StepModal(
-              viewModel: widget.viewModel,
-            );
-          },
-        );
-        setState(() {});
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border:
-              Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.5)),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              blurRadius: 8,
-              spreadRadius: 0,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_circle_outline,
-              color: AppTheme.primaryColor,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Ajouter une étape',
-              style: TextStyle(
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

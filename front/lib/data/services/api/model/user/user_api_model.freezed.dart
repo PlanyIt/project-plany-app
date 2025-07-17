@@ -20,6 +20,7 @@ UserApiModel _$UserApiModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UserApiModel {
+  @JsonKey(name: '_id')
   String get id => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
@@ -30,6 +31,10 @@ mixin _$UserApiModel {
   String? get gender => throw _privateConstructorUsedError;
   List<String> get followers => throw _privateConstructorUsedError;
   List<String> get following => throw _privateConstructorUsedError;
+  int? get followersCount => throw _privateConstructorUsedError;
+  int? get followingCount => throw _privateConstructorUsedError;
+  int? get plansCount => throw _privateConstructorUsedError;
+  int? get favoritesCount => throw _privateConstructorUsedError;
 
   /// Serializes this UserApiModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -48,7 +53,7 @@ abstract class $UserApiModelCopyWith<$Res> {
       _$UserApiModelCopyWithImpl<$Res, UserApiModel>;
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: '_id') String id,
       String username,
       String email,
       String? description,
@@ -57,7 +62,11 @@ abstract class $UserApiModelCopyWith<$Res> {
       DateTime? birthDate,
       String? gender,
       List<String> followers,
-      List<String> following});
+      List<String> following,
+      int? followersCount,
+      int? followingCount,
+      int? plansCount,
+      int? favoritesCount});
 }
 
 /// @nodoc
@@ -85,6 +94,10 @@ class _$UserApiModelCopyWithImpl<$Res, $Val extends UserApiModel>
     Object? gender = freezed,
     Object? followers = null,
     Object? following = null,
+    Object? followersCount = freezed,
+    Object? followingCount = freezed,
+    Object? plansCount = freezed,
+    Object? favoritesCount = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -127,6 +140,22 @@ class _$UserApiModelCopyWithImpl<$Res, $Val extends UserApiModel>
           ? _value.following
           : following // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      followersCount: freezed == followersCount
+          ? _value.followersCount
+          : followersCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      followingCount: freezed == followingCount
+          ? _value.followingCount
+          : followingCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      plansCount: freezed == plansCount
+          ? _value.plansCount
+          : plansCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      favoritesCount: freezed == favoritesCount
+          ? _value.favoritesCount
+          : favoritesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -140,7 +169,7 @@ abstract class _$$UserApiModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: '_id') String id,
       String username,
       String email,
       String? description,
@@ -149,7 +178,11 @@ abstract class _$$UserApiModelImplCopyWith<$Res>
       DateTime? birthDate,
       String? gender,
       List<String> followers,
-      List<String> following});
+      List<String> following,
+      int? followersCount,
+      int? followingCount,
+      int? plansCount,
+      int? favoritesCount});
 }
 
 /// @nodoc
@@ -175,6 +208,10 @@ class __$$UserApiModelImplCopyWithImpl<$Res>
     Object? gender = freezed,
     Object? followers = null,
     Object? following = null,
+    Object? followersCount = freezed,
+    Object? followingCount = freezed,
+    Object? plansCount = freezed,
+    Object? favoritesCount = freezed,
   }) {
     return _then(_$UserApiModelImpl(
       id: null == id
@@ -217,6 +254,22 @@ class __$$UserApiModelImplCopyWithImpl<$Res>
           ? _value._following
           : following // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      followersCount: freezed == followersCount
+          ? _value.followersCount
+          : followersCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      followingCount: freezed == followingCount
+          ? _value.followingCount
+          : followingCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      plansCount: freezed == plansCount
+          ? _value.plansCount
+          : plansCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      favoritesCount: freezed == favoritesCount
+          ? _value.favoritesCount
+          : favoritesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -225,7 +278,7 @@ class __$$UserApiModelImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UserApiModelImpl implements _UserApiModel {
   const _$UserApiModelImpl(
-      {required this.id,
+      {@JsonKey(name: '_id') required this.id,
       required this.username,
       required this.email,
       this.description,
@@ -234,7 +287,11 @@ class _$UserApiModelImpl implements _UserApiModel {
       this.birthDate,
       this.gender,
       final List<String> followers = const [],
-      final List<String> following = const []})
+      final List<String> following = const [],
+      this.followersCount,
+      this.followingCount,
+      this.plansCount,
+      this.favoritesCount})
       : _followers = followers,
         _following = following;
 
@@ -242,6 +299,7 @@ class _$UserApiModelImpl implements _UserApiModel {
       _$$UserApiModelImplFromJson(json);
 
   @override
+  @JsonKey(name: '_id')
   final String id;
   @override
   final String username;
@@ -277,8 +335,17 @@ class _$UserApiModelImpl implements _UserApiModel {
   }
 
   @override
+  final int? followersCount;
+  @override
+  final int? followingCount;
+  @override
+  final int? plansCount;
+  @override
+  final int? favoritesCount;
+
+  @override
   String toString() {
-    return 'UserApiModel(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following)';
+    return 'UserApiModel(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following, followersCount: $followersCount, followingCount: $followingCount, plansCount: $plansCount, favoritesCount: $favoritesCount)';
   }
 
   @override
@@ -302,7 +369,15 @@ class _$UserApiModelImpl implements _UserApiModel {
             const DeepCollectionEquality()
                 .equals(other._followers, _followers) &&
             const DeepCollectionEquality()
-                .equals(other._following, _following));
+                .equals(other._following, _following) &&
+            (identical(other.followersCount, followersCount) ||
+                other.followersCount == followersCount) &&
+            (identical(other.followingCount, followingCount) ||
+                other.followingCount == followingCount) &&
+            (identical(other.plansCount, plansCount) ||
+                other.plansCount == plansCount) &&
+            (identical(other.favoritesCount, favoritesCount) ||
+                other.favoritesCount == favoritesCount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -318,7 +393,11 @@ class _$UserApiModelImpl implements _UserApiModel {
       birthDate,
       gender,
       const DeepCollectionEquality().hash(_followers),
-      const DeepCollectionEquality().hash(_following));
+      const DeepCollectionEquality().hash(_following),
+      followersCount,
+      followingCount,
+      plansCount,
+      favoritesCount);
 
   /// Create a copy of UserApiModel
   /// with the given fields replaced by the non-null parameter values.
@@ -338,7 +417,7 @@ class _$UserApiModelImpl implements _UserApiModel {
 
 abstract class _UserApiModel implements UserApiModel {
   const factory _UserApiModel(
-      {required final String id,
+      {@JsonKey(name: '_id') required final String id,
       required final String username,
       required final String email,
       final String? description,
@@ -347,12 +426,17 @@ abstract class _UserApiModel implements UserApiModel {
       final DateTime? birthDate,
       final String? gender,
       final List<String> followers,
-      final List<String> following}) = _$UserApiModelImpl;
+      final List<String> following,
+      final int? followersCount,
+      final int? followingCount,
+      final int? plansCount,
+      final int? favoritesCount}) = _$UserApiModelImpl;
 
   factory _UserApiModel.fromJson(Map<String, dynamic> json) =
       _$UserApiModelImpl.fromJson;
 
   @override
+  @JsonKey(name: '_id')
   String get id;
   @override
   String get username;
@@ -372,6 +456,14 @@ abstract class _UserApiModel implements UserApiModel {
   List<String> get followers;
   @override
   List<String> get following;
+  @override
+  int? get followersCount;
+  @override
+  int? get followingCount;
+  @override
+  int? get plansCount;
+  @override
+  int? get favoritesCount;
 
   /// Create a copy of UserApiModel
   /// with the given fields replaced by the non-null parameter values.

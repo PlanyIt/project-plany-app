@@ -18,8 +18,9 @@ import {
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PlanService } from 'src/plan/plan.service';
+import { PlanService } from '../plan/plan.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { AuthService } from '../auth/auth.service';
 @UseGuards(JwtAuthGuard)
 @Controller('api/users')
 export class UserController {
@@ -27,6 +28,7 @@ export class UserController {
     private readonly userService: UserService,
     @Inject(forwardRef(() => PlanService))
     private readonly planService: PlanService,
+    private readonly authService: AuthService,
   ) {}
 
   @Get()
@@ -35,10 +37,11 @@ export class UserController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const user = await this.userService.findById(id);
+  async findOne(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
+    const user = await this.userService.findById(userId);
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
     return user;
   }
@@ -62,20 +65,20 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
     @Request() req,
   ) {
-    // Vérifier que l'utilisateur ne modifie que son propre profil
-    if (req.user._id.toString() !== id) {
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
       throw new UnauthorizedException('Vous ne pouvez pas modifier ce profil');
     }
-    return this.userService.updateById(id, updateUserDto);
+    return this.userService.updateById(userId, updateUserDto);
   }
 
   @Delete(':id')
   removeById(@Param('id') id: string, @Request() req) {
-    // Vérifier que l'utilisateur ne supprime que son propre compte
-    if (req.user._id.toString() !== id) {
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
       throw new UnauthorizedException('Vous ne pouvez pas supprimer ce compte');
     }
-    return this.userService.removeById(id);
+    return this.userService.removeById(userId);
   }
 
   @Get('username/:username')
@@ -92,20 +95,22 @@ export class UserController {
   async updateEmail(
     @Param('id') id: string,
     @Body('email') email: string,
+    @Body('password') password: string,
     @Request() req,
   ) {
-    // Vérifier que l'utilisateur ne modifie que son propre email
-    if (req.user._id.toString() !== id) {
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
       throw new UnauthorizedException('Vous ne pouvez pas modifier cet email');
     }
-
-    // Vérifier si l'email est déjà utilisé
     const existingUser = await this.userService.findOneByEmail(email);
-    if (existingUser && existingUser._id.toString() !== id) {
+    if (existingUser && existingUser._id.toString() !== userId.toString()) {
       throw new UnauthorizedException('Cet email est déjà utilisé');
     }
-
-    return this.userService.updateById(id, { email });
+    const user = await this.authService.validateUser(req.user.email, password);
+    if (!user) {
+      throw new UnauthorizedException('Mot de passe incorrect');
+    }
+    return this.userService.updateById(userId, { email });
   }
 
   @Patch(':id/photo')
@@ -114,28 +119,29 @@ export class UserController {
     @Body('photoUrl') photoUrl: string,
     @Request() req,
   ) {
-    // Vérifier que l'utilisateur ne modifie que sa propre photo
-    if (req.user._id.toString() !== id) {
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
       throw new UnauthorizedException(
         'Vous ne pouvez pas modifier cette photo',
       );
     }
-    return this.userService.updateById(id, { photoUrl });
+    return this.userService.updateById(userId, { photoUrl });
   }
 
   @Delete(':id/photo')
   deleteUserPhoto(@Param('id') id: string, @Request() req) {
-    // Vérifier que l'utilisateur ne supprime que sa propre photo
-    if (req.user._id.toString() !== id) {
+    const userId = id === 'me' ? req.user._id : id;
+    if (req.user._id.toString() !== userId.toString()) {
       throw new UnauthorizedException(
         'Vous ne pouvez pas supprimer cette photo',
       );
     }
-    return this.userService.updateById(id, { photoUrl: null });
+    return this.userService.updateById(userId, { photoUrl: null });
   }
 
   @Get(':id/stats')
-  async getUserStats(@Param('id') userId: string) {
+  async getUserStats(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     try {
       return await this.userService.getUserStats(userId);
     } catch (error) {
@@ -145,7 +151,8 @@ export class UserController {
   }
 
   @Get(':id/plans')
-  async getUserPlans(@Param('id') userId: string) {
+  async getUserPlans(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     try {
       const plans = await this.planService.findAllByUserId(userId);
       return plans;
@@ -156,7 +163,8 @@ export class UserController {
   }
 
   @Get(':id/favorites')
-  async getUserFavorites(@Param('id') userId: string) {
+  async getUserFavorites(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     try {
       const favorites = await this.planService.findFavoritesByUserId(userId);
       return favorites;
@@ -172,26 +180,27 @@ export class UserController {
     @Body('isPremium') isPremium: boolean,
     @Request() req,
   ) {
-    // Vérifier si l'utilisateur est admin ou modifie son propre statut
-    if (req.user._id.toString() !== id && req.user.role !== 'admin') {
+    const userId = id === 'me' ? req.user._id : id;
+    if (
+      req.user._id.toString() !== userId.toString() &&
+      req.user.role !== 'admin'
+    ) {
       throw new UnauthorizedException('Opération non autorisée');
     }
-    return this.userService.updateById(id, { isPremium });
+    return this.userService.updateById(userId, { isPremium });
   }
 
   // Suivre un utilisateur
   @Post(':id/follow')
-  async followUser(@Param('id') targetUserId: string, @Request() req) {
+  async followUser(@Param('id') id: string, @Request() req) {
+    const targetUserId = id === 'me' ? req.user._id : id;
     if (!req.user) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-
     const followerId = req.user._id;
-
     if (!followerId) {
       throw new UnauthorizedException('ID utilisateur manquant');
     }
-
     try {
       return await this.userService.followUser(followerId, targetUserId);
     } catch (error) {
@@ -202,24 +211,26 @@ export class UserController {
 
   // Ne plus suivre un utilisateur
   @Delete(':id/follow')
-  async unfollowUser(@Param('id') targetUserId: string, @Request() req) {
+  async unfollowUser(@Param('id') id: string, @Request() req) {
+    const targetUserId = id === 'me' ? req.user._id : id;
     if (!req.user) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-
     const followerId = req.user._id;
     return this.userService.unfollowUser(followerId, targetUserId);
   }
 
   // Récupérer les abonnés d'un utilisateur
   @Get(':id/followers')
-  async getUserFollowers(@Param('id') userId: string) {
+  async getUserFollowers(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     return this.userService.getUserFollowers(userId);
   }
 
   // Récupérer les abonnements d'un utilisateur
   @Get(':id/following')
-  async getUserFollowing(@Param('id') userId: string) {
+  async getUserFollowing(@Param('id') id: string, @Request() req) {
+    const userId = id === 'me' ? req.user._id : id;
     try {
       return await this.userService.getUserFollowing(userId);
     } catch (error) {
@@ -231,9 +242,11 @@ export class UserController {
   // Vérifier si un utilisateur suit un autre utilisateur
   @Get(':id/following/:targetId')
   async checkFollowing(
-    @Param('id') followerId: string,
+    @Param('id') id: string,
     @Param('targetId') targetId: string,
+    @Request() req,
   ) {
+    const followerId = id === 'me' ? req.user._id : id;
     const isFollowing = await this.userService.isFollowing(
       followerId,
       targetId,
@@ -245,15 +258,19 @@ export class UserController {
   async explicitFollowUser(
     @Param('followerId') followerId: string,
     @Param('targetId') targetId: string,
+    @Request() req,
   ) {
-    return this.userService.followUser(followerId, targetId);
+    const resolvedFollowerId = followerId === 'me' ? req.user._id : followerId;
+    return this.userService.followUser(resolvedFollowerId, targetId);
   }
 
   @Delete(':followerId/unfollow/:targetId')
   async explicitUnfollowUser(
     @Param('followerId') followerId: string,
     @Param('targetId') targetId: string,
+    @Request() req,
   ) {
-    return this.userService.unfollowUser(followerId, targetId);
+    const resolvedFollowerId = followerId === 'me' ? req.user._id : followerId;
+    return this.userService.unfollowUser(resolvedFollowerId, targetId);
   }
 }

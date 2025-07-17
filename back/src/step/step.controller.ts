@@ -17,11 +17,15 @@ import { StepDto } from './dto/step.dto';
 export class StepController {
   constructor(private readonly stepService: StepService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   async createStep(@Body() createStepDto: StepDto, @Req() req) {
     const stepData = { ...createStepDto, userId: req.user._id };
     return this.stepService.create(stepData);
+  }
+
+  @Post('batch')
+  async findByIds(@Body('stepIds') stepIds: string[]) {
+    return this.stepService.findByIds(stepIds);
   }
 
   @Get()
@@ -39,18 +43,12 @@ export class StepController {
     return this.stepService.removeById(stepId);
   }
 
-  @Get('plan/:planId')
-  async findAllByPlanId(@Param('planId') planId: string) {
-    return this.stepService.findAllByPlanId(planId);
-  }
-
   @Put(':stepId')
   async updateStep(
     @Param('stepId') stepId: string,
     @Body() updateStepDto: StepDto,
-    @Body('userId') userId: string,
-    @Body('planId') planId: string,
+    @Req() req,
   ) {
-    return this.stepService.updateById(stepId, updateStepDto, userId, planId);
+    return this.stepService.updateById(stepId, updateStepDto, req.user._id);
   }
 }

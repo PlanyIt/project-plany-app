@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../view_models/search_view_model.dart';
+import '../view_models/search_filters_view_model.dart';
 
 class SortOptionSelector extends StatelessWidget {
   final SortOption selectedOption;
@@ -53,16 +53,15 @@ class SortOptionSelector extends StatelessWidget {
 
   String _getSortLabel(SortOption sortOption) {
     switch (sortOption) {
-      case SortOption.distance:
-        return 'Distance croissante';
       case SortOption.cost:
         return 'Prix croissant';
       case SortOption.duration:
         return 'Durée croissante';
-      case SortOption.favorites:
-        return 'Plus populaires';
+
       case SortOption.recent:
         return 'Plus récents';
+      case SortOption.favorites:
+        return 'Plus populaires';
     }
   }
 }

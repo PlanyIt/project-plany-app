@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 
-import '../../../domain/models/user/user.dart';
 import '../../../routing/routes.dart';
 
 import '../../core/themes/app_theme.dart';
@@ -13,14 +12,12 @@ import '../view_models/dashboard_viewmodel.dart';
 class ProfileDrawer extends StatelessWidget {
   final VoidCallback onClose;
   final VoidCallback onLogout;
-  final User? user;
 
   const ProfileDrawer({
     super.key,
     required this.onClose,
     required this.onLogout,
     required this.viewModel,
-    this.user,
   });
 
   final DashboardViewModel viewModel;
@@ -49,10 +46,10 @@ class ProfileDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context, user),
+            _buildHeader(context),
             _buildDivider(),
             Expanded(
-              child: _buildMenuItems(context, user?.id ?? ''),
+              child: _buildMenuItems(context),
             ),
             _buildDivider(),
             LogoutButton(onPressed: viewModel.logout.execute),
@@ -62,16 +59,18 @@ class ProfileDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, User? user) {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          user != null && user.photoUrl != null && user.photoUrl!.isNotEmpty
+          viewModel.user != null &&
+                  viewModel.user?.photoUrl != null &&
+                  viewModel.user!.photoUrl!.isNotEmpty
               ? CircleAvatar(
                   radius: 35,
-                  backgroundImage: NetworkImage(user.photoUrl!),
+                  backgroundImage: NetworkImage(viewModel.user!.photoUrl!),
                   backgroundColor: Colors.transparent,
                   onBackgroundImageError: (error, stackTrace) {
                     if (kDebugMode) {
@@ -102,8 +101,9 @@ class ProfileDrawer extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      user?.email != null && user!.email.isNotEmpty
-                          ? user.email.substring(0, 1).toUpperCase()
+                      viewModel.user?.email != null &&
+                              viewModel.user!.email.isNotEmpty
+                          ? viewModel.user!.email.substring(0, 1).toUpperCase()
                           : 'U',
                       style: const TextStyle(
                         color: Colors.white,
@@ -119,7 +119,7 @@ class ProfileDrawer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user?.username ?? 'Utilisateur',
+                  viewModel.user?.username ?? 'Utilisateur',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -129,7 +129,7 @@ class ProfileDrawer extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user?.email ?? 'Pas d\'email',
+                  viewModel.user?.email ?? 'Pas d\'email',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -169,7 +169,7 @@ class ProfileDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItems(BuildContext context, String userId) {
+  Widget _buildMenuItems(BuildContext context) {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -180,9 +180,9 @@ class ProfileDrawer extends StatelessWidget {
           AppTheme.primaryColor,
           () {
             onClose();
-            if (userId.isNotEmpty) {
+            if (viewModel.user != null && viewModel.user!.id!.isNotEmpty) {
               GoRouter.of(context).go(
-                Routes.profil,
+                Routes.profile,
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -198,7 +198,15 @@ class ProfileDrawer extends StatelessWidget {
           Colors.green,
           () {
             onClose();
-            Navigator.pushNamed(context, '/my-plans');
+            if (viewModel.user != null && viewModel.user!.id!.isNotEmpty) {
+              GoRouter.of(context).go(
+                Routes.profile,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Utilisateur non connecté')),
+              );
+            }
           },
         ),
         _buildMenuItem(
@@ -208,17 +216,15 @@ class ProfileDrawer extends StatelessWidget {
           Colors.orange,
           () {
             onClose();
-            // Navigation vers paramètres
-          },
-        ),
-        _buildMenuItem(
-          context,
-          'Aide & Support',
-          Icons.help_outline,
-          Colors.blue,
-          () {
-            onClose();
-            // Navigation vers aide
+            if (viewModel.user != null && viewModel.user!.id!.isNotEmpty) {
+              GoRouter.of(context).go(
+                Routes.profile,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Utilisateur non connecté')),
+              );
+            }
           },
         ),
       ],

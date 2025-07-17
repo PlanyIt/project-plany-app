@@ -20,16 +20,17 @@ Step _$StepFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Step {
+  @JsonKey(name: '_id')
   String? get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
-  LatLng? get position => throw _privateConstructorUsedError;
+  double? get latitude => throw _privateConstructorUsedError;
+  double? get longitude => throw _privateConstructorUsedError;
   int get order => throw _privateConstructorUsedError;
   String get image => throw _privateConstructorUsedError;
-  String? get duration => throw _privateConstructorUsedError;
+  int? get duration => throw _privateConstructorUsedError;
   double? get cost => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
-  String? get userId => throw _privateConstructorUsedError;
 
   /// Serializes this Step to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -46,16 +47,16 @@ abstract class $StepCopyWith<$Res> {
       _$StepCopyWithImpl<$Res, Step>;
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(name: '_id') String? id,
       String title,
       String description,
-      LatLng? position,
+      double? latitude,
+      double? longitude,
       int order,
       String image,
-      String? duration,
+      int? duration,
       double? cost,
-      DateTime? createdAt,
-      String? userId});
+      DateTime? createdAt});
 }
 
 /// @nodoc
@@ -76,13 +77,13 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
     Object? id = freezed,
     Object? title = null,
     Object? description = null,
-    Object? position = freezed,
+    Object? latitude = freezed,
+    Object? longitude = freezed,
     Object? order = null,
     Object? image = null,
     Object? duration = freezed,
     Object? cost = freezed,
     Object? createdAt = freezed,
-    Object? userId = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -97,10 +98,14 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
-      position: freezed == position
-          ? _value.position
-          : position // ignore: cast_nullable_to_non_nullable
-              as LatLng?,
+      latitude: freezed == latitude
+          ? _value.latitude
+          : latitude // ignore: cast_nullable_to_non_nullable
+              as double?,
+      longitude: freezed == longitude
+          ? _value.longitude
+          : longitude // ignore: cast_nullable_to_non_nullable
+              as double?,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
@@ -112,7 +117,7 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
       duration: freezed == duration
           ? _value.duration
           : duration // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as int?,
       cost: freezed == cost
           ? _value.cost
           : cost // ignore: cast_nullable_to_non_nullable
@@ -121,10 +126,6 @@ class _$StepCopyWithImpl<$Res, $Val extends Step>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      userId: freezed == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String?,
     ) as $Val);
   }
 }
@@ -137,16 +138,16 @@ abstract class _$$StepImplCopyWith<$Res> implements $StepCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(name: '_id') String? id,
       String title,
       String description,
-      LatLng? position,
+      double? latitude,
+      double? longitude,
       int order,
       String image,
-      String? duration,
+      int? duration,
       double? cost,
-      DateTime? createdAt,
-      String? userId});
+      DateTime? createdAt});
 }
 
 /// @nodoc
@@ -164,13 +165,13 @@ class __$$StepImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? title = null,
     Object? description = null,
-    Object? position = freezed,
+    Object? latitude = freezed,
+    Object? longitude = freezed,
     Object? order = null,
     Object? image = null,
     Object? duration = freezed,
     Object? cost = freezed,
     Object? createdAt = freezed,
-    Object? userId = freezed,
   }) {
     return _then(_$StepImpl(
       id: freezed == id
@@ -185,10 +186,14 @@ class __$$StepImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
-      position: freezed == position
-          ? _value.position
-          : position // ignore: cast_nullable_to_non_nullable
-              as LatLng?,
+      latitude: freezed == latitude
+          ? _value.latitude
+          : latitude // ignore: cast_nullable_to_non_nullable
+              as double?,
+      longitude: freezed == longitude
+          ? _value.longitude
+          : longitude // ignore: cast_nullable_to_non_nullable
+              as double?,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
@@ -200,7 +205,7 @@ class __$$StepImplCopyWithImpl<$Res>
       duration: freezed == duration
           ? _value.duration
           : duration // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as int?,
       cost: freezed == cost
           ? _value.cost
           : cost // ignore: cast_nullable_to_non_nullable
@@ -209,10 +214,6 @@ class __$$StepImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      userId: freezed == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String?,
     ));
   }
 }
@@ -221,44 +222,45 @@ class __$$StepImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$StepImpl implements _Step {
   const _$StepImpl(
-      {this.id,
+      {@JsonKey(name: '_id') this.id,
       required this.title,
       required this.description,
-      this.position,
+      this.latitude,
+      this.longitude,
       required this.order,
       required this.image,
       this.duration,
       this.cost,
-      this.createdAt,
-      this.userId});
+      this.createdAt});
 
   factory _$StepImpl.fromJson(Map<String, dynamic> json) =>
       _$$StepImplFromJson(json);
 
   @override
+  @JsonKey(name: '_id')
   final String? id;
   @override
   final String title;
   @override
   final String description;
   @override
-  final LatLng? position;
+  final double? latitude;
+  @override
+  final double? longitude;
   @override
   final int order;
   @override
   final String image;
   @override
-  final String? duration;
+  final int? duration;
   @override
   final double? cost;
   @override
   final DateTime? createdAt;
-  @override
-  final String? userId;
 
   @override
   String toString() {
-    return 'Step(id: $id, title: $title, description: $description, position: $position, order: $order, image: $image, duration: $duration, cost: $cost, createdAt: $createdAt, userId: $userId)';
+    return 'Step(id: $id, title: $title, description: $description, latitude: $latitude, longitude: $longitude, order: $order, image: $image, duration: $duration, cost: $cost, createdAt: $createdAt)';
   }
 
   @override
@@ -270,22 +272,23 @@ class _$StepImpl implements _Step {
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.position, position) ||
-                other.position == position) &&
+            (identical(other.latitude, latitude) ||
+                other.latitude == latitude) &&
+            (identical(other.longitude, longitude) ||
+                other.longitude == longitude) &&
             (identical(other.order, order) || other.order == order) &&
             (identical(other.image, image) || other.image == image) &&
             (identical(other.duration, duration) ||
                 other.duration == duration) &&
             (identical(other.cost, cost) || other.cost == cost) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.userId, userId) || other.userId == userId));
+                other.createdAt == createdAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, title, description, position,
-      order, image, duration, cost, createdAt, userId);
+  int get hashCode => Object.hash(runtimeType, id, title, description, latitude,
+      longitude, order, image, duration, cost, createdAt);
 
   /// Create a copy of Step
   /// with the given fields replaced by the non-null parameter values.
@@ -305,39 +308,40 @@ class _$StepImpl implements _Step {
 
 abstract class _Step implements Step {
   const factory _Step(
-      {final String? id,
+      {@JsonKey(name: '_id') final String? id,
       required final String title,
       required final String description,
-      final LatLng? position,
+      final double? latitude,
+      final double? longitude,
       required final int order,
       required final String image,
-      final String? duration,
+      final int? duration,
       final double? cost,
-      final DateTime? createdAt,
-      final String? userId}) = _$StepImpl;
+      final DateTime? createdAt}) = _$StepImpl;
 
   factory _Step.fromJson(Map<String, dynamic> json) = _$StepImpl.fromJson;
 
   @override
+  @JsonKey(name: '_id')
   String? get id;
   @override
   String get title;
   @override
   String get description;
   @override
-  LatLng? get position;
+  double? get latitude;
+  @override
+  double? get longitude;
   @override
   int get order;
   @override
   String get image;
   @override
-  String? get duration;
+  int? get duration;
   @override
   double? get cost;
   @override
   DateTime? get createdAt;
-  @override
-  String? get userId;
 
   /// Create a copy of Step
   /// with the given fields replaced by the non-null parameter values.

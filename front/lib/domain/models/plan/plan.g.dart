@@ -7,38 +7,50 @@ part of 'plan.dart';
 // **************************************************************************
 
 _$PlanImpl _$$PlanImplFromJson(Map<String, dynamic> json) => _$PlanImpl(
-      id: json['id'] as String?,
+      id: json['_id'] as String?,
       title: json['title'] as String,
       description: json['description'] as String,
-      category: json['category'] as String,
-      userId: json['userId'] as String?,
+      category: json['category'] == null
+          ? null
+          : Category.fromJson(json['category'] as Map<String, dynamic>),
+      user: json['user'] == null
+          ? null
+          : User.fromJson(json['user'] as Map<String, dynamic>),
       isPublic: json['isPublic'] as bool? ?? true,
+      isAccessible: json['isAccessible'] as bool? ?? false,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
       updatedAt: json['updatedAt'] == null
           ? null
           : DateTime.parse(json['updatedAt'] as String),
-      steps: (json['steps'] as List<dynamic>).map((e) => e as String).toList(),
+      steps: (json['steps'] as List<dynamic>?)
+              ?.map((e) => Step.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       favorites: (json['favorites'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       isFavorite: json['isFavorite'] as bool? ?? false,
-      estimatedCost: (json['estimatedCost'] as num?)?.toDouble(),
+      totalCost: (json['totalCost'] as num?)?.toDouble(),
+      totalDuration: (json['totalDuration'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$PlanImplToJson(_$PlanImpl instance) =>
     <String, dynamic>{
-      'id': instance.id,
+      '_id': instance.id,
       'title': instance.title,
       'description': instance.description,
       'category': instance.category,
-      'userId': instance.userId,
+      'user': instance.user,
       'isPublic': instance.isPublic,
+      'isAccessible': instance.isAccessible,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
       'steps': instance.steps,
       'favorites': instance.favorites,
       'isFavorite': instance.isFavorite,
-      'estimatedCost': instance.estimatedCost,
+      'totalCost': instance.totalCost,
+      'totalDuration': instance.totalDuration,
     };

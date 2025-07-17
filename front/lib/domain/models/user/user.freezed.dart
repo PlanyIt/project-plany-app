@@ -20,7 +20,8 @@ User _$UserFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$User {
-  String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: '_id')
+  String? get id => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
@@ -30,6 +31,11 @@ mixin _$User {
   String? get gender => throw _privateConstructorUsedError;
   List<String> get followers => throw _privateConstructorUsedError;
   List<String> get following => throw _privateConstructorUsedError;
+  DateTime? get createdAt => throw _privateConstructorUsedError;
+  int? get followersCount => throw _privateConstructorUsedError;
+  int? get followingCount => throw _privateConstructorUsedError;
+  int? get plansCount => throw _privateConstructorUsedError;
+  int? get favoritesCount => throw _privateConstructorUsedError;
 
   /// Serializes this User to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -46,7 +52,7 @@ abstract class $UserCopyWith<$Res> {
       _$UserCopyWithImpl<$Res, User>;
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: '_id') String? id,
       String username,
       String email,
       String? description,
@@ -55,7 +61,12 @@ abstract class $UserCopyWith<$Res> {
       DateTime? birthDate,
       String? gender,
       List<String> followers,
-      List<String> following});
+      List<String> following,
+      DateTime? createdAt,
+      int? followersCount,
+      int? followingCount,
+      int? plansCount,
+      int? favoritesCount});
 }
 
 /// @nodoc
@@ -73,7 +84,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? id = freezed,
     Object? username = null,
     Object? email = null,
     Object? description = freezed,
@@ -83,12 +94,17 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? gender = freezed,
     Object? followers = null,
     Object? following = null,
+    Object? createdAt = freezed,
+    Object? followersCount = freezed,
+    Object? followingCount = freezed,
+    Object? plansCount = freezed,
+    Object? favoritesCount = freezed,
   }) {
     return _then(_value.copyWith(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       username: null == username
           ? _value.username
           : username // ignore: cast_nullable_to_non_nullable
@@ -125,6 +141,26 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.following
           : following // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      followersCount: freezed == followersCount
+          ? _value.followersCount
+          : followersCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      followingCount: freezed == followingCount
+          ? _value.followingCount
+          : followingCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      plansCount: freezed == plansCount
+          ? _value.plansCount
+          : plansCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      favoritesCount: freezed == favoritesCount
+          ? _value.favoritesCount
+          : favoritesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -137,7 +173,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: '_id') String? id,
       String username,
       String email,
       String? description,
@@ -146,7 +182,12 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       DateTime? birthDate,
       String? gender,
       List<String> followers,
-      List<String> following});
+      List<String> following,
+      DateTime? createdAt,
+      int? followersCount,
+      int? followingCount,
+      int? plansCount,
+      int? favoritesCount});
 }
 
 /// @nodoc
@@ -161,7 +202,7 @@ class __$$UserImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? id = freezed,
     Object? username = null,
     Object? email = null,
     Object? description = freezed,
@@ -171,12 +212,17 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? gender = freezed,
     Object? followers = null,
     Object? following = null,
+    Object? createdAt = freezed,
+    Object? followersCount = freezed,
+    Object? followingCount = freezed,
+    Object? plansCount = freezed,
+    Object? favoritesCount = freezed,
   }) {
     return _then(_$UserImpl(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       username: null == username
           ? _value.username
           : username // ignore: cast_nullable_to_non_nullable
@@ -213,6 +259,26 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value._following
           : following // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      followersCount: freezed == followersCount
+          ? _value.followersCount
+          : followersCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      followingCount: freezed == followingCount
+          ? _value.followingCount
+          : followingCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      plansCount: freezed == plansCount
+          ? _value.plansCount
+          : plansCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      favoritesCount: freezed == favoritesCount
+          ? _value.favoritesCount
+          : favoritesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -221,7 +287,7 @@ class __$$UserImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UserImpl implements _User {
   const _$UserImpl(
-      {required this.id,
+      {@JsonKey(name: '_id') this.id,
       required this.username,
       required this.email,
       this.description,
@@ -230,7 +296,12 @@ class _$UserImpl implements _User {
       this.birthDate,
       this.gender,
       final List<String> followers = const [],
-      final List<String> following = const []})
+      final List<String> following = const [],
+      this.createdAt,
+      this.followersCount,
+      this.followingCount,
+      this.plansCount,
+      this.favoritesCount})
       : _followers = followers,
         _following = following;
 
@@ -238,7 +309,8 @@ class _$UserImpl implements _User {
       _$$UserImplFromJson(json);
 
   @override
-  final String id;
+  @JsonKey(name: '_id')
+  final String? id;
   @override
   final String username;
   @override
@@ -273,8 +345,19 @@ class _$UserImpl implements _User {
   }
 
   @override
+  final DateTime? createdAt;
+  @override
+  final int? followersCount;
+  @override
+  final int? followingCount;
+  @override
+  final int? plansCount;
+  @override
+  final int? favoritesCount;
+
+  @override
   String toString() {
-    return 'User(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following)';
+    return 'User(id: $id, username: $username, email: $email, description: $description, isPremium: $isPremium, photoUrl: $photoUrl, birthDate: $birthDate, gender: $gender, followers: $followers, following: $following, createdAt: $createdAt, followersCount: $followersCount, followingCount: $followingCount, plansCount: $plansCount, favoritesCount: $favoritesCount)';
   }
 
   @override
@@ -298,7 +381,17 @@ class _$UserImpl implements _User {
             const DeepCollectionEquality()
                 .equals(other._followers, _followers) &&
             const DeepCollectionEquality()
-                .equals(other._following, _following));
+                .equals(other._following, _following) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.followersCount, followersCount) ||
+                other.followersCount == followersCount) &&
+            (identical(other.followingCount, followingCount) ||
+                other.followingCount == followingCount) &&
+            (identical(other.plansCount, plansCount) ||
+                other.plansCount == plansCount) &&
+            (identical(other.favoritesCount, favoritesCount) ||
+                other.favoritesCount == favoritesCount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -314,7 +407,12 @@ class _$UserImpl implements _User {
       birthDate,
       gender,
       const DeepCollectionEquality().hash(_followers),
-      const DeepCollectionEquality().hash(_following));
+      const DeepCollectionEquality().hash(_following),
+      createdAt,
+      followersCount,
+      followingCount,
+      plansCount,
+      favoritesCount);
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -334,7 +432,7 @@ class _$UserImpl implements _User {
 
 abstract class _User implements User {
   const factory _User(
-      {required final String id,
+      {@JsonKey(name: '_id') final String? id,
       required final String username,
       required final String email,
       final String? description,
@@ -343,12 +441,18 @@ abstract class _User implements User {
       final DateTime? birthDate,
       final String? gender,
       final List<String> followers,
-      final List<String> following}) = _$UserImpl;
+      final List<String> following,
+      final DateTime? createdAt,
+      final int? followersCount,
+      final int? followingCount,
+      final int? plansCount,
+      final int? favoritesCount}) = _$UserImpl;
 
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
   @override
-  String get id;
+  @JsonKey(name: '_id')
+  String? get id;
   @override
   String get username;
   @override
@@ -367,6 +471,16 @@ abstract class _User implements User {
   List<String> get followers;
   @override
   List<String> get following;
+  @override
+  DateTime? get createdAt;
+  @override
+  int? get followersCount;
+  @override
+  int? get followingCount;
+  @override
+  int? get plansCount;
+  @override
+  int? get favoritesCount;
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.

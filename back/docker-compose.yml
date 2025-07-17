@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mongo-dev:
+    image: mongo:latest
+    container_name: mongo_dev
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_dev_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: plany
+
+  mongo-test:
+    image: mongo:latest
+    container_name: mongo_test
+    ports:
+      - '27018:27017'
+    volumes:
+      - mongo_test_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: planytest
+
+volumes:
+  mongo_dev_data:
+  mongo_test_data:

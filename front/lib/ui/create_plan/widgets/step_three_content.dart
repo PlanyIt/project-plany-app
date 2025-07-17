@@ -1,26 +1,22 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../widgets/card/compact_plan_card.dart';
+
+import '../../../../utils/helpers.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/ui/card/compact_plan_card.dart';
 import '../view_models/create_plan_view_model.dart';
+import '../view_models/create_step_viewmodel.dart';
 import 'step_card_timeline.dart';
 
-class StepThreeContent extends StatefulWidget {
+class StepThreeContent extends StatelessWidget {
   const StepThreeContent({super.key, required this.viewModel});
 
   final CreatePlanViewModel viewModel;
 
   @override
-  State<StepThreeContent> createState() => _StepThreeContentState();
-}
-
-class _StepThreeContentState extends State<StepThreeContent> {
-  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.paddingL),
       physics: const BouncingScrollPhysics(),
-      // On utilise Container avec fond blanc pour assurer la cohérence
       child: Container(
         color: Colors.white,
         child: Column(
@@ -30,14 +26,50 @@ class _StepThreeContentState extends State<StepThreeContent> {
             const SizedBox(height: 24),
             _buildSectionTitle(context, 'Aperçu final'),
             const SizedBox(height: 16),
-            _buildPlanPreview(context),
+            _buildPlanPreview(),
             const SizedBox(height: 24),
-            if (widget.viewModel.stepCards.isNotEmpty) ...[
-              _buildSectionTitle(context, 'Étapes'),
-              const SizedBox(height: 16),
-              _buildStepsList(),
-              const SizedBox(height: 24),
-            ],
+            ValueListenableBuilder<List<StepData>>(
+              valueListenable: viewModel.steps,
+              builder: (_, steps, __) {
+                if (steps.isNotEmpty) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle(context, 'Étapes'),
+                      const SizedBox(height: 16),
+                      _buildStepsList(steps),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                }
+                return const SizedBox();
+              },
+            ),
+            _buildSectionTitle(context, 'Options du plan'),
+            const SizedBox(height: 16),
+            ValueListenableBuilder<bool>(
+              valueListenable: viewModel.isPublic,
+              builder: (_, isPublic, __) {
+                return _buildSwitchRow(
+                  title: 'Plan public',
+                  icon: Icons.public,
+                  value: isPublic,
+                  onChanged: (value) => viewModel.isPublic.value = value,
+                );
+              },
+            ),
+            ValueListenableBuilder<bool>(
+              valueListenable: viewModel.isAccessible,
+              builder: (_, isAccessible, __) {
+                return _buildSwitchRow(
+                  title: 'Adapté PMR (mobilité réduite)',
+                  icon: Icons.accessible,
+                  value: isAccessible,
+                  onChanged: (value) => viewModel.isAccessible.value = value,
+                );
+              },
+            ),
+            const SizedBox(height: 24),
             _buildPublishCard(),
             const SizedBox(height: 100),
           ],
@@ -46,136 +78,74 @@ class _StepThreeContentState extends State<StepThreeContent> {
     );
   }
 
-  Widget _buildInfoCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.accentColor,
-            const Color(0xFFFF5A85),
-          ],
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.check_circle_outline,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Presque terminé !',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Vérifiez les détails de votre plan avant de le publier. Vous pourrez le modifier ultérieurement.',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildPlanPreview() {
+    return ValueListenableBuilder<List<StepData>>(
+      valueListenable: viewModel.steps,
+      builder: (_, stepCards, __) {
+        final stepImages = stepCards
+            .where((step) => step.imageUrl.isNotEmpty)
+            .map((step) => step.imageUrl)
+            .toList();
 
-  Widget _buildPlanPreview(BuildContext context) {
-    final stepImages = widget.viewModel.stepCards
-        .where((step) => step.imageUrl.isNotEmpty)
-        .map((step) => step.imageUrl)
-        .toList();
+        double totalCost = 0;
+        var totalDurationInMinutes = 0;
 
-    // Calculate total cost and duration from step cards
-    double totalCost = 0;
-    var totalDurationMinutes = 0;
-
-    for (final step in widget.viewModel.stepCards) {
-      if (step.cost != null) {
-        totalCost += step.cost!;
-      }
-
-      if (step.duration != null && step.duration!.isNotEmpty) {
-        // Convert duration to minutes based on unit
-        final durationValue = int.tryParse(step.duration!) ?? 0;
-        if (step.durationUnit == 'Heures') {
-          totalDurationMinutes += durationValue * 60;
-        } else if (step.durationUnit == 'Minutes') {
-          totalDurationMinutes += durationValue;
-        } else if (step.durationUnit == 'Jours') {
-          totalDurationMinutes += durationValue * 24 * 60;
+        for (final step in stepCards) {
+          if (step.cost != null) totalCost += step.cost!;
+          if (step.duration != null &&
+              step.duration! > 0 &&
+              step.durationUnit != null) {
+            totalDurationInMinutes = formatDurationToMinutes(
+                '${step.duration} ${step.durationUnit!.toLowerCase()}');
+          }
         }
-      }
-    }
 
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          CompactPlanCard(
-            title: widget.viewModel.titlePlanController.text,
-            description: widget.viewModel.descriptionPlanController.text,
-            category: widget.viewModel.selectedCategory,
-            stepsCount: widget.viewModel.stepCards.length,
-            borderRadius: BorderRadius.circular(16),
-            imageUrls: stepImages.isEmpty ? null : stepImages,
-            totalCost: totalCost > 0 ? totalCost : null,
-            totalDuration:
-                totalDurationMinutes > 0 ? totalDurationMinutes : null,
-          ),
-        ],
-      ),
+        return ValueListenableBuilder<String>(
+          valueListenable: viewModel.title,
+          builder: (_, title, __) {
+            return ValueListenableBuilder<String>(
+              valueListenable: viewModel.description,
+              builder: (_, description, __) {
+                return Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: .05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: CompactPlanCard(
+                    title: title,
+                    description: description,
+                    category: viewModel.selectedCategory,
+                    stepsCount: stepCards.length,
+                    borderRadius: BorderRadius.circular(16),
+                    imageUrls: stepImages.isEmpty ? null : stepImages,
+                    totalCost: totalCost > 0 ? totalCost : null,
+                    totalDuration: totalDurationInMinutes > 0
+                        ? totalDurationInMinutes
+                        : null,
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildStepsList() {
+  Widget _buildStepsList(List<StepData> steps) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -184,16 +154,16 @@ class _StepThreeContentState extends State<StepThreeContent> {
       child: ListView.builder(
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
-        itemCount: widget.viewModel.stepCards.length,
+        itemCount: steps.length,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         itemBuilder: (context, index) {
-          final step = widget.viewModel.stepCards[index];
+          final step = steps[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: StepCardTimeline(
               index: index,
               isFirst: index == 0,
-              isLast: index == widget.viewModel.stepCards.length - 1,
+              isLast: index == steps.length - 1,
               title: step.title,
               description: step.description,
               imagePath: step.imageUrl.isNotEmpty ? step.imageUrl : null,
@@ -209,97 +179,154 @@ class _StepThreeContentState extends State<StepThreeContent> {
     );
   }
 
-  Widget _buildPublishCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+  Widget _buildInfoCard() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: viewModel.isAccessible,
+      builder: (_, isAccessible, __) {
+        final infoText = isAccessible
+            ? 'Votre plan sera identifié comme accessible aux personnes à mobilité réduite.'
+            : 'Vous pouvez indiquer si votre plan est accessible aux personnes à mobilité réduite.';
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.accentColor,
+                const Color(0xFFFF5A85),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-        border: Border.all(
-          color: AppTheme.accentColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.accentColor.withValues(alpha: 0.1),
+                  color: Colors.white.withValues(alpha: .2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.public,
-                  color: AppTheme.accentColor,
-                  size: 20,
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 28,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'Prêt à publier ?',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Presque terminé !',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      infoText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'En publiant ce plan, vous le rendez visible par tous les utilisateurs de l\'application. Vous pourrez le modifier ou le supprimer ultérieurement depuis votre profil.',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 14,
+        );
+      },
+    );
+  }
+
+  Widget _buildPublishCard() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: viewModel.isPublic,
+      builder: (_, isPublic, __) {
+        final publishTitle = isPublic ? 'Prêt à publier ?' : 'Plan privé';
+        final publishDescription = isPublic
+            ? 'En publiant ce plan, vous le rendez visible par tous les utilisateurs. Vous pourrez le supprimer plus tard.'
+            : 'Ce plan restera privé et ne sera visible que par vous.';
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(
+              color: AppTheme.accentColor.withValues(alpha: .3),
             ),
           ),
-          const SizedBox(height: 16),
-          const Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 16,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentColor.withValues(alpha: .1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isPublic ? Icons.public : Icons.lock_outline,
+                      color: AppTheme.accentColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    publishTitle,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 8),
+              const SizedBox(height: 12),
               Text(
-                'Vos coordonnées ne sont pas partagées',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
+                publishDescription,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 14,
                 ),
+              ),
+              const SizedBox(height: 16),
+              const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    'Vos coordonnées ne sont pas partagées',
+                    style: TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 16,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Vous pouvez modifier ce plan à tout moment',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -313,158 +340,26 @@ class _StepThreeContentState extends State<StepThreeContent> {
       ),
     );
   }
-}
 
-class ImageCarousel extends StatefulWidget {
-  final List<String> images;
-
-  const ImageCarousel({
-    super.key,
-    required this.images,
-  });
-
-  @override
-  State<ImageCarousel> createState() => _ImageCarouselState();
-}
-
-class _ImageCarouselState extends State<ImageCarousel> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.images.isEmpty) {
-      return Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(16),
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.image_not_supported,
-            size: 40,
-            color: Colors.grey.shade400,
-          ),
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 180,
-      child: Stack(
+  Widget _buildSwitchRow({
+    required String title,
+    required bool value,
+    required IconData icon,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
         children: [
-          // Images du carousel
-          PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            itemCount: widget.images.length,
-            itemBuilder: (context, index) {
-              final imagePath = widget.images[index];
-              return ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: imagePath.startsWith('http')
-                    ? Image.network(
-                        imagePath,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _buildErrorImage(),
-                      )
-                    : Image.file(
-                        File(imagePath),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _buildErrorImage(),
-                      ),
-              );
-            },
-          ),
-
-          // Indicateurs de pagination
-          if (widget.images.length > 1)
-            Positioned(
-              bottom: 10,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  widget.images.length,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: _currentPage == index ? 18 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _currentPage == index
-                          ? AppTheme.primaryColor
-                          : Colors.white.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 3,
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-          // Numéro de l'image actuelle
-          Positioned(
-            top: 10,
-            right: 10,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${_currentPage + 1}/${widget.images.length}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+          Icon(icon, size: 18, color: Colors.grey[700]),
+          const SizedBox(width: 8),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: const Color(0xFF3425B5),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildErrorImage() {
-    return Container(
-      color: Colors.grey.shade200,
-      height: 180,
-      child: Center(
-        child: Icon(
-          Icons.image_not_supported,
-          size: 40,
-          color: Colors.grey.shade400,
-        ),
       ),
     );
   }

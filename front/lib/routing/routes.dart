@@ -5,6 +5,7 @@ abstract final class Routes {
   static const dashboard = '/';
   static const reset = '/reset-password';
   static const createPlan = '/create-plan';
-  static const profil = '/profil';
+  static const profile = '/profile';
   static const search = '/search';
+  static const planDetails = '/plan-details';
 }

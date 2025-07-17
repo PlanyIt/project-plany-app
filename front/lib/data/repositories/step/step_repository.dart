@@ -8,8 +8,11 @@ abstract class StepRepository {
   Future<Result<List<Step>>> getStepsList(String planId);
 
   /// Creates a new [Step].
-  Future<Result<Step>> createStep(Step step, String userId);
+  Future<Result<Step>> createStep(Step step);
 
   /// Uploads an image for a [Step].
   Future<Result<String>> uploadImage(File imageFile);
+
+  /// Clears the cache of steps.
+  Future<void> clearCache();
 }

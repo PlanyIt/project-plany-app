@@ -5,19 +5,19 @@ export type CommentDocument = Comment & Document;
 
 @Schema({ timestamps: true })
 export class Comment {
-  @Prop({ required: false })
+  @Prop({ required: true })
   content: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  userId: string;
-
-  @Prop({ type: Types.ObjectId, ref: 'Plan', required: true })
+  @Prop({ type: String, required: true })
   planId: string;
 
-  @Prop({ type: [String], required: false })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  user: Types.ObjectId;
+
+  @Prop({ type: [String], default: [] })
   likes?: string[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Comment' }], required: false })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Comment' }], default: [] })
   responses?: Types.ObjectId[];
 
   @Prop({ type: Types.ObjectId, ref: 'Comment', required: false })

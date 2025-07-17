@@ -3,162 +3,171 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { PasswordService } from './password.service';
-import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../user/user.service';
+import { RegisterDto } from './dto/register.dto';
+import { TokenService } from './token.service';
+import { UserDocument } from '../user/schemas/user.schema';
 
+/**
+ * Service d'authentification et de gestion des utilisateurs
+ * ---------------------------------------------------------
+ * - Hash des mots de passe avec Argon2 (via PasswordService)
+ * - Génération d'un couple access / refresh token via TokenService
+ * - Rotation automatique du refresh token
+ * - Validation stricte des entrées et gestion fine des exceptions
+ */
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UserService,
-    private jwtService: JwtService,
-    private passwordService: PasswordService,
+    private readonly usersService: UserService,
+    private readonly passwordService: PasswordService,
+    private readonly tokenService: TokenService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findOneByEmail(email);
-
-    if (!user) {
-      return null;
-    }
-
-    // Tenter avec Argon2 d'abord, puis avec bcrypt si nécessaire
-    let isPasswordValid = false;
-
-    try {
-      isPasswordValid = await this.passwordService.verifyPassword(
-        password,
-        user.password,
-      );
-    } catch (e) {
-      isPasswordValid = await this.passwordService.verifyLegacyPassword(
-        password,
-        user.password,
-      );
-
-      if (!isPasswordValid) {
-        return null;
-      }
-    }
-
-    if (isPasswordValid) {
-      const { password, ...result } = user.toObject();
-      return result;
-    }
-
-    return null;
-  }
-
-  async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
-
-    if (!user) {
-      throw new UnauthorizedException('Email ou mot de passe incorrect');
-    }
-
+  /* ------------------------------------------------------------------
+     Helpers privés
+  ------------------------------------------------------------------ */
+  /**
+   * Construit et retourne un couple { accessToken, refreshToken }
+   * @param user Document Mongoose de l'utilisateur
+   */
+  private async issueTokens(user: UserDocument) {
     const payload = {
-      sub: user._id,
+      sub: user._id.toString(),
       email: user.email,
       username: user.username,
     };
 
     return {
-      token: this.jwtService.sign(payload),
-      currentUser: {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-        description: user.description || null,
-        isPremium: user.isPremium || false,
-        photoUrl: user.photoUrl || null,
-        birthDate: user.birthDate || null,
-        gender: user.gender || null,
-        followers: user.followers || [],
-        following: user.following || [],
-      },
+      accessToken: this.tokenService.signAccess(payload),
+      refreshToken: await this.tokenService.signRefresh(user._id.toString()),
     };
   }
 
-  async register(createUserDto: CreateUserDto) {
-    // Vérifier si l'email existe déjà
-    const existingUserByEmail = await this.usersService.findOneByEmail(
-      createUserDto.email,
+  /**
+   * Retire le hash du mot de passe avant de retourner l'objet au client
+   */
+  private publicUser(u: UserDocument) {
+    const { password, __v, ...rest } = u.toObject();
+    return rest;
+  }
+
+  /* ------------------------------------------------------------------
+     Authentification / validation
+  ------------------------------------------------------------------ */
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<UserDocument | null> {
+    const user = await this.usersService.findOneByEmail(email);
+    if (!user) return null;
+
+    const isPasswordValid = await this.passwordService.verifyPassword(
+      password,
+      user.password,
     );
-    if (existingUserByEmail) {
+    return isPasswordValid ? user : null;
+  }
+
+  /* ------------------------------------------------------------------
+     Login → retourne tokens + infos utilisateur
+  ------------------------------------------------------------------ */
+  async login(dto: LoginDto) {
+    const user = await this.validateUser(dto.email, dto.password);
+    if (!user)
+      throw new UnauthorizedException('Email ou mot de passe incorrect');
+
+    const { accessToken, refreshToken } = await this.issueTokens(user);
+
+    return {
+      accessToken,
+      refreshToken,
+      currentUser: this.publicUser(user),
+    };
+  }
+
+  /* ------------------------------------------------------------------
+     Register → crée utilisateur + retourne tokens
+  ------------------------------------------------------------------ */
+  async register(dto: RegisterDto) {
+    // 1. Unicité email / username
+    if (await this.usersService.findOneByEmail(dto.email)) {
       throw new BadRequestException('Cet email est déjà utilisé');
     }
-
-    // Vérifier si le nom d'utilisateur existe déjà
-    const existingUserByUsername = await this.usersService.findOneByUsername(
-      createUserDto.username,
-    );
-    if (existingUserByUsername) {
+    if (await this.usersService.findOneByUsername(dto.username)) {
       throw new BadRequestException("Ce nom d'utilisateur est déjà pris");
     }
 
-    // Hacher le mot de passe avec notre service spécialisé
+    // 2. Hash du mot de passe
     const hashedPassword = await this.passwordService.hashPassword(
-      createUserDto.password,
+      dto.password,
     );
 
-    try {
-      // Créer l'utilisateur avec le mot de passe déjà haché
-      const newUser = await this.usersService.create({
-        ...createUserDto,
-        password: hashedPassword,
-        isActive: true,
-      });
+    // 3. Persistance de l'utilisateur
+    const newUser = await this.usersService.create({
+      ...dto,
+      password: hashedPassword,
+    });
 
-      // Générer un token JWT
-      const payload = {
-        sub: newUser._id,
-        email: newUser.email,
-        username: newUser.username,
-      };
-
-      return {
-        token: this.jwtService.sign(payload),
-        currentUser: {
-          id: newUser._id,
-          email: newUser.email,
-          username: newUser.username,
-          description: newUser.description || null,
-          isPremium: newUser.isPremium || false,
-          photoUrl: newUser.photoUrl || null,
-          birthDate: newUser.birthDate || null,
-          gender: newUser.gender || null,
-          followers: newUser.followers || [],
-          following: newUser.following || [],
-        },
-      };
-    } catch (error) {
-      // Gérer les erreurs de duplication de MongoDB
-      if (error.code === 11000) {
-        const field = Object.keys(error.keyPattern)[0];
-        throw new BadRequestException(
-          `Ce ${field === 'email' ? 'email' : "nom d'utilisateur"} est déjà utilisé`,
-        );
-      }
-      throw error;
-    }
-  }
-
-  async refreshToken(userId: string) {
-    const user = await this.usersService.findById(userId);
-    if (!user) {
-      throw new UnauthorizedException('Utilisateur non trouvé');
-    }
-
-    const payload = {
-      sub: user._id,
-      email: user.email,
-      username: user.username,
-    };
+    // 4. Émission des tokens
+    const { accessToken, refreshToken } = await this.issueTokens(newUser);
 
     return {
-      token: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
+      currentUser: this.publicUser(newUser),
     };
+  }
+
+  /* ------------------------------------------------------------------
+     Changement de mot de passe (révoque tous les refresh existentes)
+  ------------------------------------------------------------------ */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('Utilisateur non trouvé');
+
+    const passwordValid = await this.passwordService.verifyPassword(
+      currentPassword,
+      user.password,
+    );
+    if (!passwordValid)
+      throw new UnauthorizedException('Mot de passe actuel incorrect');
+
+    // Validation basique de robustesse
+    if (
+      newPassword.length < 8 ||
+      !/[A-Z]/.test(newPassword) ||
+      !/[a-z]/.test(newPassword) ||
+      !/\d/.test(newPassword)
+    ) {
+      throw new BadRequestException(
+        'Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre',
+      );
+    }
+
+    // Mise à jour et révocation des refresh tokens existants
+    const hashedPassword = await this.passwordService.hashPassword(newPassword);
+    await this.usersService.updateById(userId, { password: hashedPassword });
+    await this.tokenService.revokeAllForUser(userId); // méthode à implémenter dans TokenService
+  }
+
+  /* ------------------------------------------------------------------
+     Refresh et Logout (optionnel : exposés via AuthController)
+  ------------------------------------------------------------------ */
+  async refresh(rt: string) {
+    const payload = await this.tokenService.verifyRefresh(rt);
+    const user = await this.usersService.findById(payload.sub);
+    const { accessToken, refreshToken } = await this.issueTokens(user);
+    return { accessToken, refreshToken };
+  }
+
+  async logout(rt: string) {
+    await this.tokenService.revokeFromJwt(rt);
   }
 }

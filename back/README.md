@@ -22,64 +22,165 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+# Plany Backend
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This is the backend API for **Plany**, a collaborative platform for sharing and discovering outing plans. Built with [NestJS](https://nestjs.com/) and MongoDB, it provides a robust, secure, and scalable REST API for managing users, plans, steps, comments, and categories.
 
-## Project setup
+---
+
+## Features
+
+- **User Management**: Registration, authentication (JWT), profile, premium status, followers/following, and secure password handling (Argon2).
+- **Plans**: Create, update, delete, and retrieve outing plans with steps, categories, and favorites.
+- **Steps**: Each plan consists of ordered steps (activities/places), with geolocation, images, cost, and duration.
+- **Comments**: Hierarchical comments system with likes, replies, and moderation.
+- **Categories**: Organize plans by category (e.g., Weekend, Culture, Gastronomy).
+- **Security**: Helmet, rate limiting, NoSQL injection protection, DTO validation, and CORS.
+- **Testing**: Unit and e2e tests with Jest.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [MongoDB](https://www.mongodb.com/) (local or cloud instance)
+
+### Installation
 
 ```bash
-$ npm install
+npm install
+# or
+yarn install
 ```
 
-## Compile and run the project
+### Environment Variables
+
+Create a `.env` file at the root of `/back` with the following variables:
+
+```
+MONGO_URI=mongodb://localhost:27017/plany
+JWT_SECRET=your_jwt_secret
+JWT_SECRET_AT=your_access_token_secret
+JWT_SECRET_RT=your_refresh_token_secret
+JWT_AT_EXPIRES_IN=15m
+JWT_RT_EXPIRES_IN=30d
+CORS_ORIGIN=https://plany.app,https://admin.plany.app
+PORT=3000
+```
+
+> **Note:** You can use `.env.local` for local overrides.
+
+---
+
+## Running the Server
 
 ```bash
-# development
-$ npm run start
+# Development
+npm run start:dev
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Production
+npm run build
+npm run start:prod
 ```
 
-## Run tests
+The API will be available at `http://localhost:3000` by default.
+
+---
+
+## Database Setup & Seeding
+
+Initialize and seed the database with demo data:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run db:init    # Create collections if needed
+npm run db:seed    # Seed demo users, plans, steps, categories, comments
+npm run db:reset   # Reset and reseed all data
 ```
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+## API Overview
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- **Base URL:** `/api`
+- **Authentication:** JWT (access & refresh tokens)
+- **Main Endpoints:**
+  - `/api/auth` - Login, register, refresh, logout, change password
+  - `/api/users` - User CRUD, profile, stats, followers, following, favorites
+  - `/api/plans` - Plan CRUD, favorites, user plans
+  - `/api/steps` - Step CRUD
+  - `/api/comments` - Comment CRUD, likes, replies
+  - `/api/categories` - Category CRUD
 
-## Support
+> See the [OpenAPI/Swagger documentation](#) (if enabled) for full endpoint details.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
+## Testing
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+# Unit tests
+npm run test
+
+# End-to-end tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+---
+
+## Security
+
+- DTO validation with `class-validator`
+- Helmet for HTTP headers
+- Rate limiting (1000 req/15min/IP)
+- NoSQL injection sanitization
+- CORS configuration
+
+---
+
+## Project Structure
+
+```
+src/
+  ├── app.module.ts
+  ├── auth/
+  ├── user/
+  ├── plan/
+  ├── step/
+  ├── comment/
+  ├── category/
+  └── infrastructure/
+```
+
+---
+
+## Useful Commands
+
+- `npm run start:dev` — Start in watch mode
+- `npm run db:reset` — Reset and seed the database
+- `npm run test` — Run all tests
+
+---
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+MIT
+
+---
+
+## Authors
+
+- Plany Team
+
+---
+
+## Resources
+
+- [NestJS Documentation](https://docs.nestjs.com)
+- [MongoDB Documentation](https://docs.mongodb.com/)
+- [Jest Testing](https://jestjs.io/)

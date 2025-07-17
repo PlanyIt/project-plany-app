@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../domain/models/step/step.dart' as step_model;
@@ -15,192 +16,67 @@ double calculateTotalStepsCost(List<step_model.Step> steps) {
   });
 }
 
-/// Calculates the total duration of steps from a list of Step objects.
-/// Calculates the total duration in minutes from a list of Step objects.
-/// Handles "minute", "heure", "jour", and "semaine" units.
-/// 1 jour = 8 heures, 1 semaine = 5 jours (work week).
-int calculateTotalDuration(List<step_model.Step> steps) {
-  var total = 0;
-  final regex = RegExp(r'(\d+)\s*(minute|heure|jour|semaine)');
+/// Calculates duration from minutes to a formatted string.
+/// Returns a string in the format "X jours" ou "X heures" ou "X minutes".
+/// If the duration is null or empty, returns "0 minutes".
+String formatDurationToString(int minutes) {
+  if (minutes <= 0) return '0 minutes';
 
-  for (final step in steps) {
-    final match = regex.firstMatch(step.duration ?? '');
-    if (match != null) {
-      final value = int.tryParse(match.group(1)!);
-      final unit = match.group(2);
-      if (value != null && unit != null) {
-        switch (unit) {
-          case 'minute':
-            total += value;
-            break;
-          case 'heure':
-            total += value * 60;
-            break;
-          case 'jour':
-            total += value * 8 * 60;
-            break;
-          case 'semaine':
-            total += value * 5 * 8 * 60;
-            break;
+  final days = minutes ~/ (24 * 60);
+  final hours = (minutes % (24 * 60)) ~/ 60;
+  final remainingMinutes = minutes % 60;
+
+  final parts = <String>[];
+  if (days > 0) parts.add('$days jours');
+  if (hours > 0) parts.add('$hours heures');
+  if (remainingMinutes > 0) parts.add('$remainingMinutes minutes');
+
+  return parts.join(' ');
+}
+
+/// Calculates duration String "X jours" "X heures" "X minutes" to Minutes.
+/// If the duration is null or empty, returns "0 minutes".
+int formatDurationToMinutes(String duration) {
+  if (duration.isEmpty) return 0;
+
+  final parts = duration.split(' ');
+  var totalMinutes = 0;
+
+  for (var i = 0; i < parts.length; i++) {
+    final part = parts[i];
+
+    // Check if current part is a number and next part is a unit
+    if (i + 1 < parts.length) {
+      final number = int.tryParse(part);
+      final unit = parts[i + 1];
+
+      if (number != null) {
+        if (unit == 'jours') {
+          totalMinutes += number * 24 * 60;
+          i++; // Skip the unit part
+        } else if (unit == 'heures') {
+          totalMinutes += number * 60;
+          i++; // Skip the unit part
+        } else if (unit == 'minutes') {
+          totalMinutes += number;
+          i++; // Skip the unit part
         }
       }
     }
-  }
 
-  return total;
-}
-
-/// Handles durations in the format "X minutes", "X heures", "X jours", etc.
-/// Returns a formatted string representing the total duration.
-String calculateTotalStepsDuration(List<step_model.Step> steps) {
-  // Convert all durations to minutes for easy calculation
-  var totalMinutes = 0;
-
-  for (final step in steps) {
-    if (step.duration == null || step.duration!.isEmpty) continue;
-    totalMinutes += _parseDurationToMinutes(step.duration!);
-  }
-
-  // Convert total minutes back to a readable format
-  return _formatDuration(totalMinutes);
-}
-
-/// Parses a duration string like "2 minutes", "6 heures", or "2 heures et 30 minutes" to minutes.
-int _parseDurationToMinutes(String durationStr) {
-  if (durationStr.isEmpty) return 0;
-
-  var totalMinutes = 0;
-
-  // Split by "et" to handle complex durations like "2 heures et 30 minutes"
-  final segments = durationStr.split(' et ');
-
-  for (final segment in segments) {
-    final parts = segment.trim().split(' ');
-    if (parts.length < 2) continue;
-
-    int value;
-    try {
-      value = int.parse(parts[0]);
-    } catch (e) {
-      continue; // Skip invalid segments
-    }
-
-    final unit = parts[1].toLowerCase();
-
-    if (unit.contains('seconde')) {
-      totalMinutes +=
-          (value / 60).ceil(); // Convert seconds to minutes, rounding up
-    } else if (unit.contains('minute')) {
-      totalMinutes += value;
-    } else if (unit.contains('heure')) {
-      totalMinutes += value * 60; // Convert hours to minutes
-    } else if (unit.contains('jour')) {
-      totalMinutes += value * 24 * 60; // Convert days to minutes
+    if (part.endsWith('jours')) {
+      final days = int.tryParse(part.replaceAll('jours', '').trim()) ?? 0;
+      totalMinutes += days * 24 * 60;
+    } else if (part.endsWith('heures')) {
+      final hours = int.tryParse(part.replaceAll('heures', '').trim()) ?? 0;
+      totalMinutes += hours * 60;
+    } else if (part.endsWith('minutes')) {
+      final minutes = int.tryParse(part.replaceAll('minutes', '').trim()) ?? 0;
+      totalMinutes += minutes;
     }
   }
 
   return totalMinutes;
-}
-
-/// Formats minutes into a readable duration string.
-String _formatDuration(int totalMinutes) {
-  if (totalMinutes == 0) return "0 minute";
-
-  final days = totalMinutes ~/ (24 * 60);
-  totalMinutes %= (24 * 60);
-
-  final hours = totalMinutes ~/ 60;
-  totalMinutes %= 60;
-
-  final minutes = totalMinutes;
-
-  final parts = <String>[];
-
-  if (days > 0) {
-    parts.add('$days ${days == 1 ? "jour" : "jours"}');
-  }
-
-  if (hours > 0) {
-    parts.add('$hours ${hours == 1 ? "heure" : "heures"}');
-  }
-
-  if (minutes > 0) {
-    parts.add('$minutes ${minutes == 1 ? "minute" : "minutes"}');
-  }
-
-  // Join the parts with commas and 'et' for the last part if there are multiple parts
-  if (parts.length > 1) {
-    final lastPart = parts.removeLast();
-    return '${parts.join(', ')} et $lastPart';
-  }
-  return parts.first;
-}
-
-/// Converts a formatted duration string back to minutes
-/// Used when you have a duration like "2 heures et 30 minutes" and need to convert it back to minutes
-int parseDurationStringToMinutes(String durationStr) {
-  if (durationStr.isEmpty || durationStr == "0 minute") return 0;
-
-  var totalMinutes = 0;
-
-  // Remove common words and split by different separators
-  final cleanStr =
-      durationStr.replaceAll(',', ' ').replaceAll('  ', ' ').trim();
-
-  // Split by "et" first
-  final segments = cleanStr.split(' et ');
-
-  for (final segment in segments) {
-    // Then split each segment by spaces
-    final words = segment.trim().split(' ');
-
-    for (var i = 0; i < words.length - 1; i++) {
-      final valueStr = words[i];
-      final unit = words[i + 1].toLowerCase();
-
-      int value;
-      try {
-        value = int.parse(valueStr);
-      } catch (e) {
-        continue; // Skip invalid numbers
-      }
-
-      if (unit.contains('jour')) {
-        totalMinutes += value * 24 * 60;
-      } else if (unit.contains('heure')) {
-        totalMinutes += value * 60;
-      } else if (unit.contains('minute')) {
-        totalMinutes += value;
-      }
-    }
-  }
-
-  return totalMinutes;
-}
-
-String formatDuration(int minutes) {
-  if (minutes < 60) {
-    return '$minutes min';
-  } else {
-    final hours = (minutes / 60).floor();
-    final remainingMinutes = minutes % 60;
-    if (remainingMinutes == 0) {
-      return '${hours}h';
-    } else {
-      return '${hours}h ${remainingMinutes}min';
-    }
-  }
-}
-
-String? formatDistance(double? meters) {
-  if (meters == null || meters < 0) return null;
-
-  if (meters < 1000) {
-    return '${meters.toStringAsFixed(0)} m';
-  } else {
-    final kilometers = meters / 1000;
-    return '${kilometers.toStringAsFixed(2)} km';
-  }
 }
 
 /// Calcule la distance en mètres entre deux points GPS (Haversine)
@@ -242,4 +118,108 @@ Color colorFromHex(String hexColor, {double? alpha}) {
     color = color.withValues(alpha: 0.3);
   }
   return color;
+}
+
+/// Convertit une durée en minutes selon l'unité
+int convertDurationToMinutes(int value, String unit) {
+  switch (unit.toLowerCase()) {
+    case 'min':
+    case 'minute':
+    case 'minutes':
+      return value;
+    case 'h':
+    case 'heure':
+    case 'heures':
+      return value * 60;
+    case 'j':
+    case 'jour':
+    case 'jours':
+      return value * 24 * 60; // 24 heures par jour au lieu de 8
+    default:
+      return value;
+  }
+}
+
+/// Convertit des minutes en unité spécifiée
+double convertMinutesToUnit(int minutes, String unit) {
+  switch (unit.toLowerCase()) {
+    case 'minutes':
+      return minutes.toDouble();
+    case 'heures':
+      return minutes / 60;
+    case 'jours':
+      return minutes / (24 * 60);
+    default:
+      return minutes.toDouble();
+  }
+}
+
+/// Formate une distance en mètres vers une chaîne lisible
+String formatDistance(double? distanceInMeters) {
+  if (distanceInMeters == null) return 'Distance inconnue';
+
+  if (distanceInMeters < 1000) {
+    return '${distanceInMeters.round()} m';
+  } else {
+    final kilometers = distanceInMeters / 1000;
+    if (kilometers < 10) {
+      return '${kilometers.toStringAsFixed(1)} km';
+    } else {
+      return '${kilometers.round()} km';
+    }
+  }
+}
+
+/// Calcule la distance en mètres entre deux points LatLng
+double calculateDistanceBetweenLatLng(LatLng point1, LatLng point2) {
+  return calculateDistanceBetween(
+    point1.latitude,
+    point1.longitude,
+    point2.latitude,
+    point2.longitude,
+  );
+}
+
+Color? colorFromPlanCategory(String? hexColor) {
+  if (hexColor == null || hexColor.isEmpty) return null;
+  var hex = hexColor.replaceFirst('#', '');
+  if (hex.length == 6) hex = 'ff$hex';
+  if (hex.length != 8) return null;
+
+  try {
+    return Color(int.parse(hex, radix: 16));
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Returns a human-readable "time ago" string for a given [dateTime].
+String formatTimeAgo(DateTime dateTime) {
+  final difference = DateTime.now().difference(dateTime);
+
+  if (difference.inDays > 8) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  } else if (difference.inDays >= 1) {
+    return '${difference.inDays}j';
+  } else if (difference.inHours >= 1) {
+    return '${difference.inHours}h';
+  } else if (difference.inMinutes >= 1) {
+    return '${difference.inMinutes}m';
+  } else {
+    return 'À l\'instant';
+  }
+}
+
+/// Affiche un SnackBar avec le message donné dans le contexte fourni.
+void showSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+String capitalize(String text) {
+  if (text.isEmpty) return text;
+  return text[0].toUpperCase() + text.substring(1);
+}
+
+String formatDate(DateTime date) {
+  return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
 }

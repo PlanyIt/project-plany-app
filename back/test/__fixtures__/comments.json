@@ -1,0 +1,246 @@
+{
+  "validComments": [
+    {
+      "_id": "507f1f77bcf86cd799439031",
+      "content": "Super plan ! Très utile pour ma routine quotidienne.",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": ["507f1f77bcf86cd799439012"],
+      "responses": ["507f1f77bcf86cd799439033"],
+      "parentId": null,
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439032",
+      "content": "Merci pour ce partage ! Je vais l'essayer dès aujourd'hui.",
+      "userId": "507f1f77bcf86cd799439012",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": [],
+      "parentId": null,
+      "createdAt": "2024-01-21T10:00:00.000Z",
+      "updatedAt": "2024-01-21T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439033",
+      "content": "Excellent ! J'ai déjà commencé et je vois des résultats.",
+      "userId": "507f1f77bcf86cd799439013",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"],
+      "responses": [],
+      "parentId": null,
+      "imageUrl": "https://example.com/progress.jpg",
+      "createdAt": "2024-01-22T10:00:00.000Z",
+      "updatedAt": "2024-01-22T10:00:00.000Z"
+    }
+  ],
+  "commentWithImage": {
+    "_id": "507f1f77bcf86cd799439034",
+    "content": "Regardez ma progression !",
+    "userId": "507f1f77bcf86cd799439011",
+    "planId": "507f1f77bcf86cd799439041",
+    "likes": [],
+    "responses": [],
+    "parentId": null,
+    "imageUrl": "https://example.com/screenshot.png",
+    "createdAt": "2024-01-23T10:00:00.000Z",
+    "updatedAt": "2024-01-23T10:00:00.000Z"
+  },
+  "commentWithoutContent": {
+    "_id": "507f1f77bcf86cd799439035",
+    "userId": "507f1f77bcf86cd799439012",
+    "planId": "507f1f77bcf86cd799439041",
+    "likes": [],
+    "responses": [],
+    "parentId": null,
+    "imageUrl": "https://example.com/image-only.jpg",
+    "createdAt": "2024-01-24T10:00:00.000Z",
+    "updatedAt": "2024-01-24T10:00:00.000Z"
+  },
+  "responseComments": [
+    {
+      "_id": "507f1f77bcf86cd799439036",
+      "content": "Je suis d'accord avec vous !",
+      "userId": "507f1f77bcf86cd799439012",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": ["507f1f77bcf86cd799439011"],
+      "responses": [],
+      "parentId": "507f1f77bcf86cd799439031",
+      "createdAt": "2024-01-25T10:00:00.000Z",
+      "updatedAt": "2024-01-25T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439037",
+      "content": "Merci pour cette précision !",
+      "userId": "507f1f77bcf86cd799439013",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": [],
+      "parentId": "507f1f77bcf86cd799439031",
+      "createdAt": "2024-01-26T10:00:00.000Z",
+      "updatedAt": "2024-01-26T10:00:00.000Z"
+    }
+  ],
+  "createCommentDtos": {
+    "validCreate": {
+      "content": "Super plan ! Très utile.",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": [],
+      "parentId": null
+    },
+    "minimalCreate": {
+      "userId": "507f1f77bcf86cd799439012",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": [],
+      "parentId": null,
+      "content": "Commentaire sans contenu"
+    },
+    "withImage": {
+      "content": "Regardez cette capture !",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "imageUrl": "https://example.com/image.jpg",
+      "likes": [],
+      "responses": [],
+      "parentId": null
+    },
+    "imageOnly": {
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "imageUrl": "https://example.com/image.jpg",
+      "likes": [],
+      "responses": [],
+      "parentId": null,
+      "content": "Nouveau contenu sans image"
+    },
+    "likeCreate": {
+
+    },
+    "responseCreate": {
+      "content": "Réponse au commentaire",
+      "userId": "507f1f77bcf86cd799439012",
+      "planId": "507f1f77bcf86cd799439041",
+      "parentId": "507f1f77bcf86cd799439031",
+      "likes": [],
+      "responses": []
+    }
+  },
+  "updateCommentDtos": {
+    "contentUpdate": {
+      "content": "Commentaire mis à jour",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "parentId": null
+    },
+    "imageUpdate": {
+      "content": "Nouveau contenu avec image",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "imageUrl": "https://example.com/new-image.jpg",
+      "likes": [],
+      "parentId": null
+    }
+  },
+  "commentsByPlan": [
+    {
+      "_id": "507f1f77bcf86cd799439031",
+      "content": "Premier commentaire du plan",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": ["507f1f77bcf86cd799439036"],
+      "parentId": null,
+      "createdAt": "2024-01-20T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439032",
+      "content": "Deuxième commentaire du plan",
+      "userId": "507f1f77bcf86cd799439012",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": ["507f1f77bcf86cd799439011"],
+      "responses": [],
+      "parentId": null,
+      "createdAt": "2024-01-21T10:00:00.000Z"
+    }
+  ],
+  "commentsByUser": [
+    {
+      "_id": "507f1f77bcf86cd799439031",
+      "content": "Mon premier commentaire",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": [],
+      "parentId": null
+    },
+    {
+      "_id": "507f1f77bcf86cd799439034",
+      "content": "Mon second commentaire",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439042",
+      "likes": ["507f1f77bcf86cd799439012"],
+      "responses": [],
+      "parentId": null
+    }
+  ],
+  "likingOperations": {
+    "beforeLike": {
+      "_id": "507f1f77bcf86cd799439031",
+      "content": "Commentaire à liker",
+      "likes": []
+    },
+    "afterLike": {
+      "_id": "507f1f77bcf86cd799439031",
+      "content": "Commentaire à liker",
+      "likes": ["507f1f77bcf86cd799439011"]
+    },
+    "afterUnlike": {
+      "_id": "507f1f77bcf86cd799439031",
+      "content": "Commentaire à unliker",
+      "likes": []
+    },
+    "multipleUsers": {
+      "_id": "507f1f77bcf86cd799439031",
+      "content": "Commentaire populaire",
+      "likes": [
+        "507f1f77bcf86cd799439011",
+        "507f1f77bcf86cd799439012",
+        "507f1f77bcf86cd799439013"
+      ]
+    }
+  },
+  "specialCases": {
+    "emptyContent": {
+      "_id": "507f1f77bcf86cd799439040",
+      "content": "",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": [],
+      "parentId": null
+    },
+    "longContent": {
+      "_id": "507f1f77bcf86cd799439041",
+      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+      "userId": "507f1f77bcf86cd799439011",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": [],
+      "parentId": null
+    },
+    "emojiOnly": {
+      "_id": "507f1f77bcf86cd799439042",
+      "content": "👍🎉💪",
+      "userId": "507f1f77bcf86cd799439012",
+      "planId": "507f1f77bcf86cd799439041",
+      "likes": [],
+      "responses": [],
+      "parentId": null
+    }
+  }
+}

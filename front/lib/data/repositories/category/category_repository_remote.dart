@@ -1,7 +1,6 @@
 import '../../../domain/models/category/category.dart';
 import '../../../utils/result.dart';
 import '../../services/api/api_client.dart';
-import '../../services/api/model/category/category_api_model.dart';
 import 'category_repository.dart';
 
 /// Remote data source for [Category].
@@ -16,24 +15,26 @@ class CategoryRepositoryRemote implements CategoryRepository {
 
   @override
   Future<Result<List<Category>>> getCategoriesList() async {
-    try {
+    if (_cachedCategories == null) {
+      // No cached data, request categories
       final result = await _apiClient.getCategories();
-      switch (result) {
-        case Ok<List<CategoryApiModel>>():
-          _cachedCategories = result.value
-              .map((category) => Category(
-                    id: category.id,
-                    name: category.name,
-                    icon: category.icon,
-                    color: category.color,
-                  ))
-              .toList();
-          return Result.ok(_cachedCategories!);
-        case Error<List<CategoryApiModel>>():
-          return Result.error(result.error);
+      if (result is Ok<List<Category>>) {
+        // Store value if result Ok and map to Category
+        final apiModels = result.value;
+        _cachedCategories = apiModels
+            .map((apiModel) => Category(
+                  id: apiModel.id,
+                  name: apiModel.name,
+                  icon: apiModel.icon,
+                  color: apiModel.color,
+                ))
+            .toList();
+        return Result.ok(_cachedCategories!);
       }
-    } on Exception catch (error) {
-      return Result.error(error);
+      return Result.error((result as Error).error);
+    } else {
+      // Return cached data if available
+      return Result.ok(_cachedCategories!);
     }
   }
 
@@ -42,9 +43,9 @@ class CategoryRepositoryRemote implements CategoryRepository {
     try {
       final resultCategory = await _apiClient.getCategory(id);
       switch (resultCategory) {
-        case Error<CategoryApiModel>():
+        case Error<Category>():
           return Result.error(resultCategory.error);
-        case Ok<CategoryApiModel>():
+        case Ok<Category>():
       }
 
       return Result.ok(
@@ -58,5 +59,9 @@ class CategoryRepositoryRemote implements CategoryRepository {
     } on Exception catch (error) {
       return Result.error(error);
     }
+  }
+
+  void clearCache() {
+    _cachedCategories = null;
   }
 }

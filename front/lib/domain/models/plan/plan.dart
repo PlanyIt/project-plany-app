@@ -1,24 +1,30 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../category/category.dart';
+import '../step/step.dart';
+import '../user/user.dart';
+
 part 'plan.freezed.dart';
 part 'plan.g.dart';
 
 @freezed
 class Plan with _$Plan {
   const factory Plan({
-    String? id,
+    @JsonKey(name: '_id') String? id,
     required String title,
     required String description,
-    required String category,
-    String? userId,
+    Category? category,
+    User? user,
     @Default(true) bool isPublic,
+    @Default(false) bool isAccessible,
     DateTime? createdAt,
     DateTime? updatedAt,
-    required List<String> steps,
-    List<String>? favorites,
+    @Default([]) List<Step> steps,
+    @Default([]) List<String>? favorites,
     @Default(false) bool isFavorite,
-    double? estimatedCost,
+    double? totalCost,
+    int? totalDuration,
   }) = _Plan;
 
-  factory Plan.fromJson(Map<String, dynamic> json) => _$PlanFromJson(json);
+  factory Plan.fromJson(Map<String, Object?> json) => _$PlanFromJson(json);
 }

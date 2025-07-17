@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:front/ui/core/themes/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../themes/app_theme.dart';
 
 class PlanyLogo extends StatelessWidget {
   final double fontSize;

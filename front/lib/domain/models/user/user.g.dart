@@ -7,7 +7,7 @@ part of 'user.dart';
 // **************************************************************************
 
 _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
-      id: json['id'] as String,
+      id: json['_id'] as String?,
       username: json['username'] as String,
       email: json['email'] as String,
       description: json['description'] as String?,
@@ -25,11 +25,18 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      followersCount: (json['followersCount'] as num?)?.toInt(),
+      followingCount: (json['followingCount'] as num?)?.toInt(),
+      plansCount: (json['plansCount'] as num?)?.toInt(),
+      favoritesCount: (json['favoritesCount'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
     <String, dynamic>{
-      'id': instance.id,
+      '_id': instance.id,
       'username': instance.username,
       'email': instance.email,
       'description': instance.description,
@@ -39,4 +46,9 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'gender': instance.gender,
       'followers': instance.followers,
       'following': instance.following,
+      'createdAt': instance.createdAt?.toIso8601String(),
+      'followersCount': instance.followersCount,
+      'followingCount': instance.followingCount,
+      'plansCount': instance.plansCount,
+      'favoritesCount': instance.favoritesCount,
     };

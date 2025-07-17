@@ -1,0 +1,340 @@
+{
+  "validUser": {
+    "email": "test@plany.com",
+    "username": "testuser",
+    "password": "Password123!",
+    "firstName": "Test",
+    "lastName": "User"
+  },
+  "adminUser": {
+    "email": "admin@plany.com", 
+    "username": "admin",
+    "password": "AdminPass123!",
+    "role": "admin"
+  },
+  "invalidUser": {
+    "email": "invalid-email",
+    "username": "",
+    "password": "123"
+  },
+  "users": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "email": "user1@plany.com",
+      "username": "user1",
+      "firstName": "John",
+      "lastName": "Doe"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439012", 
+      "email": "user2@plany.com",
+      "username": "user2",
+      "firstName": "Jane",
+      "lastName": "Smith"
+    }
+  ],
+  "validPlans": [
+    {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan de voyage à Paris",
+      "description": "Un magnifique voyage de 3 jours à Paris avec les principales attractions",
+      "user": "507f1f77bcf86cd799439011",
+      "isPublic": true,
+      "category": "Voyage",
+      "steps": ["507f1f77bcf86cd799439051", "507f1f77bcf86cd799439052"],
+      "favorites": ["507f1f77bcf86cd799439012"],
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439042",
+      "title": "Programme fitness débutant",
+      "description": "Un programme d'exercices pour débuter le fitness en douceur",
+      "user": "507f1f77bcf86cd799439012",
+      "isPublic": true,
+      "category": "Sport",
+      "steps": ["507f1f77bcf86cd799439053"],
+      "favorites": [],
+      "createdAt": "2024-01-19T10:00:00.000Z",
+      "updatedAt": "2024-01-19T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439043",
+      "title": "Recettes végétariennes",
+      "description": "Collection de recettes végétariennes faciles et rapides",
+      "user": "507f1f77bcf86cd799439011",
+      "isPublic": false,
+      "category": "Cuisine",
+      "steps": [],
+      "favorites": ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"],
+      "createdAt": "2024-01-18T10:00:00.000Z",
+      "updatedAt": "2024-01-18T10:00:00.000Z"
+    }
+  ],
+  "publicPlans": [
+    {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan voyage Paris",
+      "description": "Voyage à Paris",
+      "user": {
+        "_id": "507f1f77bcf86cd799439011",
+        "username": "johndoe",
+        "email": "john@example.com",
+        "photoUrl": "photo1.jpg"
+      },
+      "isPublic": true,
+      "category": "Voyage",
+      "steps": [
+        {
+          "_id": "507f1f77bcf86cd799439051",
+          "title": "Tour Eiffel",
+          "description": "Visite de la Tour Eiffel",
+          "order": 1,
+          "duration": "2h",
+          "cost": 25,
+          "longitude": 2.2945,
+          "latitude": 48.8584
+        }
+      ],
+      "favorites": ["507f1f77bcf86cd799439012"],
+      "createdAt": "2024-01-20T10:00:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439042",
+      "title": "Plan Montagne",
+      "description": "Randonnée montagne",
+      "user": {
+        "_id": "507f1f77bcf86cd799439012",
+        "username": "janedoe",
+        "email": "jane@example.com",
+        "photoUrl": "photo2.jpg"
+      },
+      "isPublic": true,
+      "category": "Sport",
+      "steps": [],
+      "favorites": [],
+      "createdAt": "2024-01-19T10:00:00.000Z"
+    }
+  ],
+  "privatePlans": [
+    {
+      "_id": "507f1f77bcf86cd799439043",
+      "title": "Mon plan personnel",
+      "description": "Plan privé pour mes objectifs personnels",
+      "user": "507f1f77bcf86cd799439011",
+      "isPublic": false,
+      "category": "Personnel",
+      "steps": [],
+      "favorites": []
+    }
+  ],
+  "createPlanDtos": {
+    "validCreate": {
+      "title": "Nouveau plan de voyage",
+      "description": "Description du nouveau plan",
+      "user": "507f1f77bcf86cd799439011",
+      "isPublic": true,
+      "category": "Voyage",
+      "steps": [],
+      "favorites": []
+    },
+    "minimalCreate": {
+      "title": "Plan minimal",
+      "description": "Description minimale",
+      "user": "507f1f77bcf86cd799439011",
+      "category": "Test",
+      "steps": [],
+      "favorites": []
+    },
+    "privateCreate": {
+      "title": "Plan privé",
+      "description": "Un plan personnel et privé",
+      "user": "507f1f77bcf86cd799439011",
+      "isPublic": false,
+      "category": "Personnel",
+      "steps": [],
+      "favorites": []
+    },
+    "withStepsCreate": {
+      "title": "Plan avec étapes",
+      "description": "Plan qui contient des étapes",
+      "user": "507f1f77bcf86cd799439011",
+      "category": "Voyage",
+      "isPublic": true,
+      "steps": ["507f1f77bcf86cd799439051", "507f1f77bcf86cd799439052"],
+      "favorites": ["507f1f77bcf86cd799439012"]
+    }
+  },
+  "updatePlanDtos": {
+    "fullUpdate": {
+      "title": "Plan mis à jour",
+      "description": "Description mise à jour",
+      "user": "507f1f77bcf86cd799439011",
+      "category": "Nouvelle catégorie",
+      "isPublic": false,
+      "steps": [],
+      "favorites": []
+    },
+    "partialUpdate": {
+      "title": "Nouveau titre seulement",
+      "description": "Description existante",
+      "user": "507f1f77bcf86cd799439011",
+      "category": "Sport",
+      "steps": [],
+      "favorites": []
+    },
+    "categoryUpdate": {
+      "title": "Titre existant",
+      "description": "Description existante",
+      "user": "507f1f77bcf86cd799439011",
+      "category": "Loisirs",
+      "isPublic": true,
+      "steps": [],
+      "favorites": []
+    }
+  },
+  "planWithSteps": {
+    "_id": "507f1f77bcf86cd799439041",
+    "title": "Plan détaillé",
+    "description": "Description détaillée du plan",
+    "user": {
+      "_id": "507f1f77bcf86cd799439011",
+      "username": "johndoe",
+      "email": "john@example.com",
+      "photoUrl": "photo.jpg"
+    },
+    "isPublic": true,
+    "category": "Voyage",
+    "steps": [
+      {
+        "_id": "507f1f77bcf86cd799439051",
+        "title": "Étape 1",
+        "description": "Première étape du voyage",
+        "order": 1,
+        "duration": "2h",
+        "cost": 50,
+        "longitude": 2.3522,
+        "latitude": 48.8566
+      }
+    ],
+    "favorites": ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"]
+  },
+  "planOperations": {
+    "beforeAddStep": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan sans étapes",
+      "steps": []
+    },
+    "afterAddStep": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan avec nouvelle étape",
+      "description": "Plan mis à jour",
+      "user": {
+        "_id": "507f1f77bcf86cd799439011",
+        "username": "johndoe",
+        "email": "john@example.com"
+      },
+      "category": "Voyage",
+      "isPublic": true,
+      "steps": ["507f1f77bcf86cd799439051"],
+      "favorites": []
+    },
+    "afterAddMultipleSteps": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan avec étapes multiples",
+      "steps": ["507f1f77bcf86cd799439051", "507f1f77bcf86cd799439052"],
+      "category": "Voyage"
+    }
+  },
+  "favoriteOperations": {
+    "beforeAddFavorite": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan à ajouter aux favoris",
+      "category": "Voyage",
+      "favorites": ["507f1f77bcf86cd799439012"]
+    },
+    "afterAddFavorite": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan à ajouter aux favoris",
+      "category": "Voyage",
+      "favorites": ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439011"]
+    },
+    "withNullFavorites": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan sans favoris",
+      "category": "Voyage",
+      "favorites": null
+    },
+    "afterInitFavorites": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan sans favoris",
+      "category": "Voyage",
+      "favorites": ["507f1f77bcf86cd799439011"]
+    },
+    "beforeRemoveFavorite": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan avec favoris",
+      "category": "Voyage",
+      "favorites": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
+    },
+    "afterRemoveFavorite": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan avec favoris",
+      "category": "Voyage",
+      "favorites": ["507f1f77bcf86cd799439012"]
+    },
+    "emptyFavorites": {
+      "_id": "507f1f77bcf86cd799439041",
+      "title": "Plan sans favoris",
+      "category": "Voyage",
+      "favorites": []
+    }
+  },
+  "specialCases": {
+    "longTitle": {
+      "_id": "507f1f77bcf86cd799439044",
+      "title": "Un titre très très long pour tester la limite de caractères et voir comment l'application gère les titres exceptionnellement longs",
+      "description": "Description normale",
+      "user": "507f1f77bcf86cd799439011",
+      "category": "Test",
+      "isPublic": true,
+      "steps": [],
+      "favorites": []
+    },
+    "emptySteps": {
+      "_id": "507f1f77bcf86cd799439045",
+      "title": "Plan sans étapes",
+      "description": "Un plan qui n'a pas encore d'étapes",
+      "user": "507f1f77bcf86cd799439011",
+      "category": "En cours",
+      "isPublic": true,
+      "steps": [],
+      "favorites": []
+    },
+    "manyFavorites": {
+      "_id": "507f1f77bcf86cd799439046",
+      "title": "Plan très populaire",
+      "description": "Un plan aimé par beaucoup d'utilisateurs",
+      "user": "507f1f77bcf86cd799439011",
+      "category": "Populaire",
+      "isPublic": true,
+      "steps": [],
+      "favorites": [
+        "507f1f77bcf86cd799439012",
+        "507f1f77bcf86cd799439013",
+        "507f1f77bcf86cd799439014",
+        "507f1f77bcf86cd799439015",
+        "507f1f77bcf86cd799439016"
+      ]
+    }
+  },
+  "updateResults": {
+    "fixNullFavorites": {
+      "acknowledged": true,
+      "modifiedCount": 5,
+      "upsertedId": null,
+      "upsertedCount": 0,
+      "matchedCount": 5
+    }
+  }
+}

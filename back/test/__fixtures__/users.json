@@ -1,0 +1,122 @@
+{
+  "validUsers": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "username": "johndoe",
+      "email": "john@plany.com",
+      "password": "$2b$10$hashedPassword123",
+      "role": "user",
+      "isActive": true,
+      "isPremium": false,
+      "followers": ["507f1f77bcf86cd799439012"],
+      "following": ["507f1f77bcf86cd799439013"],
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z",
+      "description": "Développeur passionné de voyages",
+      "birthDate": "1990-05-15T00:00:00.000Z",
+      "gender": "male",
+      "photoUrl": "https://example.com/photos/john.jpg"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "username": "janedoe",
+      "email": "jane@plany.com",
+      "password": "$2b$10$hashedPassword456",
+      "role": "user",
+      "isActive": true,
+      "isPremium": true,
+      "followers": [],
+      "following": ["507f1f77bcf86cd799439011"],
+      "createdAt": "2024-01-20T11:00:00.000Z",
+      "updatedAt": "2024-01-20T11:00:00.000Z"
+    }
+  ],
+  "createUserDtos": {
+    "validCreate": {
+      "username": "newuser",
+      "email": "newuser@plany.com",
+      "password": "SecurePass123!"
+    },
+    "minimalCreate": {
+      "username": "minimal",
+      "email": "minimal@plany.com",
+      "password": "SecurePass123!"
+    },
+    "premiumCreate": {
+      "username": "premium",
+      "email": "premium@plany.com",
+      "password": "SecurePass123!",
+      "isPremium": true
+    },
+    "adminCreate": {
+      "username": "admin",
+      "email": "admin@plany.com",
+      "password": "AdminPass123!",
+      "role": "admin"
+    }
+  },
+  "updateUserDtos": {
+    "partialUpdate": {
+      "description": "Updated description"
+    }
+  },
+  "invalidData": {
+    "duplicateEmail": {
+      "username": "duplicate",
+      "email": "john@plany.com",
+      "password": "SecurePass123!"
+    },
+    "duplicateUsername": {
+      "username": "johndoe",
+      "email": "duplicate@plany.com",
+      "password": "SecurePass123!"
+    },
+    "weakPassword": {
+      "username": "weak",
+      "email": "weak@plany.com",
+      "password": "123"
+    }
+  },
+  "followOperations": {
+    "beforeFollow": {
+      "_id": "507f1f77bcf86cd799439011"
+    },
+    "afterFollow": {
+      "_id": "507f1f77bcf86cd799439011"
+    },
+    "userToFollow": {
+      "_id": "507f1f77bcf86cd799439012"
+    }
+  },
+  "passwordOperations": {
+    "securePasswords": [
+      "SecurePass123!",
+      "MyStr0ngP@ssw0rd",
+      "Complex123Password!"
+    ],
+    "weakPasswords": [
+      "123",
+      "password",
+      "abc123"
+    ],
+    "hashResults": {
+      "hash": "$argon2id$v=19$m=65536,t=3,p=4$hashedPassword123"
+    }
+  },
+  "specialCases": {
+    "userWithLongDescription": {
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris."
+    },
+    "userWithManyFollowers": {
+      "_id": "507f1f77bcf86cd799439011",
+      "followers": ["user1", "user2", "user3", "user4", "user5"]
+    },
+    "userWithoutOptionalFields": {
+      "_id": "507f1f77bcf86cd799439011",
+      "username": "basic",
+      "email": "basic@plany.com",
+      "followers": [],
+      "following": []
+    }
+  }
+}
