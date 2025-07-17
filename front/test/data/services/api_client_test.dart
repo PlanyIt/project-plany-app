@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:front/data/services/api/api_client.dart';
 import 'package:front/domain/models/step/step.dart';
 import 'package:front/utils/result.dart';
+import 'package:mocktail/mocktail.dart';
 
 import '../../../testing/mocks.dart';
 import '../../../testing/models/category.dart';
@@ -17,6 +18,10 @@ void main() {
   group('ApiClient tests', () {
     late MockHttpClient mockHttpClient;
     late ApiClient apiClient;
+
+    setUpAll(() {
+      registerFallbackValue(Uri());
+    });
 
     setUp(() {
       mockHttpClient = MockHttpClient();
@@ -122,7 +127,7 @@ void main() {
     });
 
     test('should delete plan', () async {
-      mockHttpClient.mockDelete('/api/plans/plan1', 200);
+      mockHttpClient.mockDelete('/api/plans/plan1', {}, 200);
       final result = await apiClient.deletePlan('plan1');
       expect(result, isA<Ok>());
     });
@@ -168,7 +173,7 @@ void main() {
     });
 
     test('should delete comment', () async {
-      mockHttpClient.mockDelete('/api/comments/comment1', 200);
+      mockHttpClient.mockDelete('/api/comments/comment1', {}, 200);
       final result = await apiClient.deleteComment('comment1');
       expect(result, isA<Ok>());
     });
@@ -206,7 +211,7 @@ void main() {
     });
 
     test('should update email', () async {
-      mockHttpClient.mockPatch('/api/users/user1/email', 200);
+      mockHttpClient.mockPatch('/api/users/user1/email', {}, 200);
       final result =
           await apiClient.updateEmail('test@email.com', 'pass', 'user1');
       expect(result, isA<Ok>());
@@ -263,7 +268,7 @@ void main() {
 
     test('should delete response', () async {
       mockHttpClient.mockDelete(
-          '/api/comments/comment1/response/response1', 200);
+          '/api/comments/comment1/response/response1', {}, 200);
       final result = await apiClient.deleteResponse('comment1', 'response1');
       expect(result, isA<Ok>());
     });
