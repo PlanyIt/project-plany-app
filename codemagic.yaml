@@ -25,6 +25,12 @@ workflows:
           echo storeFile=`pwd`/front/keystore.jks >> front/android/key.properties
           echo $CM_KEYSTORE | base64 --decode > front/keystore.jks
 
+      - name: Verify key.properties content
+        script: |
+          echo "==== key.properties ===="
+          cat front/android/key.properties
+          echo "========================"
+
       - name: Get Flutter dependencies
         script: flutter pub get
         working_directory: front

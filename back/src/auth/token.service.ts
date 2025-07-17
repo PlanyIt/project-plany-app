@@ -13,11 +13,10 @@ import {
 } from './schemas/refresh-token.schema';
 
 export interface JwtPayload {
-  sub: string; // identifiant utilisateur
+  sub: string;
   email?: string;
   username?: string;
-  tokenVersion?: number; // pour invalider tous les refresh après changement mdp
-  /** champs ajoutés automatiquement par le signeur */
+  tokenVersion?: number;
   iat?: number;
   exp?: number;
   jti?: string;

@@ -158,39 +158,3 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           scanMetadataReportFile: backend/coverage/sonar-report.xml
-
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [lint-test-coverage, security-audit]
-    if: github.ref == 'refs/heads/develop'
-    environment: staging
-    steps:
-      - name: Deploy to Render Staging
-        run: |
-          curl -X POST "${{ secrets.RENDER_STAGING_WEBHOOK }}" \
-            -H "Content-Type: application/json" \
-            -d '{"branch": "develop"}'
-
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [lint-test-coverage, security-audit]
-    if: github.ref == 'refs/heads/main'
-    environment: production
-    steps:
-      - name: Deploy to Render Production
-        run: |
-          curl -X POST "${{ secrets.RENDER_PRODUCTION_WEBHOOK }}" \
-            -H "Content-Type: application/json" \
-            -d '{"branch": "main"}'
-
-      - name: Run post-deployment health checks
-        run: |
-          sleep 30
-          curl -f "${{ secrets.PRODUCTION_HEALTH_CHECK_URL }}/health" || exit 1
-
-      - name: Notify deployment success
-        if: success()
-        run: |
-          echo "🚀 Backend deployed successfully to production!"

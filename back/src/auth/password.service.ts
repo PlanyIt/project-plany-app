@@ -4,7 +4,7 @@ import * as argon2 from 'argon2';
 @Injectable()
 export class PasswordService {
   /**
-   * Hache un mot de passe en utilisant Argon2id (plus sécurisé que bcrypt en 2025)
+   * Hache un mot de passe en utilisant Argon2id
    */
   async hashPassword(plainPassword: string): Promise<string> {
     return argon2.hash(plainPassword, {

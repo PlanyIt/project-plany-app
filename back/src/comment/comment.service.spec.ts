@@ -38,6 +38,10 @@ describe('CommentService', () => {
       providers: [
         CommentService,
         { provide: getModelToken('Comment'), useValue: mockCommentModel },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
+        },
       ],
     }).compile();
 

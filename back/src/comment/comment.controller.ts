@@ -15,13 +15,25 @@ import {
 import { CommentService } from './comment.service';
 import { CommentDto } from './dto/comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PlanService } from '../plan/plan.service';
+
 @UseGuards(JwtAuthGuard)
 @Controller('api/comments')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) {}
+  constructor(
+    private readonly commentService: CommentService,
+    private readonly planService: PlanService,
+  ) {}
 
   @Post()
   async createComment(@Body() createCommentDto: CommentDto, @Req() req) {
+    // Vérifier que le plan est public avant de permettre le commentaire
+    const plan = await this.planService.findById(createCommentDto.planId);
+    if (!plan || !plan.isPublic) {
+      throw new UnauthorizedException(
+        'Vous ne pouvez commenter que les plans publics',
+      );
+    }
     const commentData = { ...createCommentDto, user: req.user._id };
     const createdComment = await this.commentService.create(commentData);
     return createdComment;

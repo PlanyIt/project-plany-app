@@ -26,9 +26,17 @@ describe('CommentController', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    const mockPlanService = { findById: jest.fn() };
+
+    // Utiliser le bon token d'injection pour PlanService (classe réelle)
+    const { PlanService } = jest.requireActual('../plan/plan.service');
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommentController],
-      providers: [{ provide: CommentService, useValue: mockCommentService }],
+      providers: [
+        { provide: CommentService, useValue: mockCommentService },
+        { provide: PlanService, useValue: mockPlanService },
+      ],
     }).compile();
 
     controller = module.get<CommentController>(CommentController);

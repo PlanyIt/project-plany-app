@@ -8,5 +8,9 @@ export class RefreshToken {
   @Prop({ required: true }) expiresAt: Date;
   @Prop({ default: false }) revoked: boolean;
 }
+
 export type RefreshTokenDocument = RefreshToken & Document;
+
 export const RefreshTokenSchema = SchemaFactory.createForClass(RefreshToken);
+
+RefreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

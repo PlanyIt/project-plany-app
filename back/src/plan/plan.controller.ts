@@ -17,6 +17,11 @@ import { PlanService } from './plan.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlanDto } from './dto/plan.dto';
 import { UserService } from '../user/user.service';
+
+/**
+ * PlanController gère les opérations liées aux plans.
+ * Il utilise le service PlanService pour interagir avec les données des plans.
+ */
 @UseGuards(JwtAuthGuard)
 @Controller('api/plans')
 export class PlanController {
@@ -68,9 +73,10 @@ export class PlanController {
   updatePlan(
     @Param('planId') planId: string,
     @Body() updatePlanDto: PlanDto,
-    @Body('userId') userId: string,
+    @Req() req,
   ) {
-    return this.planService.updateById(planId, updatePlanDto, userId);
+    // Seul l'utilisateur authentifié peut modifier son propre plan
+    return this.planService.updateById(planId, updatePlanDto, req.user._id);
   }
 
   @Delete(':planId')

@@ -53,6 +53,10 @@ describe('PlanService', () => {
         { provide: 'CommentModel', useValue: mockCommentModel },
         { provide: 'DatabaseConnection', useValue: mockDatabaseConnection },
         { provide: StepService, useValue: mockStepService },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
+        },
       ],
     }).compile();
 
