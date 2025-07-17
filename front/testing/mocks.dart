@@ -66,39 +66,65 @@ extension HttpMethodMocks on MockHttpClient {
       HttpMethod method, String path, Object object, int statusCode) {
     final request = MockHttpClientRequest();
     final response = MockHttpClientResponse();
+    final headers = MockHttpHeaders();
 
+    // Configuration de la request
+    when(() => request.headers).thenReturn(headers);
     when(() => request.close()).thenAnswer((_) => Future.value(response));
-    when(() => request.headers).thenReturn(MockHttpHeaders());
+    when(() => request.write(any())).thenReturn(null);
+
+    // Configuration de la response
     when(() => response.statusCode).thenReturn(statusCode);
     when(() => response.transform(utf8.decoder))
         .thenAnswer((_) => Stream.fromIterable([jsonEncode(object)]));
 
-    // Mock des méthodes URL-based (utilisées par votre ApiClient)
-    when(() => _mockUrlMethod(method, path))
-        .thenAnswer((_) => Future.value(request));
+    // Configuration des headers
+    when(() => headers.add(any(), any())).thenReturn(null);
+    when(() => headers.contentType = any()).thenReturn(null);
+
+    // Mock de la méthode HTTP appropriée
+    switch (method) {
+      case HttpMethod.get:
+        when(() => getUrl(any())).thenAnswer((_) => Future.value(request));
+        break;
+      case HttpMethod.post:
+        when(() => postUrl(any())).thenAnswer((_) => Future.value(request));
+        break;
+      case HttpMethod.put:
+        when(() => putUrl(any())).thenAnswer((_) => Future.value(request));
+        break;
+      case HttpMethod.patch:
+        when(() => patchUrl(any())).thenAnswer((_) => Future.value(request));
+        break;
+      case HttpMethod.delete:
+        when(() => deleteUrl(any())).thenAnswer((_) => Future.value(request));
+        break;
+    }
+
+    // Mock de la méthode close du client
+    when(() => close(force: any(named: 'force'))).thenReturn(null);
   }
 
   void _mockRequestThrows(HttpMethod method, String path, Exception exception) {
-    when(() => _mockUrlMethod(method, path)).thenThrow(exception);
-  }
-
-  Future<HttpClientRequest> _mockUrlMethod(HttpMethod method, String path) {
     switch (method) {
       case HttpMethod.get:
-        return getUrl(any(that: _uriMatcher(path)));
+        when(() => getUrl(any())).thenThrow(exception);
+        break;
       case HttpMethod.post:
-        return postUrl(any(that: _uriMatcher(path)));
+        when(() => postUrl(any())).thenThrow(exception);
+        break;
       case HttpMethod.put:
-        return putUrl(any(that: _uriMatcher(path)));
+        when(() => putUrl(any())).thenThrow(exception);
+        break;
       case HttpMethod.patch:
-        return patchUrl(any(that: _uriMatcher(path)));
+        when(() => patchUrl(any())).thenThrow(exception);
+        break;
       case HttpMethod.delete:
-        return deleteUrl(any(that: _uriMatcher(path)));
+        when(() => deleteUrl(any())).thenThrow(exception);
+        break;
     }
-  }
 
-  Matcher _uriMatcher(String expectedPath) {
-    return predicate<Uri>((uri) => uri.path.endsWith(expectedPath),
-        'Uri with path ending with "$expectedPath"');
+    // Mock de la méthode close du client
+    when(() => close(force: any(named: 'force'))).thenReturn(null);
   }
 }

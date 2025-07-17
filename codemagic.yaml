@@ -11,12 +11,11 @@ workflows:
 
       - name: Generate .env file from Codemagic environment variables
         script: |
-          echo "API_PORT=$API_PORT" > front/.env
-          echo "API_HOST=$API_HOST" >> front/.env
-          echo "IMGUR_REFRESH_TOKEN=$IMGUR_REFRESH_TOKEN" >> front/.env
-          echo "IMGUR_CALLBACK_URL=$IMGUR_CALLBACK_URL" >> front/.env
-          echo "IMGUR_CLIENT_SECRET=$IMGUR_CLIENT_SECRET" >> front/.env
-          echo "IMGUR_CLIENT_ID=$IMGUR_CLIENT_ID" >> front/.env
+          echo "API_HOST=$API_HOST" > front/.env.staging
+          echo "IMGUR_REFRESH_TOKEN=$IMGUR_REFRESH_TOKEN" >> front/.env.staging
+          echo "IMGUR_CALLBACK_URL=$IMGUR_CALLBACK_URL" >> front/.env.staging
+          echo "IMGUR_CLIENT_SECRET=$IMGUR_CLIENT_SECRET" >> front/.env.staging
+          echo "IMGUR_CLIENT_ID=$IMGUR_CLIENT_ID" >> front/.env.staging
 
       - name: Setup Android signing
         script: |
