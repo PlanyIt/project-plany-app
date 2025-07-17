@@ -1,0 +1,196 @@
+name: Backend CI/CD
+on:
+  push:
+    branches: [main, develop]
+    paths: ["backend/**"]
+  pull_request:
+    paths: ["backend/**"]
+
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs:
+  lint-test-coverage:
+    name: Lint, Tests & Coverage
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.0
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.1"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier check
+        run: npm run format:check
+
+      - name: Run unit tests with coverage
+        run: npm run test:cov
+        env:
+          NODE_ENV: test
+          MONGO_URI: mongodb://localhost:27017/plany-test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Enforce coverage threshold (80% minimum - Standard CDA)
+        run: |
+          npx jest --coverage --passWithNoTests \
+            --coverageThreshold='{
+              "global": {
+                "lines": 80,
+                "functions": 80,
+                "branches": 75,
+                "statements": 80
+              }
+            }'
+
+      - name: Run integration tests
+        run: npm run test:e2e
+        env:
+          NODE_ENV: test
+          MONGO_URI: mongodb://localhost:27017/plany-test-e2e
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: true
+
+  security-audit:
+    name: Security Audit & Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.1"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Audit de sécurité des dépendances (niveau high conforme OWASP)
+      - name: Run npm security audit
+        run: npm audit --audit-level=high
+
+      # Scanner de vulnérabilités OSV (Google)
+      - name: Install and run OSV Scanner
+        run: |
+          curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_1.7.3_linux_amd64.tar.gz | tar -xvzf -
+          sudo mv ./osv-scanner /usr/local/bin/osv-scanner
+          osv-scanner --recursive .
+
+      # Analyse statique de sécurité Semgrep
+      - name: Run Semgrep security analysis
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/nodejs
+            p/typescript
+            p/owasp-top-ten
+
+      # Détection de secrets dans le code
+      - name: Run Gitleaks secret detection
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Analyse CodeQL pour détection de vulnérabilités
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  quality-gates:
+    name: Quality Gates & SonarQube
+    runs-on: ubuntu-latest
+    needs: [lint-test-coverage]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: sonarqube-quality-gate-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          scanMetadataReportFile: backend/coverage/sonar-report.xml
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [lint-test-coverage, security-audit]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    steps:
+      - name: Deploy to Render Staging
+        run: |
+          curl -X POST "${{ secrets.RENDER_STAGING_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{"branch": "develop"}'
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [lint-test-coverage, security-audit]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Deploy to Render Production
+        run: |
+          curl -X POST "${{ secrets.RENDER_PRODUCTION_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{"branch": "main"}'
+
+      - name: Run post-deployment health checks
+        run: |
+          sleep 30
+          curl -f "${{ secrets.PRODUCTION_HEALTH_CHECK_URL }}/health" || exit 1
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🚀 Backend deployed successfully to production!"
