@@ -182,7 +182,8 @@ export class UserService {
         // 6. Supprimer l'utilisateur
         const deletedUser = await this.userModel
           .findByIdAndDelete(id)
-          .session(session);
+          .session(session)
+          .exec();
 
         return deletedUser;
       });

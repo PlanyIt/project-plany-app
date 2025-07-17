@@ -2,11 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CommentService } from './comment.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
-
+ 
 const mockCommentModelInstance = {
   save: jest.fn(),
 };
-
+ 
 const mockCommentModel = Object.assign(
   function () {
     return mockCommentModelInstance;
@@ -28,10 +28,10 @@ const mockCommentModel = Object.assign(
     save: jest.fn(),
   },
 );
-
+ 
 describe('CommentService', () => {
   let service: CommentService;
-
+ 
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
@@ -40,16 +40,16 @@ describe('CommentService', () => {
         { provide: getModelToken('Comment'), useValue: mockCommentModel },
       ],
     }).compile();
-
+ 
     service = module.get<CommentService>(CommentService);
     // Patch the injected model for direct access
     (service as any).commentModel = mockCommentModel;
   });
-
+ 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-
+ 
   describe('create', () => {
     it('should create and return a comment with user info', async () => {
       const dto = { content: 'test', user: 'userId' };
@@ -68,7 +68,7 @@ describe('CommentService', () => {
       expect(result).toEqual(saved);
     });
   });
-
+ 
   describe('likeComment', () => {
     it('should add a like and return updated comment', async () => {
       const updated = { _id: '1', likes: ['userId'] };
@@ -80,7 +80,7 @@ describe('CommentService', () => {
       expect(result).toEqual(updated);
     });
   });
-
+ 
   describe('unlikeComment', () => {
     it('should remove a like and return updated comment', async () => {
       const updated = { _id: '1', likes: [] };
@@ -92,7 +92,7 @@ describe('CommentService', () => {
       expect(result).toEqual(updated);
     });
   });
-
+ 
   describe('addResponse', () => {
     it('should add a response to a comment', async () => {
       mockCommentModel.findById = jest.fn().mockReturnValue({
@@ -117,7 +117,7 @@ describe('CommentService', () => {
       } as any);
       expect(result).toEqual(savedResponse);
     });
-
+ 
     it('should throw NotFoundException if parent not found', async () => {
       mockCommentModel.findById = jest
         .fn()
@@ -127,7 +127,7 @@ describe('CommentService', () => {
       );
     });
   });
-
+ 
   describe('findAllByPlanId', () => {
     it('should return paginated comments for a plan', async () => {
       const comments = [{ _id: '1' }, { _id: '2' }];
@@ -145,7 +145,7 @@ describe('CommentService', () => {
       expect(result).toEqual(comments);
     });
   });
-
+ 
   describe('removeResponse', () => {
     it('should remove a response from a comment', async () => {
       const comment = { _id: 'parentId', responses: [] };
@@ -159,7 +159,7 @@ describe('CommentService', () => {
       const result = await service.removeResponse('parentId', 'respId');
       expect(result).toEqual({ comment, response });
     });
-
+ 
     it('should throw NotFoundException if comment not found', async () => {
       mockCommentModel.findByIdAndUpdate = jest
         .fn()
@@ -168,7 +168,7 @@ describe('CommentService', () => {
         NotFoundException,
       );
     });
-
+ 
     it('should throw NotFoundException if response not found', async () => {
       mockCommentModel.findByIdAndUpdate = jest
         .fn()
@@ -181,7 +181,7 @@ describe('CommentService', () => {
       ).rejects.toThrow(NotFoundException);
     });
   });
-
+ 
   describe('countByPlanId', () => {
     it('should return the count of root comments', async () => {
       mockCommentModel.countDocuments = jest
@@ -191,7 +191,7 @@ describe('CommentService', () => {
       expect(result).toBe(5);
     });
   });
-
+ 
   describe('findAllResponses', () => {
     it('should return all responses for a comment', async () => {
       const responses = [{ _id: 'r1' }];
@@ -203,7 +203,7 @@ describe('CommentService', () => {
       expect(result).toEqual(responses);
     });
   });
-
+ 
   describe('findAllByUserId', () => {
     it('should return all comments by a user', async () => {
       const comments = [{ _id: 'c1' }];
@@ -215,7 +215,7 @@ describe('CommentService', () => {
       expect(result).toEqual(comments);
     });
   });
-
+ 
   describe('findById', () => {
     it('should return a comment by id', async () => {
       const comment = { _id: 'c1' };
@@ -227,7 +227,7 @@ describe('CommentService', () => {
       expect(result).toEqual(comment);
     });
   });
-
+ 
   describe('removeById', () => {
     it('should remove a comment and its responses', async () => {
       const comment = { _id: 'c1', responses: ['r1', 'r2'] };
@@ -244,7 +244,7 @@ describe('CommentService', () => {
       const result = await service.removeById('c1');
       expect(result).toEqual(comment);
     });
-
+ 
     it('should throw NotFoundException if comment not found', async () => {
       mockCommentModel.findById = jest
         .fn()
@@ -254,7 +254,7 @@ describe('CommentService', () => {
       );
     });
   });
-
+ 
   describe('updateById', () => {
     it('should update and return the comment', async () => {
       const updated = { _id: 'c1', content: 'updated' };

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StepService } from './step.service';
-
+ 
 const mockStepModel = {
   find: jest.fn().mockReturnThis(),
   findOne: jest.fn().mockReturnThis(),
@@ -14,10 +14,10 @@ const mockStepModel = {
 const mockPlanModel = {
   updateMany: jest.fn(),
 };
-
+ 
 describe('StepService', () => {
   let service: StepService;
-
+ 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -26,15 +26,15 @@ describe('StepService', () => {
         { provide: 'PlanModel', useValue: mockPlanModel },
       ],
     }).compile();
-
+ 
     service = module.get<StepService>(StepService);
     jest.clearAllMocks();
   });
-
+ 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-
+ 
   describe('findAll', () => {
     it('should return all steps', async () => {
       const steps = [{ title: 'Step1' }, { title: 'Step2' }];
@@ -43,7 +43,7 @@ describe('StepService', () => {
       expect(mockStepModel.find).toHaveBeenCalled();
     });
   });
-
+ 
   describe('findById', () => {
     it('should return a step by id', async () => {
       const step = { _id: '1', title: 'Test' };
@@ -56,7 +56,7 @@ describe('StepService', () => {
       expect(await service.findById('notfound')).toBeUndefined();
     });
   });
-
+ 
   describe('findByIds', () => {
     it('should return steps by ids', async () => {
       const steps = [{ _id: '1' }, { _id: '2' }];
@@ -68,7 +68,7 @@ describe('StepService', () => {
       expect(mockStepModel.sort).toHaveBeenCalledWith({ order: 1 });
     });
   });
-
+ 
   describe('calculateTotalCost', () => {
     it('should sum cost of steps', async () => {
       const steps = [{ cost: 10 }, { cost: 5 }, { cost: undefined }];
@@ -76,7 +76,7 @@ describe('StepService', () => {
       expect(await service.calculateTotalCost(['1', '2', '3'])).toBe(15);
     });
   });
-
+ 
   describe('calculateTotalDuration', () => {
     it('should sum duration of steps', async () => {
       const steps = [

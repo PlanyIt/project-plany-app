@@ -24,6 +24,8 @@ describe('CommentController', () => {
   const reqMock = { user: { _id: 'userId' } };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommentController],
       providers: [{ provide: CommentService, useValue: mockCommentService }],

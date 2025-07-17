@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { PasswordService } from '../auth/password.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-
+ 
 const mockUserModel = {
   find: jest.fn(),
   findById: jest.fn(),
@@ -31,10 +31,10 @@ const mockDatabaseConnection = {
 const mockPasswordService = {
   hashPassword: jest.fn(),
 };
-
+ 
 describe('UserService', () => {
   let service: UserService;
-
+ 
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
@@ -47,14 +47,14 @@ describe('UserService', () => {
         { provide: PasswordService, useValue: mockPasswordService },
       ],
     }).compile();
-
+ 
     service = module.get<UserService>(UserService);
   });
-
+ 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-
+ 
   describe('create', () => {
     it('should throw if password is not secure', async () => {
       await expect(
@@ -65,7 +65,7 @@ describe('UserService', () => {
         } as any),
       ).rejects.toThrow(BadRequestException);
     });
-
+ 
     it('should create user if password is secure', async () => {
       const dto = { password: 'Abcdefg1', email: 'a@a.fr', username: 'u' };
       const saveMock = jest.fn().mockResolvedValue({ ...dto, _id: 'id' });
@@ -78,7 +78,7 @@ describe('UserService', () => {
       };
       await expect(service.create(dto as any)).resolves.toHaveProperty('_id');
     });
-
+ 
     it('should throw BadRequestException on duplicate email', async () => {
       const dto = { password: 'Abcdefg1', email: 'a@a.fr', username: 'u' };
       jest.spyOn(service as any, 'isPasswordSecure').mockReturnValue(true);
@@ -94,7 +94,7 @@ describe('UserService', () => {
       );
     });
   });
-
+ 
   describe('findAll', () => {
     it('should return all users', async () => {
       mockUserModel.find.mockReturnValue({
@@ -103,7 +103,7 @@ describe('UserService', () => {
       await expect(service.findAll()).resolves.toEqual([1, 2]);
     });
   });
-
+ 
   describe('findById', () => {
     it('should return null for invalid id', async () => {
       await expect(service.findById('badid')).resolves.toBeNull();
@@ -117,7 +117,7 @@ describe('UserService', () => {
       ).resolves.toHaveProperty('_id');
     });
   });
-
+ 
   describe('findOneByEmail', () => {
     it('should return user by email', async () => {
       mockUserModel.findOne.mockReturnValue({
@@ -128,7 +128,7 @@ describe('UserService', () => {
       );
     });
   });
-
+ 
   describe('findOneByUsername', () => {
     it('should return user by username', async () => {
       mockUserModel.findOne.mockReturnValue({
@@ -139,7 +139,7 @@ describe('UserService', () => {
       );
     });
   });
-
+ 
   describe('updateById', () => {
     it('should update user and return updated', async () => {
       mockUserModel.findByIdAndUpdate.mockReturnValue({
@@ -159,7 +159,7 @@ describe('UserService', () => {
       );
     });
   });
-
+ 
   describe('getUserFavorites', () => {
     it('should throw NotFoundException if user not found', async () => {
       jest.spyOn(service, 'findById').mockResolvedValue(null);
@@ -177,7 +177,7 @@ describe('UserService', () => {
       await expect(service.getUserFavorites('id')).resolves.toEqual([1, 2]);
     });
   });
-
+ 
   describe('followUser', () => {
     it('should throw NotFoundException if follower not found', async () => {
       mockUserModel.exists.mockResolvedValueOnce(false);
@@ -215,7 +215,7 @@ describe('UserService', () => {
       );
     });
   });
-
+ 
   describe('unfollowUser', () => {
     it('should throw NotFoundException if follower not found', async () => {
       mockUserModel.exists.mockResolvedValueOnce(false);
@@ -242,7 +242,7 @@ describe('UserService', () => {
       );
     });
   });
-
+ 
   describe('getUserStats', () => {
     it('should throw NotFoundException if user not found', async () => {
       jest.spyOn(service, 'findById').mockResolvedValue(null);

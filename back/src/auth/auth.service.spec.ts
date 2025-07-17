@@ -4,7 +4,7 @@ import { UserService } from '../user/user.service';
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
-
+ 
 const mockUser = {
   _id: '507f1f77bcf86cd799439011',
   email: 'a@a.fr',
@@ -14,7 +14,7 @@ const mockUser = {
     return { _id: this._id, email: this.email, username: this.username };
   },
 };
-
+ 
 const mockUserService = {
   findOneByEmail: jest.fn(),
   findOneByUsername: jest.fn(),
@@ -33,10 +33,10 @@ const mockTokenService = {
   revokeFromJwt: jest.fn(),
   revokeAllForUser: jest.fn(),
 };
-
+ 
 describe('AuthService', () => {
   let service: AuthService;
-
+ 
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
@@ -47,14 +47,14 @@ describe('AuthService', () => {
         { provide: TokenService, useValue: mockTokenService },
       ],
     }).compile();
-
+ 
     service = module.get<AuthService>(AuthService);
   });
-
+ 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-
+ 
   describe('validateUser', () => {
     it('should return user if password is valid', async () => {
       mockUserService.findOneByEmail.mockResolvedValue(mockUser);
@@ -77,7 +77,7 @@ describe('AuthService', () => {
       ).resolves.toBeNull();
     });
   });
-
+ 
   describe('login', () => {
     it('should throw UnauthorizedException if user not found or password invalid', async () => {
       jest.spyOn(service as any, 'validateUser').mockResolvedValue(null);
@@ -95,7 +95,7 @@ describe('AuthService', () => {
       expect(res).toHaveProperty('currentUser');
     });
   });
-
+ 
   describe('register', () => {
     it('should throw if email exists', async () => {
       mockUserService.findOneByEmail.mockResolvedValue(mockUser);
@@ -127,7 +127,7 @@ describe('AuthService', () => {
       expect(res).toHaveProperty('currentUser');
     });
   });
-
+ 
   describe('changePassword', () => {
     it('should throw if user not found', async () => {
       mockUserService.findById.mockResolvedValue(null);
@@ -167,7 +167,7 @@ describe('AuthService', () => {
       expect(mockTokenService.revokeAllForUser).toHaveBeenCalledWith('id');
     });
   });
-
+ 
   describe('refresh', () => {
     it('should return new tokens', async () => {
       mockTokenService.verifyRefresh.mockResolvedValue({ sub: mockUser._id });
@@ -179,7 +179,7 @@ describe('AuthService', () => {
       expect(res).toHaveProperty('refreshToken', 'refresh');
     });
   });
-
+ 
   describe('logout', () => {
     it('should call revokeFromJwt', async () => {
       mockTokenService.revokeFromJwt.mockResolvedValue(undefined);

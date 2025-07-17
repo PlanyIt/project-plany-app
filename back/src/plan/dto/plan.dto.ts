@@ -5,7 +5,6 @@ import {
   IsArray,
   IsNumber,
   IsNotEmpty,
-  MinLength,
   MaxLength,
   IsMongoId,
   ArrayMinSize,
