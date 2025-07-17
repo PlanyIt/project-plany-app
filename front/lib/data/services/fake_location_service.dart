@@ -7,7 +7,6 @@ class FakeLocationService extends LocationService {
 
   @override
   Future<Position?> getCurrentLocation({bool forceRefresh = false}) async {
-    // Ne fais rien en test
     return null;
   }
 
@@ -16,8 +15,4 @@ class FakeLocationService extends LocationService {
     return true;
   }
 
-  @override
-  Future<bool> _checkLocationService() async {
-    return true;
-  }
 }

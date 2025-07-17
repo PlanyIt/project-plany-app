@@ -22,52 +22,52 @@ import '../data/services/location_service.dart';
 import '../data/services/session_manager.dart';
 
 List<SingleChildWidget> get providers {
+  final apiHost = dotenv.env['API_HOST'] ?? 'localhost';
+
   return [
     Provider(
-        create: (context) => AuthApiClient(
-              host: dotenv.env['API_HOST'],
-              port: int.parse(dotenv.env['API_PORT'] ?? '3000'),
-            )),
+      create: (context) => AuthApiClient(host: apiHost),
+    ),
     Provider(
-        create: (context) => ApiClient(
-              host: dotenv.env['API_HOST'],
-              port: int.parse(dotenv.env['API_PORT'] ?? '3000'),
-            )),
-    Provider(create: (context) => ImgurService()),
-    Provider(create: (context) => LocationService()),
-    Provider(create: (context) => AuthStorageService()),
+      create: (context) => ApiClient(host: apiHost),
+    ),
+    Provider(create: (_) => ImgurService()),
+    Provider(create: (_) => LocationService()),
+    Provider(create: (_) => AuthStorageService()),
     ChangeNotifierProvider<AuthRepository>(
       create: (context) => AuthRepositoryRemote(
         authApiClient: context.read(),
         apiClient: context.read(),
         authStorageService: context.read(),
-      ) as AuthRepository,
+      ),
     ),
-    Provider(
-      create: (context) => CategoryRepositoryRemote(apiClient: context.read())
-          as CategoryRepository,
+    Provider<CategoryRepository>(
+      create: (context) => CategoryRepositoryRemote(
+        apiClient: context.read(),
+      ),
     ),
-    Provider(
-      create: (context) =>
-          PlanRepositoryRemote(apiClient: context.read()) as PlanRepository,
+    Provider<PlanRepository>(
+      create: (context) => PlanRepositoryRemote(
+        apiClient: context.read(),
+      ),
     ),
-    Provider(
+    Provider<StepRepository>(
       create: (context) => StepRepositoryRemote(
         apiClient: context.read(),
         imgurService: context.read(),
-      ) as StepRepository,
+      ),
     ),
-    Provider(
+    Provider<CommentRepository>(
       create: (context) => CommentRepositoryRemote(
         apiClient: context.read(),
         imgurService: context.read(),
-      ) as CommentRepository,
+      ),
     ),
-    Provider(
+    Provider<UserRepository>(
       create: (context) => UserRepositoryRemote(
         apiClient: context.read(),
         imgurService: context.read(),
-      ) as UserRepository,
+      ),
     ),
     ChangeNotifierProvider(
       create: (context) => SessionManager(

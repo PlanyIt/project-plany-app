@@ -28,10 +28,10 @@
     "db:init": "ts-node scripts/init-database.ts",
     "seed:dev": "ts-node scripts/seed-data.ts",
     "seed:test": "ts-node scripts/seed-test-db.ts",
-
     "db:reset": "npm run db:init && npm run db:seed"
   },
   "dependencies": {
+    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/cli": "^10.4.9",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",

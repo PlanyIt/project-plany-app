@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/comment/comment.dart';
 import '../../../domain/models/plan/plan.dart';
@@ -15,14 +16,23 @@ import 'model/user/user_api_model.dart';
 typedef AuthHeaderProvider = String? Function();
 
 class ApiClient {
-  ApiClient({String? host, int? port, HttpClient Function()? clientFactory})
+  ApiClient({String? host, HttpClient Function()? clientFactory})
       : _host = host ?? 'localhost',
-        _port = port ?? 8080,
         _clientFactory = clientFactory ?? HttpClient.new;
 
   final String _host;
-  final int _port;
   final HttpClient Function() _clientFactory;
+
+
+Uri _buildUri(String path, {Map<String, dynamic>? queryParameters}) {
+  final isLocalhost = _host.contains('localhost') || _host.contains('192.') || _host.contains('127.');
+  if (isLocalhost || _host.contains(':3000') || _host.contains(':4000')) {
+    return Uri.http(_host, path, queryParameters);
+  } else {
+    return Uri.https(_host, path, queryParameters);
+  }
+}
+
 
   AuthHeaderProvider? _authHeaderProvider;
   void Function()? _onUnauthorized;
@@ -64,7 +74,7 @@ class ApiClient {
   Future<Result<List<Category>>> getCategories() async {
     final client = _clientFactory();
     try {
-      final request = await client.get(_host, _port, '/api/categories');
+      final request = await client.getUrl(_buildUri('/api/categories'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -85,7 +95,7 @@ class ApiClient {
   Future<Result<Category>> getCategory(String id) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(_host, _port, '/api/categories/$id');
+      final request = await client.getUrl(_buildUri('/api/categories/$id'));
       await _authHeader(request.headers);
       final response = await request.close();
       if (response.statusCode == 200) {
@@ -106,7 +116,7 @@ class ApiClient {
   Future<Result<List<Plan>>> getPlans() async {
     final client = _clientFactory();
     try {
-      final request = await client.get(_host, _port, '/api/plans');
+      final request = await client.getUrl(_buildUri('/api/plans'));
       await _authHeader(request.headers);
       final response = await request.close();
 
@@ -129,7 +139,7 @@ class ApiClient {
   Future<Result<Plan>> getPlan(String planId) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(_host, _port, '/api/plans/$planId');
+      final request = await client.getUrl(_buildUri('/api/plans/$planId'));
       await _authHeader(request.headers);
       final response = await request.close();
 
@@ -150,7 +160,7 @@ class ApiClient {
   Future<Result<List<Plan>>> getPlansByUser(String userId) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(_host, _port, '/api/plans/user/$userId');
+      final request = await client.getUrl(_buildUri('/api/plans/user/$userId'));
       await _authHeader(request.headers);
       final response = await request.close();
 
@@ -173,7 +183,7 @@ class ApiClient {
   Future<Result<Plan>> createPlan({required Map<String, dynamic> body}) async {
     final client = _clientFactory();
     try {
-      final request = await client.post(_host, _port, '/api/plans');
+      final request = await client.postUrl(_buildUri('/api/plans'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -217,11 +227,8 @@ class ApiClient {
   Future<Result<void>> addPlanToFavorites(String planId) async {
     final client = _clientFactory();
     try {
-      final request = await client.put(
-        _host,
-        _port,
-        '/api/plans/$planId/favorite',
-      );
+      final request =
+          await client.putUrl(_buildUri('/api/plans/$planId/favorite'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -245,11 +252,8 @@ class ApiClient {
   Future<Result<void>> removePlanFromFavorites(String planId) async {
     final client = _clientFactory();
     try {
-      final request = await client.put(
-        _host,
-        _port,
-        '/api/plans/$planId/unfavorite',
-      );
+      final request =
+          await client.putUrl(_buildUri('/api/plans/$planId/unfavorite'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -273,7 +277,7 @@ class ApiClient {
   Future<Result<void>> deletePlan(String planId) async {
     final client = _clientFactory();
     try {
-      final request = await client.delete(_host, _port, '/api/plans/$planId');
+      final request = await client.deleteUrl(_buildUri('/api/plans/$planId'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -298,11 +302,7 @@ class ApiClient {
   Future<Result<List<StepApiModel>>> getStepsByPlan(String planId) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(
-        _host,
-        _port,
-        '/api/steps/plan/$planId',
-      );
+      final request = await client.getUrl(_buildUri('/api/steps/plan/$planId'));
 
       await _authHeader(request.headers);
       final response = await request.close();
@@ -327,11 +327,7 @@ class ApiClient {
   ) async {
     final client = _clientFactory();
     try {
-      final request = await client.post(
-        _host,
-        _port,
-        '/api/steps',
-      );
+      final request = await client.postUrl(_buildUri('/api/steps'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -369,11 +365,8 @@ class ApiClient {
   Future<Result<UserApiModel>> updateUserProfile(User user) async {
     final client = _clientFactory();
     try {
-      final request = await client.patch(
-        _host,
-        _port,
-        '/api/users/${user.id}/profile',
-      );
+      final request =
+          await client.patchUrl(_buildUri('/api/users/${user.id}/profile'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -407,11 +400,8 @@ class ApiClient {
       String email, String password, String userId) async {
     final client = _clientFactory();
     try {
-      final request = await client.patch(
-        _host,
-        _port,
-        '/api/users/$userId/email',
-      );
+      final request =
+          await client.patchUrl(_buildUri('/api/users/$userId/email'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -438,11 +428,8 @@ class ApiClient {
   Future<Result<List<Plan>>> getFavoritesByUser(String userId) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(
-        _host,
-        _port,
-        '/api/users/$userId/favorites',
-      );
+      final request =
+          await client.getUrl(_buildUri('/api/users/$userId/favorites'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -464,11 +451,8 @@ class ApiClient {
   Future<Result<List<User>>> getFollowers(String userId) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(
-        _host,
-        _port,
-        '/api/users/$userId/followers',
-      );
+      final request =
+          await client.getUrl(_buildUri('/api/users/$userId/followers'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -488,11 +472,8 @@ class ApiClient {
   Future<Result<List<User>>> getFollowing(String userId) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(
-        _host,
-        _port,
-        '/api/users/$userId/following',
-      );
+      final request =
+          await client.getUrl(_buildUri('/api/users/$userId/following'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -512,11 +493,8 @@ class ApiClient {
   Future<Result<UserStats>> getUserStats(String userId) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(
-        _host,
-        _port,
-        '/api/users/$userId/stats',
-      );
+      final request =
+          await client.getUrl(_buildUri('/api/users/$userId/stats'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -535,7 +513,7 @@ class ApiClient {
   Future<Result<User>> getUserById(String userId) async {
     final client = _clientFactory();
     try {
-      final request = await client.get(_host, _port, '/api/users/$userId');
+      final request = await client.getUrl(_buildUri('/api/users/$userId'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
       final response = await request.close();
@@ -556,41 +534,48 @@ class ApiClient {
 
   // Comment endpoints
 
-  Future<Result<List<Comment>>> getComments(String planId,
-      {int page = 1, int limit = 10}) async {
-    final client = _clientFactory();
-    try {
-      final request = await client.get(
-          _host, _port, '/api/comments/plan/$planId?page=$page&limit=$limit');
-      request.headers.contentType = ContentType.json;
-      await _authHeader(request.headers);
-
-      final response = await request.close();
-      return await _handleResponse(
-        response,
-        (json) {
-          final responseData = json as Map<String, dynamic>;
-          if (responseData['comments'] != null) {
-            return (responseData['comments'] as List<dynamic>)
-                .map((comment) => Comment.fromJson(comment))
-                .toList();
-          } else {
-            return <Comment>[];
-          }
+Future<Result<List<Comment>>> getComments(String planId,
+    {int page = 1, int limit = 10}) async {
+  final client = _clientFactory();
+  try {
+    final request = await client.getUrl(
+      _buildUri(
+        '/api/comments/plan/$planId',
+        queryParameters: {
+          'page': page.toString(),
+          'limit': limit.toString(),
         },
-      );
-    } on Exception catch (error) {
-      return Result.error(error);
-    } finally {
-      client.close();
-    }
+      ),
+    );
+    request.headers.contentType = ContentType.json;
+    await _authHeader(request.headers);
+
+    final response = await request.close();
+    return await _handleResponse(
+      response,
+      (json) {
+        final responseData = json as Map<String, dynamic>;
+        if (responseData['comments'] != null) {
+          return (responseData['comments'] as List<dynamic>)
+              .map((comment) => Comment.fromJson(comment))
+              .toList();
+        } else {
+          return <Comment>[];
+        }
+      },
+    );
+  } on Exception catch (error) {
+    return Result.error(error);
+  } finally {
+    client.close();
   }
+}
 
   Future<Result<List<Comment>>> getCommentResponses(String commentId) async {
     final client = _clientFactory();
     try {
       final request =
-          await client.get(_host, _port, '/api/comments/$commentId/responses');
+          await client.getUrl(_buildUri('/api/comments/$commentId/responses'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -611,7 +596,7 @@ class ApiClient {
   Future<Result<Comment>> createComment(String planId, Comment comment) async {
     final client = _clientFactory();
     try {
-      final request = await client.post(_host, _port, '/api/comments');
+      final request = await client.postUrl(_buildUri('/api/comments'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -647,7 +632,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.put(_host, _port, '/api/comments/$commentId');
+          await client.putUrl(_buildUri('/api/comments/$commentId'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -681,7 +666,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.delete(_host, _port, '/api/comments/$commentId');
+          await client.deleteUrl(_buildUri('/api/comments/$commentId'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -707,7 +692,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.get(_host, _port, '/api/comments/$commentId');
+          await client.getUrl(_buildUri('/api/comments/$commentId'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -733,7 +718,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.put(_host, _port, '/api/comments/$commentId/like');
+          await client.putUrl(_buildUri('/api/comments/$commentId/like'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -759,7 +744,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.put(_host, _port, '/api/comments/$commentId/unlike');
+          await client.putUrl(_buildUri('/api/comments/$commentId/unlike'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -785,11 +770,8 @@ class ApiClient {
       String commentId, Comment comment) async {
     final client = _clientFactory();
     try {
-      final request = await client.post(
-        _host,
-        _port,
-        '/api/comments/$commentId/response',
-      );
+      final request =
+          await client.postUrl(_buildUri('/api/comments/$commentId/response'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -823,8 +805,8 @@ class ApiClient {
       String commentId, String responseId) async {
     final client = _clientFactory();
     try {
-      final request = await client.delete(
-          _host, _port, '/api/comments/$commentId/response/$responseId');
+      final request = await client.deleteUrl(
+          _buildUri('/api/comments/$commentId/response/$responseId'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -851,7 +833,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.put(_host, _port, '/api/comments/$commentId/responses');
+          await client.putUrl(_buildUri('/api/comments/$commentId/responses'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -882,7 +864,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.post(_host, _port, '/api/users/$userId/follow');
+          await client.postUrl(_buildUri('/api/users/$userId/follow'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -902,7 +884,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.delete(_host, _port, '/api/users/$userId/follow');
+          await client.deleteUrl(_buildUri('/api/users/$userId/follow'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -922,7 +904,7 @@ class ApiClient {
     final client = _clientFactory();
     try {
       final request =
-          await client.get(_host, _port, '/api/users/me/following/$userId');
+          await client.getUrl(_buildUri('/api/users/me/following/$userId'));
       request.headers.contentType = ContentType.json;
       await _authHeader(request.headers);
 
@@ -948,10 +930,8 @@ class ApiClient {
       String currentPassword, String newPassword) async {
     final client = _clientFactory();
     try {
-      final request = await client.post(
-        _host,
-        _port,
-        '/api/auth/change-password',
+      final request = await client.postUrl(
+        _buildUri('/api/auth/change-password'),
       );
 
       request.headers.contentType = ContentType.json;

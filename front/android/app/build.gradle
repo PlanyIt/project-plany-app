@@ -4,15 +4,31 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
+
 
 android {
     namespace = "com.plany.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "29.0.13599879"
+
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
 
     compileOptions {
         coreLibraryDesugaringEnabled true
@@ -20,10 +36,11 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
+
     kotlinOptions {
         jvmTarget = '17'
     }
-    
+   
     lintOptions {
         checkReleaseBuilds false
         disable 'InvalidPackage'
@@ -31,26 +48,40 @@ android {
         disable 'Deprecation'
     }
 
+
     defaultConfig {
         applicationId = "com.plany.app"
-
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-
     }
+
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            // Ajoute cette condition pour éviter l'erreur si pas de keystore
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+            shrinkResources true
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
 
+
 flutter {
     source = "../.."
 }
+
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
+}
+
 
 tasks.withType(JavaCompile) {
     options.deprecation = true

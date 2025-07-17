@@ -30,7 +30,6 @@ class StepDetailCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Barre de manipulation en haut
           Center(
             child: Container(
               margin: const EdgeInsets.only(top: 8),
@@ -43,7 +42,6 @@ class StepDetailCard extends StatelessWidget {
             ),
           ),
 
-          // Image en grand format
           Container(
             height: 250,
             width: double.infinity,

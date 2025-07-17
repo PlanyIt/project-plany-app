@@ -12,6 +12,8 @@ import { Model } from 'mongoose';
 import { StepService } from '../step/step.service';
 import { Step, StepDocument } from '../step/schemas/step.schema';
 import { Comment, CommentDocument } from '../comment/schemas/comment.schema';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 /**
  * Service de gestion des plans de sortie
@@ -34,6 +36,7 @@ export class PlanService {
     @InjectConnection() private connection: Connection,
     @Inject(forwardRef(() => StepService))
     private stepService: StepService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   /**
@@ -59,7 +62,6 @@ export class PlanService {
    * ```
    */
   async createPlan(createPlanDto: PlanDto): Promise<PlanDocument> {
-    // Conversion explicite des champs en ObjectId
     const stepIds = createPlanDto.steps.map(
       (stepId) => new Types.ObjectId(stepId),
     );
@@ -81,6 +83,9 @@ export class PlanService {
     });
 
     const savedPlan = await createdPlan.save();
+
+    await (this.cacheManager as any).del('plans:public:all');
+    await (this.cacheManager as any).del(`user:${createPlanDto.user}:plans`);
 
     return this.planModel
       .findById(savedPlan._id)
@@ -104,7 +109,13 @@ export class PlanService {
    * @returns Liste des plans publics avec relations populées
    */
   async findAll(): Promise<PlanDocument[]> {
-    return this.planModel
+    const cacheKey = 'plans:public:all';
+    const cachedPlans = await (this.cacheManager as any).get(cacheKey);
+    if (cachedPlans) {
+      return cachedPlans;
+    }
+
+    const plans = await this.planModel
       .find({ isPublic: true })
       .populate('user', 'username email photoUrl followers')
       .populate('category', 'name icon color')
@@ -116,6 +127,9 @@ export class PlanService {
       })
       .sort({ favorites: -1 })
       .exec();
+
+    await (this.cacheManager as any).set(cacheKey, plans, 30);
+    return plans;
   }
 
   /**
@@ -131,7 +145,14 @@ export class PlanService {
         `Plan with ID ${planId} is not a valid ObjectId`,
       );
     }
-    return this.planModel
+
+    const cacheKey = `plan:${planId}`;
+    const cachedPlan = await (this.cacheManager as any).get(cacheKey);
+    if (cachedPlan) {
+      return cachedPlan;
+    }
+
+    const plan = await this.planModel
       .findById(planId)
       .populate('user', 'username email photoUrl followers')
       .populate('category', 'name icon color')
@@ -142,6 +163,9 @@ export class PlanService {
           'title description image order duration cost longitude latitude',
       })
       .exec();
+
+    await (this.cacheManager as any).set(cacheKey, plan, 30);
+    return plan;
   }
 
   /**
@@ -168,7 +192,7 @@ export class PlanService {
         await this.stepService.calculateTotalDuration(stepIds);
     }
 
-    return this.planModel
+    const updatedPlan = await this.planModel
       .findOneAndUpdate({ _id: planId, user: userId }, updatePlanDto, {
         new: true,
       })
@@ -181,6 +205,12 @@ export class PlanService {
           'title description image order duration cost longitude latitude',
       })
       .exec();
+
+    await (this.cacheManager as any).del('plans:public:all');
+    await (this.cacheManager as any).del(`plan:${planId}`);
+    await (this.cacheManager as any).del(`user:${userId}:plans`);
+
+    return updatedPlan;
   }
 
   /**
@@ -197,12 +227,10 @@ export class PlanService {
    * @throws {NotFoundException} Si le plan n'existe pas ou n'appartient pas à l'utilisateur
    */
   async removeById(planId: string, userId: string): Promise<PlanDocument> {
-    // Utiliser une transaction pour garantir la cohérence
     const session = await this.connection.startSession();
 
     try {
       return await session.withTransaction(async () => {
-        // 1. Vérifier que le plan existe et appartient à l'utilisateur
         const plan = await this.planModel
           .findOne({ _id: planId, user: userId })
           .session(session);
@@ -211,7 +239,6 @@ export class PlanService {
           throw new NotFoundException(`Plan not found or not owned by user`);
         }
 
-        // 2. Supprimer tous les steps associés à ce plan
         if (plan.steps && plan.steps.length > 0) {
           await this.stepModel
             .deleteMany({
@@ -220,17 +247,19 @@ export class PlanService {
             .session(session);
         }
 
-        // 3. Supprimer tous les commentaires sur ce plan
         await this.commentModel
           .deleteMany({
             planId: planId,
           })
           .session(session);
 
-        // 4. Supprimer le plan
         const deletedPlan = await this.planModel
           .findOneAndDelete({ _id: planId, user: userId })
           .session(session);
+
+        await (this.cacheManager as any).del('plans:public:all');
+        await (this.cacheManager as any).del(`plan:${planId}`);
+        await (this.cacheManager as any).del(`user:${userId}:plans`);
 
         return deletedPlan;
       });
@@ -238,6 +267,7 @@ export class PlanService {
       await session.endSession();
     }
   }
+
   /**
    * Ajoute un plan aux favoris d'un utilisateur
    *
@@ -259,11 +289,16 @@ export class PlanService {
       );
     }
 
-    return this.planModel.findByIdAndUpdate(
+    const updated = await this.planModel.findByIdAndUpdate(
       planId,
       { $addToSet: { favorites: userId } },
       { new: true },
     );
+
+    await (this.cacheManager as any).del('plans:public:all');
+    await (this.cacheManager as any).del(`plan:${planId}`);
+
+    return updated;
   }
 
   /**
@@ -286,11 +321,16 @@ export class PlanService {
       return plan;
     }
 
-    return this.planModel.findByIdAndUpdate(
+    const updated = await this.planModel.findByIdAndUpdate(
       planId,
       { $pull: { favorites: userId } },
       { new: true },
     );
+
+    await (this.cacheManager as any).del('plans:public:all');
+    await (this.cacheManager as any).del(`plan:${planId}`);
+
+    return updated;
   }
 
   /**
@@ -315,7 +355,13 @@ export class PlanService {
       query.isPublic = true;
     }
 
-    return this.planModel
+    const cacheKey = `user:${userId}:plans`;
+    const cachedPlans = await (this.cacheManager as any).get(cacheKey);
+    if (cachedPlans) {
+      return cachedPlans;
+    }
+
+    const plans = await this.planModel
       .find(query)
       .populate('user', 'username email photoUrl followers')
       .populate('category', 'name icon color')
@@ -327,6 +373,9 @@ export class PlanService {
       })
       .sort({ createdAt: -1 })
       .exec();
+
+    await (this.cacheManager as any).set(cacheKey, plans, 30);
+    return plans;
   }
 
   /**
@@ -336,7 +385,13 @@ export class PlanService {
    * @returns Liste des plans favoris
    */
   async findFavoritesByUserId(userId: string): Promise<PlanDocument[]> {
-    return this.planModel
+    const cacheKey = `user:${userId}:favorites`;
+    const cachedPlans = await (this.cacheManager as any).get(cacheKey);
+    if (cachedPlans) {
+      return cachedPlans;
+    }
+
+    const plans = await this.planModel
       .find({ favorites: userId })
       .populate('user', 'username email photoUrl followers')
       .populate('category', 'name icon color')
@@ -348,5 +403,8 @@ export class PlanService {
       })
       .sort({ createdAt: -1 })
       .exec();
+
+    await (this.cacheManager as any).set(cacheKey, plans, 30);
+    return plans;
   }
 }

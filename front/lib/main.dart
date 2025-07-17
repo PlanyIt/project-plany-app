@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -15,7 +13,18 @@ import 'ui/core/themes/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+
+  const env = String.fromEnvironment('ENV', defaultValue: 'local');
+
+  switch (env) {
+    case 'staging':
+      await dotenv.load(fileName: '.env.staging');
+      break;
+    case 'local':
+    default:
+      await dotenv.load(fileName: '.env.local');
+      break;
+  }
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((rec) {
@@ -36,7 +45,6 @@ Future<void> main() async {
     ),
   );
 
-  // ⚠️ Empêche d'appeler initialize en test
   if (!isInTest) {
     Future.delayed(const Duration(milliseconds: 500), () {
       locationService.initialize();

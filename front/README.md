@@ -44,3 +44,8 @@ This admin panel connects to the Plany backend API to fetch and manipulate real 
 flutter pub run build_runner build --delete-conflicting-outputs
 
 flutter test integration_test/app_test.dart --dart-define=IS_TEST=true
+
+| Environnement | Commande Flutter                        |
+| ------------- | --------------------------------------- |
+| **local**     | `flutter run --dart-define=ENV=local`   |
+| **staging**   | `flutter run --dart-define=ENV=staging` |

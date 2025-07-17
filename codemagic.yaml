@@ -18,6 +18,14 @@ workflows:
           echo "IMGUR_CLIENT_SECRET=$IMGUR_CLIENT_SECRET" >> front/.env
           echo "IMGUR_CLIENT_ID=$IMGUR_CLIENT_ID" >> front/.env
 
+      - name: Setup Android signing
+        script: |
+          echo storePassword=$CM_KEYSTORE_PASSWORD > front/android/key.properties
+          echo keyPassword=$CM_KEY_PASSWORD >> front/android/key.properties
+          echo keyAlias=$CM_KEY_ALIAS >> front/android/key.properties
+          echo storeFile=`pwd`/front/keystore.jks >> front/android/key.properties
+          echo $CM_KEYSTORE | base64 --decode > front/keystore.jks
+
       - name: Get Flutter dependencies
         script: flutter pub get
         working_directory: front

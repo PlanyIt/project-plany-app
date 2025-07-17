@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { Model } from 'mongoose';
 import { Comment, CommentDocument } from './schemas/comment.schema';
 import { CommentDto } from './dto/comment.dto';
@@ -20,41 +22,35 @@ import { CommentDto } from './dto/comment.dto';
 export class CommentService {
   constructor(
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  /**
-   * Crée un nouveau commentaire
-   *
-   * Crée un commentaire et récupère automatiquement les informations
-   * de l'utilisateur associé pour l'affichage.
-   *
-   * @param createCommentDto - Données du commentaire à créer
-   * @returns Commentaire créé avec les informations utilisateur
-   * @throws {Error} Si une erreur survient lors de la création
-   *
-   */
+  private get cache(): any {
+    return this.cacheManager as any;
+  }
+
+  private async invalidatePlanCommentsCache(planId: string) {
+    await this.cache.del(`comments:plan:${planId}`);
+    await this.cache.del(`comments:count:${planId}`);
+  }
+
+  private async invalidateUserCommentsCache(userId: string) {
+    await this.cache.del(`comments:user:${userId}`);
+  }
+
   async create(createCommentDto: CommentDto): Promise<CommentDocument> {
     const newComment = new this.commentModel(createCommentDto);
     const savedComment = await newComment.save();
 
-    // Populate user information
+    await this.invalidatePlanCommentsCache(savedComment.planId.toString());
+    await this.invalidateUserCommentsCache(savedComment.user.toString());
+
     return this.commentModel
       .findById(savedComment._id)
       .populate('user', 'username email photoUrl')
       .exec();
   }
 
-  /**
-   * Ajoute un like à un commentaire
-   *
-   * Utilise $addToSet pour ajouter l'ID utilisateur à la liste des likes
-   * Évite les doublons grâce à $addToSet qui pourrait être utilisé alternativement.
-   *
-   * @param commentId - ID du commentaire à liker
-   * @param userId - ID de l'utilisateur qui like
-   * @returns Commentaire mis à jour avec le nouveau like
-   * @throws {NotFoundException} Si le commentaire n'existe pas
-   */
   async likeComment(
     commentId: string,
     userId: string,
@@ -69,16 +65,6 @@ export class CommentService {
       .exec();
   }
 
-  /**
-   * Retire un like d'un commentaire
-   *
-   * Utilise $pull pour retirer l'ID utilisateur de la liste des likes.
-   *
-   * @param commentId - ID du commentaire à unliker
-   * @param userId - ID de l'utilisateur qui retire son like
-   * @returns Commentaire mis à jour sans le like
-   * @throws {NotFoundException} Si le commentaire n'existe pas
-   */
   async unlikeComment(
     commentId: string,
     userId: string,
@@ -93,19 +79,6 @@ export class CommentService {
       .exec();
   }
 
-  /**
-   * Ajoute une réponse à un commentaire
-   *
-   * Crée une nouvelle entrée commentaire avec un parentId pour créer
-   * la hiérarchie. Met à jour le commentaire parent pour inclure
-   * la référence à la réponse.
-   *
-   * @param commentId - ID du commentaire parent
-   * @param responseDto - Données de la réponse à créer
-   * @returns Réponse créée avec les informations utilisateur
-   * @throws {NotFoundException} Si le commentaire parent n'existe pas
-   *
-   */
   async addResponse(
     commentId: string,
     responseDto: CommentDto,
@@ -125,33 +98,28 @@ export class CommentService {
       { $addToSet: { responses: savedResponse.id } },
     );
 
-    // Populate user information before returning
+    await this.cache.del(`comments:responses:${commentId}`);
+    await this.invalidatePlanCommentsCache(comment.planId.toString());
+    await this.invalidateUserCommentsCache(responseDto.user.toString());
+
     return this.commentModel
       .findById(savedResponse._id)
       .populate('user', 'username email photoUrl')
       .exec();
   }
 
-  /**
-   * Récupère tous les commentaires d'un plan avec pagination
-   *
-   * Récupère uniquement les commentaires racines (sans parentId)
-   * avec leurs réponses populées. Inclut la pagination pour optimiser
-   * les performances sur les plans avec beaucoup de commentaires.
-   *
-   * @param planId - ID du plan
-   * @param paginationOptions - Options de pagination (page, limit)
-   * @returns Liste paginée des commentaires avec leurs réponses
-   *
-   */
   async findAllByPlanId(
     planId: string,
     paginationOptions: { page: number; limit: number },
   ): Promise<CommentDocument[]> {
     const { page, limit } = paginationOptions;
     const skip = (page - 1) * limit;
+    const cacheKey = `comments:plan:${planId}:page:${page}:limit:${limit}`;
 
-    return this.commentModel
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const comments = await this.commentModel
       .find({
         planId,
         $or: [{ parentId: { $exists: false } }, { parentId: null }],
@@ -168,20 +136,11 @@ export class CommentService {
         },
       })
       .exec();
+
+    await this.cache.set(cacheKey, comments, 30);
+    return comments;
   }
 
-  /**
-   * Supprime une réponse d'un commentaire
-   *
-   * Retire la référence de la réponse du commentaire parent
-   * puis supprime la réponse elle-même. Opération atomique
-   * pour maintenir la cohérence des données.
-   *
-   * @param commentId - ID du commentaire parent
-   * @param responseId - ID de la réponse à supprimer
-   * @returns Objet contenant le commentaire parent et la réponse supprimée
-   * @throws {NotFoundException} Si le commentaire ou la réponse n'existe pas
-   */
   async removeResponse(
     commentId: string,
     responseId: string,
@@ -206,69 +165,61 @@ export class CommentService {
       throw new NotFoundException(`Response with ID ${responseId} not found`);
     }
 
+    await this.cache.del(`comments:responses:${commentId}`);
+    await this.invalidatePlanCommentsCache(comment.planId.toString());
+
     return { comment, response };
   }
 
-  /**
-   * Compte le nombre de commentaires racines d'un plan
-   *
-   * Compte uniquement les commentaires principaux (sans parentId)
-   * pour le calcul de pagination et les statistiques.
-   *
-   * @param planId - ID du plan
-   * @returns Nombre de commentaires racines
-   */
   async countByPlanId(planId: string): Promise<number> {
-    return this.commentModel
+    const cacheKey = `comments:count:${planId}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached !== undefined) return cached;
+
+    const count = await this.commentModel
       .countDocuments({
         planId,
         $or: [{ parentId: { $exists: false } }, { parentId: null }],
       })
       .exec();
+
+    await this.cache.set(cacheKey, count, 30);
+    return count;
   }
 
-  /**
-   * Récupère toutes les réponses d'un commentaire
-   *
-   * Récupère les réponses directes d'un commentaire spécifique
-   * avec les informations utilisateur populées.
-   *
-   * @param commentId - ID du commentaire parent
-   * @returns Liste des réponses avec les informations utilisateur
-   */
   async findAllResponses(commentId: string): Promise<Comment[]> {
-    return this.commentModel
+    const cacheKey = `comments:responses:${commentId}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const responses = await this.commentModel
       .find({ parentId: commentId })
       .populate('user', 'username email photoUrl')
       .exec();
+
+    await this.cache.set(cacheKey, responses, 30);
+    return responses;
   }
 
-  /**
-   * Récupère tous les commentaires d'un utilisateur
-   *
-   * Récupère tous les commentaires (racines et réponses) créés
-   * par un utilisateur spécifique, utile pour l'affichage du profil.
-   *
-   * @param userId - ID de l'utilisateur
-   * @returns Liste des commentaires de l'utilisateur
-   */
   async findAllByUserId(userId: string): Promise<CommentDocument[]> {
-    return this.commentModel
+    const cacheKey = `comments:user:${userId}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const comments = await this.commentModel
       .find({ user: userId })
       .populate('user', 'username email photoUrl')
       .exec();
+
+    await this.cache.set(cacheKey, comments, 30);
+    return comments;
   }
 
-  /**
-   * Récupère un commentaire par son ID
-   *
-   * Récupère un commentaire spécifique avec ses réponses et
-   * les informations utilisateur populées.
-   *
-   * @param commentId - ID du commentaire
-   * @returns Commentaire avec ses réponses et informations utilisateur
-   */
   async findById(commentId: string): Promise<CommentDocument | undefined> {
+    const cacheKey = `comment:${commentId}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
     const comment = await this.commentModel
       .findOne({ _id: commentId })
       .populate('user', 'username email photoUrl')
@@ -280,22 +231,11 @@ export class CommentService {
         },
       })
       .exec();
+
+    await this.cache.set(cacheKey, comment, 30);
     return comment;
   }
 
-  /**
-   * Supprime un commentaire et toutes ses réponses
-   *
-   * Effectue une suppression en cascade pour maintenir l'intégrité :
-   * - Supprime toutes les réponses associées au commentaire
-   * - Supprime le commentaire principal
-   * - Maintient la cohérence des références
-   *
-   * @param commentId - ID du commentaire à supprimer
-   * @returns Commentaire supprimé avec les informations utilisateur
-   * @throws {NotFoundException} Si le commentaire n'existe pas
-   *
-   */
   async removeById(commentId: string): Promise<CommentDocument> {
     const comment = await this.commentModel.findById(commentId).exec();
 
@@ -309,33 +249,32 @@ export class CommentService {
         .exec();
     }
 
+    await this.invalidatePlanCommentsCache(comment.planId.toString());
+    await this.invalidateUserCommentsCache(comment.user.toString());
+    await this.cache.del(`comment:${commentId}`);
+
     return this.commentModel
       .findByIdAndDelete(commentId)
       .populate('user', 'username email photoUrl')
       .exec();
   }
 
-  /**
-   * Met à jour un commentaire existant
-   *
-   * Met à jour le contenu d'un commentaire tout en préservant
-   * les métadonnées et les relations existantes.
-   *
-   * @param commentId - ID du commentaire à mettre à jour
-   * @param updateCommentDto - Nouvelles données du commentaire
-   * @returns Commentaire mis à jour avec les informations utilisateur
-   * @throws {NotFoundException} Si le commentaire n'existe pas
-   *
-   */
   async updateById(
     commentId: string,
     updateCommentDto: CommentDto,
   ): Promise<CommentDocument | null> {
-    return this.commentModel
+    const updatedComment = await this.commentModel
       .findOneAndUpdate({ _id: commentId }, updateCommentDto, {
         new: true,
       })
       .populate('user', 'username email photoUrl')
       .exec();
+
+    if (updatedComment) {
+      await this.cache.del(`comment:${commentId}`);
+      await this.invalidatePlanCommentsCache(updatedComment.planId.toString());
+    }
+
+    return updatedComment;
   }
 }

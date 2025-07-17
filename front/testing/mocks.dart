@@ -41,7 +41,7 @@ extension HttpMethodMocks on MockHttpClient {
   void mockPut(String path, Object object, [int statusCode = 200]) =>
       _mockRequest(HttpMethod.put, path, object, statusCode);
 
-  void mockPatch(String path, Object object, [int statusCode = 204]) =>
+  void mockPatch(String path, Object object, [int statusCode = 200]) =>
       _mockRequest(HttpMethod.patch, path, object, statusCode);
 
   void mockDelete(String path, Object object, [int statusCode = 204]) =>
@@ -73,26 +73,32 @@ extension HttpMethodMocks on MockHttpClient {
     when(() => response.transform(utf8.decoder))
         .thenAnswer((_) => Stream.fromIterable([jsonEncode(object)]));
 
-    when(() => _httpMethod(method, path))
+    // Mock des méthodes URL-based (utilisées par votre ApiClient)
+    when(() => _mockUrlMethod(method, path))
         .thenAnswer((_) => Future.value(request));
   }
 
   void _mockRequestThrows(HttpMethod method, String path, Exception exception) {
-    when(() => _httpMethod(method, path)).thenThrow(exception);
+    when(() => _mockUrlMethod(method, path)).thenThrow(exception);
   }
 
-  Future<HttpClientRequest> _httpMethod(HttpMethod method, String path) {
+  Future<HttpClientRequest> _mockUrlMethod(HttpMethod method, String path) {
     switch (method) {
       case HttpMethod.get:
-        return get('localhost', 8080, path);
+        return getUrl(any(that: _uriMatcher(path)));
       case HttpMethod.post:
-        return post('localhost', 8080, path);
+        return postUrl(any(that: _uriMatcher(path)));
       case HttpMethod.put:
-        return put('localhost', 8080, path);
+        return putUrl(any(that: _uriMatcher(path)));
       case HttpMethod.patch:
-        return patch('localhost', 8080, path);
+        return patchUrl(any(that: _uriMatcher(path)));
       case HttpMethod.delete:
-        return delete('localhost', 8080, path);
+        return deleteUrl(any(that: _uriMatcher(path)));
     }
+  }
+
+  Matcher _uriMatcher(String expectedPath) {
+    return predicate<Uri>((uri) => uri.path.endsWith(expectedPath),
+        'Uri with path ending with "$expectedPath"');
   }
 }

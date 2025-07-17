@@ -27,6 +27,21 @@ class FakeHttpClient implements HttpClient {
       request;
 
   @override
+  Future<HttpClientRequest> postUrl(Uri url) async => request;
+
+  @override
+  Future<HttpClientRequest> getUrl(Uri url) async => request;
+
+  @override
+  Future<HttpClientRequest> putUrl(Uri url) async => request;
+
+  @override
+  Future<HttpClientRequest> patchUrl(Uri url) async => request;
+
+  @override
+  Future<HttpClientRequest> deleteUrl(Uri url) async => request;
+
+  @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
