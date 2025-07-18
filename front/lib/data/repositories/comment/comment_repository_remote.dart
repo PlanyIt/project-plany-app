@@ -14,21 +14,13 @@ class CommentRepositoryRemote implements CommentRepository {
 
   final ApiClient _apiClient;
   final ImgurService _imgurService;
-  List<Comment>? _cachedComments;
 
   @override
   Future<Result<List<Comment>>> getComments(String planId,
       {int page = 1, int limit = 10}) async {
-    // Si le cache existe, le retourner
-    if (_cachedComments != null) {
-      return Result.ok(_cachedComments!);
-    }
     try {
       final result =
           await _apiClient.getComments(planId, page: page, limit: limit);
-      if (result is Ok<List<Comment>>) {
-        _cachedComments = result.value;
-      }
       return result;
     } catch (e) {
       return Result.error(Exception('Failed to load comments: $e'));
@@ -48,6 +40,7 @@ class CommentRepositoryRemote implements CommentRepository {
   @override
   Future<Result<Comment>> createComment(String planId, Comment comment) async {
     try {
+      // Validate input before making the API call
       if (comment.content.trim().isEmpty) {
         return Result.error(Exception('Comment content cannot be empty'));
       }
@@ -57,7 +50,6 @@ class CommentRepositoryRemote implements CommentRepository {
       }
 
       final result = await _apiClient.createComment(planId, comment);
-      clearCache();
       return result;
     } catch (e) {
       var errorMessage = 'Failed to create comment';
@@ -79,7 +71,6 @@ class CommentRepositoryRemote implements CommentRepository {
   Future<Result<void>> editComment(String commentId, Comment comment) async {
     try {
       final result = await _apiClient.editComment(commentId, comment);
-      clearCache();
       return result;
     } catch (e) {
       return Result.error(Exception('Failed to edit comment: $e'));
@@ -90,7 +81,6 @@ class CommentRepositoryRemote implements CommentRepository {
   Future<Result<void>> deleteComment(String commentId) async {
     try {
       final result = await _apiClient.deleteComment(commentId);
-      clearCache();
       return result;
     } catch (e) {
       return Result.error(Exception('Failed to delete comment: $e'));
@@ -132,7 +122,6 @@ class CommentRepositoryRemote implements CommentRepository {
       String commentId, Comment comment) async {
     try {
       final result = await _apiClient.respondToComment(commentId, comment);
-      clearCache();
       return result;
     } catch (e) {
       return Result.error(Exception('Failed to respond to comment: $e'));
@@ -144,7 +133,6 @@ class CommentRepositoryRemote implements CommentRepository {
       String commentId, String responseId) async {
     try {
       final result = await _apiClient.deleteResponse(commentId, responseId);
-      clearCache();
       return result;
     } catch (e) {
       return Result.error(Exception('Failed to delete response: $e'));
@@ -157,7 +145,6 @@ class CommentRepositoryRemote implements CommentRepository {
     try {
       final result =
           await _apiClient.addResponseToComment(commentId, responseId);
-      clearCache();
       return result;
     } catch (e) {
       return Result.error(Exception('Failed to add response to comment: $e'));
@@ -172,9 +159,5 @@ class CommentRepositoryRemote implements CommentRepository {
     } catch (e) {
       return Result.error(Exception('Failed to upload image: $e'));
     }
-  }
-
-  void clearCache() {
-    _cachedComments = null;
   }
 }
