@@ -49,13 +49,12 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.organization=planyit
+            -Dsonar.organization=PlanyIt
             -Dsonar.projectKey=PlanyIt_project-plany-app
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
