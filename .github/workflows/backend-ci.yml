@@ -49,10 +49,13 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: 🔎 SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
           projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=planyit
+            -Dsonar.organization=PlanyIt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
