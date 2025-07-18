@@ -1,51 +1,99 @@
-# Plany Admin
+# Plany Flutter App
 
-Administration interface for the Plany application.
+Plany is the mobile client for the Plany project, built with Flutter. It allows users to browse, create, and manage collaborative plans, steps, comments, and categories, with real-time data from the backend API.
 
-## Overview
-
-This admin panel allows management of plans, steps, categories, and users. It connects to the Plany backend API to fetch and manipulate real data.
+---
 
 ## Features
 
-- Authentication with Firebase
-- Real-time data from backend API
-- Management of:
-  - Plans
-  - Steps
-  - Categories
-  - Users
-- Dashboard with analytics
+- User authentication (JWT, secure storage)
+- Browse and manage plans, steps, categories, comments
+- Map integration (flutter_map, geolocation)
+- Image caching and optimized loading
+- Local data caching for offline support
+- Responsive UI, theming, and animations
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-- Flutter SDK
-- Firebase project configuration
-- Backend API access
+- [Flutter SDK](https://flutter.dev/docs/get-started/install) (3.10+ recommandé)
+- Backend API access (voir `/back`)
 
-### Environment Setup
+### Installation & Setup
 
-1. Create a `.env` file in the project root with:
+1. Clone le dépôt et va dans `/front` :
+   ```bash
+   cd front
+   ```
+2. Installe les dépendances :
+   ```bash
+   flutter pub get
+   ```
+3. Crée un fichier `.env` dans `/front` :
+   ```env
+   BASE_URL=https://your-backend-api-url.com
+   ```
+4. (Optionnel) Configure la signature Android/iOS pour les builds release.
+
+### Lancer l'application
+
+- Développement :
+  ```bash
+  flutter run
+  ```
+- Avec environnement :
+  ```bash
+  flutter run --dart-define=ENV=local
+  flutter run --dart-define=ENV=staging
+  ```
+
+### Commandes utiles
+
+- Générer le code :
+  ```bash
+  flutter pub run build_runner build --delete-conflicting-outputs
+  ```
+- Lancer les tests :
+  ```bash
+  flutter test
+  flutter test integration_test/app_test.dart --dart-define=IS_TEST=true
+  ```
+
+---
+
+## Structure du projet
 
 ```
-BASE_URL=https://your-backend-api-url.com
+front/
+  lib/         # Code principal de l'app (UI, data, domain, utils)
+  assets/      # Images et assets statiques
+  test/        # Tests unitaires et widgets
+  integration_test/ # Tests d'intégration
 ```
 
-2. Run `flutter pub get` to install dependencies
+---
 
-3. Start the app with `flutter run`
+## CI/CD
 
-## Backend Integration
+- Voir le fichier racine `codemagic.yaml` pour l'intégration build, test et SonarCloud.
 
-This admin panel connects to the Plany backend API to fetch and manipulate real data. Authentication is handled via Firebase tokens which are sent with each API request.
+---
 
-flutter pub run build_runner build --delete-conflicting-outputs
+## Backend
 
-flutter test integration_test/app_test.dart --dart-define=IS_TEST=true
+Cette application mobile communique avec l'API backend Plany (NestJS/MongoDB). Voir [`/back`](../back/README.md) pour la configuration et le lancement du serveur.
 
-| Environnement | Commande Flutter                        |
-| ------------- | --------------------------------------- |
-| **local**     | `flutter run --dart-define=ENV=local`   |
-| **staging**   | `flutter run --dart-define=ENV=staging` |
+---
+
+## Licence
+
+MIT
+
+---
+
+## Auteurs
+
+Plany Team

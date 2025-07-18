@@ -1,42 +1,28 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+src/
+├── app.module.ts
+├── auth/
+├── user/
+├── plan/
+├── step/
+├── comment/
+├── category/
+└── infrastructure/
 
 # Plany Backend
 
-This is the backend API for **Plany**, a collaborative platform for sharing and discovering outing plans. Built with [NestJS](https://nestjs.com/) and MongoDB, it provides a robust, secure, and scalable REST API for managing users, plans, steps, comments, and categories.
+Backend API for **Plany**, a collaborative platform for sharing and discovering outing plans. Built with [NestJS](https://nestjs.com/) and MongoDB, it provides a robust, secure, and scalable REST API for users, plans, steps, comments, and categories.
 
 ---
 
 ## Features
 
-- **User Management**: Registration, authentication (JWT), profile, premium status, followers/following, and secure password handling (Argon2).
-- **Plans**: Create, update, delete, and retrieve outing plans with steps, categories, and favorites.
-- **Steps**: Each plan consists of ordered steps (activities/places), with geolocation, images, cost, and duration.
-- **Comments**: Hierarchical comments system with likes, replies, and moderation.
-- **Categories**: Organize plans by category (e.g., Weekend, Culture, Gastronomy).
-- **Security**: Helmet, rate limiting, NoSQL injection protection, DTO validation, and CORS.
-- **Testing**: Unit and e2e tests with Jest.
+- **User Management**: Registration, authentication (JWT), profile, premium status, followers/following, secure password (Argon2)
+- **Plans**: CRUD, steps, categories, favorites
+- **Steps**: Ordered steps (activities/places), geolocation, images, cost, duration
+- **Comments**: Hierarchical, likes, replies, moderation
+- **Categories**: Organize plans by category
+- **Security**: Helmet, rate limiting, NoSQL injection protection, DTO validation, CORS
+- **Testing**: Unit and e2e tests with Jest
 
 ---
 
@@ -46,19 +32,20 @@ This is the backend API for **Plany**, a collaborative platform for sharing and 
 
 - [Node.js](https://nodejs.org/) (v18+ recommended)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [MongoDB](https://www.mongodb.com/) (local or cloud instance)
+- [MongoDB](https://www.mongodb.com/) (local or cloud)
 
 ### Installation
 
 ```bash
+cd back
 npm install
 # or
-yarn install
+
 ```
 
 ### Environment Variables
 
-Create a `.env` file at the root of `/back` with the following variables:
+Create a `.env` file in `/back` with:
 
 ```
 MONGO_URI=mongodb://localhost:27017/plany
@@ -71,7 +58,7 @@ CORS_ORIGIN=https://plany.app,https://admin.plany.app
 PORT=3000
 ```
 
-> **Note:** You can use `.env.local` for local overrides.
+> You can use `.env.local` for local overrides.
 
 ---
 
@@ -86,17 +73,17 @@ npm run build
 npm run start:prod
 ```
 
-The API will be available at `http://localhost:3000` by default.
+API available at `http://localhost:3000` by default.
 
 ---
 
 ## Database Setup & Seeding
 
-Initialize and seed the database with demo data:
+Initialize and seed the database:
 
 ```bash
-npm run db:init    # Create collections if needed
-npm run db:seed    # Seed demo users, plans, steps, categories, comments
+npm run db:init    # Create collections
+npm run db:seed    # Seed demo data
 npm run db:reset   # Reset and reseed all data
 ```
 
@@ -113,8 +100,6 @@ npm run db:reset   # Reset and reseed all data
   - `/api/steps` - Step CRUD
   - `/api/comments` - Comment CRUD, likes, replies
   - `/api/categories` - Category CRUD
-
-> See the [OpenAPI/Swagger documentation](#) (if enabled) for full endpoint details.
 
 ---
 
@@ -154,7 +139,7 @@ src/
   ├── step/
   ├── comment/
   ├── category/
-  └── infrastructure/
+  └── common/
 ```
 
 ---
@@ -184,3 +169,5 @@ MIT
 - [NestJS Documentation](https://docs.nestjs.com)
 - [MongoDB Documentation](https://docs.mongodb.com/)
 - [Jest Testing](https://jestjs.io/)
+
+---
