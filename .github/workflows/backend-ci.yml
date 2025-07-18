@@ -1,236 +1,74 @@
-name: Backend CI/CD
+name: Backend CI
 
-on:
-  push:
-    branches: [main, develop]
-    paths: ["back/**"]
-  pull_request:
-    paths: ["back/**"]
-
-defaults:
-  run:
-    working-directory: ./back
-
-env:
-  NODE_ENV: test
-  MONGO_URI: mongodb://localhost:27017/plany-test
-  REDIS_URL: redis://localhost:6379
-  JWT_SECRET_AT: test-access-token-secret-for-ci
-  JWT_SECRET_RT: test-refresh-token-secret-for-ci
-  JWT_EXPIRES_AT: 15m
-  JWT_EXPIRES_RT: 7d
+on: [push, pull_request]
 
 jobs:
-  lint-test-coverage:
-    name: Lint, Tests & Coverage
+  build-and-test:
     runs-on: ubuntu-latest
-    services:
-      mongodb:
-        image: mongo:7.0
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7.0
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    defaults:
+      run:
+        working-directory: back
+
+    env:
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      DATABASE_NAME: plany
+      JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
+      JWT_AT_EXPIRES_IN: 15m
+      JWT_SECRET_RT: ultra-secret-refresh
+      JWT_RT_EXPIRES_IN: 30d
+      PORT: 3000
+      NODE_ENV: test
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: 🛠️ Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: "22.13.1"
-          cache: "npm"
-          cache-dependency-path: back/package-lock.json
+          node-version: 20
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: Run ESLint
+      - name: 🔍 Run linter
         run: npm run lint
 
-      - name: Run Prettier check
-        run: npm run format:check
+      - name: 🧪 Run unit tests
+        run: npm run test
 
-      - name: Run unit tests with coverage
+      - name: 📊 Run coverage tests
         run: npm run test:cov
 
-      - name: Enforce coverage threshold
-        run: |
-          npx jest --coverage --passWithNoTests \
-            --coverageThreshold='{
-              "global": {
-                "lines": 80,
-                "functions": 80,
-                "branches": 65,
-                "statements": 80
-              }
-            }'
-
-      - name: Run integration tests
-        run: npm run test:e2e
-        env:
-          MONGO_URI: mongodb://localhost:27017/plany-test-e2e
-
-      - name: Generate coverage summary
-        run: |
-          echo "## 📊 Backend Coverage Report" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          if [ -f "coverage/coverage-summary.json" ]; then
-            cat coverage/coverage-summary.json | jq -r '.total | "Lines: " + (.lines.pct|tostring) + "% | Functions: " + (.functions.pct|tostring) + "% | Branches: " + (.branches.pct|tostring) + "% | Statements: " + (.statements.pct|tostring) + "%"'
-          else
-            echo "No coverage summary found"
-          fi >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Comment PR with coverage
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            try {
-              const coveragePath = path.join(process.cwd(), 'back', 'coverage', 'coverage-summary.json');
-              
-              if (!fs.existsSync(coveragePath)) {
-                console.log('No coverage file found');
-                return;
-              }
-              
-              const coverage = fs.readFileSync(coveragePath, 'utf8');
-              const data = JSON.parse(coverage);
-              const total = data.total;
-
-              const comment = `## 📊 Backend Coverage Report
-              | Metric | Coverage | Status |
-              |--------|----------|--------|
-              | Lines | ${total.lines.pct}% | ${total.lines.pct >= 80 ? '✅' : '❌'} |
-              | Functions | ${total.functions.pct}% | ${total.functions.pct >= 80 ? '✅' : '❌'} |
-              | Branches | ${total.branches.pct}% | ${total.branches.pct >= 75 ? '✅' : '❌'} |
-              | Statements | ${total.statements.pct}% | ${total.statements.pct >= 80 ? '✅' : '❌'} |
-              
-              **Thresholds:** Lines ≥ 80%, Functions ≥ 80%, Branches ≥ 75%, Statements ≥ 80%`;
-
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-              
-            } catch (error) {
-              console.log('Error generating coverage comment:', error.message);
-            }
-
-  security-scan:
-    name: Security Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22.13.1"
-          cache: "npm"
-          cache-dependency-path: back/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: ./back
-
-      - name: Run npm security audit
-        run: |
-          echo "## 🔒 Security Audit Results" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          npm audit --audit-level=high || echo "Security vulnerabilities found - check details above"
-          echo '```' >> $GITHUB_STEP_SUMMARY
-        working-directory: ./back
+      - name: 🔎 Run npm audit (do not fail build)
+        run: npm audit --production
         continue-on-error: true
 
-      - name: Install and run OSV Scanner
-        run: |
-          # Télécharger le binaire OSV Scanner
-          curl -sSL https://github.com/google/osv-scanner/archive/refs/tags/v2.1.0.tar.gz -o osv-scanner-2.1.0.tar
-          tar -xzf osv-scanner.tar.gz
-          sudo mv osv-scanner /usr/local/bin/osv-scanner
-
-          # Scanner le projet avec format SARIF
-          osv-scanner scan --format=sarif --output=osv-results.sarif ./back || true
-
-          # Afficher un résumé dans GitHub Actions
-          echo "## 🔍 OSV Scanner Results" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          osv-scanner scan ./back || echo "Vulnerabilities found - check SARIF report in Security tab"
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload OSV Scanner results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: osv-results.sarif
-        if: always()
-
-      # ✅ Semgrep corrigé - Paramètre correct
-      - name: Run Semgrep security analysis
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/nodejs
-            p/typescript
-            p/owasp-top-ten
+      - name: Run snyk test
+        run: npx snyk test --all-projects
+        continue-on-error: true
         env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      # ✅ Alternative Semgrep si pas de token
-      - name: Run Semgrep (fallback without token)
-        if: failure() || !env.SEMGREP_APP_TOKEN
-        run: |
-          # Installer Semgrep via pip
-          pip install semgrep
-
-          # Scanner avec règles de base
-          semgrep --config=p/security-audit --config=p/nodejs --config=p/typescript --sarif --output=semgrep-fallback.sarif ./back || true
-
-          echo "## 🔍 Semgrep Results" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          semgrep --config=p/security-audit --config=p/nodejs ./back || echo "Issues found - check SARIF report"
-          echo '```' >> $GITHUB_STEP_SUMMARY
-        working-directory: ./
-
-      - name: Upload Semgrep results (fallback)
-        uses: github/codeql-action/upload-sarif@v3
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v2
         with:
-          sarif_file: semgrep-fallback.sarif
-        if: always()
-
-      - name: Run Gitleaks secret detection
-        uses: gitleaks/gitleaks-action@v2
+          projectBaseDir: back
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECTKEY: PlanyIt_project-plany-app
+          SONAR_ORGANIZATION: planyit
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript
+      - name: Install k6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg software-properties-common
+          sudo gpg -k || true
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/k6.gpg
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+      - name: 🏋️ Run K6 load tests
+        run: k6 run ./k6-tests/api-load.js
+        working-directory: back

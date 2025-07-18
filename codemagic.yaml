@@ -3,8 +3,18 @@ workflows:
     name: Build Plany Android
     max_build_duration: 60
     environment:
-      java: 17  # ← Ajout de Java 17 pour correspondre à votre version locale
+      java: 17
       flutter: stable
+      groups:
+        - plany_env 
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+        - pattern: develop
+
     scripts:
       - name: Clean Flutter
         script: flutter clean
@@ -18,21 +28,24 @@ workflows:
           echo "IMGUR_CLIENT_SECRET=$IMGUR_CLIENT_SECRET" >> front/.env.staging
           echo "IMGUR_CLIENT_ID=$IMGUR_CLIENT_ID" >> front/.env.staging
 
+      - name: Check keystore variable
+        script: |
+          if [ -z "$CM_KEYSTORE" ]; then
+            echo "❌ CM_KEYSTORE is empty! Check your Codemagic environment variables."
+            exit 1
+          fi
+          echo $CM_KEYSTORE | base64 --decode > front/keystore.jks
+          ls -lh front/keystore.jks
+
       - name: Setup Android signing
         script: |
           echo storePassword=$CM_KEYSTORE_PASSWORD > front/android/key.properties
           echo keyPassword=$CM_KEY_PASSWORD >> front/android/key.properties
           echo keyAlias=$CM_KEY_ALIAS >> front/android/key.properties
           echo storeFile=`pwd`/front/keystore.jks >> front/android/key.properties
-          echo $CM_KEYSTORE | base64 --decode > front/keystore.jks
 
       - name: Fix keystore compatibility
         script: |
-          # Vérifier la version Java
-          echo "Java version used:"
-          java -version
-          
-          # Convertir le keystore pour assurer la compatibilité
           keytool -importkeystore \
             -srckeystore front/keystore.jks \
             -destkeystore front/keystore_fixed.jks \
@@ -40,26 +53,49 @@ workflows:
             -srcstorepass $CM_KEYSTORE_PASSWORD \
             -deststorepass $CM_KEYSTORE_PASSWORD \
             -noprompt
-          
-          # Remplacer l'ancien keystore
           mv front/keystore_fixed.jks front/keystore.jks
-          
-          # Vérifier que le keystore est lisible
           keytool -list -keystore front/keystore.jks -storepass $CM_KEYSTORE_PASSWORD
 
       - name: Verify key.properties content
-        script: |
-          echo "==== key.properties ===="
-          cat front/android/key.properties
-          echo "========================"
+        script: cat front/android/key.properties
 
       - name: Get Flutter dependencies
         script: flutter pub get
         working_directory: front
+        
+      - name: Analyze Flutter code
+        script: |
+          mkdir -p front/build/lint
+          flutter analyze --no-fatal-infos --no-fatal-warnings --format json > front/build/lint/lint-result.json || true
+        working_directory: front
+
+      - name: Run Flutter tests with coverage
+        script: flutter test --coverage
+        working_directory: front
+
+      - name: Install Sonar Scanner (macOS)
+        script: brew install sonar-scanner
+
+      - name: SonarCloud Scan
+        script: |
+          sonar-scanner \
+            -Dsonar.projectKey=PlanyIt_project-plany-app \
+            -Dsonar.organization=planyit \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.sources=lib \
+            -Dsonar.exclusions=**/*.g.dart \
+            -Dsonar.dart.coverage.reportPaths=coverage/lcov.info \
+            -Dsonar.dart.reportPaths=build/lint/lint-result.json
+        working_directory: front
+
 
       - name: Build AAB
         script: flutter build appbundle --release
         working_directory: front
+
+      - name: Clean .env after build
+        script: rm front/.env.staging
 
     artifacts:
       - front/build/app/outputs/bundle/release/app-release.aab
