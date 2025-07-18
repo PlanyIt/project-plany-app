@@ -50,6 +50,7 @@ export class AuthService {
    * Retire le hash du mot de passe avant de retourner l'objet au client
    */
   private publicUser(u: UserDocument) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, __v, ...rest } = u.toObject();
     return rest;
   }

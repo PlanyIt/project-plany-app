@@ -8,6 +8,9 @@ jobs:
   flutter-analysis:
     name: Flutter Analysis & Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./front
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,7 +64,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          file: ./front/coverage/lcov.info
+          file: ./coverage/lcov.info
           flags: front
           name: front-coverage
           fail_ci_if_error: true
