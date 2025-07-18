@@ -54,7 +54,7 @@ jobs:
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.organization=PlanyIt
+            -Dsonar.organization=planyit
             -Dsonar.projectKey=PlanyIt_project-plany-app
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
