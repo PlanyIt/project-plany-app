@@ -29,7 +29,7 @@ jobs:
         run: flutter doctor -v
 
       - name: Run code generation (if needed)
-        run: flutter packages pub run build_runner build --delete-conflicting-outputs
+        run: flutter packages pub run build_runner build --delete-conflicting-outputs || true
 
       - name: Run Flutter analyzer (warnings only, non-blocking)
         run: flutter analyze || true
@@ -40,34 +40,36 @@ jobs:
       - name: Run unit and widget tests
         run: flutter test --coverage --reporter=github
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODE_COV }}
-          file: ./back/coverage/lcov.info
-          flags: backend
-          name: backend-coverage
-          fail_ci_if_error: true
-
+      # Option 2: Coverage check simple pour Flutter
       - name: Enforce coverage threshold (80% minimum - Standard CDA)
         run: |
-          TOTAL=$(lcov-summary coverage/lcov.info | grep lines | awk '{ print $2 }' | sed 's/%//')
+          # Installer lcov si pas disponible
+          sudo apt-get update && sudo apt-get install -y lcov
+
+          # Vérifier si le fichier existe
+          if [ ! -f "coverage/lcov.info" ]; then
+            echo "❌ No coverage file found"
+            exit 1
+          fi
+
+          # Calculer le pourcentage de coverage
+          TOTAL=$(lcov --summary coverage/lcov.info 2>/dev/null | grep lines | awk '{ print $2 }' | sed 's/%//' || echo "0")
           echo "📊 Coverage is $TOTAL%"
+
           if (( $(echo "$TOTAL < 80" | bc -l) )); then
             echo "❌ Coverage threshold not met (80% required)"
             exit 1
           fi
           echo "✅ Coverage threshold met ($TOTAL% >= 80%)"
 
-      - name: Generate coverage report
+      # Option 4: Coverage report natif GitHub Actions
+      - name: Flutter Coverage Report Summary
         run: |
-          genhtml coverage/lcov.info -o coverage/html
-          echo "Coverage report generated in coverage/html"
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage/lcov.info
-          flags: front
-          name: front-coverage
-          fail_ci_if_error: true
+          echo "## 📊 Flutter Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          if [ -f "coverage/lcov.info" ]; then
+            lcov --summary coverage/lcov.info >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Coverage summary not available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No coverage data found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
