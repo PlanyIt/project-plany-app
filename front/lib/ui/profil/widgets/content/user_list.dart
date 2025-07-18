@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+
 import '../../../../domain/models/user/user.dart';
 import '../../../../domain/models/user/user_stats.dart';
 
@@ -72,7 +73,7 @@ class UserListItem extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -125,7 +126,7 @@ class UserListItem extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: _getUserLevelColor().withOpacity(0.15),
+            color: _getUserLevelColor().withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -151,14 +152,14 @@ class UserListItem extends StatelessWidget {
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [categoryColor, categoryColor.withOpacity(0.8)],
+          colors: [categoryColor, categoryColor.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: categoryColor.withOpacity(0.3),
+            color: categoryColor.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

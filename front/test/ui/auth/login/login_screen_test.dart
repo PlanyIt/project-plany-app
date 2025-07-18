@@ -9,8 +9,10 @@ import 'package:mocktail_image_network/mocktail_image_network.dart';
 import '../../../../testing/fakes/app.dart';
 import '../../../../testing/fakes/repositories/fake_auth_repository.dart';
 import '../../../../testing/fakes/repositories/fake_category_repository.dart';
+import '../../../../testing/fakes/repositories/fake_comment_repository.dart';
 import '../../../../testing/fakes/repositories/fake_plan_repository.dart';
 import '../../../../testing/fakes/repositories/fake_step_repository.dart';
+import '../../../../testing/fakes/repositories/fake_user_repository.dart';
 import '../../../../testing/fakes/services/fake_session_manager.dart';
 import '../../../../testing/mocks.dart';
 
@@ -22,13 +24,19 @@ void main() {
     late FakePlanRepository fakePlanRepository;
     late FakeCategoryRepository fakeCategoryRepository;
     late FakeSessionManager fakeSessionManager;
+    late FakeCommentRepository fakeCommentRepository;
+    late FakeUserRepository fakeUserRepository;
 
     setUp(() {
       goRouter = MockGoRouter();
       fakeAuthRepository = FakeAuthRepository();
       fakePlanRepository = FakePlanRepository();
       fakeCategoryRepository = FakeCategoryRepository();
+      fakeUserRepository = FakeUserRepository();
+      fakeCommentRepository = FakeCommentRepository();
       fakeSessionManager = FakeSessionManager(
+        userRepository: fakeUserRepository,
+        commentRepository: fakeCommentRepository,
         authRepository: fakeAuthRepository,
         planRepository: fakePlanRepository,
         categoryRepository: fakeCategoryRepository,

@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart';
 import '../../utils/result.dart';
 import '../repositories/auth/auth_repository.dart';
 import '../repositories/category/category_repository.dart';
+import '../repositories/comment/comment_repository.dart';
 import '../repositories/plan/plan_repository.dart';
 import '../repositories/step/step_repository.dart';
+import '../repositories/user/user_repository.dart';
 
 /// Gère les actions transversales comme login/logout,
 /// et vide les caches si nécessaire.
@@ -14,15 +16,21 @@ class SessionManager extends ChangeNotifier {
     required PlanRepository planRepository,
     required CategoryRepository categoryRepository,
     required StepRepository stepRepository,
+    required UserRepository userRepository,
+    required CommentRepository commentRepository,
   })  : _authRepository = authRepository,
         _planRepository = planRepository,
         _categoryRepository = categoryRepository,
-        _stepRepository = stepRepository;
+        _stepRepository = stepRepository,
+        _userRepository = userRepository,
+        _commentRepository = commentRepository;
 
   final AuthRepository _authRepository;
   final PlanRepository _planRepository;
   final CategoryRepository _categoryRepository;
   final StepRepository _stepRepository;
+  final UserRepository _userRepository;
+  final CommentRepository _commentRepository;
 
   /// Connecte l'utilisateur et nettoie les caches pour repartir sur une base propre
   Future<Result<void>> login({
@@ -124,6 +132,10 @@ class SessionManager extends ChangeNotifier {
             () async => (_categoryRepository as dynamic).clearCache()),
         _clearRepositoryCache(
             'Steps', () async => (_stepRepository as dynamic).clearCache()),
+        _clearRepositoryCache(
+            'Users', () async => (_userRepository as dynamic).clearCache()),
+        _clearRepositoryCache('Comments',
+            () async => (_commentRepository as dynamic).clearCache()),
       ]);
     } catch (e) {
       if (kDebugMode) {
@@ -157,6 +169,7 @@ class SessionManager extends ChangeNotifier {
     bool categories = false,
     bool steps = false,
     bool users = false,
+    bool comments = false,
   }) async {
     final clearOperations = <Future<void>>[];
 
@@ -171,6 +184,16 @@ class SessionManager extends ChangeNotifier {
     if (steps) {
       clearOperations.add(_clearRepositoryCache(
           'Steps', () async => (_stepRepository as dynamic).clearCache()));
+    }
+
+    if (users) {
+      clearOperations.add(_clearRepositoryCache(
+          'Users', () async => (_userRepository as dynamic).clearCache()));
+    }
+
+    if (comments) {
+      clearOperations.add(_clearRepositoryCache('Comments',
+          () async => (_commentRepository as dynamic).clearCache()));
     }
 
     if (clearOperations.isNotEmpty) {

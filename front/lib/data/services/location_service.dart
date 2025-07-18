@@ -215,7 +215,7 @@ class LocationService extends ChangeNotifier {
             }
           }
         }
-        return data['display_name'] ?? null;
+        return data['display_name'];
       }
       return null;
     } catch (_) {

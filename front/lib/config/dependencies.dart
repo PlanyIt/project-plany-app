@@ -75,6 +75,8 @@ List<SingleChildWidget> get providers {
         planRepository: context.read(),
         categoryRepository: context.read(),
         stepRepository: context.read(),
+        commentRepository: context.read(),
+        userRepository: context.read(),
       ),
     ),
   ];

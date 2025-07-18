@@ -40,7 +40,6 @@ class FakeStepRepository extends StepRepository {
         'https://fake-storage.com/steps/${imageFile.path.split('/').last}');
   }
 
-  @override
   Future<void> clearCache() async {
     _steps.clear();
   }

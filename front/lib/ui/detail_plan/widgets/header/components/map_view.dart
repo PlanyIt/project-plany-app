@@ -133,7 +133,7 @@ class MapViewState extends State<MapView> {
                           size: isSelected ? 45 : 35,
                           color: isSelected
                               ? _categoryColor
-                              : _categoryColor.withOpacity(0.7),
+                              : _categoryColor.withValues(alpha: .7),
                         ),
                       ),
                     ),

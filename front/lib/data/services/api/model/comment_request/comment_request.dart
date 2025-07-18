@@ -5,6 +5,7 @@ part 'comment_request.g.dart';
 @freezed
 class CommentRequest with _$CommentRequest {
   const factory CommentRequest({
+    // ignore: invalid_annotation_target
     @JsonKey(name: '_id') String? id,
     required String content,
     required String user,

@@ -76,7 +76,9 @@ class ValidationUtils {
   }) {
     // Si les deux sont vides, c'est valide
     if ((minValue == null || minValue.isEmpty) &&
-        (maxValue == null || maxValue.isEmpty)) return null;
+        (maxValue == null || maxValue.isEmpty)) {
+      return null;
+    }
 
     double? min, max;
 
@@ -103,7 +105,7 @@ class ValidationUtils {
 
     // Valider que min <= max seulement si les deux sont définies
     if (min != null && max != null && min > max) {
-      return 'La ${fieldName} minimale ne peut pas être supérieure à la maximale';
+      return 'La $fieldName minimale ne peut pas être supérieure à la maximale';
     }
 
     return null;

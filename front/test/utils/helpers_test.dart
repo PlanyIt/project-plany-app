@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:front/domain/models/step/step.dart' as step_model;
@@ -115,6 +117,7 @@ void main() {
 
   group('colorFromPlanCategory', () {
     test('returns Color or null', () {
+      // ignore: deprecated_member_use
       expect(colorFromPlanCategory('#FF5733')?.value, Color(0xFFFF5733).value);
       expect(colorFromPlanCategory(''), null);
       expect(colorFromPlanCategory('badhex'), null);

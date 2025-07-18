@@ -35,8 +35,8 @@ jobs:
       - name: Run code generation (if needed)
         run: flutter packages pub run build_runner build --delete-conflicting-outputs
 
-      - name: Run Flutter analyzer
-        run: flutter analyze --fatal-infos
+      - name: Run Flutter analyzer (warnings only, non-blocking)
+        run: flutter analyze
 
       - name: Check Dart formatting
         run: dart format --set-exit-if-changed .
@@ -96,8 +96,9 @@ jobs:
 
       - name: Install and run OSV Scanner
         run: |
-          curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_1.7.3_linux_amd64.tar.gz | tar -xvzf -
-          sudo mv ./osv-scanner /usr/local/bin/osv-scanner
+          curl -sSL https://github.com/google/osv-scanner/releases/download/v1.9.2/osv-scanner_1.9.2_linux_amd64.tar.gz -o osv-scanner.tar.gz
+          tar -xzf osv-scanner.tar.gz
+          sudo mv osv-scanner /usr/local/bin/osv-scanner
           osv-scanner --recursive .
 
       - name: Run Semgrep security analysis

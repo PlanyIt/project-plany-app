@@ -5,14 +5,18 @@ import 'package:front/utils/result.dart';
 
 import '../../../testing/fakes/repositories/fake_auth_repository.dart';
 import '../../../testing/fakes/repositories/fake_category_repository.dart';
+import '../../../testing/fakes/repositories/fake_comment_repository.dart';
 import '../../../testing/fakes/repositories/fake_plan_repository.dart';
 import '../../../testing/fakes/repositories/fake_step_repository.dart';
+import '../../../testing/fakes/repositories/fake_user_repository.dart';
 
 void main() {
   late FakeAuthRepository authRepository;
   late FakePlanRepository planRepository;
   late FakeCategoryRepository categoryRepository;
   late FakeStepRepository stepRepository;
+  late FakeCommentRepository commentRepository;
+  late FakeUserRepository userRepository;
   late SessionManager sessionManager;
 
   setUp(() {
@@ -20,12 +24,16 @@ void main() {
     planRepository = FakePlanRepository();
     categoryRepository = FakeCategoryRepository();
     stepRepository = FakeStepRepository();
+    commentRepository = FakeCommentRepository();
+    userRepository = FakeUserRepository();
 
     sessionManager = SessionManager(
       authRepository: authRepository,
       planRepository: planRepository,
       categoryRepository: categoryRepository,
       stepRepository: stepRepository,
+      commentRepository: commentRepository,
+      userRepository: userRepository,
     );
   });
 

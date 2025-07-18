@@ -57,7 +57,7 @@ class ResponseInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = categoryColor.withOpacity(0.6);
+    final borderColor = categoryColor.withValues(alpha: 0.6);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -68,7 +68,7 @@ class ResponseInput extends StatelessWidget {
         border: Border.all(color: borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, -1),
           ),

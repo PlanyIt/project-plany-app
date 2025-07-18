@@ -16,10 +16,12 @@ class NavigationService {
       final hasPermission = await handleLocationPermission(context);
       if (!hasPermission) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(title != null
-              ? "Préparation de l'itinéraire vers $title..."
-              : "Préparation de l'itinéraire...")));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(title != null
+                ? "Préparation de l'itinéraire vers $title..."
+                : "Préparation de l'itinéraire...")));
+      }
 
       final position = await Geolocator.getCurrentPosition();
 

@@ -156,7 +156,7 @@ class ProfileUserInfo extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: _getUserLevelColor().withOpacity(0.15),
+                color: _getUserLevelColor().withValues(alpha: .15),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(

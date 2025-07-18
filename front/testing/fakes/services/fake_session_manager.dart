@@ -3,17 +3,31 @@ import 'package:front/data/services/session_manager.dart';
 import 'package:front/utils/result.dart';
 
 import '../repositories/fake_auth_repository.dart';
+import '../repositories/fake_category_repository.dart';
+import '../repositories/fake_comment_repository.dart';
+import '../repositories/fake_plan_repository.dart';
+import '../repositories/fake_step_repository.dart';
+import '../repositories/fake_user_repository.dart';
 
 class FakeSessionManager extends SessionManager {
   final FakeAuthRepository fakeAuthRepository;
 
   FakeSessionManager({
     required FakeAuthRepository authRepository,
-    required super.planRepository,
-    required super.categoryRepository,
-    required super.stepRepository,
+    required FakePlanRepository planRepository,
+    required FakeCategoryRepository categoryRepository,
+    required FakeStepRepository stepRepository,
+    required FakeCommentRepository commentRepository,
+    required FakeUserRepository userRepository,
   })  : fakeAuthRepository = authRepository,
-        super(authRepository: authRepository);
+        super(
+          authRepository: authRepository,
+          planRepository: planRepository,
+          categoryRepository: categoryRepository,
+          stepRepository: stepRepository,
+          commentRepository: commentRepository,
+          userRepository: userRepository,
+        );
 
   bool isCleared = false;
   bool loggedIn = false;
@@ -72,6 +86,7 @@ class FakeSessionManager extends SessionManager {
     bool categories = false,
     bool steps = false,
     bool users = false,
+    bool comments = false,
   }) async {
     isCleared = true;
   }

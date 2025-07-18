@@ -178,7 +178,7 @@ void main() {
     });
 
     test('updateCurrentUser notifies listeners', () async {
-      bool notified = false;
+      var notified = false;
       repository.addListener(() {
         notified = true;
       });
@@ -189,7 +189,7 @@ void main() {
     });
 
     test('logout clears all state and notifies listeners', () async {
-      bool notified = false;
+      var notified = false;
       repository.addListener(() {
         notified = true;
       });

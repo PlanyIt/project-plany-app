@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { Test, TestingModule } from '@nestjs/testing';
 import { CategoryService } from './category.service';
 import { BadRequestException } from '@nestjs/common';

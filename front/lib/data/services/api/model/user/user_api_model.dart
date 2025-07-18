@@ -6,6 +6,7 @@ part 'user_api_model.g.dart';
 @freezed
 class UserApiModel with _$UserApiModel {
   const factory UserApiModel({
+    // ignore: invalid_annotation_target
     @JsonKey(name: '_id') required String id,
     required String username,
     required String email,
