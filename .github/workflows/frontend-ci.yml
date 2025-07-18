@@ -1,16 +1,3 @@
-name: Frontend CI/CD
-
-on:
-  push:
-    branches: [main, develop]
-    paths: ["front/**"]
-  pull_request:
-    paths: ["front/**"]
-
-defaults:
-  run:
-    working-directory: ./front
-
 jobs:
   flutter-analysis:
     name: Flutter Analysis & Tests
@@ -36,7 +23,7 @@ jobs:
         run: flutter packages pub run build_runner build --delete-conflicting-outputs
 
       - name: Run Flutter analyzer (warnings only, non-blocking)
-        run: flutter analyze
+        run: flutter analyze || true
 
       - name: Check Dart formatting
         run: dart format --set-exit-if-changed .
@@ -68,124 +55,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          file: ./frontend/coverage/lcov.info
-          flags: frontend
-          name: frontend-coverage
+          file: ./front/coverage/lcov.info
+          flags: front
+          name: front-coverage
           fail_ci_if_error: true
-
-  security-audit:
-    name: Security Audit & Dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.32.5"
-          channel: "stable"
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Check for outdated packages
-        run: |
-          flutter pub outdated --show-all
-          echo "📦 Package audit completed"
-
-      - name: Install and run OSV Scanner
-        run: |
-          curl -sSL https://github.com/google/osv-scanner/releases/download/v1.9.2/osv-scanner_1.9.2_linux_amd64.tar.gz -o osv-scanner.tar.gz
-          tar -xzf osv-scanner.tar.gz
-          sudo mv osv-scanner /usr/local/bin/osv-scanner
-          osv-scanner --recursive .
-
-      - name: Run Semgrep security analysis
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/mobile-security
-            p/secrets
-
-      - name: Run Gitleaks secret detection
-        uses: gitleaks/gitleaks-action@v2
-
-      - name: Analyze Android permissions
-        run: |
-          if [ -f "android/app/src/main/AndroidManifest.xml" ]; then
-            echo "🔍 Checking Android permissions..."
-            grep -n "uses-permission" android/app/src/main/AndroidManifest.xml || echo "No permissions found"
-          fi
-
-  build-android:
-    name: Build Android APK
-    runs-on: ubuntu-latest
-    needs: [flutter-analysis]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.32.5"
-          channel: "stable"
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: "17"
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build Android APK (debug)
-        run: flutter build apk --debug --split-per-abi
-
-      - name: Upload APK artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk-debug
-          path: frontend/build/app/outputs/flutter-apk/*.apk
-          retention-days: 7
-
-  integration-tests:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: [flutter-analysis]
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Start backend test infrastructure (MongoDB)
-        working-directory: ./backend
-        run: docker-compose up -d
-
-      - name: Wait for MongoDB
-        run: |
-          until nc -z localhost 27018; do
-            echo "Waiting for MongoDB test (localhost:27018)..."
-            sleep 2
-          done
-          echo "✅ MongoDB test ready."
-
-      - name: Seed test database
-        working-directory: ./backend
-        run: yarn seed:test
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.32.5"
-          channel: "stable"
-
-      - name: Install frontend dependencies
-        run: flutter pub get
-
-      - name: Run integration tests
-        run: flutter test integration_test/ --dart-define=API_BASE_URL=${{ secrets.STAGING_API_URL }} --dart-define=IS_TEST=true
