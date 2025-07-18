@@ -59,5 +59,16 @@ jobs:
           SONAR_PROJECTKEY: PlanyIt_project-plany-app
           SONAR_ORGANIZATION: planyit
 
+      - name: Install k6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg software-properties-common
+          sudo gpg -k || true
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/k6.gpg
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
       - name: 🏋️ Run K6 load tests
-        run: npx k6 run ../k6-tests/api-load.js
+        run: k6 run ../k6-tests/api-load.js
+
