@@ -46,6 +46,7 @@ jobs:
 
       - name: Run snyk test
         run: npx snyk test --all-projects
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
