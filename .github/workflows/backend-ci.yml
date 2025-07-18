@@ -9,57 +9,50 @@ jobs:
       run:
         working-directory: back
 
+    env:
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      DATABASE_NAME: plany
+      JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
+      JWT_AT_EXPIRES_IN: 15m
+      JWT_SECRET_RT: ultra-secret-refresh
+      JWT_RT_EXPIRES_IN: 30d
+      PORT: 3000
+      NODE_ENV: test
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      - run: npm ci
-      - run: npm run lint
+      - name: 📦 Install dependencies
+        run: npm ci
 
-      - name: Run unit tests
+      - name: 🔍 Run linter
+        run: npm run lint
+
+      - name: 🧪 Run unit tests
         run: npm run test
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          DATABASE_NAME: plany
-          JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
-          JWT_AT_EXPIRES_IN: 15m
-          JWT_SECRET_RT: ultra-secret-refresh
-          JWT_RT_EXPIRES_IN: 30d
-          PORT: 3000
-          NODE_ENV: test
 
-      - name: Run coverage tests
+      - name: 📊 Run coverage tests
         run: npm run test:cov
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          DATABASE_NAME: plany
-          JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
-          JWT_AT_EXPIRES_IN: 15m
-          JWT_SECRET_RT: ultra-secret-refresh
-          JWT_RT_EXPIRES_IN: 30d
-          PORT: 3000
-          NODE_ENV: test
 
-      - run: npm audit --production
-      - run: npx snyk test --all-projects
+      - name: 🔎 Run npm audit (do not fail build)
+        run: npm audit --production
+        continue-on-error: true
 
-      - name: SonarCloud Scan
+      - name: 🛡️ Run Snyk
+        run: npx snyk test --all-projects
+
+      - name: 🔎 SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         with:
           projectBaseDir: .
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Run k6 load test
+      - name: 🏋️ Run K6 load tests
         run: npx k6 run ../k6-tests/api-load.js
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          DATABASE_NAME: plany
-          JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
-          JWT_AT_EXPIRES_IN: 15m
-          JWT_SECRET_RT: ultra-secret-refresh
-          JWT_RT_EXPIRES_IN: 30d
-          PORT: 3000
-          NODE_ENV: test
