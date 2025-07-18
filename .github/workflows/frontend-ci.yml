@@ -40,11 +40,14 @@ jobs:
       - name: Run unit and widget tests
         run: flutter test --coverage --reporter=github
 
-      - name: Install lcov tools for coverage
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lcov
-          npm install -g lcov-summary
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODE_COV }}
+          file: ./back/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: true
 
       - name: Enforce coverage threshold (80% minimum - Standard CDA)
         run: |

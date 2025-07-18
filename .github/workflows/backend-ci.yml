@@ -117,6 +117,7 @@ jobs:
           osv-scanner --recursive .
 
 
+
       - name: Run Semgrep security analysis
         uses: returntocorp/semgrep-action@v1
         with:
