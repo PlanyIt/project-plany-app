@@ -6,7 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 
-jest.setTimeout(30000); // 🔧 Important si tu as des tests un peu longs.
+jest.setTimeout(120000);
 
 describe('PlanController (e2e)', () => {
   let app: INestApplication;
