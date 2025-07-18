@@ -53,11 +53,12 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
           projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=planyit
-            -Dsonar.organization=PlanyIt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          run: |
+            sonar-scanner \
+              -Dsonar.organization=planyit \
+              -Dsonar.projectKey=PlanyIt_project-plany-app
 
       - name: 🏋️ Run K6 load tests
         run: npx k6 run ../k6-tests/api-load.js
