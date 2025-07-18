@@ -3,13 +3,13 @@ name: Frontend CI/CD
 on:
   push:
     branches: [main, develop]
-    paths: ["frontend/**"]
+    paths: ["front/**"]
   pull_request:
-    paths: ["frontend/**"]
+    paths: ["front/**"]
 
 defaults:
   run:
-    working-directory: ./frontend
+    working-directory: ./front
 
 jobs:
   flutter-analysis:

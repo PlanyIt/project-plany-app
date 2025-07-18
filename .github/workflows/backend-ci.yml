@@ -3,13 +3,13 @@ name: Backend CI/CD
 on:
   push:
     branches: [main, develop]
-    paths: ["backend/**"]
+    paths: ["back/**"]
   pull_request:
-    paths: ["backend/**"]
+    paths: ["back/**"]
 
 defaults:
   run:
-    working-directory: ./backend
+    working-directory: ./back
 
 jobs:
   lint-test-coverage:

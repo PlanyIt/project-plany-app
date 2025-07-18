@@ -64,9 +64,9 @@ class PlanInfoSection extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             colorFromPlanCategory(plan.category?.color) ??
-                Colors.blue.withOpacity(0.6),
+                Colors.blue.withValues(alpha: 0.6),
             colorFromPlanCategory(plan.category?.color) ??
-                Colors.blue.withOpacity(0.5),
+                Colors.blue.withValues(alpha: 0.5),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -120,7 +120,7 @@ class PlanInfoSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.amber.shade400.withOpacity(0.3),
+        color: Colors.amber.shade400.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -141,7 +141,7 @@ class PlanInfoSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
