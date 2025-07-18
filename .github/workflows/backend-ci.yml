@@ -1,11 +1,8 @@
-name: Backend CI
-
 on:
   push:
-    branches: [main, develop]
-    paths: ["back/**"]
+    branches: [main]
   pull_request:
-    paths: ["back/**"]
+    branches: [main]
 
 defaults:
   run:
