@@ -6,7 +6,7 @@ workflows:
       java: 17
       flutter: stable
       groups:
-        - plany_env  # Doit contenir SONAR_TOKEN
+        - plany_env 
 
     triggering:
       events:
@@ -73,15 +73,11 @@ workflows:
         script: flutter test --coverage
         working_directory: front
 
-      - name: SonarCloud Scan
+      - name: Install Sonar Scanner (macOS)
+        script: brew install sonar-scanner
+
+      - name: Run Sonar Scanner
         script: |
-          export JAVA_HOME=$CM_JAVA_HOME
-          export PATH=$JAVA_HOME/bin:$PATH
-          export SONAR_SCANNER_VERSION=5.0.1.3006
-          export SONAR_SCANNER_DIR=$CM_BUILD_DIR/sonar-scanner-$SONAR_SCANNER_VERSION-linux
-          wget -qO- https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip | bsdtar -xvf- -C $CM_BUILD_DIR
-          chmod +x $SONAR_SCANNER_DIR/bin/sonar-scanner
-          export PATH=$SONAR_SCANNER_DIR/bin:$PATH
           sonar-scanner \
             -Dsonar.projectKey=PlanyIt_project-plany-app \
             -Dsonar.organization=planyit \
@@ -91,6 +87,8 @@ workflows:
             -Dsonar.exclusions=**/*.g.dart \
             -Dsonar.coverageReportPaths=front/coverage/lcov.info \
             -Dsonar.dart.reportPaths=front/build/lint/lint-result.json
+        working_directory: front
+
 
       - name: Build AAB
         script: flutter build appbundle --release
