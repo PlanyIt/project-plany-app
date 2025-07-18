@@ -3,19 +3,14 @@
   "rootDir": "..",
   "testRegex": "test/e2e/.*\\.e2e-spec\\.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "<rootDir>/tsconfig.json" }]
   },
   "testEnvironment": "node",
-  "globals": {
-    "ts-jest": {
-      "tsconfig": "<rootDir>/tsconfig.json"
-    }
-  },
   "coverageDirectory": "../coverage-e2e",
   "collectCoverageFrom": [
     "**/*.(t|j)s"
   ],
   "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/$1"
+    "^src/(.*)$": "<rootDir>/back/src/$1"
   }
 }
