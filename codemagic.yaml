@@ -76,17 +76,17 @@ workflows:
       - name: Install Sonar Scanner (macOS)
         script: brew install sonar-scanner
 
-      - name: Run Sonar Scanner
+      - name: SonarCloud Scan
         script: |
           sonar-scanner \
             -Dsonar.projectKey=PlanyIt_project-plany-app \
             -Dsonar.organization=planyit \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.sources=front/lib \
+            -Dsonar.sources=lib \
             -Dsonar.exclusions=**/*.g.dart \
-            -Dsonar.coverageReportPaths=front/coverage/lcov.info \
-            -Dsonar.dart.reportPaths=front/build/lint/lint-result.json
+            -Dsonar.coverageReportPaths=coverage/lcov.info \
+            -Dsonar.dart.reportPaths=build/lint/lint-result.json
         working_directory: front
 
 
