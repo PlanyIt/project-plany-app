@@ -5,6 +5,9 @@ on: [push, pull_request]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
@@ -22,4 +25,4 @@ jobs:
           projectBaseDir: .
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - run: npx k6 run ./k6-tests/api-load.js
+      - run: npx k6 run ../k6-tests/api-load.js
