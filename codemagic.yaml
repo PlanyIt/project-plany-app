@@ -85,7 +85,7 @@ workflows:
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.sources=lib \
             -Dsonar.exclusions=**/*.g.dart \
-            -Dsonar.coverageReportPaths=coverage/lcov.info \
+            -Dsonar.dart.coverage.reportPaths=coverage/lcov.info \
             -Dsonar.dart.reportPaths=build/lint/lint-result.json
         working_directory: front
 
