@@ -79,7 +79,7 @@ class HeaderControls extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(25),
         onTap: onPressed,
-        splashColor: Colors.white.withOpacity(0.15),
+        splashColor: Colors.white.withValues(alpha: .15),
         highlightColor: Colors.white.withOpacity(0.1),
         child: Container(
           alignment: Alignment.center,

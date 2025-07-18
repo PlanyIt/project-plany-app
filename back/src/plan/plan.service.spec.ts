@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PlanService } from './plan.service';
 import { StepService } from '../step/step.service';
 
-// Helper pour chaînage .populate().populate().exec()
 function mockQuery(result) {
   return {
     populate: jest.fn().mockReturnThis(),
