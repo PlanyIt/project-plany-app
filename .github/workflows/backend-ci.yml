@@ -111,7 +111,7 @@ jobs:
 
       - name: Install and run OSV Scanner
         run: |
-          curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_1.7.3_linux_amd64.tar.gz | tar -xvzf -
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.1.0/osv-scanner_darwin_amd64 | tar -xvzf -
           sudo mv ./osv-scanner /usr/local/bin/osv-scanner
           osv-scanner --recursive .
 
