@@ -22,13 +22,25 @@ jobs:
         run: npm run test
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
+          DATABASE_NAME: plany
           JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
+          JWT_AT_EXPIRES_IN: 15m
+          JWT_SECRET_RT: ultra-secret-refresh
+          JWT_RT_EXPIRES_IN: 30d
+          PORT: 3000
+          NODE_ENV: test
 
       - name: Run coverage tests
         run: npm run test:cov
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
+          DATABASE_NAME: plany
           JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
+          JWT_AT_EXPIRES_IN: 15m
+          JWT_SECRET_RT: ultra-secret-refresh
+          JWT_RT_EXPIRES_IN: 30d
+          PORT: 3000
+          NODE_ENV: test
 
       - run: npm audit --production
       - run: npx snyk test --all-projects
@@ -42,3 +54,12 @@ jobs:
 
       - name: Run k6 load test
         run: npx k6 run ../k6-tests/api-load.js
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          DATABASE_NAME: plany
+          JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
+          JWT_AT_EXPIRES_IN: 15m
+          JWT_SECRET_RT: ultra-secret-refresh
+          JWT_RT_EXPIRES_IN: 30d
+          PORT: 3000
+          NODE_ENV: test

@@ -5,12 +5,16 @@ workflows:
     environment:
       java: 17
       flutter: stable
+      groups:
+        - plany_env
+
     triggering:
       events:
         - push
       branch_patterns:
         - pattern: main
         - pattern: develop
+
     scripts:
       - name: Clean Flutter
         script: flutter clean
