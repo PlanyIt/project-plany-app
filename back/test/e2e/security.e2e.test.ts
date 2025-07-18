@@ -1,3 +1,5 @@
+jest.setTimeout(30000); // Augmente le timeout à 30 secondes
+
 process.env.JWT_SECRET_AT = process.env.JWT_SECRET_AT || 'test-secret';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
@@ -6,7 +8,6 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-
 
 describe('Security (e2e)', () => {
   let app: INestApplication;
@@ -36,7 +37,6 @@ describe('Security (e2e)', () => {
     await mongoServer.stop();
   });
 
-
   it('should reject requests with invalid JWT', async () => {
     await request(app.getHttpServer())
       .get('/api/plans')
@@ -47,6 +47,4 @@ describe('Security (e2e)', () => {
   it('should reject access to protected endpoint without token', async () => {
     await request(app.getHttpServer()).get('/api/plans').expect(401);
   });
-
-  // Ajoute ici d'autres tests de sécurité si besoin
 });

@@ -14,6 +14,7 @@ const mockPlanService = {
   findAllByUserId: jest.fn(),
   findFavoritesByUserId: jest.fn(),
 };
+
 const mockUserService = {};
 
 describe('PlanController', () => {
@@ -59,8 +60,9 @@ describe('PlanController', () => {
 
   it('should update a plan', async () => {
     const dto = { title: 't', steps: [], category: 'c' };
+    const req = { user: { _id: 'u1' } };
     mockPlanService.updateById.mockResolvedValue({ _id: 'p1', title: 't' });
-    expect(await controller.updatePlan('p1', dto as any, 'u1')).toEqual({
+    expect(await controller.updatePlan('p1', dto as any, req)).toEqual({
       _id: 'p1',
       title: 't',
     });

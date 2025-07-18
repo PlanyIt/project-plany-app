@@ -1,4 +1,5 @@
 name: Backend CI/CD
+
 on:
   push:
     branches: [main, develop]
@@ -105,18 +106,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Audit de sécurité des dépendances (niveau high conforme OWASP)
       - name: Run npm security audit
         run: npm audit --audit-level=high
 
-      # Scanner de vulnérabilités OSV (Google)
       - name: Install and run OSV Scanner
         run: |
           curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_1.7.3_linux_amd64.tar.gz | tar -xvzf -
           sudo mv ./osv-scanner /usr/local/bin/osv-scanner
           osv-scanner --recursive .
 
-      # Analyse statique de sécurité Semgrep
       - name: Run Semgrep security analysis
         uses: returntocorp/semgrep-action@v1
         with:
@@ -126,13 +124,11 @@ jobs:
             p/typescript
             p/owasp-top-ten
 
-      # Détection de secrets dans le code
       - name: Run Gitleaks secret detection
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Analyse CodeQL pour détection de vulnérabilités
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -146,15 +142,42 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint-test-coverage]
     if: github.event_name == 'pull_request'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: SonarQube Scan
-        uses: sonarqube-quality-gate-action@master
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.1"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Le vrai scan Sonar
+      - name: Run SonarQube Scanner
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=your-project-key \
+            -Dsonar.organization=your-organization \
+            -Dsonar.sources=src \
+            -Dsonar.tests=src \
+            -Dsonar.test.inclusions=**/*.spec.ts,**/*.test.ts \
+            -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # Qualité : Quality Gate bloquant
+      - name: SonarQube Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
         with:
           scanMetadataReportFile: backend/coverage/sonar-report.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

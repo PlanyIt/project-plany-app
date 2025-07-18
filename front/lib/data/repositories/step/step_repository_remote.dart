@@ -24,19 +24,16 @@ class StepRepositoryRemote implements StepRepository {
 
   @override
   Future<Result<List<Step>>> getStepsList(String planId) async {
-    // Désactiver le cache temporairement pour débugger
-    // if (_cachedData.containsKey(planId)) {
-    //   return Result.ok(List<Step>.from(_cachedData[planId]!));
-    // }
+    if (_cachedData.containsKey(planId)) {
+      return Result.ok(List<Step>.from(_cachedData[planId]!));
+    }
 
     try {
       final result = await _apiClient.getStepsByPlan(planId);
-      print('🔍 Loading steps for plan $planId'); // Debug
 
       switch (result) {
         case Ok<List<StepApiModel>>():
           final stepsApi = result.value;
-          print('✅ Found ${stepsApi.length} steps for plan $planId'); // Debug
           final steps = stepsApi
               .map((stepApi) => Step(
                     title: stepApi.title,
@@ -52,11 +49,9 @@ class StepRepositoryRemote implements StepRepository {
           _cachedData[planId] = steps;
           return Result.ok(steps);
         case Error<List<StepApiModel>>():
-          print('❌ Failed to load steps: ${result.error}'); // Debug
           return Result.error(result.error);
       }
     } on Exception catch (error) {
-      print('❌ Exception loading steps: $error'); // Debug
       return Result.error(error);
     }
   }
@@ -67,7 +62,7 @@ class StepRepositoryRemote implements StepRepository {
   ) async {
     try {
       final result = await _apiClient.createStep(step);
-
+      await clearCache();
       if (result is Ok<Step>) {
         final created = result.value;
         return Result.ok(created);
@@ -93,6 +88,5 @@ class StepRepositoryRemote implements StepRepository {
 
   Future<void> clearCache() async {
     _cachedData = {};
-    print('🧹 Step cache cleared'); // Debug
   }
 }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../data/services/share_service.dart';
@@ -240,7 +241,19 @@ class PlanInfoSection extends StatelessWidget {
         ],
       ),
       child: url != null && url.isNotEmpty
-          ? ClipOval(child: Image.network(url, fit: BoxFit.cover))
+          ? ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[300],
+                  child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+                errorWidget: (context, url, error) =>
+                    Icon(Icons.person, size: 30, color: Colors.grey[600]),
+              ),
+            )
           : Icon(Icons.person, size: 30, color: Colors.grey[600]),
     );
   }

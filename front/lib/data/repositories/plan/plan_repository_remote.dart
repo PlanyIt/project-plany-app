@@ -18,14 +18,13 @@ class PlanRepositoryRemote implements PlanRepository {
 
   @override
   Future<Result<List<Plan>>> getPlanList() async {
-    // Toujours charger depuis l'API - pour débugger
+    if (_cachedData != null) {
+      return Result.ok(_cachedData!);
+    }
     final result = await _apiClient.getPlans();
     if (result is Ok<List<Plan>>) {
       _cachedData = result.value;
-      print('🔍 Plans loaded: ${result.value.length}'); // Debug
-    } else if (result is Error<List<Plan>>) {
-      print('❌ Failed to load plans: ${result.error}'); // Debug
-    }
+    } else if (result is Error<List<Plan>>) {}
     return result;
   }
 
@@ -41,21 +40,8 @@ class PlanRepositoryRemote implements PlanRepository {
       "isAccessible": plan.isAccessible,
     };
 
-    print('🚀 Creating plan with payload: $payload'); // Debug
-
     final result = await _apiClient.createPlan(body: payload);
-
-    if (result case Ok<Plan>()) {
-      final newPlan = result.value;
-      print('✅ Plan created successfully: ${newPlan.id}'); // Debug
-      if (newPlan.id != null) {
-        _cachedData ??= [];
-        _cachedData!.add(newPlan);
-      }
-    } else if (result case Error()) {
-      print('❌ Plan creation failed: ${result.error}'); // Debug
-    }
-
+    await clearCache();
     return result;
   }
 
@@ -82,8 +68,7 @@ class PlanRepositoryRemote implements PlanRepository {
 
   @override
   Future<void> clearCache() async {
-    _cachedData = null; // ❌ Mettre à null, pas []
-    print('🧹 Plan cache cleared'); // Debug
+    _cachedData = null;
   }
 
   @override
@@ -100,10 +85,10 @@ class PlanRepositoryRemote implements PlanRepository {
 
   @override
   Future<Result<void>> deletePlan(String planId) {
-    return _apiClient.deletePlan(planId).then((result) {
+    return _apiClient.deletePlan(planId).then((result) async {
       switch (result) {
         case Ok<void>():
-          _cachedData?.removeWhere((plan) => plan.id == planId);
+          await clearCache();
           return const Result.ok(null);
         case Error<void>():
           return Result.error(result.error);

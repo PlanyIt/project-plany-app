@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../../domain/models/step/step.dart' as plan_steps;
 import '../../../../../utils/helpers.dart';
@@ -45,17 +46,11 @@ class StepDetailCard extends StatelessWidget {
           Container(
             height: 250,
             width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
               ),
-              image: step.image.isNotEmpty
-                  ? DecorationImage(
-                      image: NetworkImage(step.image),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
             ),
             child: step.image.isEmpty
                 ? Center(
@@ -66,7 +61,31 @@ class StepDetailCard extends StatelessWidget {
                     ),
                   )
                 : Stack(
+                    fit: StackFit.expand,
                     children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: step.image,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          errorWidget: (context, url, error) => Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 60,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ),
+                      ),
                       // Badge du numéro d'étape
                       Positioned(
                         top: 16,

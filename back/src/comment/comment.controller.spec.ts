@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommentController } from './comment.controller';
 import { CommentService } from './comment.service';
+import { PlanService } from '../plan/plan.service';
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 const mockCommentService = {
@@ -18,6 +19,10 @@ const mockCommentService = {
   removeById: jest.fn(),
 };
 
+const mockPlanService = {
+  findById: jest.fn(),
+};
+
 describe('CommentController', () => {
   let controller: CommentController;
 
@@ -25,11 +30,6 @@ describe('CommentController', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-
-    const mockPlanService = { findById: jest.fn() };
-
-    // Utiliser le bon token d'injection pour PlanService (classe réelle)
-    const { PlanService } = jest.requireActual('../plan/plan.service');
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommentController],
@@ -40,7 +40,6 @@ describe('CommentController', () => {
     }).compile();
 
     controller = module.get<CommentController>(CommentController);
-    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -49,12 +48,16 @@ describe('CommentController', () => {
 
   describe('createComment', () => {
     it('should create a comment', async () => {
+      mockPlanService.findById.mockResolvedValue({ isPublic: true });
       mockCommentService.create.mockResolvedValue({ text: 'ok' });
+
       await expect(
-        controller.createComment({ text: 'ok' } as any, reqMock),
+        controller.createComment({ text: 'ok', planId: 'pid' } as any, reqMock),
       ).resolves.toEqual({ text: 'ok' });
+
       expect(mockCommentService.create).toHaveBeenCalledWith({
         text: 'ok',
+        planId: 'pid',
         user: 'userId',
       });
     });
@@ -92,12 +95,14 @@ describe('CommentController', () => {
         controller.removeResponse('cid', 'rid', reqMock),
       ).rejects.toThrow(NotFoundException);
     });
+
     it('should throw UnauthorizedException if not owner', async () => {
       mockCommentService.findById.mockResolvedValue({ user: 'other' });
       await expect(
         controller.removeResponse('cid', 'rid', reqMock),
       ).rejects.toThrow(UnauthorizedException);
     });
+
     it('should remove response if owner', async () => {
       mockCommentService.findById.mockResolvedValue({ user: 'userId' });
       mockCommentService.removeResponse.mockResolvedValue('ok');
@@ -165,12 +170,14 @@ describe('CommentController', () => {
         NotFoundException,
       );
     });
+
     it('should throw UnauthorizedException if not owner', async () => {
       mockCommentService.findById.mockResolvedValue({ user: 'other' });
       await expect(controller.removeComment('cid', reqMock)).rejects.toThrow(
         UnauthorizedException,
       );
     });
+
     it('should remove comment if owner', async () => {
       mockCommentService.findById.mockResolvedValue({ user: 'userId' });
       mockCommentService.removeById.mockResolvedValue('removed');

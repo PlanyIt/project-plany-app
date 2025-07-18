@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../domain/models/user/user.dart';
 import '../../../../domain/models/user/user_stats.dart';
 
@@ -42,11 +43,16 @@ class UserListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final avatar = user.photoUrl != null && user.photoUrl!.isNotEmpty
         ? ClipOval(
-            child: Image.network(
-              user.photoUrl!,
+            child: CachedNetworkImage(
+              imageUrl: user.photoUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  Icon(Icons.person, color: Colors.grey[600]),
+              placeholder: (context, url) => Container(
+                color: Colors.grey[300],
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              errorWidget: (context, url, error) => Icon(Icons.person, color: Colors.grey[600]),
             ),
           )
         : Icon(Icons.person, size: 30, color: Colors.grey[600]);

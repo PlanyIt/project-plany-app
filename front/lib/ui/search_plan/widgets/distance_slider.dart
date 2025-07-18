@@ -37,14 +37,12 @@ class DistanceSlider extends StatelessWidget {
         Row(
           children: [
             Text(
-              formatDistance(currentValues.start * 1000) ??
-                  '${currentValues.start.toInt()} km',
+              formatDistance(currentValues.start * 1000),
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             Text(
-              formatDistance(currentValues.end * 1000) ??
-                  '${currentValues.end.toInt()} km',
+              formatDistance(currentValues.end * 1000),
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ],

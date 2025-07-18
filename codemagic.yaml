@@ -3,6 +3,7 @@ workflows:
     name: Build Plany Android
     max_build_duration: 60
     environment:
+      java: 17  # ← Ajout de Java 17 pour correspondre à votre version locale
       flutter: stable
     scripts:
       - name: Clean Flutter
@@ -24,6 +25,27 @@ workflows:
           echo keyAlias=$CM_KEY_ALIAS >> front/android/key.properties
           echo storeFile=`pwd`/front/keystore.jks >> front/android/key.properties
           echo $CM_KEYSTORE | base64 --decode > front/keystore.jks
+
+      - name: Fix keystore compatibility
+        script: |
+          # Vérifier la version Java
+          echo "Java version used:"
+          java -version
+          
+          # Convertir le keystore pour assurer la compatibilité
+          keytool -importkeystore \
+            -srckeystore front/keystore.jks \
+            -destkeystore front/keystore_fixed.jks \
+            -deststoretype JKS \
+            -srcstorepass $CM_KEYSTORE_PASSWORD \
+            -deststorepass $CM_KEYSTORE_PASSWORD \
+            -noprompt
+          
+          # Remplacer l'ancien keystore
+          mv front/keystore_fixed.jks front/keystore.jks
+          
+          # Vérifier que le keystore est lisible
+          keytool -list -keystore front/keystore.jks -storepass $CM_KEYSTORE_PASSWORD
 
       - name: Verify key.properties content
         script: |

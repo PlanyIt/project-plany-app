@@ -174,7 +174,6 @@ class AuthRepositoryRemote extends AuthRepository {
     _refreshToken = auth.refreshToken;
     _tokenExpiration = _parseTokenExpiration(auth.accessToken);
 
-    print('Access token: $_accessToken');
     print('Refresh token: $_refreshToken');
 
     print(auth.currentUser.id);

@@ -47,7 +47,7 @@ class CommentInput extends StatelessWidget {
 
     final picker = ImagePicker();
     try {
-      final XFile? pickedFile =
+      final pickedFile =
           await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
       if (pickedFile != null) onPickImage(File(pickedFile.path));
     } catch (e) {

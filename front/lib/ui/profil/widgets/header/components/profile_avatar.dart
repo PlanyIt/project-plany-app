@@ -1,4 +1,6 @@
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -66,19 +68,26 @@ class ProfileAvatar extends StatelessWidget {
                     ),
                   )
                 : userProfile.photoUrl?.isNotEmpty == true
-                    ? Image.network(
-                        userProfile.photoUrl!,
+                    ? CachedNetworkImage(
+                        imageUrl: userProfile.photoUrl!,
                         width: avatarSize,
                         height: avatarSize,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[200],
-                            child: Icon(Icons.person,
-                                size: avatarSize * 0.5,
-                                color: Colors.grey[400]),
-                          );
-                        },
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(primaryColor),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child: Icon(Icons.person,
+                              size: avatarSize * 0.5, color: Colors.grey[400]),
+                        ),
                       )
                     : Container(
                         color: Colors.grey[200],

@@ -4,12 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { applySecurity, validateEnvOrThrow } from './common/security.setup';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: false });
+  const app = await NestFactory.create(AppModule);
+
   const configService = app.get(ConfigService);
 
   validateEnvOrThrow(configService);
 
-  // Applique toute la couche sécurité
   await applySecurity(app, configService);
 
   const port = configService.get<number>('PORT') ?? 3000;

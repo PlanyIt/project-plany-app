@@ -4,6 +4,9 @@ import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import mongoose from 'mongoose';
+
+jest.setTimeout(30000); // 🔧 Important si tu as des tests un peu longs.
 
 describe('PlanController (e2e)', () => {
   let app: INestApplication;
@@ -16,6 +19,7 @@ describe('PlanController (e2e)', () => {
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
+    await mongoose.connect(mongoUri);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule, MongooseModule.forRoot(mongoUri)],
@@ -31,9 +35,7 @@ describe('PlanController (e2e)', () => {
     );
     await app.init();
 
-    // Register a user and get JWT token
     const unique = Date.now().toString();
-    // "testuser" = 8 chars, donc on prend max 12 chars pour unique
     const maxUniqueLen = 20 - 'testuser'.length;
     const shortUnique = unique.slice(0, maxUniqueLen);
     const user = {
@@ -46,7 +48,6 @@ describe('PlanController (e2e)', () => {
       .send(user);
 
     if (registerRes.status !== 201) {
-      console.error('Register failed:', registerRes.status, registerRes.body);
       throw new Error('Register failed');
     }
 
@@ -57,23 +58,16 @@ describe('PlanController (e2e)', () => {
 
     jwtToken = loginRes.body.accessToken;
 
-    // Crée une catégorie pour les plans
     const categoryRes = await request(app.getHttpServer())
       .post('/api/categories')
       .set('Authorization', `Bearer ${jwtToken}`)
       .send({ name: 'TestCat', icon: 'test', color: '#fff' });
 
     if (categoryRes.status !== 201) {
-      console.error(
-        'Category creation failed:',
-        categoryRes.status,
-        categoryRes.body,
-      );
       throw new Error('Category creation failed');
     }
     categoryId = categoryRes.body._id;
 
-    // Crée un step pour les plans
     const stepRes = await request(app.getHttpServer())
       .post('/api/steps')
       .set('Authorization', `Bearer ${jwtToken}`)
@@ -89,15 +83,17 @@ describe('PlanController (e2e)', () => {
       });
 
     if (stepRes.status !== 201) {
-      console.error('Step creation failed:', stepRes.status, stepRes.body);
       throw new Error('Step creation failed');
     }
     stepId = stepRes.body._id;
   });
 
   afterAll(async () => {
+    await mongoose.disconnect();
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
     await app.close();
-    await mongoServer.stop();
   });
 
   it('POST /api/plans should create a plan', async () => {

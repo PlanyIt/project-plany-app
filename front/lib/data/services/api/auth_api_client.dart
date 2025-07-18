@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import '../../../utils/result.dart';
 import 'model/auth_response/auth_response.dart';
 import 'model/login_request/login_request.dart';
@@ -17,7 +15,11 @@ class AuthApiClient {
   final HttpClient Function() _clientFactory;
 
   Uri _buildUri(String path) {
-    final isLocalhost = _host.contains('localhost') || _host.contains('192.') || _host.contains('127.') || _host.contains(':3000') || _host.contains(':4000');
+    final isLocalhost = _host.contains('localhost') ||
+        _host.contains('192.') ||
+        _host.contains('127.') ||
+        _host.contains(':3000') ||
+        _host.contains(':4000');
     if (isLocalhost) {
       return Uri.http(_host, path);
     } else {

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../../domain/models/step/step.dart' as custom;
 import '../../../view_models/detail/plan_details_viewmodel.dart';
@@ -110,10 +111,12 @@ class HeaderCarousel extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             step.image.isNotEmpty
-                ? Image.network(
-                    step.image,
+                ? CachedNetworkImage(
+                    imageUrl: step.image,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
+                    placeholder: (context, url) =>
+                        _defaultStepImage(step, categoryColor),
+                    errorWidget: (context, url, error) =>
                         _defaultStepImage(step, categoryColor),
                   )
                 : _defaultStepImage(step, categoryColor),

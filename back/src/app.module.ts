@@ -25,7 +25,7 @@ import { CacheModule } from '@nestjs/cache-manager';
       cache: true,
       expandVariables: true,
       validate: (config) => {
-        const requiredVars = ['MONGO_URI', 'JWT_SECRET'];
+        const requiredVars = ['MONGO_URI', 'JWT_SECRET_AT'];
         const missingVars = requiredVars.filter((varName) => !config[varName]);
         if (missingVars.length > 0) {
           console.error(

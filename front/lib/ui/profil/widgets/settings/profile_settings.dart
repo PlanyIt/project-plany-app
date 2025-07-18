@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../view_models/profile_viewmodel.dart';
 import '../common/section_text_field.dart';
@@ -232,12 +233,21 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                       )
                     : CircleAvatar(
                         radius: 50,
-                        backgroundImage: user.photoUrl != null
-                            ? NetworkImage(user.photoUrl!)
-                            : null,
-                        child: user.photoUrl == null
-                            ? const Icon(Icons.person, size: 50)
-                            : null,
+                        backgroundColor: Colors.grey[200],
+                        child: user.photoUrl != null
+                            ? ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: user.photoUrl!,
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => const Center(
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  errorWidget: (context, url, error) => const Icon(Icons.person, size: 50, color: Colors.grey),
+                                ),
+                              )
+                            : const Icon(Icons.person, size: 50, color: Colors.grey),
                       ),
               ),
               TextButton(

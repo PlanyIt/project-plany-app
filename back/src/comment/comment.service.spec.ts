@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommentService } from './comment.service';
-import { getModelToken } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
+import { getModelToken } from '@nestjs/mongoose';
 
 const mockCommentModelInstance = {
   save: jest.fn(),
@@ -24,7 +24,6 @@ const mockCommentModel = Object.assign(
     updateOne: jest.fn(),
     exec: jest.fn(),
     populate: jest.fn(),
-    // Pour compatibilité, on peut ajouter save ici aussi
     save: jest.fn(),
   },
 );
@@ -46,7 +45,6 @@ describe('CommentService', () => {
     }).compile();
 
     service = module.get<CommentService>(CommentService);
-    // Patch the injected model for direct access
     (service as any).commentModel = mockCommentModel;
   });
 
@@ -56,12 +54,13 @@ describe('CommentService', () => {
 
   describe('create', () => {
     it('should create and return a comment with user info', async () => {
-      const dto = { content: 'test', user: 'userId' };
+      const dto = { content: 'test', user: 'userId', planId: 'planId' };
       const saved = {
         _id: '1',
         ...dto,
+        user: { toString: () => 'userId' },
+        planId: { toString: () => 'planId' },
       };
-      // Simule le comportement du save sur l'instance
       mockCommentModelInstance.save.mockResolvedValue(saved);
       mockCommentModel.findById = jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnThis(),
@@ -100,16 +99,19 @@ describe('CommentService', () => {
   describe('addResponse', () => {
     it('should add a response to a comment', async () => {
       mockCommentModel.findById = jest.fn().mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ _id: 'parentId' }),
+        exec: jest.fn().mockResolvedValue({
+          _id: 'parentId',
+          planId: { toString: () => 'planId' },
+        }),
       });
       const savedResponse = {
         _id: 'respId',
         parentId: 'parentId',
+        user: { toString: () => 'userId' },
+        planId: { toString: () => 'planId' },
       };
-      // Simule le comportement du save sur l'instance pour la réponse
       mockCommentModelInstance.save.mockResolvedValue(savedResponse);
       mockCommentModel.updateOne = jest.fn().mockResolvedValue({});
-      mockCommentModel.populate = jest.fn().mockReturnThis();
       mockCommentModel.findById = jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(savedResponse),
@@ -152,7 +154,11 @@ describe('CommentService', () => {
 
   describe('removeResponse', () => {
     it('should remove a response from a comment', async () => {
-      const comment = { _id: 'parentId', responses: [] };
+      const comment = {
+        _id: 'parentId',
+        responses: [],
+        planId: { toString: () => 'planId' },
+      };
       const response = { _id: 'respId' };
       mockCommentModel.findByIdAndUpdate = jest
         .fn()
@@ -174,9 +180,11 @@ describe('CommentService', () => {
     });
 
     it('should throw NotFoundException if response not found', async () => {
-      mockCommentModel.findByIdAndUpdate = jest
-        .fn()
-        .mockReturnValue({ exec: jest.fn().mockResolvedValue({}) });
+      mockCommentModel.findByIdAndUpdate = jest.fn().mockReturnValue({
+        exec: jest.fn().mockResolvedValue({
+          planId: { toString: () => 'planId' },
+        }),
+      });
       mockCommentModel.findByIdAndDelete = jest
         .fn()
         .mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
@@ -234,7 +242,12 @@ describe('CommentService', () => {
 
   describe('removeById', () => {
     it('should remove a comment and its responses', async () => {
-      const comment = { _id: 'c1', responses: ['r1', 'r2'] };
+      const comment = {
+        _id: 'c1',
+        responses: ['r1', 'r2'],
+        planId: { toString: () => 'planId' },
+        user: { toString: () => 'userId' },
+      };
       mockCommentModel.findById = jest
         .fn()
         .mockReturnValue({ exec: jest.fn().mockResolvedValue(comment) });
@@ -261,7 +274,12 @@ describe('CommentService', () => {
 
   describe('updateById', () => {
     it('should update and return the comment', async () => {
-      const updated = { _id: 'c1', content: 'updated' };
+      const updated = {
+        _id: 'c1',
+        content: 'updated',
+        planId: { toString: () => 'planId' },
+        user: { toString: () => 'userId' },
+      };
       mockCommentModel.findOneAndUpdate = jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(updated),

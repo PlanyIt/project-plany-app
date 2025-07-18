@@ -226,46 +226,31 @@ export class PlanService {
    * @returns Plan supprimé
    * @throws {NotFoundException} Si le plan n'existe pas ou n'appartient pas à l'utilisateur
    */
-  async removeById(planId: string, userId: string): Promise<PlanDocument> {
-    const session = await this.connection.startSession();
-
-    try {
-      return await session.withTransaction(async () => {
-        const plan = await this.planModel
-          .findOne({ _id: planId, user: userId })
-          .session(session);
-
-        if (!plan) {
-          throw new NotFoundException(`Plan not found or not owned by user`);
-        }
-
-        if (plan.steps && plan.steps.length > 0) {
-          await this.stepModel
-            .deleteMany({
-              _id: { $in: plan.steps },
-            })
-            .session(session);
-        }
-
-        await this.commentModel
-          .deleteMany({
-            planId: planId,
-          })
-          .session(session);
-
-        const deletedPlan = await this.planModel
-          .findOneAndDelete({ _id: planId, user: userId })
-          .session(session);
-
-        await (this.cacheManager as any).del('plans:public:all');
-        await (this.cacheManager as any).del(`plan:${planId}`);
-        await (this.cacheManager as any).del(`user:${userId}:plans`);
-
-        return deletedPlan;
-      });
-    } finally {
-      await session.endSession();
+  async removeById(planId: string, userId: string) {
+    const plan = await this.planModel
+      .findOne({ _id: planId, user: userId })
+      .exec();
+    if (!plan) {
+      throw new NotFoundException(`Plan not found or not owned by user`);
     }
+
+    if (plan.steps && plan.steps.length > 0) {
+      await this.stepModel.deleteMany({
+        _id: { $in: plan.steps },
+      });
+    }
+
+    await this.commentModel.deleteMany({
+      planId: planId,
+    });
+
+    await this.planModel.deleteOne({ _id: planId, user: userId });
+
+    await this.cacheManager.del('plans:public:all');
+    await this.cacheManager.del(`plan:${planId}`);
+    await this.cacheManager.del(`user:${userId}:plans`);
+
+    return { deleted: true };
   }
 
   /**

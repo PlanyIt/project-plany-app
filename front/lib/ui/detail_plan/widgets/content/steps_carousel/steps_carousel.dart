@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -272,12 +273,14 @@ class StepsCarouselState extends State<StepsCarousel>
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: step.image.isNotEmpty
-                      ? Image.network(
-                          step.image,
+                      ? CachedNetworkImage(
+                          imageUrl: step.image,
                           height: 150,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          placeholder: (context, url) =>
+                              _buildImagePlaceholder(),
+                          errorWidget: (context, url, error) =>
                               _buildImagePlaceholder(),
                         )
                       : _buildImagePlaceholder(),

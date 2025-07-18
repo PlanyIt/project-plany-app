@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../domain/models/comment/comment.dart';
 import '../../../../../../domain/models/user/user.dart';
@@ -121,10 +122,14 @@ class CommentCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
       clipBehavior: Clip.hardEdge,
-      child: Image.network(
-        url,
+      child: CachedNetworkImage(
+        imageUrl: url,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, _) => Container(
+        placeholder: (context, url) => Container(
+          color: Colors.grey[200],
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) => Container(
           color: Colors.grey[200],
           child:
               const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
@@ -138,7 +143,7 @@ class CommentCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Row(
-          mainAxisSize: MainAxisSize.min, // Important : garde le bloc compact
+          mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
               icon: Icon(

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../themes/app_theme.dart';
 
@@ -94,25 +95,21 @@ class ImageCarouselState extends State<ImageCarousel> {
 
   Widget _buildImageItem(String imageUrl) {
     if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: Colors.grey.shade200,
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-                strokeWidth: 2,
-              ),
+        placeholder: (context, url) => Container(
+          color: Colors.grey.shade200,
+          child: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              strokeWidth: 2,
             ),
-          );
-        },
-        errorBuilder: (_, __, ___) => _buildErrorImage(),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildErrorImage(),
       );
     } else {
       return Image.file(
