@@ -6,7 +6,7 @@ workflows:
       java: 17
       flutter: stable
       groups:
-        - plany_env
+        - plany_env  # Doit contenir SONAR_TOKEN
 
     triggering:
       events:
@@ -65,13 +65,32 @@ workflows:
         
       - name: Analyze Flutter code
         script: |
-          flutter analyze || true
+          mkdir -p front/build/lint
+          flutter analyze --no-fatal-infos --no-fatal-warnings --format json > front/build/lint/lint-result.json || true
         working_directory: front
 
-
-      - name: Run Flutter tests
-        script: flutter test
+      - name: Run Flutter tests with coverage
+        script: flutter test --coverage
         working_directory: front
+
+      - name: SonarCloud Scan
+        script: |
+          export SONAR_SCANNER_VERSION=5.0.1.3006
+          export SONAR_SCANNER_DIR=$CM_BUILD_DIR/sonar-scanner-$SONAR_SCANNER_VERSION-linux
+          wget -qO- https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip | bsdtar -xvf- -C $CM_BUILD_DIR
+          export PATH=$SONAR_SCANNER_DIR/bin:$PATH
+          sonar-scanner \
+            -Dsonar.projectKey=PlanyIt_project-plany-app \
+            -Dsonar.organization=planyit \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.sources=front/lib \
+            -Dsonar.exclusions=**/*.g.dart \
+            -Dsonar.coverageReportPaths=front/coverage/lcov.info \
+            -Dsonar.dart.reportPaths=front/build/lint/lint-result.json
+          environment:
+          groups:
+            - plany_env
 
       - name: Build AAB
         script: flutter build appbundle --release

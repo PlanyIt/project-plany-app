@@ -49,15 +49,15 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        uses: sonarsource/sonarcloud-github-action@v2
         with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.organization=planyit
-            -Dsonar.projectKey=PlanyIt_project-plany-app
+          projectBaseDir: back
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECTKEY: PlanyIt_project-plany-app
+          SONAR_ORGANIZATION: planyit
 
       - name: 🏋️ Run K6 load tests
         run: npx k6 run ../k6-tests/api-load.js

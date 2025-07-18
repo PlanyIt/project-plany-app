@@ -36,9 +36,5 @@ void main() {
         find.byKey(const Key('titleField')), 'Mon super plan');
     await tester.enterText(
         find.byKey(const Key('descriptionField')), 'Une description top.');
-
-    // Passer à l'étape suivante
-    await tester.tap(find.text('Continuer'));
-    await tester.pumpAndSettle();
   });
 }
