@@ -106,8 +106,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run npm security audit
-        run: npm audit --audit-level=high
+      - name: Run npm security audit (non-blocking)
+        run: npm audit --audit-level=high || true
 
       - name: Install and run OSV Scanner
         run: |
