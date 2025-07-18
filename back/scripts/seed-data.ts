@@ -21,7 +21,7 @@ async function main() {
 
   // 0. Catégories
   const categories = [
-    { name: 'Weekend', icon: 'calendar_today', color: '#FF9800' }, // orange foncé
+    { name: 'Weekend', icon: 'calendar_today', color: '#FF9800' },
     { name: 'Vacances', icon: 'beach_access', color: '#1976D2' }, // bleu foncé
     { name: 'Escapade en amoureux', icon: 'favorite', color: '#D81B60' }, // rose foncé
     { name: 'Sortie entre amis', icon: 'group', color: '#616161' }, // gris foncé
