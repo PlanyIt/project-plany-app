@@ -44,8 +44,10 @@ jobs:
         run: npm audit --production
         continue-on-error: true
 
-      - name: 🛡️ Run Snyk
+      - name: Run snyk test
         run: npx snyk test --all-projects
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: 🔎 SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
