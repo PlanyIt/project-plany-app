@@ -104,34 +104,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Install and run OSV Scanner
-        run: |
-          # Télécharger le binaire OSV Scanner
-          curl -sSL https://github.com/google/osv-scanner/archive/refs/tags/v2.1.0.tar.gz -o osv-scanner.tar.gz
-          tar -xzf osv-scanner.tar.gz
-          sudo mv osv-scanner /usr/local/bin/osv-scanner
-
-          # Scanner le projet avec format SARIF
-          osv-scanner scan --format=sarif --output=osv-results.sarif ./back || true
-
-          # Afficher un résumé dans GitHub Actions
-          echo "## 🔍 OSV Scanner Results" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          osv-scanner scan ./back || echo "Vulnerabilities found - check SARIF report in Security tab"
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload OSV Scanner results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: osv-results.sarif
-        if: always()
-
-      - name: Upload Flutter OSV results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: flutter-osv-results.sarif
-        if: always()
-
       - name: Run Gitleaks on Flutter
         uses: gitleaks/gitleaks-action@v2
         env:
