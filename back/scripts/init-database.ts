@@ -11,7 +11,6 @@ async function main() {
   await client.connect();
   const db = client.db(dbName);
 
-  // Création des collections principales si elles n'existent pas
   const collections = await db.listCollections().toArray();
   const names = collections.map((c) => c.name);
 
