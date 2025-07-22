@@ -60,7 +60,6 @@ android {
 
     buildTypes {
         release {
-            // Ajoute cette condition pour éviter l'erreur si pas de keystore
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release
             }

@@ -31,6 +31,8 @@ Future<void> main() async {
     debugPrint('${rec.level.name}: ${rec.time}: ${rec.message}');
   });
 
+  debugPrint("je suis l'env : $env");
+
   const isInTest = bool.fromEnvironment('IS_TEST');
 
   final locationService = isInTest ? FakeLocationService() : LocationService();

@@ -31,7 +31,7 @@ See [`back/README.md`](./back/README.md) for full details.
 - Install dependencies: `cd back && npm install`
 - Configure environment: create `.env` in `/back` (see template in backend README)
 - Start dev server: `npm run start:dev`
-- Seed database: `npm run db:seed`
+- Seed database: `npm run seed:dev`
 - Run tests: `npm run test` (unit), `npm run test:e2e` (e2e)
 
 ### 3. Setup the Frontend
