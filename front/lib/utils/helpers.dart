@@ -27,8 +27,8 @@ String formatDurationToString(int minutes) {
 
   final parts = <String>[];
   if (days > 0) parts.add('$days jours');
-  if (hours > 0) parts.add('$hours heures');
-  if (remainingMinutes > 0) parts.add('$remainingMinutes minutes');
+  if (hours > 0) parts.add('$hours h');
+  if (remainingMinutes > 0) parts.add('$remainingMinutes min');
 
   return parts.join(' ');
 }
