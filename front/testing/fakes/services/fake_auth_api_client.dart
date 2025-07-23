@@ -46,4 +46,10 @@ class FakeAuthApiClient implements AuthApiClient {
     }
     return Result.error(Exception('Invalid refresh token'));
   }
+  
+  @override
+  Future<Result<void>> logout(String refreshToken) {
+    // TODO: implement logout
+    throw UnimplementedError();
+  }
 }

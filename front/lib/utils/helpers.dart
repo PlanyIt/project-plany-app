@@ -19,7 +19,7 @@ double calculateTotalStepsCost(List<step_model.Step> steps) {
 /// Returns a string in the format "X jours" ou "X heures" ou "X minutes".
 /// If the duration is null or empty, returns "0 minutes".
 String formatDurationToString(int minutes) {
-  if (minutes <= 0) return '0 minutes';
+  if (minutes <= 0) return '0 min';
 
   final days = minutes ~/ (24 * 60);
   final hours = (minutes % (24 * 60)) ~/ 60;
@@ -27,8 +27,8 @@ String formatDurationToString(int minutes) {
 
   final parts = <String>[];
   if (days > 0) parts.add('$days jours');
-  if (hours > 0) parts.add('$hours heures');
-  if (remainingMinutes > 0) parts.add('$remainingMinutes minutes');
+  if (hours > 0) parts.add('$hours h');
+  if (remainingMinutes > 0) parts.add('$remainingMinutes min');
 
   return parts.join(' ');
 }

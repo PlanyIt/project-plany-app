@@ -25,8 +25,7 @@ class AuthRepositoryRemote extends AuthRepository {
         _authApiClient = authApiClient,
         _authStorageService = authStorageService {
     _apiClient.authHeaderProvider = _authHeaderProvider;
-    _apiClient.onUnauthorized =
-        () => logout(); // API renvoie 401 → on force logout
+    _apiClient.onUnauthorized = () => logout();
   }
 
   // ────────────────────────── Dépendances ──────────────────────────
@@ -174,10 +173,6 @@ class AuthRepositoryRemote extends AuthRepository {
     _refreshToken = auth.refreshToken;
     _tokenExpiration = _parseTokenExpiration(auth.accessToken);
 
-    print('Refresh token: $_refreshToken');
-
-    print(auth.currentUser.id);
-
     _currentUser = User(
       id: auth.currentUser.id,
       username: auth.currentUser.username,
@@ -201,6 +196,9 @@ class AuthRepositoryRemote extends AuthRepository {
   @override
   Future<Result<void>> logout() async {
     try {
+      if (_refreshToken != null) {
+        await _authApiClient.logout(_refreshToken!);
+      }
       await _authStorageService.saveTokens(
           accessToken: null, refreshToken: null);
       await _authStorageService.saveUserJson(null);

@@ -18,8 +18,10 @@ class AuthApiClient {
     final isLocalhost = _host.contains('localhost') ||
         _host.contains('192.') ||
         _host.contains('127.') ||
+        _host.contains('10.') ||
         _host.contains(':3000') ||
-        _host.contains(':4000');
+        _host.contains(':3000') ||
+        _host.contains(':5000');
     if (isLocalhost) {
       return Uri.http(_host, path);
     } else {
@@ -82,6 +84,25 @@ class AuthApiClient {
       return const Result.error(HttpException('Refresh error'));
     } catch (e) {
       return Result.error(Exception('Failed to refresh token: $e'));
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Result<void>> logout(String refreshToken) async {
+    final client = _clientFactory();
+    try {
+      final req = await client.postUrl(_buildUri('/api/auth/logout'));
+      req.headers.contentType = ContentType.json;
+      req.write(jsonEncode({'refreshToken': refreshToken}));
+      final res = await req.close();
+
+      if (res.statusCode == 204) {
+        return Result.ok(null);
+      }
+      return const Result.error(HttpException('Logout error'));
+    } catch (e) {
+      return Result.error(Exception('Failed to logout: $e'));
     } finally {
       client.close();
     }

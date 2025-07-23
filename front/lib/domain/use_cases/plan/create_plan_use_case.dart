@@ -17,7 +17,7 @@ class CreatePlanUseCase {
     required this.stepRepository,
   });
 
-  /// [plan] : Plan à créer (steps doit contenir les StepCard ou objets intermédiaires)
+  /// [plan] : Plan à créer (steps doit contenir les StepCard)
   /// [steps] : Liste des steps à créer (avec image locale)
   /// [userId] : Id de l'utilisateur
   /// [stepImages] : Liste des fichiers images pour chaque step (même ordre que steps)

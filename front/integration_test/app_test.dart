@@ -31,10 +31,25 @@ void main() {
     await tester.tap(find.byTooltip('Créer'));
     await tester.pumpAndSettle();
 
-    // Remplir les champs
+    // Remplir les champs du formulaire de création de plan
     await tester.enterText(
         find.byKey(const Key('titleField')), 'Mon super plan');
     await tester.enterText(
         find.byKey(const Key('descriptionField')), 'Une description top.');
+
+    // Ouvrir la bottom sheet de sélection de catégorie
+    await tester.tap(find.byKey(const Key('categoryField')));
+    await tester.pumpAndSettle();
+
+    // Sélectionner la catégorie "Nature" (doit exister dans la liste)
+    await tester.tap(find.text('Nature').first);
+    await tester.pumpAndSettle();
+
+    // Valider la création du plan
+    await tester.tap(find.byKey(const Key('createPlanButton')));
+    await tester.pumpAndSettle(const Duration(seconds: 3));
+
+    // Vérifier que le plan apparaît dans la liste des plans (optionnel)
+    expect(find.text('Mon super plan'), findsOneWidget);
   });
 }

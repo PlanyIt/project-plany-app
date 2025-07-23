@@ -29,13 +29,25 @@ Plany is the mobile client for the Plany project, built with Flutter. It allows 
    cd front
    ```
 2. Installe les dépendances :
+
    ```bash
    flutter pub get
    ```
+
 3. Crée un fichier `.env` dans `/front` :
+
    ```env
    BASE_URL=https://your-backend-api-url.com
    ```
+
+   **Si tu lances le backend en local (et pas via Render), ajoute aussi `.env.local` dans la section `assets` de ton `pubspec.yaml` :**
+
+   ```yaml
+   flutter:
+     assets:
+       - .env.local
+   ```
+
 4. (Optionnel) Configure la signature Android/iOS pour les builds release.
 
 ### Lancer l'application

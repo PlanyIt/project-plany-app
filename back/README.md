@@ -83,7 +83,7 @@ Initialize and seed the database:
 
 ```bash
 npm run db:init    # Create collections
-npm run db:seed    # Seed demo data
+npm run seed:dev   # Seed demo data
 npm run db:reset   # Reset and reseed all data
 ```
 

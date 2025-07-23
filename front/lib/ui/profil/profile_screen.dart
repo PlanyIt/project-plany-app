@@ -105,13 +105,13 @@ class _ProfileScreenContent extends StatelessWidget {
         );
       case 'subscriptions':
         return FollowingSection(
-          viewModel: vm.userListViewModel!,
+          viewModel: vm,
           onFollowChanged: vm.refreshProfile,
         );
       case 'followers':
         return FollowersSection(
           onFollowChanged: vm.refreshProfile,
-          viewModel: vm.userListViewModel!,
+          viewModel: vm,
         );
       case 'settings':
         return SettingsSection(

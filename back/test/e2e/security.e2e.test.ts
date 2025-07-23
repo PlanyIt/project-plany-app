@@ -1,4 +1,4 @@
-jest.setTimeout(30000); // Augmente le timeout à 30 secondes
+jest.setTimeout(30000);
 
 process.env.JWT_SECRET_AT = process.env.JWT_SECRET_AT || 'test-secret';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';

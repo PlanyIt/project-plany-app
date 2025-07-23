@@ -316,7 +316,6 @@ class StepsCarouselState extends State<StepsCarousel>
                           formatDurationToString(step.duration ?? 0),
                           actualColor),
                     if (step.duration != null && step.cost != null)
-                      const SizedBox(width: 10),
                     if (step.cost != null)
                       _buildInfoBadge(
                           Icons.euro_rounded, "${step.cost} €", actualColor),

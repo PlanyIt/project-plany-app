@@ -6,6 +6,13 @@ import 'package:front/domain/models/user/user_stats.dart';
 import 'package:front/utils/result.dart';
 
 class FakeUserRepository extends UserRepository {
+  void clearCache() {
+    _currentUser = null;
+    _followers.clear();
+    _following.clear();
+    _isFollowing = false;
+  }
+
   User? _currentUser = User(
     id: 'fake_id',
     username: 'fake_user',

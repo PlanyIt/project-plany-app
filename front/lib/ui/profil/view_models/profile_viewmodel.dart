@@ -10,9 +10,21 @@ import '../../../domain/models/user/user_stats.dart';
 import '../../../utils/result.dart';
 import 'favorites_viewmodel.dart';
 import 'my_plan_viewmodel.dart';
-import 'user_list_viewmodel.dart';
 
 class ProfileViewModel extends ChangeNotifier {
+  Future<void> unfollowAndRefresh(String userId) async {
+    await userRepository.unfollowUser(userId);
+    await loadUserData(userProfile?.id);
+    notifyListeners();
+  }
+
+  // Listes réelles d'utilisateurs abonnés/abonnements
+  List<User> _followers = [];
+  List<User> _following = [];
+
+  List<User> get followers => _followers;
+  List<User> get following => _following;
+
   final AuthRepository authRepository;
   final UserRepository userRepository;
   final PlanRepository planRepository;
@@ -20,7 +32,6 @@ class ProfileViewModel extends ChangeNotifier {
 
   late final MyPlansViewModel myPlansViewModel;
   late final FavoritesViewModel favoritesViewModel;
-  UserListViewModel? userListViewModel;
 
   ProfileViewModel({
     required this.authRepository,
@@ -48,7 +59,6 @@ class ProfileViewModel extends ChangeNotifier {
 
   Future<void> loadUserData(String? userId) async {
     try {
-      isLoading = true;
       notifyListeners();
 
       final currentUserId = authRepository.currentUser?.id;
@@ -72,10 +82,11 @@ class ProfileViewModel extends ChangeNotifier {
         return;
       }
 
-      userListViewModel = UserListViewModel(
-        userRepository: userRepository,
-        userId: userProfile!.id!,
-      );
+      // Charge les followers et following réels
+      await Future.wait([
+        _loadFollowers(),
+        _loadFollowing(),
+      ]);
 
       await _loadRelatedData();
     } catch (e, stack) {
@@ -86,15 +97,36 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _loadFollowers() async {
+    if (userProfile == null) return;
+    final result = await userRepository.getFollowers(userProfile!.id!);
+    if (result is Ok<List<User>>) {
+      _followers = result.value;
+    } else {
+      _followers = [];
+    }
+    notifyListeners();
+  }
+
+  Future<void> _loadFollowing() async {
+    if (userProfile == null) return;
+    final result = await userRepository.getFollowing(userProfile!.id!);
+    if (result is Ok<List<User>>) {
+      _following = result.value;
+    } else {
+      _following = [];
+    }
+    notifyListeners();
+  }
+
   Future<void> _loadRelatedData() async {
     final tasks = [
       myPlansViewModel.loadPlans(userProfile!.id!),
       favoritesViewModel.loadFavorites(userProfile!.id!),
-      userListViewModel!.loadFollowers(),
-      userListViewModel!.loadFollowing(),
       _loadStats(),
       _checkFollowStatus(),
       loadUserCategories(),
+      // Followers/following déjà chargés dans loadUserData
     ];
 
     for (final task in tasks) {
@@ -163,6 +195,11 @@ class ProfileViewModel extends ChangeNotifier {
         }
       }
       await _loadStats();
+      // Recharge les followers et following pour mettre à jour la section
+      await Future.wait([
+        _loadFollowers(),
+        _loadFollowing(),
+      ]);
     } finally {
       loadingFollow = false;
       notifyListeners();
