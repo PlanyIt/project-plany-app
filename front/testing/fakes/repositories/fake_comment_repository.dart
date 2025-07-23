@@ -5,6 +5,11 @@ import 'package:front/domain/models/comment/comment.dart';
 import 'package:front/utils/result.dart';
 
 class FakeCommentRepository extends CommentRepository {
+  void clearCache() {
+    _comments.clear();
+    _idCounter = 0;
+  }
+
   final List<Comment> _comments = [];
   int _idCounter = 0;
 

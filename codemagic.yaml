@@ -6,7 +6,7 @@ workflows:
       java: 17
       flutter: stable
       groups:
-        - plany_env 
+        - plany_env
 
     triggering:
       events:
@@ -62,7 +62,7 @@ workflows:
       - name: Get Flutter dependencies
         script: flutter pub get
         working_directory: front
-        
+
       - name: Analyze Flutter code
         script: |
           mkdir -p front/build/lint
@@ -71,6 +71,16 @@ workflows:
 
       - name: Run Flutter tests with coverage
         script: flutter test --coverage
+        working_directory: front
+
+      - name: Enforce lines coverage ≥ 80%
+        script: |
+          COVERAGE=$(lcov --summary front/coverage/lcov.info | grep 'lines\.' | awk '{print $2}' | sed 's/%//')
+          echo "Lines coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ Lines coverage is below 80%."
+            exit 1
+          fi
         working_directory: front
 
       - name: Install Sonar Scanner (macOS)
@@ -89,9 +99,13 @@ workflows:
             -Dsonar.dart.reportPaths=build/lint/lint-result.json
         working_directory: front
 
-
-      - name: Build AAB
-        script: flutter build appbundle --release
+      - name: Build AAB (only for main)
+        script: |
+          if [ "$CM_BRANCH" == "main" ]; then
+            flutter build appbundle --release
+          else
+            echo "Skipping build on branch: $CM_BRANCH"
+          fi
         working_directory: front
 
       - name: Clean .env after build

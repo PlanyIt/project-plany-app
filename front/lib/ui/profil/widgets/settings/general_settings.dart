@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../domain/models/user/user.dart';
 import '../../../../routing/routes.dart';
@@ -25,61 +24,50 @@ class GeneralSettings extends StatefulWidget {
 }
 
 class GeneralSettingsState extends State<GeneralSettings> {
-  bool _darkMode = false;
-  bool _notifications = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPreferences();
-  }
-
-  Future<void> _loadPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      setState(() {
-        _darkMode = prefs.getBool('darkMode') ?? false;
-        _notifications = prefs.getBool('notifications') ?? true;
-      });
-    } catch (e) {
-      widget.showErrorCard('Erreur lors du chargement des préférences: $e');
-    }
-  }
-
-  Future<void> _savePreference(String key, bool value) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(key, value);
-    } catch (e) {
-      widget.showErrorCard('Erreur lors de la sauvegarde des préférences: $e');
-    }
-  }
-
-  void _toggleDarkMode(bool value) async {
-    widget.showInfoCard('Développement en cours',
-        'Le mode sombre sera disponible prochainement.');
-    await _savePreference('darkMode', value);
-    setState(() {
-      _darkMode = value;
-    });
-  }
-
-  void _toggleNotifications(bool value) async {
-    widget.showInfoCard('Développement en cours',
-        'La gestion des notifications sera disponible prochainement.');
-    await _savePreference('notifications', value);
-    setState(() {
-      _notifications = value;
-    });
-  }
-
-  void _showAboutInfo() {
-    widget.showInfoCard('Plany', 'Version 1.0.0\nTous droits réservés');
-  }
-
   void _showPrivacyPolicy() {
-    widget.showInfoCard('Développement en cours',
-        'La politique de confidentialité sera disponible prochainement.');
+    widget.showInfoCard(
+      'Politique de confidentialité',
+      """
+Plany attache une grande importance à la protection de vos données personnelles et s'engage à respecter la réglementation en vigueur, notamment le Règlement Général sur la Protection des Données (RGPD).
+
+1. **Collecte des données** :
+Nous collectons uniquement les données nécessaires au fonctionnement de l'application (identité, email, préférences, etc.).
+
+2. **Utilisation des données** :
+Vos données sont utilisées exclusivement pour vous fournir les services de Plany (gestion de compte, personnalisation, sécurité, etc.). Elles ne sont jamais revendues à des tiers.
+
+3. **Conservation** :
+Les données sont conservées pendant la durée d'utilisation de votre compte et supprimées à la demande ou lors de la suppression du compte.
+
+4. **Droits des utilisateurs** :
+Vous disposez d'un droit d'accès, de rectification, de suppression, de portabilité et d'opposition concernant vos données. Pour exercer vos droits, contactez-nous à contact@plany.fr.
+
+5. **Sécurité** :
+Nous mettons en œuvre toutes les mesures nécessaires pour garantir la sécurité de vos données.
+
+6. **Contact** :
+Pour toute question relative à la protection de vos données, écrivez-nous à contact@plany.fr.
+
+Pour plus d'informations, consultez les mentions légales et la section RGPD.
+""",
+    );
+  }
+
+  void _showLegalNotice() {
+    widget.showInfoCard(
+      'Mentions légales',
+      """
+Éditeur : Plany SAS\nAdresse : 123 rue de la Liberté, 75000 Paris\nSIRET : 123 456 789 00012\nDirecteur de la publication : Jean Dupont\nContact : contact@plany.fr\nHébergeur : OVH, 2 rue Kellermann, 59100 Roubaix\n""",
+    );
+  }
+
+  void _showRGPDInfo() {
+    widget.showInfoCard(
+      'Données personnelles (RGPD)',
+      """
+Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez d'un droit d'accès, de rectification, de suppression et de portabilité de vos données.\n\nPour exercer vos droits, contactez-nous à contact@plany.fr.\n\nPour plus d'informations, consultez la politique de confidentialité.
+""",
+    );
   }
 
   Future<void> _showLogoutConfirmation() async {
@@ -141,27 +129,20 @@ class GeneralSettingsState extends State<GeneralSettings> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildSwitchRow(
-          title: 'Mode sombre',
-          value: _darkMode,
-          icon: Icons.dark_mode_outlined,
-          onChanged: _toggleDarkMode,
-        ),
-        _buildSwitchRow(
-          title: 'Notifications',
-          value: _notifications,
-          icon: Icons.notifications_outlined,
-          onChanged: _toggleNotifications,
-        ),
-        _buildActionRow(
-          title: 'À propos de Plany',
-          icon: Icons.info_outline,
-          onTap: _showAboutInfo,
-        ),
         _buildActionRow(
           title: 'Politique de confidentialité',
           icon: Icons.privacy_tip_outlined,
           onTap: _showPrivacyPolicy,
+        ),
+        _buildActionRow(
+          title: 'Mentions légales',
+          icon: Icons.gavel_outlined,
+          onTap: _showLegalNotice,
+        ),
+        _buildActionRow(
+          title: 'Données personnelles (RGPD)',
+          icon: Icons.verified_user_outlined,
+          onTap: _showRGPDInfo,
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
@@ -217,29 +198,6 @@ class GeneralSettingsState extends State<GeneralSettings> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSwitchRow({
-    required String title,
-    required bool value,
-    required IconData icon,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: Colors.grey[700]),
-          const SizedBox(width: 8),
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: const Color(0xFF3425B5),
-          ),
-        ],
-      ),
     );
   }
 

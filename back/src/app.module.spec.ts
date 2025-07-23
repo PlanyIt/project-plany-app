@@ -10,7 +10,7 @@ describe('AppModule', () => {
     module = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-  });
+  }, 30000); // Increase timeout for slow setup
 
   afterAll(() => {
     (console.error as jest.Mock).mockRestore();

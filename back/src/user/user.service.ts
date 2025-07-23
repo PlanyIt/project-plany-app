@@ -280,6 +280,8 @@ export class UserService {
 
     await this.invalidateUserCache(followerId);
     await this.invalidateUserCache(targetUserId);
+    await this.cache.del(`user:${followerId}:stats`);
+    await this.cache.del(`user:${targetUserId}:stats`);
 
     return { message: 'Désabonnement réussi', success: true };
   }
@@ -296,7 +298,7 @@ export class UserService {
 
     const populatedUser = await this.userModel
       .findById(user._id)
-      .populate('followers', 'username email photoUrl')
+      .populate('followers', 'username email photoUrl followers')
       .exec();
 
     await this.cache.set(cacheKey, populatedUser.followers, 30);
@@ -314,7 +316,7 @@ export class UserService {
     }
     const populatedUser = await this.userModel
       .findById(user._id)
-      .populate('following', 'username email photoUrl')
+      .populate('following', 'username email photoUrl following followers')
       .exec();
 
     await this.cache.set(cacheKey, populatedUser.following, 30);

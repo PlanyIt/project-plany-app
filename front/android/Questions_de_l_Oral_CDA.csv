@@ -1,0 +1,37 @@
+Questions
+Quels outils as-tu utilisés pour configurer ton environnement de développement ?
+Peux-tu expliquer l’intérêt de la conteneurisation (ex : Docker) dans un projet ?
+Comment as-tu mis en place un environnement de développement proche de la production ?
+Comment assures-tu l’accessibilité (RGAA) dans tes interfaces ?
+Comment intègres-tu la sécurité dans une interface front-end ?
+Quelle est la différence entre un test unitaire et un test de sécurité sur une interface ?
+Qu’est-ce qu’un style de programmation défensif ?
+Comment gères-tu les erreurs et exceptions dans tes composants ?
+Quelle est la stratégie à suivre pour sécuriser les traitements côté serveur ?
+Quelle est la différence entre une méthode agile et une méthode en cascade ?
+Comment planifies-tu tes tâches de développement ?
+Comment rédiges-tu un compte-rendu de réunion efficace ?
+Comment fais-tu l’analyse d’un cahier des charges ?
+Quels outils utilises-tu pour le maquettage ?
+Peux-tu expliquer l'importance du RGAA et du RGPD dans cette phase ?
+Peux-tu décrire une architecture multicouche typique ?
+Quelles sont les couches que tu implémentes et leur rôle ?
+Comment la sécurité est-elle prise en compte dans ton architecture ?
+"Quelle différence fais-tu entre schéma conceptuel, logique et physique ?"
+Quelles sont les bonnes pratiques pour garantir la sécurité et l’intégrité des données ?
+Comment définis-tu les droits d'accès des utilisateurs dans une BDD ?
+"Quels types de conflits d'accès peux-tu rencontrer, et comment les éviter ?"
+As-tu déjà utilisé des procédures stockées ou des triggers ? Pour quel cas ?
+Quelle est la différence de sécurisation entre SQL et NoSQL ?
+"Quelle est la différence entre tests unitaires, d'intégration, système et d’acceptation ?"
+Comment prépares-tu un plan de tests ?
+As-tu déjà utilisé des outils d’automatisation des tests ? Lesquels ?
+Peux-tu décrire la procédure de déploiement que tu as mise en place ?
+Quels sont les environnements nécessaires avant une mise en production ?
+Quelles sont les bonnes pratiques à respecter pour un déploiement sécurisé ?
+Quelle est ta compréhension du concept CI/CD ?
+Quels outils as-tu utilisés pour l’intégration continue ?
+Comment interprètes-tu les rapports de qualité de code ?
+Comment gères-tu un désaccord technique avec un collègue ?
+Quelle est ta stratégie de veille technologique ?
+As-tu déjà dû adapter ta communication à un public non technique ?

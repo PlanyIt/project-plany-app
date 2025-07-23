@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-
 import '../../../domain/models/category/category.dart';
 import '../../../domain/models/comment/comment.dart';
 import '../../../domain/models/plan/plan.dart';
@@ -23,16 +22,20 @@ class ApiClient {
   final String _host;
   final HttpClient Function() _clientFactory;
 
-
-Uri _buildUri(String path, {Map<String, dynamic>? queryParameters}) {
-  final isLocalhost = _host.contains('localhost') || _host.contains('192.') || _host.contains('127.');
-  if (isLocalhost || _host.contains(':3000') || _host.contains(':4000')) {
-    return Uri.http(_host, path, queryParameters);
-  } else {
-    return Uri.https(_host, path, queryParameters);
+  Uri _buildUri(String path, {Map<String, dynamic>? queryParameters}) {
+    final isLocalhost = _host.contains('localhost') ||
+        _host.contains('192.') ||
+        _host.contains('10.') ||
+        _host.contains('127.');
+    if (isLocalhost ||
+        _host.contains(':3000') ||
+        _host.contains(':4000') ||
+        _host.contains(':5000')) {
+      return Uri.http(_host, path, queryParameters);
+    } else {
+      return Uri.https(_host, path, queryParameters);
+    }
   }
-}
-
 
   AuthHeaderProvider? _authHeaderProvider;
   void Function()? _onUnauthorized;
@@ -534,42 +537,42 @@ Uri _buildUri(String path, {Map<String, dynamic>? queryParameters}) {
 
   // Comment endpoints
 
-Future<Result<List<Comment>>> getComments(String planId,
-    {int page = 1, int limit = 10}) async {
-  final client = _clientFactory();
-  try {
-    final request = await client.getUrl(
-      _buildUri(
-        '/api/comments/plan/$planId',
-        queryParameters: {
-          'page': page.toString(),
-          'limit': limit.toString(),
-        },
-      ),
-    );
-    request.headers.contentType = ContentType.json;
-    await _authHeader(request.headers);
+  Future<Result<List<Comment>>> getComments(String planId,
+      {int page = 1, int limit = 10}) async {
+    final client = _clientFactory();
+    try {
+      final request = await client.getUrl(
+        _buildUri(
+          '/api/comments/plan/$planId',
+          queryParameters: {
+            'page': page.toString(),
+            'limit': limit.toString(),
+          },
+        ),
+      );
+      request.headers.contentType = ContentType.json;
+      await _authHeader(request.headers);
 
-    final response = await request.close();
-    return await _handleResponse(
-      response,
-      (json) {
-        final responseData = json as Map<String, dynamic>;
-        if (responseData['comments'] != null) {
-          return (responseData['comments'] as List<dynamic>)
-              .map((comment) => Comment.fromJson(comment))
-              .toList();
-        } else {
-          return <Comment>[];
-        }
-      },
-    );
-  } on Exception catch (error) {
-    return Result.error(error);
-  } finally {
-    client.close();
+      final response = await request.close();
+      return await _handleResponse(
+        response,
+        (json) {
+          final responseData = json as Map<String, dynamic>;
+          if (responseData['comments'] != null) {
+            return (responseData['comments'] as List<dynamic>)
+                .map((comment) => Comment.fromJson(comment))
+                .toList();
+          } else {
+            return <Comment>[];
+          }
+        },
+      );
+    } on Exception catch (error) {
+      return Result.error(error);
+    } finally {
+      client.close();
+    }
   }
-}
 
   Future<Result<List<Comment>>> getCommentResponses(String commentId) async {
     final client = _clientFactory();

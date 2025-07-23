@@ -18,8 +18,10 @@ class AuthApiClient {
     final isLocalhost = _host.contains('localhost') ||
         _host.contains('192.') ||
         _host.contains('127.') ||
+        _host.contains('10.') ||
         _host.contains(':3000') ||
-        _host.contains(':4000');
+        _host.contains(':3000') ||
+        _host.contains(':5000');
     if (isLocalhost) {
       return Uri.http(_host, path);
     } else {

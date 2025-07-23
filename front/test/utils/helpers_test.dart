@@ -41,11 +41,11 @@ void main() {
 
   group('formatDurationToString', () {
     test('formats minutes to string', () {
-      expect(formatDurationToString(0), '0 minutes');
-      expect(formatDurationToString(45), '45 minutes');
-      expect(formatDurationToString(60), '1 heures');
-      expect(formatDurationToString(1500), '1 jours 1 heures');
-      expect(formatDurationToString(1501), '1 jours 1 heures 1 minutes');
+      expect(formatDurationToString(0), '0 min');
+      expect(formatDurationToString(45), '45 min');
+      expect(formatDurationToString(60), '1 h');
+      expect(formatDurationToString(1500), '1 jours 1 h');
+      expect(formatDurationToString(1501), '1 jours 1 h 1 min');
     });
   });
 

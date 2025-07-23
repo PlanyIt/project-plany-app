@@ -32,11 +32,15 @@ class FavoritesViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeFavorite(String planId, String userId) async {
+  Future<void> removeFavorite(String planId, String userId,
+      {Future<void> Function()? onFavoriteRemoved}) async {
     final result = await planRepository.removeFromFavorites(planId);
     if (result is Ok<void>) {
       favorites.removeWhere((p) => p.id == planId);
-      await loadFavorites(userId);
+      notifyListeners();
+      if (onFavoriteRemoved != null) {
+        await onFavoriteRemoved();
+      }
     }
   }
 }

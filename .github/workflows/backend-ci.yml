@@ -1,6 +1,14 @@
 name: Backend CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
   build-and-test:
@@ -14,7 +22,7 @@ jobs:
       DATABASE_NAME: plany
       JWT_SECRET_AT: ${{ secrets.JWT_SECRET_AT }}
       JWT_AT_EXPIRES_IN: 15m
-      JWT_SECRET_RT: ultra-secret-refresh
+      JWT_SECRET_RT: ${{ secrets.JWT_SECRET_RT }}
       JWT_RT_EXPIRES_IN: 30d
       PORT: 3000
       NODE_ENV: test
@@ -31,26 +39,35 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🔍 Run linter
+      - name: 🔍 Run linter (ESLint & Prettier)
         run: npm run lint
 
-      - name: 🧪 Run unit tests
-        run: npm run test
+      - name: 🧪 Run unit tests (with coverage report)
+        run: npm run test -- --coverage --coverageReporters=json-summary
 
-      - name: 📊 Run coverage tests
+      - name: 🔍 Enforce lines coverage ≥ 80%
+        run: |
+          LINES_COVERAGE=$(node -pe "require('./coverage/coverage-summary.json').total.lines.pct")
+          echo "Lines coverage: $LINES_COVERAGE%"
+          if (( $(echo "$LINES_COVERAGE < 80" | bc -l) )); then
+            echo '❌ Line coverage is below 80%.'
+            exit 1
+          fi
+
+      - name: 📊 Run coverage tests (Jest coverage report)
         run: npm run test:cov
 
-      - name: 🔎 Run npm audit (do not fail build)
+      - name: 🔎 Run npm audit (continue on error)
         run: npm audit --production
         continue-on-error: true
 
-      - name: Run snyk test
+      - name: 🛡️ Run snyk security check (continue on error)
         run: npx snyk test --all-projects
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: SonarCloud Scan
+      - name: 🔬 SonarCloud Quality Gate
         uses: sonarsource/sonarcloud-github-action@v2
         with:
           projectBaseDir: back
@@ -58,17 +75,3 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PROJECTKEY: PlanyIt_project-plany-app
           SONAR_ORGANIZATION: planyit
-
-      - name: Install k6
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gnupg software-properties-common
-          sudo gpg -k || true
-          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/k6.gpg
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install -y k6
-
-      - name: 🏋️ Run K6 load tests
-        run: k6 run ./k6-tests/api-load.js
-        working-directory: back

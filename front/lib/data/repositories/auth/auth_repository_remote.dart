@@ -196,7 +196,9 @@ class AuthRepositoryRemote extends AuthRepository {
   @override
   Future<Result<void>> logout() async {
     try {
-      await _authApiClient.logout(_refreshToken!);
+      if (_refreshToken != null) {
+        await _authApiClient.logout(_refreshToken!);
+      }
       await _authStorageService.saveTokens(
           accessToken: null, refreshToken: null);
       await _authStorageService.saveUserJson(null);

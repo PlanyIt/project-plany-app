@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../routing/routes.dart';
 import '../../../core/ui/card/compact_plan_card.dart';
 import '../../view_models/favorites_viewmodel.dart';
+import '../../view_models/profile_viewmodel.dart';
 import '../common/section_header.dart';
 
 class FavoritesSection extends StatelessWidget {
@@ -102,7 +103,9 @@ class FavoritesSection extends StatelessWidget {
                                         color: Colors.red, size: 20),
                                     onPressed: () async {
                                       await vm.removeFavorite(plan.id!, user);
-                                      onToggleFavorite?.call();
+                                      if (onToggleFavorite != null) {
+                                        onToggleFavorite!();
+                                      }
                                     },
                                     tooltip: 'Retirer des favoris',
                                     constraints:
